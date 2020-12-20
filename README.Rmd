@@ -20,6 +20,6 @@ Check out the data.
 ```{r}
 suppressPackageStartupMessages(library(CATALYST))
 suppressPackageStartupMessages(library(data.table))
-pop_assign <- data.table::fread("extdata/Panorama BM 1-10/population_assignments.txt", header = FALSE)
-sce <- CATALYST::prepData("extdata/Panorama BM 1-10/")
+pop_assign <- data.table::fread("~/Downloads/SystemsBioMedicine/Panorama BM 1-10/population_assignments.txt", header = FALSE)
+sce <- CATALYST::prepData("~/Downloads/SystemsBioMedicine/Panorama BM 1-10/")
 ```
