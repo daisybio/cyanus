@@ -742,10 +742,10 @@
     },
     "foreign": {
       "Package": "foreign",
-      "Version": "0.8-79",
+      "Version": "0.8-80",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "910ad5e5ce9aae0d0f57186ca9a12e1e"
+      "Hash": "ae1b1e15cc6ccb2bc61c0ac33e86d35f"
     },
     "formatR": {
       "Package": "formatR",
@@ -1364,6 +1364,13 @@
       "Repository": "CRAN",
       "Hash": "9d7aba7bed9a79e2403b4777428a2b12"
     },
+    "rmarkdown": {
+      "Package": "rmarkdown",
+      "Version": "2.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "bc4bac38960b446c183957bfd563e763"
+    },
     "robustbase": {
       "Package": "robustbase",
       "Version": "0.93-6",
@@ -1421,9 +1428,9 @@
     },
     "scuttle": {
       "Package": "scuttle",
-      "Version": "1.0.3",
+      "Version": "1.0.4",
       "Source": "Bioconductor",
-      "Hash": "5b5529096d0d9d7ef66abaa2c150d6d0"
+      "Hash": "82d75cd0746bda36735f10a0087e171c"
     },
     "shape": {
       "Package": "shape",
@@ -1439,12 +1446,26 @@
       "Repository": "CRAN",
       "Hash": "ee4ed72d7a5047d9e73cf922ad66e9c9"
     },
+    "shinycssloaders": {
+      "Package": "shinycssloaders",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f39bb3c44a9b496723ec7e86f9a771d8"
+    },
     "shinydashboard": {
       "Package": "shinydashboard",
       "Version": "0.7.1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "133639dc106955eee4ffb8ec73edac37"
+    },
+    "shinyjs": {
+      "Package": "shinyjs",
+      "Version": "2.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9ddfc91d4280eaa34c2103951538976f"
     },
     "snow": {
       "Package": "snow",
@@ -1535,6 +1556,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "6ea435c354e8448819627cf686f66e0a"
+    },
+    "tinytex": {
+      "Package": "tinytex",
+      "Version": "0.28",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ff73961a77fba606fbf944dc3468e5b9"
     },
     "tmvnsim": {
       "Package": "tmvnsim",
