@@ -29,6 +29,10 @@ server <- function(input, output, session) {
     }
   })
   
+  #TODO: make tabs
+  #TODO: make optional metadata input box
+  #TODO: make panel information 
+  
   output$currentData <- renderInfoBox({
     status <- "success"
     if (!reactiveVals$useExampleData & !reactiveVals$useUploadedData) {

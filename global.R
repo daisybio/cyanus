@@ -4,7 +4,7 @@ library(shinyjs)
 library(shinycssloaders)
 
 reactiveVals <- reactiveValues()
-tab_ids <- c("welcome", "start", "visualization", "clustering", "de")
+tab_ids <- c("welcome", "start", "preprocessing", "visualization", "clustering", "de")
 tabs <- list(
   menuItem(
     "Welcome",
@@ -17,23 +17,29 @@ tabs <- list(
     icon = icon("play-circle")
   ),
   menuItem(
-    "Visualization",
+    "Preprocessing",
     tabName = tab_ids[3],
-    icon = icon("print")
+    icon = icon("tools")
+  ),
+  menuItem(
+    "Visualization",
+    tabName = tab_ids[4],
+    icon = icon("palette")
   ),
   menuItem(
     "Clustering",
-    tabName = tab_ids[4],
+    tabName = tab_ids[5],
     icon = icon("border-none")
   ),
   menuItem(
     "DE analysis",
-    tabName = tab_ids[5],
+    tabName = tab_ids[6],
     icon = icon("chart-bar")
   )
 )
 
 reactiveVals$current_tab <- 1
+
 reactiveVals$useExampleData <- F
 reactiveVals$useUploadedData <- F
 
