@@ -1,10 +1,16 @@
+library(shiny)
+library(shinydashboard)
+library(shinyjs)
+library(shinycssloaders)
+library(shinyWidgets)
+
+
+# read all ui files
+sapply(list.files("ui", full.names = TRUE), source, environment())
+
 header <- dashboardHeader(title = "CyTOF Pipeline")
 
 sidebar <- dashboardSidebar(uiOutput("sidebar"))
-
-# read all ui files
-sapply(list.files("ui", full.names = TRUE), source)
-
 
 body <-
   dashboardBody(
