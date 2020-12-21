@@ -80,5 +80,13 @@ plotDR(sce2, dr = "TSNE", color_by = chs, facet_by = "dualTriple")
 
 library(CytobankAPI)
 #flowsom, viSNE
+library(vegan)
+#isomap
+dis <- vegdist(assays(sce2)$exprs)
+tr <- spantree(dis)
+pl <- ordiplot(cmdscale(dis), main="cmdscale")
+lines(tr, pl, col="red")
+ord <- isomap(dis, epsilon = 0.9, ndim=1)
 
+plotExprs(sce2, color_by = "dualTriple")
 
