@@ -1,38 +1,19 @@
-library(shiny)
-library(shinydashboard)
-
 header <- dashboardHeader(title = "CyTOF Pipeline")
 
-sidebar <- dashboardSidebar(sidebarMenu(
-  menuItem("Welcome", tabName = "welcome", icon = icon("home")),
-  menuItem(
-    "Get Started",
-    tabName = "start",
-    icon = icon("play-circle")
-  ),
-  menuItem(
-    "Visualization",
-    tabName = "visualization",
-    icon = icon("print")
-  ),
-  menuItem(
-    "Clustering",
-    tabName = "clustering",
-    icon = icon("border-none")
-  ),
-  menuItem(
-    "DE analysis",
-    tabName = "diff_expr",
-    icon = icon("chart-bar")
-  )
-))
+sidebar <- dashboardSidebar(uiOutput("sidebar"))
 
-sapply(list.files("ui/", full.names = TRUE), source)
+# read all ui files
+sapply(list.files("ui", full.names = TRUE), source)
 
 
 body <-
-  dashboardBody(tabItems(# First tab content
-    welcomeBody, startBody))
+  dashboardBody(
+    useShinyjs(),
+    tabItems(welcomeBody,
+             startBody()),
+    actionButton("continue", "Start Analysis", icon("arrow-right"), class =
+                   "btn-success btn-block")
+  )
 
 
 ui <- dashboardPage(header, sidebar, body)

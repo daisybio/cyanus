@@ -1,5 +1,8 @@
 CyTOF Pipeline
-================
+
+**This README was made to check the data and make an example workflow.
+To run the shiny app use** `shiny::runApp()`.
+
 
 We are using renv with this project. You can load the library version
 from the lockfile using the `restore` function:
@@ -11,7 +14,7 @@ renv::restore()
 
 ### Mouse Data
 
-Download the mouse data set and save it at under extdata. *Sorry no idea
+Download the mouse data set and save it at in extdata. *Sorry no idea
 how to download from google drive using R.*
 
 Check out the data.
@@ -72,6 +75,7 @@ plotDR(sce2, dr = "TSNE", color_by = "a_b", facet_by = "dual_triple")
 
 ``` r
 plotDR(sce2, dr = "TSNE", color_by = chs, facet_by = "dual_triple")
+
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-3-4.png)<!-- -->

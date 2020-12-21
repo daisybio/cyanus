@@ -3,6 +3,8 @@ title: "CyTOF Pipeline"
 output: github_document
 ---
 
+**This README was made to check the data and make an example workflow. To run the shiny app use** `shiny::runApp()`.
+
 We are using renv with this project. You can load the library version from the lockfile using the `restore` function:
 
 ```{r, eval = FALSE}
@@ -13,7 +15,7 @@ renv::restore()
 
 ### Mouse Data
 
-Download the mouse data set and save it at under extdata. _Sorry no idea how to download from google drive using R._ 
+Download the mouse data set and save it at in extdata. _Sorry no idea how to download from google drive using R._ 
 
 Check out the data. 
 
@@ -59,5 +61,4 @@ plotDR(sce2, dr = "UMAP", color_by = chs, facet_by = "dual_triple")
 plotDR(sce2, dr = "TSNE", color_by = "a_b", facet_by = "dual_triple")
 plotDR(sce2, dr = "TSNE", color_by = chs, facet_by = "dual_triple")
 ```
-
 
