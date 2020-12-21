@@ -2,6 +2,7 @@ library(shiny)
 library(shinydashboard)
 library(shinyjs)
 library(shinycssloaders)
+library(shinyWidgets)
 
 reactiveVals <- reactiveValues()
 tab_ids <- c("welcome", "start", "preprocessing", "visualization", "clustering", "de")
@@ -42,5 +43,6 @@ reactiveVals$current_tab <- 1
 
 reactiveVals$useExampleData <- F
 reactiveVals$useUploadedData <- F
+
 
 

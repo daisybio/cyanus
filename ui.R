@@ -10,7 +10,7 @@ body <-
   dashboardBody(
     useShinyjs(),
     tabItems(welcomeBody,
-             startBody()),
+             startBody(), preprocessingBody()),
     actionButton("continue", "Start Analysis", icon("arrow-right"), class =
                    "btn-success btn-block")
   )

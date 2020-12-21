@@ -29,6 +29,7 @@ server <- function(input, output, session) {
     }
   })
   
+  
   #TODO: make tabs
   #TODO: make optional metadata input box
   #TODO: make panel information 
@@ -57,6 +58,9 @@ server <- function(input, output, session) {
       updateActionButton(session, "continue", label = "Preprocessing")
       shinyjs::show("continue")
     }
+    
+    
+    
     shinydashboard::box(value, title = "Selected Data", status = status)
   })
   
