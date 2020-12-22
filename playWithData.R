@@ -7,8 +7,23 @@ library(SingleCellExperiment)
 exp1 <- list.files("/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/MouseData/fcs/", pattern = "*.fcs", full.names = T)
 sce <- prepData(exp1, transform = T)
 
+colData(sce)
+
+# log counts
+counts <- assay(sce, "counts")
+libsizes <- colSums(counts)
+size.factors <- libsizes/mean(libsizes)
+logcounts(sce) <- log2(t(t(counts)/size.factors) + 1)
+assayNames(sce)
+log <- logcounts(sce)
+
+
+
 names(channels(sce))
 print(unique(sample_ids(sce)))
+
+## todo:
+levels(sample_ids(sce))
 
 plotCounts(sce, group_by="sample_id", color_by=NULL)
 plotNRS(sce,features="state", color_by="sample_id")

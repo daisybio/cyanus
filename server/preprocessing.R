@@ -52,15 +52,21 @@ output$nrsPlot <- renderPlot({
   CATALYST::plotNRS(reactiveVals$sce,features="state", color_by="sample_id")
 })
 
-output$exprsPlot <- renderPlot({
+output$exprsHeatmapPlot <- renderPlot({
   CATALYST::plotExprHeatmap(reactiveVals$sce)
 })
 
-observeEvent(input$markerSelection,{
-  if (length(input$markerSelection)!=0){
-    updateActionButton(session, "continue", label = "Visualization")
-    shinyjs::show("continue")
-  }
+output$exprsPlot <- renderPlot({
+  CATALYST:: plotExprs(reactiveVals$sce, color_by="sample_id")
+})
+
+observeEvent({input$markerSelection
+              input$sampleSelection
+              },{
+              if ((length(input$markerSelection)!=0) && (length(input$sampleSelection)!=0)){
+                updateActionButton(session, "continue", label = "Visualization")
+                shinyjs::show("continue")
+              }
 })
 
 

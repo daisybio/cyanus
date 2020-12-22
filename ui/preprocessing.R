@@ -63,6 +63,13 @@ preprocessingBody <- function() {
     height = "30em"
   )
   
+  exprsHeatmapBox <- shinydashboard::box(
+    shinycssloaders::withSpinner(plotOutput("exprsHeatmapPlot", width="100%", height="350px")),
+    title = "Heatmap of marker expression across all cells measured for each sample",
+    width = 12,
+    height = "30em"
+  )
+  
   preprocessingBody <- tabItem(
     tabName = "preprocessing",
     fluidRow(shinydashboard::box(
@@ -82,6 +89,7 @@ preprocessingBody <- function() {
     tabPanel(fluidRow(mdsBox), value = "plotMDS", title = "MDS"),
     tabPanel(fluidRow(nrsBox), value = "plotNRS", title = "NRS"),
     tabPanel(fluidRow(exprsBox), value = "plotExpr", title = "Expr"),
+    tabPanel(fluidRow(exprsHeatmapBox), value = "plotHeatmapExpr", title = "Heatmap"),
     id = "plots",
     title = "Simple Data Visualization",
     width = 12
