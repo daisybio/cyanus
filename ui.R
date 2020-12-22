@@ -2,6 +2,7 @@ library(shiny)
 library(shinydashboard)
 library(shinyjs)
 library(shinycssloaders)
+library(shinyBS)
 
 
 # read all ui files
@@ -17,9 +18,9 @@ body <-
     useShinyjs(),
     tabItems(welcomeBody,
              startBody(),
-             visbody()),
-    actionButton("continue", "Start Analysis", icon("arrow-right"), class =
-                   "btn-success btn-block")
+             visbody(),
+             clusteringBody),
+    bsButton("continue", "Start Analysis", icon("arrow-right"), style = "success", block = TRUE)
   )
 
 
