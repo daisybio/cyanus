@@ -22,30 +22,8 @@ observeEvent(input$exampleData, {
   # reactiveVals$panel <- file.path(input$exampleData, "panel.rds")
   # reactiveVals$md <- file.path(input$exampleData, "md.rds")
 }, ignoreInit = TRUE)
-# 
-# output$fcsInfo <- renderTable({
-#   if (is.null(input$fcsFiles))
-#     return(data.frame("Nothing" = ""))
-#   fileTable <- input$fcsFiles
-#   fileTable <- fileTable[, c("name", "size")]
-#   fileTable$size <- sprintf("%.2f MB", fileTable$size / 1000000)
-#   fileTable
-# }, caption = "FCS Data", caption.placement = "top")
-# 
-# output$metaInfo <- renderTable({
-#   if (is.null(input$metaFile))
-#     return(data.frame("Nothing" = ""))
-#   reactiveVals$md <- read.table(input$metaFile$datapath, header = T)
-#   reactiveVals$md
-# }, caption = "Metadata", caption.placement = "top")
-# 
-# output$panelInfo <- renderTable({
-#   if (is.null(input$panelFile))
-#     return(data.frame("Nothing" = ""))
-#   reactiveVals$panel <-
-#     read.table(input$panelFile$datapath, header = T)
-#   reactiveVals$panel
-# }, caption = "Panel Data", caption.placement = "top")
+
+#TODO add load data
 
 output$currentData <- renderInfoBox({
   status <- "warning"
