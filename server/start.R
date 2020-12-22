@@ -33,6 +33,9 @@ output$currentData <- renderInfoBox({
   if (status == "success"){
     updateActionButton(session, "continue", label = "Preprocessing")
     shinyjs::show("continue")
+    hide(id="plots", anim=TRUE)
+    hide(id="markers", anim=TRUE)
+    hide(id="samples", anim=TRUE)
   }
   shinydashboard::box(value, title = "Selected Data", status = status)
 })

@@ -5,8 +5,18 @@ library(ggplot2)
 library(SingleCellExperiment)
 
 exp1 <- list.files("/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/MouseData/fcs/", pattern = "*.fcs", full.names = T)
-sce <- prepData(exp1[[1]], transform = T)
-print(rowData(sce))
+sce <- prepData(exp1, transform = T)
+
+names(channels(sce))
+print(unique(sample_ids(sce)))
+
+plotCounts(sce, group_by="sample_id", color_by=NULL)
+plotNRS(sce,features="state", color_by="sample_id")
+
+plotExprs(sce, color_by="sample_id")
+
+plotExprHeatmap(sce)
+
 chs <- c("DNA1", "DNA2")
 plotScatter(sce, chs)
 
