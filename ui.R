@@ -5,6 +5,7 @@ library(shinycssloaders)
 
 
 # read all ui files
+
 sapply(list.files("ui", full.names = TRUE), source, environment())
 
 header <- dashboardHeader(title = "CyTOF Pipeline")
@@ -15,7 +16,8 @@ body <-
   dashboardBody(
     useShinyjs(),
     tabItems(welcomeBody,
-             startBody()),
+             startBody(),
+             visbody()),
     actionButton("continue", "Start Analysis", icon("arrow-right"), class =
                    "btn-success btn-block")
   )
