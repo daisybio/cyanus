@@ -16,7 +16,8 @@ body <-
   dashboardBody(
     useShinyjs(),
     tabItems(welcomeBody,
-             startBody()),
+             startBody(),
+             clusteringBody),
     bsButton("continue", "Start Analysis", icon("arrow-right"), style = "success", block = TRUE)
   )
 

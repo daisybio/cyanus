@@ -434,9 +434,9 @@
     },
     "beachmat": {
       "Package": "beachmat",
-      "Version": "2.6.3",
+      "Version": "2.6.4",
       "Source": "Bioconductor",
-      "Hash": "61692bc08937f4a1d9f06b8430a92e67"
+      "Hash": "8af9f5ade6bca275eb2c7cf22267032f"
     },
     "beeswarm": {
       "Package": "beeswarm",
@@ -1177,6 +1177,13 @@
       "Repository": "CRAN",
       "Hash": "90f84270f5af583cefeb978d12d121a7"
     },
+    "permute": {
+      "Package": "permute",
+      "Version": "0.9-5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e367efa1f0d52cb753bdb9163b63f528"
+    },
     "pillar": {
       "Package": "pillar",
       "Version": "1.4.7",
@@ -1446,6 +1453,13 @@
       "Repository": "CRAN",
       "Hash": "ee4ed72d7a5047d9e73cf922ad66e9c9"
     },
+    "shinyBS": {
+      "Package": "shinyBS",
+      "Version": "0.61",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f895dafd39733c4a70d425f605a832e7"
+    },
     "shinycssloaders": {
       "Package": "shinycssloaders",
       "Version": "1.0.0",
@@ -1591,6 +1605,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "5cf1957f93076c19fdc81d01409d240b"
+    },
+    "vegan": {
+      "Package": "vegan",
+      "Version": "2.5-7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "01771d8de354fa30c87c68e599e2429b"
     },
     "vipor": {
       "Package": "vipor",
