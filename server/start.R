@@ -1,41 +1,59 @@
-fileOverview <- function(fileTable) {
+reactiveVals$fcs <- data.frame("Nothing" = "")
+reactiveVals$panel <- data.frame("Nothing" = "")
+reactiveVals$md <- data.frame("Nothing" = "")
+
+observeEvent(input$fcsFiles, {
+  fileTable <- input$fcsFiles
   fileTable <- fileTable[, c("name", "size")]
-  fileTable$size <- sprintf("%.2f MB", fileTable$size/1000000)
-  return(fileTable)
-}
+  fileTable$size <- sprintf("%.2f MB", fileTable$size / 1000000)
+  reactiveVals$fcs <- fileTable
+})
 
+observeEvent(input$metaFile, {
+  reactiveVals$md <- read.table(input$metaFile$datapath, header = T)
+})
 
-output$fcsInfo <- renderTable(fileOverview())
+observeEvent(input$panelFile, {
+  reactiveVals$panel <- read.table(input$panelFile$datapath, header = T)
+})
 
+observeEvent(input$exampleData, {
+  reactiveVals$fcs <- readRDS(file.path(input$exampleData, "fcs.rds"))
+  # reactiveVals$panel <- file.path(input$exampleData, "panel.rds")
+  # reactiveVals$md <- file.path(input$exampleData, "md.rds")
+}, ignoreInit = TRUE)
+
+#TODO add load data
 
 output$currentData <- renderInfoBox({
-  status <- "success"
-  # if (!reactiveVals$useExampleData & !reactiveVals$useUploadedData) {
-  #   value <- "You have currently no data selected."
-  #   status <- "warning"
-  # }
-  # else 
-  if (input$selectedData == "dataUpload") {
-    library(CATALYST)
-    # tmp <- CATALYST::prepData(, transform = FALSE)
-    fileTable <- input$fcsFiles
-    fileTable <- fileTable[, c("name", "size")]
-    fileTable
-    fileTable$size <- sprintf("%.2f MB", fileTable$size/1000000)
-    value <- list(div("The following file(s) have been uploaded:"),
-                  renderTable(fileTable)
-    )
+  status <- "warning"
+  value <- list(renderTable(reactiveVals$fcs, caption = "FCS Data", caption.placement = "top"),
+                  renderTable(reactiveVals$md, caption = "Metadata", caption.placement = "top"),
+                  renderTable(reactiveVals$panel, caption = "Panel Data", caption.placement = "top"))
+  
+  if (input$selectedData == "dataUpload" & !is.null(input$fcsFiles)) {
+      status <- "success"
   }
-  else if (reactiveVals$useExampleData) {
-    value <- sprintf("info about %s", input$exampleData)
-  } else
-    stop("This is unexpected. Is Data selected or not?")
-  if (status == "success"){
+  else if (input$selectedData == "dataExample" & input$exampleData != "") {
+      status <- "success"
+      value <-
+        c(div(sprintf(
+          "Found %s: %s",
+          input$exampleData,
+          file.exists(input$exampleData)
+        )),
+        div(sprintf("info about %s", input$exampleData)),
+        value)
+      # TODO: remove this as soon as preprocessing is done
+      library(CATALYST)
+      reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
+  } 
+  if (status == "success") {
     updateActionButton(session, "continue", label = "Preprocessing")
     shinyjs::show("continue")
-    hide(id="plots", anim=TRUE)
-    hide(id="markers", anim=TRUE)
-    hide(id="samples", anim=TRUE)
+  } else {
+    shinyjs::hide("continue")
   }
+  
   shinydashboard::box(value, title = "Selected Data", status = status)
 })

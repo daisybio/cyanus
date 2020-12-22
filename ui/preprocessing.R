@@ -77,7 +77,9 @@ preprocessingBody <- function() {
       title = h2("Data preprocessing"),
       width = 12
     )),
-    
+    #hide(id="plots", anim=TRUE)
+   # hide(id="markers", anim=TRUE)
+    #hide(id="samples", anim=TRUE)
     
   fluidRow(transformationBox, cofactorBox),
     

@@ -8,30 +8,4 @@ server <- function(input, output, session) {
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())
   
-
-  
-  ### menu ----
-  
-  
-  ### start ----
-  # observeEvent(input$exampleData, {
-  #   if (input$exampleData != ""){
-  #     reactiveVals$useExampleData <- T
-  #     reactiveVals$useUploadedData <- F
-  #   }
-  # })
-  # 
-  # observeEvent(input$fcsFiles, {
-  #   if (!is.null(input$fcsFiles)){
-  #     reactiveVals$useExampleData <- F
-  #     reactiveVals$useUploadedData <- T
-  #   }
-  # })
-  
-  
-  #TODO: make tabs
-  #TODO: make optional metadata input box
-  #TODO: make panel information 
-  
-  
 }
