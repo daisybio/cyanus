@@ -1,7 +1,7 @@
 startBody <- function() {
   box_height <- "12em"
-  exampleDataVector <- c("MouseData" = "data/mousedata.rds",
-                         "Platelets" = "data/platelets.rds")
+  exampleDataVector <- c("MouseData" = "data/mousedata",
+                         "Platelets" = "data/platelets")
   
   dataUploadBox <- shinydashboard::box(
     fileInput(
