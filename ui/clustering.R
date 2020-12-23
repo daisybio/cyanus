@@ -6,36 +6,30 @@ clusteringMethods <-
   )
 
 
-clusteringBody <- tabItem(
-  tabName = "clustering",
-  fluidRow(shinydashboard::box(
-    div("Here you can cluster your data."),
-    title = h2("Clustering"),
-    width = 12
-  )),
-  fluidRow(
-    shinydashboard::box(
-      selectizeInput("clusteringMethod",
-                     "Clustering Methods",
-                     clusteringMethods),
-      div(
-        bsButton(
-          "startClustering",
-          "Start Clustering",
-          icon = icon("border-none"),
-          style = "success"
-        ),
-        style = "float: right;"
-      ),
-      title = "Choose Clustering Method",
-      width = 12
-    )
-  ),
-  fluidRow(uiOutput("parameters"),
-           width = 12),
-  fluidRow(
-    shinydashboard::box(uiOutput("clusterPlot"),
-                        title = "Clustering Visualization",
-                        width = 12),
-  )
-)
+clusteringBody <- tabItem(tabName = "clustering",
+                          fluidRow(shinydashboard::box(
+                            div("Here you can cluster your data."),
+                            title = h2("Clustering"),
+                            width = 12
+                          )),
+                          fluidRow(div(
+                            id = "clusteringInputs",
+                            shinydashboard::box(
+                              selectizeInput("clusteringMethod",
+                                             "Clustering Methods",
+                                             clusteringMethods),
+                              div(
+                                bsButton(
+                                  "startClustering",
+                                  "Start Clustering",
+                                  icon = icon("border-none"),
+                                  style = "success"
+                                ),
+                                style = "float: right;"
+                              ),
+                              uiOutput("parameters"),
+                              title = "Choose Clustering Method",
+                              width = 12
+                            )
+                          )),
+                          fluidRow(uiOutput("clusteringOutput")))
