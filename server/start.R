@@ -13,18 +13,18 @@ observeEvent(input$fcsFiles, {
 })
 
 observeEvent(input$metaFile, {
-  reactiveVals$md <- read.table(input$metaFile$datapath, header = T)
+  reactiveVals$md <- read.table(input$metaFile$datapath, header = T, sep = ",")
 })
 
 observeEvent(input$panelFile, {
   reactiveVals$panel <-
-    read.table(input$panelFile$datapath, header = T)
+    read.table(input$panelFile$datapath, header = T, sep = ",")
 })
 
 observeEvent(input$exampleData, {
   reactiveVals$fcs <- readRDS(file.path(input$exampleData, "fcs.rds"))
-  # reactiveVals$panel <- file.path(input$exampleData, "panel.rds")
-  # reactiveVals$md <- file.path(input$exampleData, "md.rds")
+  reactiveVals$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
+  reactiveVals$md <- readRDS(file.path(input$exampleData, "md.rds"))
 }, ignoreInit = TRUE)
 
 observeEvent(input$loadData, {
@@ -32,13 +32,11 @@ observeEvent(input$loadData, {
   library(CATALYST)
   #TODO: check if data was uploaded or example selected
   if (input$chooseDataTab == "dataUpload") {
-    CATALYST::prepData(
-      input$fcsFiles$datapath[1],
+    reactiveVals$sce <- CATALYST::prepData(
+      dirname(input$fcsFiles$datapath)[1],
       reactiveVals$panel,
       reactiveVals$md,
-      transform = FALSE,
-      panel_cols = names(reactiveVals$panel),
-      md_cols = names(reactiveVals$md)
+      transform = FALSE
     )
   } else if (input$chooseDataTab == "dataExample") {
     reactiveVals$sce <-
@@ -46,6 +44,7 @@ observeEvent(input$loadData, {
   } else
     stop("Which tab is selected?")
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
+  updateButton(session, "continue", label = " Preprocessing")
   shinyjs::show("continue")
   runjs("document.getElementById('continue').scrollIntoView();")
 })
@@ -60,13 +59,13 @@ output$currentData <- renderInfoBox({
         caption.placement = "top"
       ),
       renderTable(
-        checkNullTable(reactiveVals$md),
-        caption = "Metadata",
+        checkNullTable(reactiveVals$panel),
+        caption = "Panel Data",
         caption.placement = "top"
       ),
       renderTable(
-        checkNullTable(reactiveVals$panel),
-        caption = "Panel Data",
+        checkNullTable(reactiveVals$md),
+        caption = "Metadata",
         caption.placement = "top"
       )
     )

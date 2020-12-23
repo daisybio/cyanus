@@ -1,6 +1,7 @@
 startBody <- function() {
   box_height <- "12em"
-  exampleDataVector <- c("MouseData" = "data/mousedata",
+  exampleDataVector <- c("PBMC" = "data/pbmc",
+                         "MouseData" = "data/mousedata",
                          "Platelets" = "data/platelets")
   
   dataUploadBox <- shinydashboard::box(
@@ -30,7 +31,7 @@ startBody <- function() {
     bsPopover(
       id = "metaQ",
       title = "A CSV file with headers describing the experiment",
-      content = "e.g. 4 columns:<br>file_name,sample_id,patient_id,condition<br>file_name: the FCS file name<br>sample_id: a unique sample identifier<br>patient_id: the patient ID<br>condition: brief sample description (e.g. reference/stimulated, healthy/diseased)"
+      content = "e.g. 4 columns:<br>file_name,sample_id,patient_id,condition<br>file_name: the FCS file name<br>sample_id: a unique sample identifier<br>patient_id: the patient ID<br>condition: brief sample description (e.g. reference/stimulated, healthy/diseased)<br><b>Example: Check out the PBMC Example Data</b>"
     )
   
   panelUploadBox <- shinydashboard::box(
@@ -46,7 +47,7 @@ startBody <- function() {
     bsPopover(
       id = "panelQ",
       title = "A CSV file with headers describing the panel",
-      content = "for each channel, its column name in the input data, targeted protein marker, and (optionally) class (type, state, or none) i.e.:<br>channel,col_name,marker,class"
+      content = "for each channel:<br>fcs_colname: its column name in the input data<br>antigen: targeted protein marker<br>marker_class: (optionally) class (type, state, or none)<br>i.e.:<br>fcs_colname,antigen[,marker_class]<br><b>Example: Check out the PBMC Example Data</b>"
     )
   
   dataExampleBox <- shinydashboard::box(
@@ -76,7 +77,7 @@ startBody <- function() {
     fluidRow(
       tabBox(
         tabPanel(
-          fluidRow(dataUploadBox, metaUploadBox, metaPopover, panelUploadBox, panelPopover),
+          fluidRow(dataUploadBox, panelUploadBox, panelPopover, metaUploadBox, metaPopover),
           value = "dataUpload",
           title = "Upload Data"
         ),
