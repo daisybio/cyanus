@@ -66,5 +66,15 @@ plotDR(sce2, dr = "UMAP", color_by = "a_b", facet_by = "dual_triple")
 plotDR(sce2, dr = "UMAP", color_by = chs, facet_by = "dual_triple")
 plotDR(sce2, dr = "TSNE", color_by = "a_b", facet_by = "dual_triple")
 plotDR(sce2, dr = "TSNE", color_by = chs, facet_by = "dual_triple")
+
+data(PBMC_fs, PBMC_panel, PBMC_md)
+saveRDS(PBMC_panel, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/pbmc/panel.rds")
+saveRDS(PBMC_md, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/pbmc/md.rds")
+saveRDS(PBMC_fs, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/pbmc/fcs.rds")
+sce <- prepData(PBMC_fs, PBMC_panel, PBMC_md)
+saveRDS(sce, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/pbmc/sce.rds")
+
+sce <- runDR(sce, dr = "UMAP", cells = 100)
+plotDR(sce, color_by = c("pBtk", "pPlcg2", "pErk"), facet_by = "condition")
 ```
 

@@ -1,3 +1,4 @@
+#reactiveVals$sce <- readRDS("data/plateletsSCE1-4.Rds")
 observeEvent(input$markersState, {
   shinyjs::hide("visBox")
   shinyjs::hide("visPlotBox")
@@ -38,7 +39,11 @@ observeEvent(input$selectMarkersVis, {
 })
 
 observeEvent(input$selectClassesVis, {
-  reactiveVals$classes <- input$classes
+  if(input$classes != "All features"){
+    reactiveVals$classes <- input$classes
+  }else{
+    reactiveVals$classes <- NULL
+  }
   reactiveVals$featuresDR <- reactiveVals$classes
   reactiveVals$markers <- c()
   shinyjs::show("visBox")
@@ -49,6 +54,14 @@ observeEvent(input$selectedVisMethod, {
 })
 
 observeEvent(reactiveVals$featuresDR, {
+  shinyjs::hide("visPlotBox")
+})
+
+observeEvent(input$assayVisSelected, {
+  shinyjs::hide("visPlotBox")
+})
+
+observeEvent(input$scaleVis, {
   shinyjs::hide("visPlotBox")
 })
 
@@ -89,14 +102,16 @@ plotData <- eventReactive(input$startDimRed, {
   color <- isolate(input$plt_color_by)
   facet <- isolate(input$plt_facet_by)
   method <- isolate(input$selectedVisMethod)
+  assay <- isolate(input$assayVisSelected)
+  scale <- isolate(input$scaleVis)
   sceObj <- isolate(reactiveVals$sce)
   
   if(method == "UMAP"){
-    g <- makeDR(sceObj, "UMAP", feat, nr_cells , color, facet)
+    g <- makeDR(sceObj, "UMAP", feat, nr_cells , color, facet, assay, scale)
   }else if(method == "T-SNE"){
-    g <- makeDR(sceObj, "TSNE", feat, nr_cells , color, facet)
+    g <- makeDR(sceObj, "TSNE", feat, nr_cells , color, facet, assay, scale)
   }else if(method == "PCA"){
-    g <- makeDR(sceObj, "PCA", feat, nr_cells , color, facet)
+    g <- makeDR(sceObj, "PCA", feat, nr_cells , color, facet, assay, scale)
   }else{
     g <- NULL
   }
@@ -122,12 +137,14 @@ output$parametersVis <- renderUI({
 })
 
 output$markerClassVis <- renderUI({
+  classes <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+  choices <- c(as.vector(classes), "All features")
   fluidRow(
     shinydashboard::box(
       selectizeInput(
         inputId = "classes",
         label = "Available marker classes",
-        unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class),
+        choices = choices,
         options = list(
           placeholder = "Select your marker class",
           onInitialize = I("function() { this.setValue(''); }")
@@ -198,6 +215,19 @@ output$expressionVis <- renderUI({
       ))
 })
 
+output$assayVis <- renderUI({
+  choices <- assayNames(reactiveVals$sce)
+  if(all(tmp == c("counts", "exprs"))){
+    choices <- c("Raw" = "counts", "Normalized" = "exprs")
+  }
+  return(selectizeInput(
+    "assayVisSelected",
+    "Do you want to use raw counts or the normalization?",
+    choices = choices,
+    multiple = FALSE
+  ))
+})
+
 output$color_by <- renderUI({
   shinydashboard::box(
   radioButtons(
@@ -212,13 +242,7 @@ output$color_by <- renderUI({
 
 output$selectColorBy <- renderUI({
   if(input$radioButtonsColor == "expression"){
-    if(!is.null(reactiveVals$markers)){
-      choices = c(rownames(reactiveVals$sce)[rownames(reactiveVals$sce) %in% reactiveVals$markers])
-    }else if(!is.null(reactiveVals$classes)){
-      choices = c(rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == reactiveVals$classes])
-    }else{
-      choices = c("Something went wrong")
-    }
+    choices = c(rownames(reactiveVals$sce))
     return(pickerInput(
       inputId = "plt_color_by",
       label = "Color by: ",
@@ -230,13 +254,7 @@ output$selectColorBy <- renderUI({
       multiple = TRUE
     ))
     }else{
-      if(!is.null(reactiveVals$markers)){
-        choices = names(colData(reactiveVals$sce))
-      }else if(!is.null(reactiveVals$classes)){
-        choices = names(colData(reactiveVals$sce))
-      }else{
-        choices = c("Something went wrong")
-      }
+      choices = names(colData(reactiveVals$sce))
       return(selectizeInput(
         inputId = "plt_color_by",
         label = "Color by: ",
@@ -251,13 +269,7 @@ output$selectColorBy <- renderUI({
 })
 
 output$facet_by <- renderUI({
-  if(!is.null(reactiveVals$markers)){
-    choices = names(colData(reactiveVals$sce))
-  }else if(!is.null(reactiveVals$classes)){
-    choices = names(colData(reactiveVals$sce))
-  }else{
-    choices = c("Something went wrong")
-  }
+  choices = names(colData(reactiveVals$sce))
   shinydashboard::box(
   selectizeInput(
     inputId = "plt_facet_by",
@@ -272,14 +284,22 @@ output$facet_by <- renderUI({
   )
 })
 
-makeDR <- function(sce, dr_chosen, feature_chosen, cell_nr, color_chosen, facet_chosen) {
+makeDR <- function(sce, dr_chosen, feature_chosen, cell_nr, color_chosen, facet_chosen, assay_chosen, scale) {
   if(color_chosen == ""){
     color_chosen <- NULL
   }
   if(facet_chosen == ""){
     facet_chosen <- NULL
   } 
-  sce <- runDR(sce, dr = dr_chosen, features = feature_chosen, cells = cell_nr)
-  g <- plotDR(sce, dr = dr_chosen, color_by = color_chosen, facet_by = facet_chosen)
+  if(assay_chosen == ""){
+    assay_chosen <- NULL
+  }
+  if(scale == "yes"){
+    scale <- T
+  }else{
+    scale <- F
+  }
+  sce <- runDR(sce, dr = dr_chosen, features = feature_chosen, cells = cell_nr, assay = assay_chosen)
+  g <- plotDR(sce, dr = dr_chosen, color_by = color_chosen, facet_by = facet_chosen, assay = assay_chosen, scale = scale)
   return(g)
 }

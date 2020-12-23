@@ -12,6 +12,13 @@ visbody <- function(){
         onInitialize = I("function() { this.setValue(''); }")
       )
     ),
+    uiOutput("assayVis"),
+    radioButtons(
+      inputId = "scaleVis",
+      label = "Scale ",
+      choices = c("yes", "no"), 
+      inline = TRUE
+    ),
     numericInput(
       "nrCells",
       label = "From how many cells do you want to sample?",
