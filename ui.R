@@ -3,6 +3,7 @@ library(shinydashboard)
 library(shinyjs)
 library(shinycssloaders)
 library(shinyBS)
+library(shinyWidgets)
 
 
 # read all ui files

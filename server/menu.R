@@ -40,7 +40,6 @@ observeEvent(input$continue, {
 output$sidebar <- renderUI({
   curr_menu <- sidebarMenu(id = "tabs",
                            tabs[1:reactiveVals$current_tab])
-  curr_menu <- sidebarMenu(id = "tabs", tabs[1:length(tabs)])
   updateTabItems(session, "tabs", tab_ids[reactiveVals$current_tab])
   return(curr_menu)
 })

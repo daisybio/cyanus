@@ -32,14 +32,16 @@ observeEvent(input$classes, {
 
 observeEvent(input$selectMarkersVis, {
   reactiveVals$markers <- c(input$markersState, input$markersType, input$markersNone)
-  reactiveVals$sceTMP <- reactiveVals$sce[rownames(reactiveVals$sce) %in% reactiveVals$markers]
+  #reactiveVals$sceTMP <- reactiveVals$sce[rownames(reactiveVals$sce) %in% reactiveVals$markers]
   reactiveVals$featuresDR <- reactiveVals$markers
+  input$classes <- ""
   shinyjs::show("visBox")
 })
 
 observeEvent(input$selectClassesVis, {
-  reactiveVals$sceTMP <- reactiveVals$sce[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == input$classes]
+  #reactiveVals$sceTMP <- reactiveVals$sce[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == input$classes]
   reactiveVals$featuresDR <- input$classes
+  reactiveVals$markers <- ""
   shinyjs::show("visBox")
 })
 
@@ -76,7 +78,9 @@ observeEvent(input$startDimRed, {
     color <- isolate(input$plt_color_by)
     facet <- isolate(input$plt_facet_by)
     method <- isolate(input$selectedVisMethod)
-    sceObj <- isolate(reactiveVals$sceTMP)
+    #sceObj <- isolate(reactiveVals$sceTMP)
+    sceObj <- isolate(reactiveVals$sce)
+    
     if(method == "UMAP"){
       makeDR(sceObj, "UMAP", feat, nr_cells , color, facet)
     }else if(method == "T-SNE"){
@@ -133,12 +137,11 @@ output$markerClassVis <- renderUI({
 })
 
 output$expressionVis <- renderUI({
-  library(shinyWidgets)
       fluidRow(shinydashboard::box(
         pickerInput(
           inputId = "markersState",
           label = "Markers from class state",
-          choices = rownames(reactiveVals$sce[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "state"]),
+          choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "state"],
           options = list(
             onInitialize = I("function() { this.setValue(''); }"), 
             `actions-box` = TRUE
@@ -148,7 +151,7 @@ output$expressionVis <- renderUI({
         pickerInput(
           inputId = "markersType",
           label = "Markers from class type",
-          choices = rownames(reactiveVals$sce[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "type"]),
+          choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "type"],
           options = list(
             onInitialize = I("function() { this.setValue(''); }"), 
             `actions-box` = TRUE
@@ -158,7 +161,7 @@ output$expressionVis <- renderUI({
         pickerInput(
           inputId = "markersNone",
           label = "Markers from class none",
-          choices = rownames(reactiveVals$sce[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "none"]),
+          choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "none"],
           options = list(
             onInitialize = I("function() { this.setValue(''); }"), 
             `actions-box` = TRUE
@@ -196,10 +199,18 @@ output$color_by <- renderUI({
 
 output$selectColorBy <- renderUI({
   if(input$radioButtonsColor == "expression"){
+    if(reactiveVals$markers != ""){
+      choices = c(rownames(reactiveVals$sce)[rownames(reactiveVals$sce) %in% reactiveVals$markers])
+    }else if(input$classes != ""){
+      choices = c(rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == input$classes])
+    }else{
+      choices = c("Something went wrong")
+    }
     return(pickerInput(
       inputId = "plt_color_by",
       label = "Color by: ",
-      choices = c(rownames(reactiveVals$sceTMP)),
+      #choices = c(rownames(reactiveVals$sceTMP)),
+      choices = choices,
       options = list(
         onInitialize = I("function() { this.setValue(''); }"), 
         `actions-box` = TRUE
@@ -207,10 +218,18 @@ output$selectColorBy <- renderUI({
       multiple = TRUE
     ))
     }else{
+      if(reactiveVals$markers != ""){
+        choices = c(colData(reactiveVals$sce)[rownames(reactiveVals$sce) %in% reactiveVals$markers])
+      }else if(input$classes != ""){
+        choices = c(colData(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == input$classes])
+      }else{
+        choices = c("Something went wrong")
+      }
       return(selectizeInput(
         inputId = "plt_color_by",
         label = "Color by: ",
-        names(colData(reactiveVals$sceTMP)),
+        #names(colData(reactiveVals$sceTMP)),
+        choices = choices,
         options = list(
           placeholder = "Select your coloring or nothing",
           onInitialize = I("function() { this.setValue(''); }")
@@ -221,11 +240,19 @@ output$selectColorBy <- renderUI({
 })
 
 output$facet_by <- renderUI({
+  if(reactiveVals$markers != ""){
+    choices = c(colData(reactiveVals$sce)[rownames(reactiveVals$sce) %in% reactiveVals$markers])
+  }else if(input$classes != ""){
+    choices = c(colData(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == input$classes])
+  }else{
+    choices = c("Something went wrong")
+  }
   shinydashboard::box(
   selectizeInput(
     inputId = "plt_facet_by",
     label = "Facet by: ",
-    names(colData(reactiveVals$sceTMP)),
+    #names(colData(reactiveVals$sceTMP)),
+    choices = choices,
     options = list(
       placeholder = "Select your faceting or nothing",
       onInitialize = I("function() { this.setValue(''); }")
