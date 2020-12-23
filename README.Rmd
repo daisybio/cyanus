@@ -52,6 +52,7 @@ sce2 <- prepData(exp2, md = metadata, md_cols = list(file = "file_name",
 saveRDS(sce2, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/plateletsSCE1-4.Rds")
 library(CATALYST)
 tmp <- readRDS("data/plateletsSCE1-4.Rds")
+
 ```
 
 ```{r}

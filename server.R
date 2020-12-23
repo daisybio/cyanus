@@ -8,18 +8,8 @@ server <- function(input, output, session) {
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())
   
-  observeEvent(input$exampleDataVis, {
-    if(input$exampleDataVis != ""){
-      reactiveVals$useExampleDataVis <- T
-    }
-  })
-  observeEvent(input$selectedVisMethod, {
-    if(input$selectedVisMethod != ""){
-      reactiveVals$visMethod <- T
-    }
-  })
-
-  
+  shinyjs::hide("visBox")
+  shinyjs::hide("visPlotBox")
   ### menu ----
   
   
