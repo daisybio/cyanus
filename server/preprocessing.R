@@ -7,6 +7,7 @@ transformData <-
             cf = 5,
             ain = "counts",
             aout = "exprs") {
+    
     if (transform != "no") {
       y <- assay(sce, ain)
       if (transform == "arcsinh") {
@@ -28,6 +29,9 @@ transformData <-
         y <- log(y + 1)
       }
       assay(sce, aout, FALSE) <- y
+    } else {
+      y <- assay(sce, ain)
+      assay(sce,aout,FALSE) <- y
     }
     sce
   }
