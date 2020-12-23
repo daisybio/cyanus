@@ -85,7 +85,7 @@ startBody <- function() {
           value = "dataExample",
           title = "Example Data"
         ),
-        id = "selectedData",
+        id = "chooseDataTab",
         title = "Choose Data",
         width = 12
       )
