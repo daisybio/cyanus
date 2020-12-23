@@ -41,5 +41,6 @@ output$sidebar <- renderUI({
   curr_menu <- sidebarMenu(id = "tabs",
                            tabs[1:reactiveVals$current_tab])
   updateTabItems(session, "tabs", tab_ids[reactiveVals$current_tab])
+  shinyjs::runjs("window.scrollTo(0, 0)")
   return(curr_menu)
 })

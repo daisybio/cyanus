@@ -1,11 +1,34 @@
 observeEvent(input$startClustering, {
+  updateButton(session,
+               "startClustering",
+               label = " Clustering...",
+               disabled = TRUE)
+  shinyjs::disable("clusteringInputs")
+  
+  # TODO: remove this
+  reactiveVals$sce <-
+    prepData(
+      "extdata/PBMC/PBMC8_fcs_files/",
+      readRDS("data/pbmc/panel.rds"),
+      readRDS("data/pbmc/md.rds")
+    )
+  
   if (input$clusteringMethod == "flowSOM") {
+    if (input$useFeatures == "Choose All")
+      features <- NULL
+    else
+      features <- isolate(input$featuresIn)
     reactiveVals$sce <- cluster(reactiveVals$sce,
-                                input$features,
+                                features,
                                 input$xdim,
                                 input$ydim,
                                 input$k)
   }
+  shinyjs::enable("clusteringInputs")
+  updateButton(session,
+               "startClustering",
+               label = " Start Clustering",
+               disabled = FALSE)
 })
 
 output$k <- renderUI({
@@ -71,18 +94,18 @@ output$useFeatures <- renderUI({
       label = "Parameters to choose from",
       choices = c("Marker by Class",
                   "Marker by Name",
-                  "Choose All"),
-      selected = "Marker by Class"
+                  "Choose All")
     ))
   } else
     stop("which clustermethod was chosen?")
 })
 
-output$features <- renderUI({
+output$featuresOut <- renderUI({
   if (input$clusteringMethod %in% c("clusterX", "rphenoGraph"))
     return(NULL)
   else if (input$clusteringMethod == "flowSOM") {
-    if (is.null(input$useFeatures) || input$useFeatures == "Choose All") {
+    if (is.null(input$useFeatures) ||
+        input$useFeatures == "Choose All") {
       return(NULL)
     } else if (input$useFeatures == "Marker by Class") {
       choices = unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
@@ -91,7 +114,7 @@ output$features <- renderUI({
     }
     return(
       selectInput(
-        inputId = "features",
+        inputId = "featuresIn",
         label = "features to use for clustering",
         choices = choices,
         selected = choices[1],
@@ -118,8 +141,14 @@ output$dimReduction <- renderUI({
     stop("which clustermethod was chosen?")
 })
 
-output$clusterPlot <- renderUI({
+output$clusteringOutput <- renderUI({
+  if (!"cluster_id" %in% names(colData(reactiveVals$sce)))
+    return(NULL)
   
+  browser()
+  shinydashboard::box(renderPlot(delta_area(reactiveVals$sce)),
+                      title = "Clustering Visualization",
+                      width = 12)
 })
 
 output$parameters <- renderUI({
@@ -130,7 +159,7 @@ output$parameters <- renderUI({
              uiOutput("ydim"), width = 6),
       column(
         uiOutput("useFeatures"),
-        uiOutput("features"),
+        uiOutput("featuresOut"),
         uiOutput("dimReduction"),
         width = 6
       ),
