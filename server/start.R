@@ -5,13 +5,6 @@ checkNullTable <- function(toCheck) {
     return(toCheck)
 }
 
-observeEvent(reactiveVals$sce, {
-  if (is.null(reactiveVals$sce))
-    shinyjs::hide("continue")
-  else
-    shinyjs::show("continue")
-}, ignoreNULL = FALSE, ignoreInit = TRUE)
-
 observeEvent(input$fcsFiles, {
   fileTable <- input$fcsFiles
   fileTable <- fileTable[, c("name", "size")]
@@ -53,6 +46,8 @@ observeEvent(input$loadData, {
   } else
     stop("Which tab is selected?")
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
+  shinyjs::show("continue")
+  runjs("document.getElementById('continue').scrollIntoView();")
 })
 
 output$currentData <- renderInfoBox({
