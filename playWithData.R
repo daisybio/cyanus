@@ -4,10 +4,53 @@ library(flowCore)
 library(ggplot2)
 library(SingleCellExperiment)
 
-exp1 <- list.files("/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/MouseData/fcs/", pattern = "*.fcs", full.names = T)
-sce <- prepData(exp1, transform = T)
 
-colData(sce)
+transformData <- function (sce, transform, cf=5, ain = "counts", aout = "exprs"){
+  y <- assay(sce, ain)
+  if (transform == "arcsinh"){
+    chs <- channels(sce)
+    stopifnot(is.numeric(cf), cf > 0)
+    if (length(cf) == 1) {
+      int_metadata(sce)$cofactor <- cf
+      cf <- rep(cf, nrow(sce))
+    }
+    else {
+      stopifnot(!is.null(names(cf)), chs %in% names(cf))
+      cf <- cf[match(chs, names(cf))]
+      int_metadata(sce)$cofactor <- cf
+    }
+    fun <- asinh
+    op <- "/"
+    y <- fun(sweep(y, 1, cf, op))
+  } else if (transform == "log"){
+    y <- log(y+1)
+  }
+  
+  assay(sce, aout, FALSE) <- y
+  return(sce)
+}
+
+
+
+exp1 <- list.files("/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/MouseData/fcs/", pattern = "*.fcs", full.names = T)
+sceT <- prepData(exp1, transform = T)
+sce <- prepData(exp1,transform=F)
+
+names(colData(sce))
+
+assayNames(sce)
+
+levels(rowData(sce)$marker_class)
+
+assays(sceT)$counts[1]
+assays(sceT)$exprs[1]
+
+assays(transformData(sce,"log"))$exprs[1]
+assays(sce)$counts[1]
+
+names(colData(sce))
+o <- names(colData(sce))
+test <- c(o,no=NULL)
 
 # log counts
 counts <- assay(sce, "counts")
