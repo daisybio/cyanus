@@ -1,6 +1,9 @@
-reactiveVals$fcs <- data.frame("Nothing" = "")
-reactiveVals$panel <- data.frame("Nothing" = "")
-reactiveVals$md <- data.frame("Nothing" = "")
+checkNullTable <- function(toCheck) {
+  if (is.null(toCheck))
+    return(data.frame("Nothing" = ""))
+  else
+    return(toCheck)
+}
 
 observeEvent(input$fcsFiles, {
   fileTable <- input$fcsFiles
@@ -14,7 +17,8 @@ observeEvent(input$metaFile, {
 })
 
 observeEvent(input$panelFile, {
-  reactiveVals$panel <- read.table(input$panelFile$datapath, header = T)
+  reactiveVals$panel <-
+    read.table(input$panelFile$datapath, header = T)
 })
 
 observeEvent(input$exampleData, {
@@ -23,36 +27,81 @@ observeEvent(input$exampleData, {
   # reactiveVals$md <- file.path(input$exampleData, "md.rds")
 }, ignoreInit = TRUE)
 
-#TODO add load data
+observeEvent(input$loadData, {
+  updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
+  library(CATALYST)
+  #TODO: check if data was uploaded or example selected
+  if (input$chooseDataTab == "dataUpload") {
+    CATALYST::prepData(
+      input$fcsFiles$datapath[1],
+      reactiveVals$panel,
+      reactiveVals$md,
+      transform = FALSE,
+      panel_cols = names(reactiveVals$panel),
+      md_cols = names(reactiveVals$md)
+    )
+  } else if (input$chooseDataTab == "dataExample") {
+    reactiveVals$sce <-
+      readRDS(file.path(input$exampleData, "sce.rds"))
+  } else
+    stop("Which tab is selected?")
+  updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
+  shinyjs::show("continue")
+  runjs("document.getElementById('continue').scrollIntoView();")
+})
 
 output$currentData <- renderInfoBox({
   status <- "warning"
-  value <- list(renderTable(reactiveVals$fcs, caption = "FCS Data", caption.placement = "top"),
-                  renderTable(reactiveVals$md, caption = "Metadata", caption.placement = "top"),
-                  renderTable(reactiveVals$panel, caption = "Panel Data", caption.placement = "top"))
+  value <-
+    list(
+      renderTable(
+        checkNullTable(reactiveVals$fcs),
+        caption = "FCS Data",
+        caption.placement = "top"
+      ),
+      renderTable(
+        checkNullTable(reactiveVals$md),
+        caption = "Metadata",
+        caption.placement = "top"
+      ),
+      renderTable(
+        checkNullTable(reactiveVals$panel),
+        caption = "Panel Data",
+        caption.placement = "top"
+      )
+    )
   
-  if (input$selectedData == "dataUpload" & !is.null(input$fcsFiles)) {
-      status <- "success"
+  if (input$chooseDataTab == "dataUpload" &
+      !is.null(input$fcsFiles)) {
+    status <- "success"
   }
-  else if (input$selectedData == "dataExample" & input$exampleData != "") {
-      status <- "success"
-      value <-
-        c(div(sprintf(
+  else if (input$chooseDataTab == "dataExample" &
+           input$exampleData != "") {
+    status <- "success"
+    value <-
+      c(list(div(
+        sprintf(
           "Found %s: %s",
           input$exampleData,
           file.exists(input$exampleData)
-        )),
-        div(sprintf("info about %s", input$exampleData)),
-        value)
-      # TODO: remove this as soon as preprocessing is done
-      library(CATALYST)
-      reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
-  } 
+        )
+      ),
+      div(
+        sprintf("info about %s", input$exampleData)
+      )),
+      value)
+  }
   if (status == "success") {
-    updateActionButton(session, "continue", label = "Preprocessing")
-    shinyjs::show("continue")
-  } else {
-    shinyjs::hide("continue")
+    value <- c(list(
+      bsButton(
+        "loadData",
+        "Load Data",
+        icon("database"),
+        style = "success",
+        block = TRUE
+      )
+    ),
+    value)
   }
   
   shinydashboard::box(value, title = "Selected Data", status = status)
