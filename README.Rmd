@@ -52,7 +52,8 @@ sce2 <- prepData(exp2, md = metadata, md_cols = list(file = "file_name",
 saveRDS(sce2, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/plateletsSCE1-4.Rds")
 library(CATALYST)
 tmp <- readRDS("data/plateletsSCE1-4.Rds")
-
+tmp <- runDR(tmp, dr = "PCA", features = "state", cells = 100)
+plotDR(tmp, dr = "PCA", color_by = "a_b", facet_by = "")
 ```
 
 ```{r}

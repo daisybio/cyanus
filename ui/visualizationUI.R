@@ -27,9 +27,11 @@ visbody <- function(){
         "startDimRed",
         "Start Dimensionality Reduction",
         icon = icon("palette"),
-        style = "success"
+        style = "success", 
+        disabled = TRUE
       ),
-      style = "float: right;"
+      style = "float: right;", 
+      id = "divStartDimRed"
     ),
     id = "visBox", 
     title = "Choose your Visualization method",
@@ -54,7 +56,7 @@ visbody <- function(){
       width = 12)
       ),
     fluidRow(
-      uiOutput("parametersVis"),
+      shinycssloaders::withSpinner(uiOutput("parametersVis")),
       width = 12
     ),
     fluidRow(
@@ -63,7 +65,7 @@ visbody <- function(){
     fluidRow(
       plotBox
     ),
-    shinycssloaders::withSpinner(uiOutput("currentDataVis"))
+    uiOutput("currentDataVis")
   )
   return(visbody)
 }
