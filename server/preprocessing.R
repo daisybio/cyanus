@@ -7,7 +7,7 @@ transformData <-
             cf = 5,
             ain = "counts",
             aout = "exprs") {
-    if (transform == "no") {
+    if (transform != "no") {
       y <- assay(sce, ain)
       if (transform == "arcsinh") {
         chs <- channels(sce)
@@ -29,41 +29,109 @@ transformData <-
       }
       assay(sce, aout, FALSE) <- y
     }
-    return(sce)
+    sce
   }
+
+# render markers box
+output$markersBox <- renderUI({
+  pickerInput(
+    inputId = "markerSelection",
+    label = "Markers",
+    choices = names(channels(reactiveVals$sce)),
+    selected = names(channels(reactiveVals$sce)),
+    options = list(
+      `actions-box` = TRUE,
+      size = 4,
+      `selected-text-format` = "count > 3",
+      "dropup-auto" = FALSE
+    ),
+    multiple = TRUE
+  )
+})
+
+# render samples box
+output$samplesBox <- renderUI({
+  pickerInput(
+    "sampleSelection",
+    choices = unique(colData(reactiveVals$sce)$sample_id),
+    selected = unique(colData(reactiveVals$sce)$sample_id),
+    label = "Samples",
+    options = list(
+      `actions-box` = TRUE,
+      size = 4,
+      `selected-text-format` = "count > 3",
+      "dropup-auto" = FALSE
+    ),
+    multiple = TRUE
+  )
+})
 
 # render counts plot
 output$countsPlot <- renderPlot({
   CATALYST::plotCounts(
     reactiveVals$sce,
     group_by = input$countsGroupBy,
-    color_by = input$countsColorBy
+    color_by = input$countsColorBy,
+    prop = as.logical(input$countsProp)
   )
 })
 
 # render mds plot
 output$mdsPlot <- renderPlot({
-  CATALYST::pbMDS(reactiveVals$sce, color_by = input$mdsColorBy, label_by = input$mdsLabels, features = input$nrsFeatures)
-  
+  feature <- input$mdsFeatures
+  if (feature=="all"){
+    feature <- NULL
+  }
+  CATALYST::pbMDS(
+    reactiveVals$sce,
+    label_by = input$mdsLabelBy,
+    color_by = input$mdsColorBy,
+    features = feature,
+    assay = input$mdsAssay,
+  )
 })
 
 # render nrs plot
 output$nrsPlot <- renderPlot({
-  CATALYST::plotNRS(reactiveVals$sce,
-                    features = input$nrsFeatures,
-                    color_by = input$nrsColorBy)
+  feature <- input$nrsFeatures
+  if (feature=="all"){
+    feature <- NULL
+  }
+  CATALYST::plotNRS(
+    reactiveVals$sce,
+    color_by = input$nrsColorBy,
+    features = feature,
+    assay = input$nrsAssay
+  )
 })
 
-# render expression heatmap
-output$exprsHeatmapPlot <- renderPlot({
-  CATALYST::plotExprHeatmap(reactiveVals$sce, features = input$hpexprFeatures, scale = input$hpexprScale)
-})
-
-# render expression plot
+# render exprs plot
 output$exprsPlot <- renderPlot({
-  CATALYST::plotExprs(reactiveVals$sce, color_by = input$exprsColorBy, features = input$exprsColorBy)
+  feature <- input$exprsFeatures
+  if (feature=="all"){
+    feature <- NULL
+  }
+  CATALYST::plotExprs(
+    reactiveVals$sce,
+    color_by = input$exprsColorBy,
+    features = feature,
+    assay = input$exprsAssay
+  )
 })
 
+# render exprs heatmap plot
+output$exprsHeatmapPlot <- renderPlot({
+  feature <- input$exprsHeatmapFeatures
+  if (feature=="all"){
+    feature <- NULL
+  }
+  CATALYST::plotExprHeatmap(
+    reactiveVals$sce,
+    scale = input$exprsHeatmapScale,
+    features = feature,
+    assay = input$exprsHeatmapAssay
+  )
+})
 
 # marker selection -> if markers are selected -> visualization can start
 observeEvent({
@@ -80,117 +148,140 @@ observeEvent({
 # if start transformation button is clicked
 observeEvent(input$prepButton, {
   # data transformation
-  fcs <- dirname(input$fcsFiles$datapath)[1]   #later this will be done in upload data
-  sce <- prepData(fcs, transform = F) #later this will be done in upload data
-  sce <-transformData(
-      sce = sce,
-      transform = input$transformation,
-      cf = as.numeric(input$cofactor)
-    )
-  reactiveVals$sce <- sce
-  
-  # show markers and samples selection
-  updatePickerInput(
-    session,
-    'markerSelection',
-    choices = names(channels(reactiveVals$sce)),
-    selected = names(channels(reactiveVals$sce)) ,
-  )
-  updatePickerInput(
-    session,
-    'sampleSelection',
-    choices = unique(sample_ids(reactiveVals$sce)),
-    selected = unique(sample_ids(reactiveVals$sce)),
-  )
+  reactiveVals$sce <-transformData(sce = reactiveVals$sce, transform = input$transformation, cf = as.numeric(input$cofactor))
+  print(assayNames(reactiveVals$sce))
 })
 
 output$designCounts <- renderUI({
-  shinydashboard::box(
-    selectizeInput("countsGroupBy",
-                   "Group by:",
-                   names(colData(
-                     reactiveVals$sce
-                   )), multiple = F),
-    selectizeInput("countsColorBy",
-                   "Color by:",
-                   names(colData(
-                     reactiveVals$sce
-                   )), multiple = F),
-    width = 4,
+  fluidRow(
+    column(4,
+    dropdownButton(
+      tags$h3("Plot Options"),
+      selectizeInput("countsGroupBy",
+                     "Group by:",
+                     names(colData(reactiveVals$sce)), multiple = F),
+      selectizeInput("countsColorBy",
+                     "Color by:",
+                     names(colData(reactiveVals$sce)), multiple = F),
+      selectizeInput("countsProp",
+                     "Stacked or dodged:",
+                     c( "dodged (total cell counts)"=FALSE,"stacked (relative abundance)"=TRUE), multiple = F),
+      circle = TRUE,
+      status = "info",
+      icon = icon("gear"),
+      width = "100%",
+      tooltip = tooltipOptions(title="Click to see plot options")
+    )),
+    column(8, shinycssloaders::withSpinner(plotOutput(
+      "countsPlot", width = "100%", height = "400px"
+    )))
   )
 })
 
-output$designNrs <- renderUI({
-  shinydashboard::box(
-    selectizeInput(
-      "nrsFeatures",
-      "Features:",
-      unique(rowData(reactiveVals$sce)$marker_class),
-      multiple = F
-    ),
-    selectizeInput("nrsColorBy",
-                   "Color by:",
-                   names(colData(
-                     reactiveVals$sce
-                   )), multiple = F),
-    width = 4
+output$designMDS <- renderUI({
+  fluidRow(
+    column(4,
+           dropdownButton(
+             tags$h3("Plot Options"),
+             selectizeInput("mdsLabelBy",
+                            "Label by:",
+                            names(colData(reactiveVals$sce)), multiple = F),
+             selectizeInput("mdsColorBy",
+                            "Color by:",
+                            names(colData(reactiveVals$sce)), multiple = F),
+             selectizeInput("mdsAssay",
+                            "Assay:",
+                            assayNames(reactiveVals$sce), multiple = F),
+             selectizeInput("mdsFeatures",
+                            "Features:",
+                            c("all",as.character(unique(rowData(reactiveVals$sce)$marker_class))), multiple = F),
+             circle = TRUE,
+             status = "info",
+             icon = icon("gear"),
+             width = "100%",
+             tooltip = tooltipOptions(title="Click to see plot options")
+           )),
+    column(8, shinycssloaders::withSpinner(plotOutput(
+      "mdsPlot", width = "100%", height = "400px"
+    )))
   )
 })
 
-output$designMds <- renderUI({
-  shinydashboard::box(
-    selectizeInput(
-      "mdsFeatures",
-      "Features::",
-      unique(rowData(reactiveVals$sceT)$marker_class),
-      multiple = F
-    ),
-    selectizeInput("mdsColorBy",
-                   "Color by:",
-                   names(colData(
-                     reactiveVals$sce
-                   )), multiple = F),
-    selectizeInput("mdsLabels",
-                   "Label by:",
-                   unique(colData(
-                     reactiveVals$sce
-                   )), multiple = F),
-    width = 4
+output$designNRS <- renderUI({
+  fluidRow(
+    column(4,
+           dropdownButton(
+             tags$h3("Plot Options"),
+             selectizeInput("nrsColorBy",
+                            "Color by:",
+                            names(colData(reactiveVals$sce)), multiple = F),
+             selectizeInput("nrsAssay",
+                            "Assay:",
+                            assayNames(reactiveVals$sce), multiple = F),
+             selectizeInput("nrsFeatures",
+                            "Features:",
+                            c("all",as.character(unique(rowData(reactiveVals$sce)$marker_class))), multiple = F),
+             circle = TRUE,
+             status = "info",
+             icon = icon("gear"),
+             width = "100%",
+             tooltip = tooltipOptions(title="Click to see plot options")
+           )),
+    column(8, shinycssloaders::withSpinner(plotOutput(
+      "nrsPlot", width = "100%", height = "400px"
+    )))
   )
 })
 
 output$designExprs <- renderUI({
-  shinydashboard::box(
-    selectizeInput(
-      "exprFeatures",
-      "Features:",
-      unique(rowData(reactiveVals$sce)$marker_class),
-      multiple = F
-    ),
-    selectizeInput("exprsColorBy",
-                   "Color by:",
-                   names(colData(
-                     reactiveVals$sce
-                   )), multiple = F),
-    width = 4
+  fluidRow(
+    column(4,
+           dropdownButton(
+             tags$h3("Plot Options"),
+             selectizeInput("exprsColorBy",
+                            "Color by:",
+                            names(colData(reactiveVals$sce)), multiple = F),
+             selectizeInput("exprsAssay",
+                            "Assay:",
+                            assayNames(reactiveVals$sce), multiple = F),
+             selectizeInput("exprsFeatures",
+                            "Features:",
+                            c("all",as.character(unique(rowData(reactiveVals$sce)$marker_class))), multiple = F),
+             circle = TRUE,
+             status = "info",
+             icon = icon("gear"),
+             width = "100%",
+             tooltip = tooltipOptions(title="Click to see plot options")
+           )),
+    column(8, shinycssloaders::withSpinner(plotOutput(
+      "exprsPlot", width = "100%", height = "400px"
+    )))
   )
 })
 
-output$designHeatmapExprs <- renderUI({
-  shinydashboard::box(
-    selectizeInput(
-      "hpexprFeatures",
-      "Features:",
-      unique(rowData(reactiveVals$sce)$marker_class),
-      multiple = F
-    ),
-    selectizeInput(
-      "hpexprScale",
-      "Scale:",
-      c("first", "last", "never"),
-      multiple = F
-    ),
-    width = 4
+output$designExprsHeatmap <- renderUI({
+  fluidRow(
+    column(4,
+           dropdownButton(
+             tags$h3("Plot Options"),
+             selectizeInput("exprsHeatmapScale",
+                            "Scale:",
+                            c("never","first","last"), multiple = F),
+             selectizeInput("exprsHeatmapAssay",
+                            "Assay:",
+                            assayNames(reactiveVals$sce), multiple = F),
+             selectizeInput("exprsHeatmapFeatures",
+                            "Features:",
+                            c("all",as.character(unique(rowData(reactiveVals$sce)$marker_class))), multiple = F),
+             circle = TRUE,
+             status = "info",
+             icon = icon("gear"),
+             width = "100%",
+             tooltip = tooltipOptions(title="Click to see plot options")
+           )),
+    column(8, shinycssloaders::withSpinner(plotOutput(
+      "exprsHeatmapPlot", width = "100%", height = "400px"
+    )))
   )
-  
 })
+

@@ -25,22 +25,32 @@ transformData <- function (sce, transform, cf=5, ain = "counts", aout = "exprs")
   } else if (transform == "log"){
     y <- log(y+1)
   }
-  
   assay(sce, aout, FALSE) <- y
-  return(sce)
+  sce
 }
 
 
 
 exp1 <- list.files("/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/MouseData/fcs/", pattern = "*.fcs", full.names = T)
 sceT <- prepData(exp1, transform = T)
-sce <- prepData(exp1,transform=F)
+sce_no_transform <- prepData(exp1,transform=F)
+test <- transformData(sce_no_transform,"log")
+assayNames(test)
+
+
+f <- unique(rowData(sce)$marker_class)
+
+features <- c("all",as.character(unique(rowData(sce)$marker_class)))
 
 names(colData(sce))
 
 assayNames(sce)
 
-levels(rowData(sce)$marker_class)
+sceT
+
+unique(rowData(sce)$marker_class)
+
+scelevels(rowData(sce)$marker_class)
 
 assays(sceT)$counts[1]
 assays(sceT)$exprs[1]
@@ -52,14 +62,6 @@ names(colData(sce))
 o <- names(colData(sce))
 test <- c(o,no=NULL)
 
-# log counts
-counts <- assay(sce, "counts")
-libsizes <- colSums(counts)
-size.factors <- libsizes/mean(libsizes)
-logcounts(sce) <- log2(t(t(counts)/size.factors) + 1)
-assayNames(sce)
-log <- logcounts(sce)
-
 
 
 names(channels(sce))
@@ -69,9 +71,9 @@ print(unique(sample_ids(sce)))
 levels(sample_ids(sce))
 
 plotCounts(sce, group_by="sample_id", color_by=NULL)
-plotNRS(sce,features="state", color_by="sample_id")
+plotNRS(sce,features="state", color_by="sample_id", assay=NULL)
 
-plotExprs(sce, color_by="sample_id")
+plotExprs(sce, group_by="sample_id")
 
 plotExprHeatmap(sce)
 

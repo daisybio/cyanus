@@ -32,13 +32,13 @@ observeEvent(input$loadData, {
   library(CATALYST)
   #TODO: check if data was uploaded or example selected
   if (input$chooseDataTab == "dataUpload") {
-    CATALYST::prepData(
-      input$fcsFiles$datapath[1],
+    reactiveVals$sce <- CATALYST::prepData(
+      dirname(input$fcsFiles$datapath)[1],
       reactiveVals$panel,
       reactiveVals$md,
       transform = FALSE,
-      panel_cols = names(reactiveVals$panel),
-      md_cols = names(reactiveVals$md)
+      #panel_cols = names(reactiveVals$panel),
+      #md_cols = names(reactiveVals$md)
     )
   } else if (input$chooseDataTab == "dataExample") {
     reactiveVals$sce <-
