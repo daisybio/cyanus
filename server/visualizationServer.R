@@ -32,16 +32,15 @@ observeEvent(input$classes, {
 
 observeEvent(input$selectMarkersVis, {
   reactiveVals$markers <- c(input$markersState, input$markersType, input$markersNone)
-  #reactiveVals$sceTMP <- reactiveVals$sce[rownames(reactiveVals$sce) %in% reactiveVals$markers]
   reactiveVals$featuresDR <- reactiveVals$markers
-  input$classes <- ""
+  reactiveVals$classes <- c()
   shinyjs::show("visBox")
 })
 
 observeEvent(input$selectClassesVis, {
-  #reactiveVals$sceTMP <- reactiveVals$sce[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == input$classes]
-  reactiveVals$featuresDR <- input$classes
-  reactiveVals$markers <- ""
+  reactiveVals$classes <- input$classes
+  reactiveVals$featuresDR <- reactiveVals$classes
+  reactiveVals$markers <- c()
   shinyjs::show("visBox")
 })
 
@@ -73,23 +72,39 @@ observeEvent(input$startDimRed, {
   library(ggplot2)
   library(CATALYST)
   output$visPlot <- renderPlot({
-    nr_cells <- isolate(input$nrCells)
-    feat <- isolate(reactiveVals$featuresDR)
-    color <- isolate(input$plt_color_by)
-    facet <- isolate(input$plt_facet_by)
-    method <- isolate(input$selectedVisMethod)
-    #sceObj <- isolate(reactiveVals$sceTMP)
-    sceObj <- isolate(reactiveVals$sce)
-    
-    if(method == "UMAP"){
-      makeDR(sceObj, "UMAP", feat, nr_cells , color, facet)
-    }else if(method == "T-SNE"){
-      makeDR(sceObj, "TSNE", feat, nr_cells , color, facet)
-    }else if(method == "PCA"){
-      makeDR(sceObj, "PCA", feat, nr_cells , color, facet)
-    }
+    plotData()
   })
   shinyjs::show("visPlotBox")
+  updateActionButton(session, "continue", label = "Clustering")
+  shinyjs::show("continue")
+})
+
+plotData <- eventReactive(input$startDimRed, {
+  disable("startDimRed")
+  disable("continue")
+  disable("selectClassesVis")
+  disable("selectMarkersVis")
+  nr_cells <- isolate(input$nrCells)
+  feat <- isolate(reactiveVals$featuresDR)
+  color <- isolate(input$plt_color_by)
+  facet <- isolate(input$plt_facet_by)
+  method <- isolate(input$selectedVisMethod)
+  sceObj <- isolate(reactiveVals$sce)
+  
+  if(method == "UMAP"){
+    g <- makeDR(sceObj, "UMAP", feat, nr_cells , color, facet)
+  }else if(method == "T-SNE"){
+    g <- makeDR(sceObj, "TSNE", feat, nr_cells , color, facet)
+  }else if(method == "PCA"){
+    g <- makeDR(sceObj, "PCA", feat, nr_cells , color, facet)
+  }else{
+    g <- NULL
+  }
+  enable("startDimRed")
+  enable("continue")
+  enable("selectClassesVis")
+  enable("selectMarkersVis")
+  return(g)
 })
 
 output$parametersVis <- renderUI({
@@ -101,8 +116,8 @@ output$parametersVis <- renderUI({
              value = "expressionTab",
              title = "By Marker"),
     id = "visTabs",
-    title = "Choose",
-    width = 12
+    title = "Choose which antigens to use",
+    width = 6
   )
 })
 
@@ -111,7 +126,7 @@ output$markerClassVis <- renderUI({
     shinydashboard::box(
       selectizeInput(
         inputId = "classes",
-        label = "marker classes to use for clustering",
+        label = "Available marker classes",
         unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class),
         options = list(
           placeholder = "Select your marker class",
@@ -131,8 +146,7 @@ output$markerClassVis <- renderUI({
       ), 
       id = "classBoxVis",
       title = "Select Class",
-      height = "12em",
-      width = 12)
+      height = "12em")
   )
 })
 
@@ -180,8 +194,7 @@ output$expressionVis <- renderUI({
         ),
         id = "markerBoxVis",
         title = "Select Markers",
-        height = "12em",
-        width = 12
+        height = "12em"
       ))
 })
 
@@ -199,17 +212,16 @@ output$color_by <- renderUI({
 
 output$selectColorBy <- renderUI({
   if(input$radioButtonsColor == "expression"){
-    if(reactiveVals$markers != ""){
+    if(!is.null(reactiveVals$markers)){
       choices = c(rownames(reactiveVals$sce)[rownames(reactiveVals$sce) %in% reactiveVals$markers])
-    }else if(input$classes != ""){
-      choices = c(rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == input$classes])
+    }else if(!is.null(reactiveVals$classes)){
+      choices = c(rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == reactiveVals$classes])
     }else{
       choices = c("Something went wrong")
     }
     return(pickerInput(
       inputId = "plt_color_by",
       label = "Color by: ",
-      #choices = c(rownames(reactiveVals$sceTMP)),
       choices = choices,
       options = list(
         onInitialize = I("function() { this.setValue(''); }"), 
@@ -218,17 +230,16 @@ output$selectColorBy <- renderUI({
       multiple = TRUE
     ))
     }else{
-      if(reactiveVals$markers != ""){
-        choices = c(colData(reactiveVals$sce)[rownames(reactiveVals$sce) %in% reactiveVals$markers])
-      }else if(input$classes != ""){
-        choices = c(colData(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == input$classes])
+      if(!is.null(reactiveVals$markers)){
+        choices = names(colData(reactiveVals$sce))
+      }else if(!is.null(reactiveVals$classes)){
+        choices = names(colData(reactiveVals$sce))
       }else{
         choices = c("Something went wrong")
       }
       return(selectizeInput(
         inputId = "plt_color_by",
         label = "Color by: ",
-        #names(colData(reactiveVals$sceTMP)),
         choices = choices,
         options = list(
           placeholder = "Select your coloring or nothing",
@@ -240,10 +251,10 @@ output$selectColorBy <- renderUI({
 })
 
 output$facet_by <- renderUI({
-  if(reactiveVals$markers != ""){
-    choices = c(colData(reactiveVals$sce)[rownames(reactiveVals$sce) %in% reactiveVals$markers])
-  }else if(input$classes != ""){
-    choices = c(colData(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == input$classes])
+  if(!is.null(reactiveVals$markers)){
+    choices = names(colData(reactiveVals$sce))
+  }else if(!is.null(reactiveVals$classes)){
+    choices = names(colData(reactiveVals$sce))
   }else{
     choices = c("Something went wrong")
   }
@@ -251,7 +262,6 @@ output$facet_by <- renderUI({
   selectizeInput(
     inputId = "plt_facet_by",
     label = "Facet by: ",
-    #names(colData(reactiveVals$sceTMP)),
     choices = choices,
     options = list(
       placeholder = "Select your faceting or nothing",
@@ -260,18 +270,6 @@ output$facet_by <- renderUI({
     multiple = FALSE
   )
   )
-})
-
-output$currentDataVis <- renderUI({
-  status <- "error"
-  reactiveVals$sce <- readRDS("data/plateletsSCE1-4.Rds")
-  if(input$startDimRed){
-    status <- "success"
-  }
-  if (status == "success"){
-    updateActionButton(session, "continue", label = "Clustering")
-    shinyjs::show("continue")
-  }
 })
 
 makeDR <- function(sce, dr_chosen, feature_chosen, cell_nr, color_chosen, facet_chosen) {

@@ -35,7 +35,7 @@ visbody <- function(){
     ),
     id = "visBox", 
     title = "Choose your Visualization method",
-    width = 12
+    width = 6
   )
   
   
@@ -56,16 +56,12 @@ visbody <- function(){
       width = 12)
       ),
     fluidRow(
-      shinycssloaders::withSpinner(uiOutput("parametersVis")),
-      width = 12
-    ),
-    fluidRow(
+      uiOutput("parametersVis"),
       visualizationBox
     ),
     fluidRow(
       plotBox
-    ),
-    uiOutput("currentDataVis")
+    )
   )
   return(visbody)
 }
