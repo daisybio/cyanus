@@ -29,11 +29,11 @@ sce <- CATALYST::prepData("~/Downloads/SystemsBioMedicine/Panorama BM 1-10/")
 ### Patient Data
 
 ```{r loadPatientData}
-pathToDir <- "~/Downloads/SystemsBioMedicine/systems_biomedicine_spill_applied_fcs_files/"
+pathToDir <- "~/Desktop/Bioinfo/SystemsBioMedicine/systems_biomedicine_spill_applied_fcs_files/"
 exp2 <- list.files(pathToDir, pattern = "*.fcs", full.names = T)
 names <- list.files(pathToDir, pattern = "*.fcs")
-exp2 <- exp2[c(1:6)]
-names <- names[c(1:6)]
+exp2 <- exp2[c(1:4)]
+names <- names[c(1:4)]
 info <- sapply(names, function(x){strsplit(x, split = ".*\\d\\d\\d")[[1]][2]})
 a_b <- sapply(info, function(x){factor(strsplit(x, split = "_")[[1]][1])})
 dual_triple <- sapply(info, function(x){
@@ -44,10 +44,16 @@ dual_triple <- sapply(info, function(x){
 library(data.table)
 metadata <- data.table("file_name" = names, 
                        "sample_id" = names, "a_b" = a_b, "dual_triple" = dual_triple)
+#fwrite(metadata, "~/Desktop/Bioinfo/SystemsBioMedicine/systems_biomedicine_spill_applied_fcs_files/metadata1-4.csv", quote = F)
 
 sce2 <- prepData(exp2, md = metadata, md_cols = list(file = "file_name", 
                                                      id = "sample_id", 
                                                      factors = c("a_b", "dual_triple")))
+saveRDS(sce2, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/plateletsSCE1-4.Rds")
+library(CATALYST)
+tmp <- readRDS("data/plateletsSCE1-4.Rds")
+tmp <- runDR(tmp, dr = "PCA", features = "state", cells = 100)
+plotDR(tmp, dr = "PCA", color_by = "a_b", facet_by = "")
 ```
 
 ```{r}
@@ -60,5 +66,15 @@ plotDR(sce2, dr = "UMAP", color_by = "a_b", facet_by = "dual_triple")
 plotDR(sce2, dr = "UMAP", color_by = chs, facet_by = "dual_triple")
 plotDR(sce2, dr = "TSNE", color_by = "a_b", facet_by = "dual_triple")
 plotDR(sce2, dr = "TSNE", color_by = chs, facet_by = "dual_triple")
+
+data(PBMC_fs, PBMC_panel, PBMC_md)
+saveRDS(PBMC_panel, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/pbmc/panel.rds")
+saveRDS(PBMC_md, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/pbmc/md.rds")
+saveRDS(PBMC_fs, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/pbmc/fcs.rds")
+sce <- prepData(PBMC_fs, PBMC_panel, PBMC_md)
+saveRDS(sce, "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/cytof/data/pbmc/sce.rds")
+
+sce <- runDR(sce, dr = "UMAP", cells = 100)
+plotDR(sce, color_by = c("pBtk", "pPlcg2", "pErk"), facet_by = "condition")
 ```
 

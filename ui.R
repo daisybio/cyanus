@@ -7,6 +7,7 @@ library(shinyBS)
 
 
 # read all ui files
+
 sapply(list.files("ui", full.names = TRUE), source, environment())
 
 header <- dashboardHeader(title = "CyTOF Pipeline")
@@ -19,6 +20,7 @@ body <-
     tabItems(welcomeBody,
              startBody(),
               preprocessingBody(),
+             visbody(),
              clusteringBody),
     bsButton("continue", "Start Analysis", icon("arrow-right"), style = "success", block = TRUE)
   )
