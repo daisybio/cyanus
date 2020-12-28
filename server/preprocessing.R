@@ -70,6 +70,24 @@ output$samplesBox <- renderUI({
   )
 })
 
+# render samples box
+output$patientsBox <- renderUI({
+  pickerInput(
+    "patientsSelection",
+    choices = unique(colData(reactiveVals$sce)$patient_id),
+    selected = unique(colData(reactiveVals$sce)$patient_id),
+    label = "Patients",
+    options = list(
+      `actions-box` = TRUE,
+      size = 4,
+      `selected-text-format` = "count > 3",
+      "dropup-auto" = FALSE
+    ),
+    multiple = TRUE
+  )
+})
+
+
 # render counts plot
 output$countsPlot <- renderPlot({
   CATALYST::plotCounts(

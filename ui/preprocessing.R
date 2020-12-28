@@ -42,21 +42,16 @@ preprocessingBody <- function() {
     )
   )
   
-  # box with markers (all markers selected by default)
-  markersBox <- shinydashboard::box(
+  # box with markers, samples and patients (all markers, patients, samples selected by default)
+  selectingBox <- shinydashboard::box(
     uiOutput("markersBox"),
-    title = "Select Markers",
+    uiOutput("samplesBox"),
+    uiOutput("patientsBox"),
+    title = "Select Markers, Samples and Patients",
     height = marker_sample_height,
-    width = 6
+    width = 12
   )
   
-  # box with samples (all samples selected by default)
-  samplesBox <- shinydashboard::box(
-    uiOutput("samplesBox"),
-    title = "Select Samples",
-    height = marker_sample_height,
-    width = 6
-  )
   
   # box for counts plots
   countsBox <- shinydashboard::box(
@@ -113,7 +108,7 @@ preprocessingBody <- function() {
     fluidRow(transformationBox, cofactorBox),
     
     # box selecting markers and box selecting samples
-    fluidRow(markersBox, samplesBox),
+    fluidRow(selectingBox),
     
     # tabBox with simple visualization plots
     fluidRow(
