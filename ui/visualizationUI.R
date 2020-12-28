@@ -1,17 +1,19 @@
+markerSelectionBox <- shinydashboard::tabBox(
+  tabPanel(uiOutput("markerClassVis"), 
+           value = "classTab",
+           title = "By Marker Class"),
+  tabPanel(uiOutput("expressionVis"),
+           value = "expressionTab",
+           title = "By Marker"),
+  id = "visTabs",
+  title = "Run your dimensionality reduction", 
+  width = 12
+)
+
 visbody <- function(){
   
-  vis_methods <- c("UMAP", "T-SNE", "PCA", "Isomap")
-  
   visualizationBox <- shinydashboard::box(
-    selectizeInput(
-      "selectedVisMethod",
-      "Visualization method",
-      vis_methods,
-      options = list(
-        placeholder = "Select how you want to visualize your data",
-        onInitialize = I("function() { this.setValue(''); }")
-      )
-    ),
+    uiOutput("methodsVis"),
     uiOutput("assayVis"),
     radioButtons(
       inputId = "scaleVis",
@@ -19,20 +21,12 @@ visbody <- function(){
       choices = c("yes", "no"), 
       inline = TRUE
     ),
-    numericInput(
-      "nrCells",
-      label = "From how many cells do you want to sample?",
-      value = 100,
-      min = 0,
-      max = 100000,
-      step = 100
-      ),
     uiOutput("color_by"),
     uiOutput("facet_by"),
     div(
       bsButton(
         "startDimRed",
-        "Start Dimensionality Reduction",
+        "Start Visualization",
         icon = icon("palette"),
         style = "success", 
         disabled = TRUE
@@ -41,15 +35,18 @@ visbody <- function(){
       id = "divStartDimRed"
     ),
     id = "visBox", 
-    title = "Choose your Visualization method",
+    title = "Visualize your dimensionality reduction(s)", 
     width = 6
   )
   
-  
-  plotBox <- shinydashboard::box(shinycssloaders::withSpinner(plotOutput("visPlot", width="100%", height="350px")),
-                                 id = "visPlotBox",
-                                 title = "Dimensionality Reduction",
-                                 width = 12)
+  plotBox <- shinydashboard::box(
+    fluidRow(
+      shinycssloaders::withSpinner(plotOutput("visPlot")),
+      uiOutput("plotInfo")
+    ),
+    id = "visPlotBox",
+    title = "Dimensionality Reduction",
+    width = 12)
   
     
   visbody <- tabItem(
@@ -63,8 +60,12 @@ visbody <- function(){
       width = 12)
       ),
     fluidRow(
-      uiOutput("parametersVis"),
-      visualizationBox
+      box(
+        markerSelectionBox,
+        uiOutput("runDRparBox"),
+        width = 6
+      ),
+        visualizationBox,
     ),
     fluidRow(
       plotBox
