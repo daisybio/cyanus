@@ -156,7 +156,13 @@ observeEvent(input$startDimRed, {
   library(ggplot2)
   library(CATALYST)
   output$visPlot <- renderPlotly({
-    plotData()
+    color <- isolate(input$plt_color_by)
+    facet <- isolate(input$plt_facet_by)
+    method <- isolate(input$selectedVisMethod)
+    assay <- isolate(input$assayVisSelected)
+    scale <- isolate(input$scaleVis)
+    sceObj <- isolate(reactiveVals$sce)
+    plotData(sceObj, method, color, facet, assay, scale)
   })
   output$plotInfo <- renderUI({
     method <- isolate(input$selectedVisMethod)
@@ -200,16 +206,10 @@ observeEvent(input$startDimRed, {
   shinyjs::show("continue")
 })
 
-plotData <- eventReactive(input$startDimRed, {
+plotData <- function(sceObj, method, color, facet, assay, scale){
   disable("startDimRed")
   disable("continue")
   disable("runDRButton")
-  color <- isolate(input$plt_color_by)
-  facet <- isolate(input$plt_facet_by)
-  method <- isolate(input$selectedVisMethod)
-  assay <- isolate(input$assayVisSelected)
-  scale <- isolate(input$scaleVis)
-  sceObj <- isolate(reactiveVals$sce)
   
   g <- makeDR(sceObj, method, color, facet, assay, scale)
   g <- g + theme(plot.margin = unit(c(1, 1, 1, 2), "cm"))
@@ -218,7 +218,7 @@ plotData <- eventReactive(input$startDimRed, {
   enable("continue")
   enable("runDRButton")
   return(g)
-})
+}
 
 output$markerClassVis <- renderUI({
   classes <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
