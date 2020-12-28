@@ -1,55 +1,107 @@
-shinyjs::hide("visBox")
 shinyjs::hide("visPlotBox")
-
 #reactiveVals$sce <- readRDS("data/plateletsSCE1-4.Rds")
 observeEvent(input$markersState, {
-  shinyjs::hide("visBox")
   shinyjs::hide("visPlotBox")
-  if(input$markersState != ""){
-    updateButton(session, "selectMarkersVis", disabled = FALSE)
+  reactiveVals$useClassesRun <- F
+  reactiveVals$useMarkersRun <- T
+  req(input$selectedRunMethod)
+  if(input$markersState != "" & input$selectedRunMethod != ""){
+    updateButton(session, "runDRButton", disabled = FALSE)
   }
 })
 
 observeEvent(input$markersType, {
-    shinyjs::hide("visBox")
     shinyjs::hide("visPlotBox")
-    if(input$markersType != ""){
-      updateButton(session, "selectMarkersVis", disabled = FALSE)
+    reactiveVals$useClassesRun <- F
+    reactiveVals$useMarkersRun <- T
+    req(input$selectedRunMethod)
+    if(input$markersType != "" & input$selectedRunMethod != ""){
+      updateButton(session, "runDRButton", disabled = FALSE)
     }
   })
 
 observeEvent(input$markersNone, {
-  shinyjs::hide("visBox")
   shinyjs::hide("visPlotBox")
-  if(input$markersNone != ""){
-    updateButton(session, "selectMarkersVis", disabled = FALSE)
+  reactiveVals$useClassesRun <- F
+  reactiveVals$useMarkersRun <- T
+  req(input$selectedRunMethod)
+  if(input$markersNone != "" & input$selectedRunMethod != ""){
+    updateButton(session, "runDRButton", disabled = FALSE)
   }
 })
 
 observeEvent(input$classes, {
-  shinyjs::hide("visBox")
   shinyjs::hide("visPlotBox")
-  if(input$classes != ""){
-    updateButton(session, "selectClassesVis", disabled = FALSE)
+  reactiveVals$useClassesRun <- T
+  reactiveVals$useMarkersRun <- F
+  req(input$selectedRunMethod)
+  if(input$classes != "" & input$selectedRunMethod != ""){
+    updateButton(session, "runDRButton", disabled = FALSE)
   }
 })
 
-observeEvent(input$selectMarkersVis, {
-  reactiveVals$markers <- c(input$markersState, input$markersType, input$markersNone)
-  reactiveVals$featuresDR <- reactiveVals$markers
-  reactiveVals$classes <- c()
-  shinyjs::show("visBox")
+observeEvent(input$selectedRunMethod, {a
+  if(!is.null(reactiveVals$useClassesRun)){
+    if(input$selectedRunMethod != "" & reactiveVals$useClassesRun){
+      updateButton(session, "runDRButton", disabled = FALSE)
+    }
+  }
+  if(!is.null(reactiveVals$useMarkersRun)){
+    if(input$selectedRunMethod != "" & reactiveVals$useMarkersRun){
+      updateButton(session, "runDRButton", disabled = FALSE)
+    }
+  }
 })
 
-observeEvent(input$selectClassesVis, {
-  if(input$classes != "All features"){
-    reactiveVals$classes <- input$classes
-  }else{
-    reactiveVals$classes <- NULL
+observeEvent(input$runDRButton, {
+  disable("continue")
+  disable("runDRButton")
+  disable("visBox")
+  if(reactiveVals$useClassesRun){
+    if(input$classes != "All features"){
+      reactiveVals$classes <- input$classes
+    }else{
+      reactiveVals$classes <- NULL
+    }
+    reactiveVals$featuresDR <- reactiveVals$classes
+    reactiveVals$markers <- c()
+  }else if(reactiveVals$useMarkersRun){
+    reactiveVals$markers <- c(input$markersState, input$markersType, input$markersNone)
+    reactiveVals$featuresDR <- reactiveVals$markers
+    reactiveVals$classes <- c()
   }
-  reactiveVals$featuresDR <- reactiveVals$classes
-  reactiveVals$markers <- c()
-  shinyjs::show("visBox")
+  
+  if(input$selectedRunMethod == "UMAP"){
+    library(uwot)
+    reactiveVals$umapDF <- data.frame(method = "UMAP",
+                         features = toString(reactiveVals$featuresDR),
+                         counts = input$assayRunSelected,
+                         cells = input$nrCellsRun,
+                         scale = input$scaleRun)
+    runCatalystDR("UMAP", input$nrCellsRun, reactiveVals$featuresDR, 
+                  input$assayRunSelected, input$scaleRun)
+  }else if(input$selectedRunMethod == "T-SNE"){
+    reactiveVals$tsneDF <- data.frame(method = "TSNE",
+                                      features = toString(reactiveVals$featuresDR),
+                                      counts = input$assayRunSelected,
+                                      cells = input$nrCellsRun,
+                                      scale = input$scaleRun)
+    runCatalystDR("TSNE", input$nrCellsRun, reactiveVals$featuresDR, 
+                  input$assayRunSelected, input$scaleRun)
+  }else if(input$selectedRunMethod == "PCA"){
+    reactiveVals$pcaDF <- data.frame(method = "PCA",
+                                      features = toString(reactiveVals$featuresDR),
+                                      counts = input$assayRunSelected,
+                                      cells = input$nrCellsRun,
+                                      scale = input$scaleRun)
+    runCatalystDR("PCA", input$nrCellsRun, reactiveVals$featuresDR, 
+                  input$assayRunSelected, input$scaleRun)
+  }
+  reactiveVals$useMarkersRun <- c()
+  reactiveVals$useClassesRun <- c()
+  enable("visBox")
+  enable("continue")
+  enable("runDRButton")
 })
 
 observeEvent(input$selectedVisMethod, {
@@ -90,6 +142,31 @@ observeEvent(input$startDimRed, {
   output$visPlot <- renderPlot({
     plotData()
   })
+  output$plotInfo <- renderInfoBox({
+    method <- isolate(input$selectedVisMethod)
+    if(method == "UMAP"){
+      value <- renderTable(
+        checkNullTable(reactiveVals$umapDF),
+        caption = "UMAP Run Features",
+        caption.placement = "top"
+      )
+    }else if(method == "TSNE"){
+      value <- renderTable(
+        checkNullTable(reactiveVals$tsneDF),
+        caption = "T-SNE Run Features",
+        caption.placement = "top"
+      )
+    }else if(method == "PCA"){
+      value <- renderTable(
+        checkNullTable(reactiveVals$pcaDF),
+        caption = "PCA Run Features",
+        caption.placement = "top"
+      )
+    }else{
+      value <- "failed"
+    }
+    shinydashboard::box(value, title = "Info")
+  })
   shinyjs::show("visPlotBox")
   updateActionButton(session, "continue", label = "Clustering")
   shinyjs::show("continue")
@@ -98,10 +175,7 @@ observeEvent(input$startDimRed, {
 plotData <- eventReactive(input$startDimRed, {
   disable("startDimRed")
   disable("continue")
-  disable("selectClassesVis")
-  disable("selectMarkersVis")
-  nr_cells <- isolate(input$nrCells)
-  feat <- isolate(reactiveVals$featuresDR)
+  disable("runDRButton")
   color <- isolate(input$plt_color_by)
   facet <- isolate(input$plt_facet_by)
   method <- isolate(input$selectedVisMethod)
@@ -110,33 +184,18 @@ plotData <- eventReactive(input$startDimRed, {
   sceObj <- isolate(reactiveVals$sce)
   
   if(method == "UMAP"){
-    g <- makeDR(sceObj, "UMAP", feat, nr_cells , color, facet, assay, scale)
-  }else if(method == "T-SNE"){
-    g <- makeDR(sceObj, "TSNE", feat, nr_cells , color, facet, assay, scale)
+    g <- makeDR(sceObj, "UMAP", color, facet, assay, scale)
+  }else if(method == "TSNE"){
+    g <- makeDR(sceObj, "TSNE", color, facet, assay, scale)
   }else if(method == "PCA"){
-    g <- makeDR(sceObj, "PCA", feat, nr_cells , color, facet, assay, scale)
+    g <- makeDR(sceObj, "PCA", color, facet, assay, scale)
   }else{
     g <- NULL
   }
   enable("startDimRed")
   enable("continue")
-  enable("selectClassesVis")
-  enable("selectMarkersVis")
+  enable("runDRButton")
   return(g)
-})
-
-output$parametersVis <- renderUI({
-  shinydashboard::tabBox(
-    tabPanel(uiOutput("markerClassVis"), 
-             value = "classTab",
-             title = "By Marker Class"),
-    tabPanel(uiOutput("expressionVis"),
-             value = "expressionTab",
-             title = "By Marker"),
-    id = "visTabs",
-    title = "Choose which antigens to use",
-    width = 6
-  )
 })
 
 output$markerClassVis <- renderUI({
@@ -153,76 +212,123 @@ output$markerClassVis <- renderUI({
           onInitialize = I("function() { this.setValue(''); }")
         ),
         multiple = FALSE
-      ),
-      div(
-        bsButton(
-          "selectClassesVis",
-          "Select this class",
-          icon = icon("mouse-pointer"),
-          style = "success", 
-          disabled = TRUE
-        ),
-        style = "float: right;"
       ), 
       id = "classBoxVis",
-      title = "Select Class",
-      height = "12em")
+      title = "Select Class", 
+      width = 12),
   )
 })
 
 output$expressionVis <- renderUI({
-      fluidRow(shinydashboard::box(
-        pickerInput(
-          inputId = "markersState",
-          label = "Markers from class state",
-          choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "state"],
-          options = list(
-            onInitialize = I("function() { this.setValue(''); }"), 
-            `actions-box` = TRUE
-          ),
-          multiple = TRUE
-        ), 
-        pickerInput(
-          inputId = "markersType",
-          label = "Markers from class type",
-          choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "type"],
-          options = list(
-            onInitialize = I("function() { this.setValue(''); }"), 
-            `actions-box` = TRUE
-          ),
-          multiple = TRUE
-        ), 
-        pickerInput(
-          inputId = "markersNone",
-          label = "Markers from class none",
-          choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "none"],
-          options = list(
-            onInitialize = I("function() { this.setValue(''); }"), 
-            `actions-box` = TRUE
-          ),
-          multiple = TRUE
-        ), 
-        div(
-          bsButton(
-            "selectMarkersVis",
-            "Select these markers",
-            icon = icon("mouse-pointer"),
-            style = "success", 
-            disabled = TRUE
-          ),
-          style = "float: right;"
-        ),
-        id = "markerBoxVis",
-        title = "Select Markers",
-        height = "12em"
-      ))
+  fluidRow(
+    shinydashboard::box(
+    pickerInput(
+      inputId = "markersState",
+      label = "Markers from class state",
+      choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "state"],
+      options = list(
+        onInitialize = I("function() { this.setValue(''); }"), 
+        `actions-box` = TRUE
+      ),
+      multiple = TRUE
+    ), 
+    pickerInput(
+      inputId = "markersType",
+      label = "Markers from class type",
+      choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "type"],
+      options = list(
+        onInitialize = I("function() { this.setValue(''); }"), 
+        `actions-box` = TRUE
+      ),
+      multiple = TRUE
+    ), 
+    pickerInput(
+      inputId = "markersNone",
+      label = "Markers from class none",
+      choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "none"],
+      options = list(
+        onInitialize = I("function() { this.setValue(''); }"), 
+        `actions-box` = TRUE
+      ),
+      multiple = TRUE
+    ), 
+    id = "markerBoxVis",
+    title = "Select Markers",
+    width = 12
+  )
+  )
 })
+
+output$runDRparBox <- renderUI({
+  vis_methods <- c("UMAP", "T-SNE", "PCA", "Isomap")
+  choices <- assayNames(reactiveVals$sce)
+  if(all(choices == c("counts", "exprs"))){
+    choices <- c("Raw" = "counts", "Normalized" = "exprs")
+  }
+  shinydashboard::box(
+    selectizeInput(
+      "selectedRunMethod",
+      "Visualization method",
+      vis_methods,
+      options = list(
+        placeholder = "Select your method",
+        onInitialize = I("function() { this.setValue(''); }")
+      )
+    ), 
+    selectizeInput(
+      "assayRunSelected",
+      "Do you want to use raw counts or the normalization?",
+      choices = choices,
+      multiple = FALSE
+    ),
+    numericInput(
+      "nrCellsRun",
+      label = sprintf("From how many cells do you want to sample (all: %s)?", dim(reactiveVals$sce)[2]),
+      value = 100,
+      min = 0,
+      max = dim(reactiveVals$sce)[2],
+      step = 100
+    ),
+    radioButtons(
+      inputId = "scaleRun",
+      label = "Scale ",
+      choices = c("yes", "no"), 
+      inline = TRUE
+    ), 
+    div(
+      bsButton(
+        "runDRButton",
+        "Run with these parameters",
+        icon = icon("mouse-pointer"),
+        style = "success", 
+        disabled = TRUE
+      ),
+      style = "float: right;"
+    ),
+    width = 12
+  )
+})
+
+output$methodsVis <- renderUI({
+  vis_methods <- reactiveVals$availableDRs
+  selectizeInput(
+    "selectedVisMethod",
+    "Visualization method",
+    vis_methods,
+    options = list(
+      placeholder = "Select how you want to visualize your data",
+      onInitialize = I("function() { this.setValue(''); }")
+    )
+  )
+})
+
+
 
 output$assayVis <- renderUI({
   choices <- assayNames(reactiveVals$sce)
-  # if(all(tmp == c("counts", "exprs"))){
-  #   choices <- c("Raw" = "counts", "Normalized" = "exprs")
-  # }
+  if(all(choices == c("counts", "exprs"))){
+    choices <- c("Raw" = "counts", "Normalized" = "exprs")
+  }
   return(selectizeInput(
     "assayVisSelected",
     "Do you want to use raw counts or the normalization?",
@@ -287,7 +393,23 @@ output$facet_by <- renderUI({
   )
 })
 
-makeDR <- function(sce, dr_chosen, feature_chosen, cell_nr, color_chosen, facet_chosen, assay_chosen, scale) {
+runCatalystDR <- function(dr_chosen, cells_chosen, feature_chosen, assay_chosen, scale){
+  if(scale == "yes"){
+    scale <- T
+  }else{
+    scale <- F
+  }
+  reactiveVals$sce <- runDR(
+    reactiveVals$sce, 
+    dr = dr_chosen, 
+               cells = cells_chosen, 
+               features = feature_chosen, 
+               assay = assay_chosen, 
+               scale = scale)
+  reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
+}
+
+makeDR <- function(sce, dr_chosen, color_chosen, facet_chosen, assay_chosen, scale) {
   if(color_chosen == ""){
     color_chosen <- NULL
   }
@@ -302,7 +424,7 @@ makeDR <- function(sce, dr_chosen, feature_chosen, cell_nr, color_chosen, facet_
   }else{
     scale <- F
   }
-  sce <- runDR(sce, dr = dr_chosen, features = feature_chosen, cells = cell_nr, assay = assay_chosen)
+  #sce <- runDR(sce, dr = dr_chosen, features = feature_chosen, cells = cell_nr, assay = assay_chosen)
   g <- plotDR(sce, dr = dr_chosen, color_by = color_chosen, facet_by = facet_chosen, assay = assay_chosen, scale = scale)
   return(g)
 }
