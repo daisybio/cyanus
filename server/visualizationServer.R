@@ -96,6 +96,22 @@ observeEvent(input$runDRButton, {
                                       scale = input$scaleRun)
     runCatalystDR("PCA", input$nrCellsRun, reactiveVals$featuresDR, 
                   input$assayRunSelected, input$scaleRun)
+  }else if(input$selectedRunMethod == "MDS"){
+    reactiveVals$mdsDF <- data.frame(method = "MDS",
+                                     features = toString(reactiveVals$featuresDR),
+                                     counts = input$assayRunSelected,
+                                     cells = input$nrCellsRun,
+                                     scale = input$scaleRun)
+    runCatalystDR("MDS", input$nrCellsRun, reactiveVals$featuresDR, 
+                  input$assayRunSelected, input$scaleRun)
+  }else if(input$selectedRunMethod == "DiffusionMap"){
+    reactiveVals$diffMapDF <- data.frame(method = "Diffusion Map",
+                                     features = toString(reactiveVals$featuresDR),
+                                     counts = input$assayRunSelected,
+                                     cells = input$nrCellsRun,
+                                     scale = input$scaleRun)
+    runCatalystDR("DiffusionMap", input$nrCellsRun, reactiveVals$featuresDR, 
+                  input$assayRunSelected, input$scaleRun)
   }
   reactiveVals$useMarkersRun <- c()
   reactiveVals$useClassesRun <- c()
@@ -139,10 +155,10 @@ observeEvent(input$nrCells, {
 observeEvent(input$startDimRed, {
   library(ggplot2)
   library(CATALYST)
-  output$visPlot <- renderPlot({
+  output$visPlot <- renderPlotly({
     plotData()
   })
-  output$plotInfo <- renderInfoBox({
+  output$plotInfo <- renderUI({
     method <- isolate(input$selectedVisMethod)
     if(method == "UMAP"){
       value <- renderTable(
@@ -162,10 +178,22 @@ observeEvent(input$startDimRed, {
         caption = "PCA Run Features",
         caption.placement = "top"
       )
+    }else if(method == "MDS"){
+      value <- renderTable(
+        checkNullTable(reactiveVals$mdsDF),
+        caption = "MDS Run Features",
+        caption.placement = "top"
+      )
+    }else if(method == "DiffusionMap"){
+      value <- renderTable(
+        checkNullTable(reactiveVals$diffMapDF),
+        caption = "Diffusion Map Run Features",
+        caption.placement = "top"
+      )
     }else{
       value <- "failed"
     }
-    shinydashboard::box(value, title = "Info")
+    shinydashboard::box(value, title = "Info", width = 4)
   })
   shinyjs::show("visPlotBox")
   updateActionButton(session, "continue", label = "Clustering")
@@ -183,15 +211,9 @@ plotData <- eventReactive(input$startDimRed, {
   scale <- isolate(input$scaleVis)
   sceObj <- isolate(reactiveVals$sce)
   
-  if(method == "UMAP"){
-    g <- makeDR(sceObj, "UMAP", color, facet, assay, scale)
-  }else if(method == "TSNE"){
-    g <- makeDR(sceObj, "TSNE", color, facet, assay, scale)
-  }else if(method == "PCA"){
-    g <- makeDR(sceObj, "PCA", color, facet, assay, scale)
-  }else{
-    g <- NULL
-  }
+  g <- makeDR(sceObj, method, color, facet, assay, scale)
+  g <- g + theme(plot.margin = unit(c(1, 1, 1, 2), "cm"))
+  g <- ggplotly(g)
   enable("startDimRed")
   enable("continue")
   enable("runDRButton")
@@ -260,7 +282,7 @@ output$expressionVis <- renderUI({
 })
 
 output$runDRparBox <- renderUI({
-  vis_methods <- c("UMAP", "T-SNE", "PCA", "Isomap")
+  vis_methods <- c("UMAP", "T-SNE", "PCA", "MDS", "DiffusionMap", "Isomap")
   choices <- assayNames(reactiveVals$sce)
   if(all(choices == c("counts", "exprs"))){
     choices <- c("Raw" = "counts", "Normalized" = "exprs")
@@ -424,7 +446,6 @@ makeDR <- function(sce, dr_chosen, color_chosen, facet_chosen, assay_chosen, sca
   }else{
     scale <- F
   }
-  #sce <- runDR(sce, dr = dr_chosen, features = feature_chosen, cells = cell_nr, assay = assay_chosen)
   g <- plotDR(sce, dr = dr_chosen, color_by = color_chosen, facet_by = facet_chosen, assay = assay_chosen, scale = scale)
   return(g)
 }

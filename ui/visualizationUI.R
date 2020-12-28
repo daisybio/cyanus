@@ -41,7 +41,10 @@ visbody <- function(){
   
   plotBox <- shinydashboard::box(
     fluidRow(
-      shinycssloaders::withSpinner(plotOutput("visPlot")),
+      box(shinycssloaders::withSpinner(plotlyOutput("visPlot", width = "90%")), 
+          id = "imageBox",
+          title = "Plot",
+          width = 8),
       uiOutput("plotInfo")
     ),
     id = "visPlotBox",
