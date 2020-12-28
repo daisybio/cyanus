@@ -150,7 +150,7 @@ observeEvent(input$startDimRed, {
         caption = "UMAP Run Features",
         caption.placement = "top"
       )
-    }else if(method == "T-SNE"){
+    }else if(method == "TSNE"){
       value <- renderTable(
         checkNullTable(reactiveVals$tsneDF),
         caption = "T-SNE Run Features",
@@ -185,7 +185,7 @@ plotData <- eventReactive(input$startDimRed, {
   
   if(method == "UMAP"){
     g <- makeDR(sceObj, "UMAP", color, facet, assay, scale)
-  }else if(method == "T-SNE"){
+  }else if(method == "TSNE"){
     g <- makeDR(sceObj, "TSNE", color, facet, assay, scale)
   }else if(method == "PCA"){
     g <- makeDR(sceObj, "PCA", color, facet, assay, scale)
