@@ -6,15 +6,6 @@ observeEvent(input$startClustering, {
   shinyjs::disable("clusteringInputs")
   shinyjs::disable("clusteringOutput")
   
-  
-  # TODO: remove this
-  reactiveVals$sce <-
-    prepData(
-      "extdata/PBMC/PBMC8_fcs_files/",
-      readRDS("data/pbmc/panel.rds"),
-      readRDS("data/pbmc/md.rds")
-    )
-  
   if (input$clusteringMethod == "flowSOM") {
     if (input$useFeatures == "Choose All")
       features <- NULL
@@ -32,11 +23,9 @@ observeEvent(input$startClustering, {
                "startClustering",
                label = " Start Clustering",
                disabled = FALSE)
-})
-
-observeEvent(input$plotClusterExpr, {
-  #TODO: plot exproutput
-  browser()
+  updateButton(session, "continue", label = " Differential Expression Analysis")
+  shinyjs::show("continue")
+  runjs("document.getElementById('continue').scrollIntoView();")
 })
 
 output$k <- renderUI({
@@ -149,17 +138,19 @@ output$dimReduction <- renderUI({
     stop("which clustermethod was chosen?")
 })
 
-output$delta_area <- renderPlot({
+output$delta_area <- renderUI({
   if (!"delta_area" %in% names(metadata(reactiveVals$sce)))
     return(NULL)
   
-  CATALYST::delta_area(reactiveVals$sce)
+  shinydashboard::box(renderPlot(CATALYST::delta_area(reactiveVals$sce)),
+                      title = "Delta Area",
+                      width = 12)
 })
 
 output$clusterSizes <- renderTable({
   res <-
     as.data.frame(table(cluster_ids(reactiveVals$sce, input$clusterCode)))
-  names(res) <- c("ClusterID", "Size")
+  names(res) <- c("Cluster", "Size")
   res
 })
 
@@ -169,26 +160,22 @@ output$clusterExprsPlot <- renderPlot({
 })
 
 output$clusterHeatmapPlot <- renderPlot({
-  CATALYST::plotClusterHeatmap(reactiveVals$sce,
-                               k = input$clusterCode) # TODO: implement other parameters
+  CATALYST::plotFreqHeatmap(reactiveVals$sce,
+                            k = input$clusterCode) # TODO: implement other parameters
 })
 
-output$clusterExprs <- renderUI({
-  fluidRow(
+output$clusterOverview <- renderUI({
+  div(column(
     selectInput("clusterCode",
                 "Clusters",
                 rev(names(
                   cluster_codes(reactiveVals$sce)
                 )),
-                selected = input$k),
-    uiOutput("clusterSizes"),
-    bsButton("plotClusterExpr",
-             "Plot Cluster Expression"),
-    tabsetPanel(
-      tabPanel("Densities", plotOutput("clusterExprsPlot")),
-      tabPanel("Heatmap", plotOutput("clusterHeatmapPlot"))
-    )
-  )
+                selected = isolate(input$k)),
+    withSpinner(uiOutput("clusterSizes")),
+    width = 2
+  ),
+  column(withSpinner(uiOutput("delta_area")), width = 10))
 })
 
 
@@ -196,26 +183,37 @@ output$clusteringOutput <- renderUI({
   if (!"cluster_id" %in% names(colData(reactiveVals$sce)))
     return(NULL)
   
-  shinydashboard::box(fluidRow(uiOutput("clusterExprs")),
-                      fluidRow(plotOutput("delta_area")),
-                      title = "Clustering Visualization",
-                      width = 12)
+  shinydashboard::box(
+    fluidRow(uiOutput("clusterOverview")),
+    fluidRow(
+      shinydashboard::tabBox(
+        tabPanel("Densities", withSpinner(plotOutput(
+          "clusterExprsPlot"
+        ))),
+        tabPanel("Heatmap", withSpinner(plotOutput(
+          "clusterHeatmapPlot"
+        ))),
+        title = "Cluster Visualization",
+        width = 12
+      )
+    ),
+    title = "Clustering Results",
+    width = 12
+  )
 })
 
 output$parameters <- renderUI({
-  (
-    shinydashboard::box(
-      column(uiOutput("k"),
-             uiOutput("xdim"),
-             uiOutput("ydim"), width = 6),
-      column(
-        uiOutput("useFeatures"),
-        uiOutput("featuresOut"),
-        uiOutput("dimReduction"),
-        width = 6
-      ),
-      title = "Choose Clustering Parameters",
-      width = 9
-    )
+  shinydashboard::box(
+    column(uiOutput("k"),
+           uiOutput("xdim"),
+           uiOutput("ydim"), width = 6),
+    column(
+      uiOutput("useFeatures"),
+      uiOutput("featuresOut"),
+      uiOutput("dimReduction"),
+      width = 6
+    ),
+    title = "Choose Clustering Parameters",
+    width = 10
   )
 })
