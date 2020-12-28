@@ -1,9 +1,7 @@
 tabs <- list(
-  menuItem(
-    "Welcome",
-    tabName = tab_ids[1],
-    icon = icon("home")
-  ),
+  menuItem("Welcome",
+           tabName = tab_ids[1],
+           icon = icon("home")),
   menuItem(
     "Get Started",
     tabName = tab_ids[2],

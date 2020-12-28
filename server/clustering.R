@@ -4,6 +4,8 @@ observeEvent(input$startClustering, {
                label = " Clustering...",
                disabled = TRUE)
   shinyjs::disable("clusteringInputs")
+  shinyjs::disable("clusteringOutput")
+  
   
   # TODO: remove this
   reactiveVals$sce <-
@@ -18,17 +20,23 @@ observeEvent(input$startClustering, {
       features <- NULL
     else
       features <- isolate(input$featuresIn)
-    reactiveVals$sce <- cluster(reactiveVals$sce,
-                                features,
-                                input$xdim,
-                                input$ydim,
-                                input$k)
+    reactiveVals$sce <- CATALYST::cluster(reactiveVals$sce,
+                                          features,
+                                          input$xdim,
+                                          input$ydim,
+                                          input$k)
   }
   shinyjs::enable("clusteringInputs")
+  shinyjs::enable("clusteringOutput")
   updateButton(session,
                "startClustering",
                label = " Start Clustering",
                disabled = FALSE)
+})
+
+observeEvent(input$plotClusterExpr, {
+  #TODO: plot exproutput
+  browser()
 })
 
 output$k <- renderUI({
@@ -141,12 +149,55 @@ output$dimReduction <- renderUI({
     stop("which clustermethod was chosen?")
 })
 
+output$delta_area <- renderPlot({
+  if (!"delta_area" %in% names(metadata(reactiveVals$sce)))
+    return(NULL)
+  
+  CATALYST::delta_area(reactiveVals$sce)
+})
+
+output$clusterSizes <- renderTable({
+  res <-
+    as.data.frame(table(cluster_ids(reactiveVals$sce, input$clusterCode)))
+  names(res) <- c("ClusterID", "Size")
+  res
+})
+
+output$clusterExprsPlot <- renderPlot({
+  CATALYST::plotClusterExprs(reactiveVals$sce,
+                             k = input$clusterCode)#, features = TODO: implement)
+})
+
+output$clusterHeatmapPlot <- renderPlot({
+  CATALYST::plotClusterHeatmap(reactiveVals$sce,
+                               k = input$clusterCode) # TODO: implement other parameters
+})
+
+output$clusterExprs <- renderUI({
+  fluidRow(
+    selectInput("clusterCode",
+                "Clusters",
+                rev(names(
+                  cluster_codes(reactiveVals$sce)
+                )),
+                selected = input$k),
+    uiOutput("clusterSizes"),
+    bsButton("plotClusterExpr",
+             "Plot Cluster Expression"),
+    tabsetPanel(
+      tabPanel("Densities", plotOutput("clusterExprsPlot")),
+      tabPanel("Heatmap", plotOutput("clusterHeatmapPlot"))
+    )
+  )
+})
+
+
 output$clusteringOutput <- renderUI({
   if (!"cluster_id" %in% names(colData(reactiveVals$sce)))
     return(NULL)
   
-  browser()
-  shinydashboard::box(renderPlot(delta_area(reactiveVals$sce)),
+  shinydashboard::box(fluidRow(uiOutput("clusterExprs")),
+                      fluidRow(plotOutput("delta_area")),
                       title = "Clustering Visualization",
                       width = 12)
 })

@@ -30,13 +30,15 @@ observeEvent(input$exampleData, {
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
   library(CATALYST)
-  #TODO: check if data was uploaded or example selected
   if (input$chooseDataTab == "dataUpload") {
     reactiveVals$sce <- CATALYST::prepData(
       dirname(input$fcsFiles$datapath)[1],
       reactiveVals$panel,
       reactiveVals$md,
       transform = FALSE
+      #TODO: check if we have other columns
+      #panel_cols = names(reactiveVals$panel),
+      #md_cols = names(reactiveVals$md)
     )
   } else if (input$chooseDataTab == "dataExample") {
     reactiveVals$sce <-

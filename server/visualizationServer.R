@@ -1,4 +1,3 @@
-
 shinyjs::hide("visPlotBox")
 #reactiveVals$sce <- readRDS("data/plateletsSCE1-4.Rds")
 observeEvent(input$markersState, {

@@ -4,8 +4,79 @@ library(flowCore)
 library(ggplot2)
 library(SingleCellExperiment)
 
-exp1 <- list.files("~/Downloads/SystemsBioMedicine/Panorama BM 1-10/", pattern = "*.fcs", full.names = T)
-sce <- prepData(exp1[[1]], transform = T)
+
+transformData <- function (sce, transform, cf=5, ain = "counts", aout = "exprs"){
+  y <- assay(sce, ain)
+  if (transform == "arcsinh"){
+    chs <- channels(sce)
+    stopifnot(is.numeric(cf), cf > 0)
+    if (length(cf) == 1) {
+      int_metadata(sce)$cofactor <- cf
+      cf <- rep(cf, nrow(sce))
+    }
+    else {
+      stopifnot(!is.null(names(cf)), chs %in% names(cf))
+      cf <- cf[match(chs, names(cf))]
+      int_metadata(sce)$cofactor <- cf
+    }
+    fun <- asinh
+    op <- "/"
+    y <- fun(sweep(y, 1, cf, op))
+  } else if (transform == "log"){
+    y <- log(y+1)
+  }
+  assay(sce, aout, FALSE) <- y
+  sce
+}
+
+
+
+exp1 <- list.files("/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/MouseData/fcs/", pattern = "*.fcs", full.names = T)
+sceT <- prepData(exp1, transform = T)
+sce_no_transform <- prepData(exp1,transform=F)
+test <- transformData(sce_no_transform,"log")
+assayNames(test)
+
+
+f <- unique(rowData(sce)$marker_class)
+
+features <- c("all",as.character(unique(rowData(sce)$marker_class)))
+
+names(colData(sce))
+
+assayNames(sce)
+
+sceT
+
+unique(rowData(sce)$marker_class)
+
+scelevels(rowData(sce)$marker_class)
+
+assays(sceT)$counts[1]
+assays(sceT)$exprs[1]
+
+assays(transformData(sce,"log"))$exprs[1]
+assays(sce)$counts[1]
+
+names(colData(sce))
+o <- names(colData(sce))
+test <- c(o,no=NULL)
+
+
+
+names(channels(sce))
+print(unique(sample_ids(sce)))
+
+## todo:
+levels(sample_ids(sce))
+
+plotCounts(sce, group_by="sample_id", color_by=NULL)
+plotNRS(sce,features="state", color_by="sample_id", assay=NULL)
+
+plotExprs(sce, group_by="sample_id")
+
+plotExprHeatmap(sce)
+
 chs <- c("DNA1", "DNA2")
 plotScatter(sce, chs)
 
