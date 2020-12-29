@@ -1,62 +1,55 @@
 # Preprocessing Tab
 
 preprocessingBody <- function() {
+  
   transform_height <- "15em"
-  marker_sample_height <- "20em"
+  marker_sample_height <- "25em"
   panel_height <- "40em"
   plot_height <- "35em"
   
   # box with transformations: arcsinh, log or none
   transformationBox <- shinydashboard::box(
-    prettyRadioButtons(
-      inputId = "transformation",
-      label = "Possible transformations:",
-      choices = c("no", "log", "arcsinh"),
-      selected = "no",
-      icon = icon("check"),
-      outline = TRUE
-    ),
+    textInput("cofactor", "Cofactor:", value ="5"),
     div(
       bsButton(
         "prepButton",
         "Start Transformation",
-        icon = icon("border-none"),
+        icon = icon("tools"),
         style = "success"
       ),
       style = "float: right;"
     ),
-    title = "Choose Transformation",
+    title = span("Choose Cofactor for Arcsinh Transformation", icon("question-circle"), id = "cofactor"),
     height = transform_height,
-    width = 6
+    width = 12
   )
   
-  # box for specifying cofactor when selecting arcsinh transformation
-  cofactorBox <- conditionalPanel(
-    condition = "input.transformation=='arcsinh'",
-    shinydashboard::box(
-      textInput("cofactor", "Cofactor:", value =
-                  "5"),
-      title = "Choose Cofactor of Arcsinh transformation",
-      height = transform_height,
-      width = 6
+  cofactorPopover <- 
+    bsPopover(
+      id = "cofactor",
+      title = "Cofactor of the inverse hyperbolic sine transformation",
+      content = "Recommended values for the cofactor parameter are 5 for mass cytometry (CyTOF) or 150 for fluorescence flow cytometry."
     )
-  )
   
-  # box with markers (all markers selected by default)
-  markersBox <- shinydashboard::box(
+  # box with markers, samples and patients (all markers, patients, samples selected by default)
+  selectingBox <- shinydashboard::box(
     uiOutput("markersBox"),
-    title = "Select Markers",
+    uiOutput("samplesBox"),
+    uiOutput("patientsBox"),
+    div(
+      bsButton(
+        "prepVisButton",
+        "Visualize Selection",
+        icon = icon("palette"),
+        style = "success"
+      ),
+      style = "float: right;"
+    ),
+    title = "Select Markers, Samples and Patients",
     height = marker_sample_height,
-    width = 6
+    width = 12
   )
   
-  # box with samples (all samples selected by default)
-  samplesBox <- shinydashboard::box(
-    uiOutput("samplesBox"),
-    title = "Select Samples",
-    height = marker_sample_height,
-    width = 6
-  )
   
   # box for counts plots
   countsBox <- shinydashboard::box(
@@ -110,10 +103,10 @@ preprocessingBody <- function() {
     )),
     
     # box for selecting transformations
-    fluidRow(transformationBox, cofactorBox),
+    fluidRow(transformationBox, cofactorPopover),
     
     # box selecting markers and box selecting samples
-    fluidRow(markersBox, samplesBox),
+    fluidRow(selectingBox),
     
     # tabBox with simple visualization plots
     fluidRow(
