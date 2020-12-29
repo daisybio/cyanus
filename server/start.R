@@ -13,12 +13,26 @@ observeEvent(input$fcsFiles, {
 })
 
 observeEvent(input$metaFile, {
-  reactiveVals$md <- read.table(input$metaFile$datapath, header = T, sep = ",")
+  if(endsWith(input$metaFile$datapath, ".csv")){
+    reactiveVals$md <- read.table(input$metaFile$datapath, header = T, sep = ",")
+  }else if(endsWith(input$metaFile$datapath, ".xls") | 
+           endsWith(input$metaFile$datapath, ".xlsx")){
+    library(xlsx)
+    showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
+    reactiveVals$md <- read.xlsx2(input$metaFile$datapath, 1)
+  }
 })
 
 observeEvent(input$panelFile, {
-  reactiveVals$panel <-
-    read.table(input$panelFile$datapath, header = T, sep = ",")
+  if(endsWith(input$panelFile$datapath, ".csv")){
+    reactiveVals$panel <-
+      read.table(input$panelFile$datapath, header = T, sep = ",")
+  }else if(endsWith(input$panelFile$datapath, ".xls") | 
+            endsWith(input$panelFile$datapath, ".xlsx")){
+    library(xlsx)
+    showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
+    reactiveVals$panel <- read.xlsx2(input$panelFile$datapath, 1)
+  }
 })
 
 observeEvent(input$exampleData, {

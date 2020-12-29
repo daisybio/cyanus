@@ -20,7 +20,7 @@ startBody <- function() {
     fileInput(
       "metaFile",
       "Choose Metadata File (optional)",
-      accept = c(".csv")
+      accept = c(".csv", ".xlsx", ".xls")
     ),
     title = span("Upload Metadata", icon("question-circle"), id = "metaQ"),
     height = box_height,
@@ -30,14 +30,14 @@ startBody <- function() {
   metaPopover <- 
     bsPopover(
       id = "metaQ",
-      title = "A CSV file with headers describing the experiment",
+      title = "A CSV or Excel file with headers describing the experiment",
       content = "e.g. 4 columns:<br>file_name,sample_id,patient_id,condition<br>file_name: the FCS file name<br>sample_id: a unique sample identifier<br>patient_id: the patient ID<br>condition: brief sample description (e.g. reference/stimulated, healthy/diseased)<br><b>Example: Check out the PBMC Example Data</b>"
     )
   
   panelUploadBox <- shinydashboard::box(
     fileInput("panelFile",
               "Choose Panel File (optional)",
-              accept = c(".csv")),
+              accept = c(".csv", ".xlsx", ".xls")),
     title = span("Upload Panel Data", icon("question-circle"), id = "panelQ"),
     height = box_height,
     width = 3
@@ -46,7 +46,7 @@ startBody <- function() {
   panelPopover <- 
     bsPopover(
       id = "panelQ",
-      title = "A CSV file with headers describing the panel",
+      title = "A CSV or Excel file with headers describing the panel",
       content = "for each channel:<br>fcs_colname: its column name in the input data<br>antigen: targeted protein marker<br>marker_class: (optionally) class (type, state, or none)<br>i.e.:<br>fcs_colname,antigen[,marker_class]<br><b>Example: Check out the PBMC Example Data</b>"
     )
   
