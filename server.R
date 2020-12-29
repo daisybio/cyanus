@@ -7,7 +7,6 @@ server <- function(input, output, session) {
   
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())
-  
 }
 
 
