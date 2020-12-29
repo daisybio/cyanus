@@ -2,7 +2,7 @@
 
 preprocessingBody <- function() {
   transform_height <- "15em"
-  marker_sample_height <- "20em"
+  marker_sample_height <- "25em"
   panel_height <- "40em"
   plot_height <- "35em"
   
@@ -20,7 +20,7 @@ preprocessingBody <- function() {
       bsButton(
         "prepButton",
         "Start Transformation",
-        icon = icon("border-none"),
+        icon = icon("tools"),
         style = "success"
       ),
       style = "float: right;"
@@ -47,6 +47,15 @@ preprocessingBody <- function() {
     uiOutput("markersBox"),
     uiOutput("samplesBox"),
     uiOutput("patientsBox"),
+    div(
+      bsButton(
+        "prepVisButton",
+        "Visualize Selection",
+        icon = icon("palette"),
+        style = "success"
+      ),
+      style = "float: right;"
+    ),
     title = "Select Markers, Samples and Patients",
     height = marker_sample_height,
     width = 12
