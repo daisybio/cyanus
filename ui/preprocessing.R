@@ -1,6 +1,7 @@
 # Preprocessing Tab
 
 preprocessingBody <- function() {
+  
   transform_height <- "15em"
   marker_sample_height <- "25em"
   panel_height <- "40em"
@@ -8,14 +9,7 @@ preprocessingBody <- function() {
   
   # box with transformations: arcsinh, log or none
   transformationBox <- shinydashboard::box(
-    prettyRadioButtons(
-      inputId = "transformation",
-      label = "Possible transformations:",
-      choices = c("no", "log", "arcsinh"),
-      selected = "no",
-      icon = icon("check"),
-      outline = TRUE
-    ),
+    textInput("cofactor", "Cofactor:", value ="5"),
     div(
       bsButton(
         "prepButton",
@@ -25,22 +19,17 @@ preprocessingBody <- function() {
       ),
       style = "float: right;"
     ),
-    title = "Choose Transformation",
+    title = span("Choose Cofactor for Arcsinh Transformation", icon("question-circle"), id = "cofactor"),
     height = transform_height,
-    width = 6
+    width = 12
   )
   
-  # box for specifying cofactor when selecting arcsinh transformation
-  cofactorBox <- conditionalPanel(
-    condition = "input.transformation=='arcsinh'",
-    shinydashboard::box(
-      textInput("cofactor", "Cofactor:", value =
-                  "5"),
-      title = "Choose Cofactor of Arcsinh transformation",
-      height = transform_height,
-      width = 6
+  cofactorPopover <- 
+    bsPopover(
+      id = "cofactor",
+      title = "Cofactor of the inverse hyperbolic sine transformation",
+      content = "Recommended values for the cofactor parameter are 5 for mass cytometry (CyTOF) or 150 for fluorescence flow cytometry."
     )
-  )
   
   # box with markers, samples and patients (all markers, patients, samples selected by default)
   selectingBox <- shinydashboard::box(
@@ -114,7 +103,7 @@ preprocessingBody <- function() {
     )),
     
     # box for selecting transformations
-    fluidRow(transformationBox, cofactorBox),
+    fluidRow(transformationBox, cofactorPopover),
     
     # box selecting markers and box selecting samples
     fluidRow(selectingBox),
