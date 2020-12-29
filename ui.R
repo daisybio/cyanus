@@ -5,7 +5,7 @@ library(shinycssloaders)
 library(shinyWidgets)
 library(shinyBS)
 library(plotly)
-
+library(DT)
 
 # read all ui files
 

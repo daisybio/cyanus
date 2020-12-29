@@ -45,8 +45,10 @@ observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
   library(CATALYST)
   if (input$chooseDataTab == "dataUpload") {
+    dn <- dirname(input$fcsFiles$datapath)[1]
+    file.rename(input$fcsFiles$datapath, file.path(dn, "/", input$fcsFiles$name))
     reactiveVals$sce <- CATALYST::prepData(
-      dirname(input$fcsFiles$datapath)[1],
+      dn,
       reactiveVals$panel,
       reactiveVals$md,
       transform = FALSE
@@ -55,8 +57,7 @@ observeEvent(input$loadData, {
       #md_cols = names(reactiveVals$md)
     )
   } else if (input$chooseDataTab == "dataExample") {
-    reactiveVals$sce <-
-      readRDS(file.path(input$exampleData, "sce.rds"))
+    reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
   } else
     stop("Which tab is selected?")
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
@@ -65,8 +66,25 @@ observeEvent(input$loadData, {
   runjs("document.getElementById('continue').scrollIntoView();")
 })
 
+
+
+output$panelDT <- renderDT(
+  checkNullTable(reactiveVals$panel),
+  editable = "cell"
+)
+
 output$currentData <- renderInfoBox({
   status <- "warning"
+  if(input$chooseDataTab == "dataUpload"){
+    tableObj <- fluidRow(column(
+      12, h5(HTML("<b style=\"color:grey;\">If you provide a panel, you can alter its cells by double-clicking</b>")), hr(), DTOutput("panelDT")))
+  }else{
+    tableObj <- renderTable(
+      checkNullTable(reactiveVals$panel),
+      caption = "FCS Data",
+      caption.placement = "top"
+    )
+  }
   value <-
     list(
       renderTable(
@@ -74,11 +92,7 @@ output$currentData <- renderInfoBox({
         caption = "FCS Data",
         caption.placement = "top"
       ),
-      renderTable(
-        checkNullTable(reactiveVals$panel),
-        caption = "Panel Data",
-        caption.placement = "top"
-      ),
+      tableObj,
       renderTable(
         checkNullTable(reactiveVals$md),
         caption = "Metadata",
@@ -120,4 +134,8 @@ output$currentData <- renderInfoBox({
   }
   
   shinydashboard::box(value, title = "Selected Data", status = status)
+})
+
+observeEvent(input$panelDT_cell_edit, {
+  reactiveVals$panel <<- editData(reactiveVals$panel, input$panelDT_cell_edit, "panelDT")
 })
