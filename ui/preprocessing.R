@@ -2,7 +2,6 @@
 
 preprocessingBody <- function() {
   
-  transform_height <- "15em"
   marker_sample_height <- "25em"
   panel_height <- "40em"
   plot_height <- "35em"
@@ -20,8 +19,8 @@ preprocessingBody <- function() {
       style = "float: right;"
     ),
     title = span("Choose Cofactor for Arcsinh Transformation", icon("question-circle"), id = "cofactor"),
-    height = transform_height,
-    width = 12
+    height = marker_sample_height,
+    width = 6
   )
   
   cofactorPopover <- 
@@ -47,7 +46,7 @@ preprocessingBody <- function() {
     ),
     title = "Select Markers, Samples and Patients",
     height = marker_sample_height,
-    width = 12
+    width = 6
   )
   
   
@@ -102,12 +101,10 @@ preprocessingBody <- function() {
       width = 12
     )),
     
-    # box for selecting transformations
-    fluidRow(transformationBox, cofactorPopover),
+    # box for selecting transformation, markers, patients and samples
+    fluidRow(transformationBox, cofactorPopover, selectingBox),
     
-    # box selecting markers and box selecting samples
-    fluidRow(selectingBox),
-    
+
     # tabBox with simple visualization plots
     fluidRow(
       id = "plots",
