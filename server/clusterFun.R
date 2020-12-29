@@ -110,7 +110,7 @@ clusterSCE <-
     if (method == "flowSOM") {
       if (verbose)
         message("o running FlowSOM clustering...")
-      fsom <- ReadInput(flowCore::flowFrame(t(assay(x, assayType))))
+      fsom <- FlowSOM::ReadInput(flowCore::flowFrame(t(assay(x, assayType))))
       som <- FlowSOM::BuildSOM(
         fsom,
         colsToUse = features,

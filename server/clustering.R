@@ -7,10 +7,7 @@ observeEvent(input$startClustering, {
                "startClustering",
                label = " Clustering...",
                disabled = TRUE)
-  shinyjs::disable("clusteringInputs")
-  shinyjs::disable("clusteringOutput")
-  shinyjs::disable("clusteringVisualizationSelection")
-  shinyjs::disable("sidebar")
+  toggle_inputs()
   
   reactiveVals$sce <-
     clusterSCE(
@@ -23,10 +20,7 @@ observeEvent(input$startClustering, {
       input$k
     )
   
-  shinyjs::enable("clusteringInputs")
-  shinyjs::enable("clusteringOutput")
-  shinyjs::enable("clusteringVisualizationSelection")
-  shinyjs::enable("sidebar")
+  toggle_inputs(enable_inputs = TRUE)
   updateButton(session, "startClustering", label = " Start Clustering", disabled = FALSE)
   updateButton(session, "continue", label = " Differential Expression Analysis")
   shinyjs::show("continue")
