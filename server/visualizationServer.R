@@ -40,7 +40,7 @@ observeEvent(input$classes, {
   }
 })
 
-observeEvent(input$selectedRunMethod, {a
+observeEvent(input$selectedRunMethod, {
   if(!is.null(reactiveVals$useClassesRun)){
     if(input$selectedRunMethod != "" & reactiveVals$useClassesRun){
       updateButton(session, "runDRButton", disabled = FALSE)
@@ -50,6 +50,11 @@ observeEvent(input$selectedRunMethod, {a
     if(input$selectedRunMethod != "" & reactiveVals$useMarkersRun){
       updateButton(session, "runDRButton", disabled = FALSE)
     }
+  }
+  if(input$selectedRunMethod == "Isomap"){
+    shinyjs::show("isobox")
+  }else{
+    shinyjs::hide("isobox")
   }
 })
 
@@ -79,7 +84,7 @@ observeEvent(input$runDRButton, {
                          cells = input$nrCellsRun,
                          scale = input$scaleRun)
     runCatalystDR("UMAP", input$nrCellsRun, reactiveVals$featuresDR, 
-                  input$assayRunSelected, input$scaleRun)
+                  input$assayRunSelected, input$scaleRun, NULL)
   }else if(input$selectedRunMethod == "T-SNE"){
     reactiveVals$tsneDF <- data.frame(method = "TSNE",
                                       features = toString(reactiveVals$featuresDR),
@@ -87,7 +92,7 @@ observeEvent(input$runDRButton, {
                                       cells = input$nrCellsRun,
                                       scale = input$scaleRun)
     runCatalystDR("TSNE", input$nrCellsRun, reactiveVals$featuresDR, 
-                  input$assayRunSelected, input$scaleRun)
+                  input$assayRunSelected, input$scaleRun, NULL)
   }else if(input$selectedRunMethod == "PCA"){
     reactiveVals$pcaDF <- data.frame(method = "PCA",
                                       features = toString(reactiveVals$featuresDR),
@@ -95,7 +100,7 @@ observeEvent(input$runDRButton, {
                                       cells = input$nrCellsRun,
                                       scale = input$scaleRun)
     runCatalystDR("PCA", input$nrCellsRun, reactiveVals$featuresDR, 
-                  input$assayRunSelected, input$scaleRun)
+                  input$assayRunSelected, input$scaleRun, NULL)
   }else if(input$selectedRunMethod == "MDS"){
     reactiveVals$mdsDF <- data.frame(method = "MDS",
                                      features = toString(reactiveVals$featuresDR),
@@ -103,7 +108,7 @@ observeEvent(input$runDRButton, {
                                      cells = input$nrCellsRun,
                                      scale = input$scaleRun)
     runCatalystDR("MDS", input$nrCellsRun, reactiveVals$featuresDR, 
-                  input$assayRunSelected, input$scaleRun)
+                  input$assayRunSelected, input$scaleRun, NULL)
   }else if(input$selectedRunMethod == "DiffusionMap"){
     reactiveVals$diffMapDF <- data.frame(method = "Diffusion Map",
                                      features = toString(reactiveVals$featuresDR),
@@ -111,7 +116,16 @@ observeEvent(input$runDRButton, {
                                      cells = input$nrCellsRun,
                                      scale = input$scaleRun)
     runCatalystDR("DiffusionMap", input$nrCellsRun, reactiveVals$featuresDR, 
-                  input$assayRunSelected, input$scaleRun)
+                  input$assayRunSelected, input$scaleRun, NULL)
+  }else if(input$selectedRunMethod == "Isomap"){
+    reactiveVals$isomapDF <- data.frame(method = "Isomap",
+                                        features = toString(reactiveVals$featuresDR),
+                                        counts = input$assayRunSelected,
+                                        cells = input$nrCellsRun,
+                                        scale = input$scaleRun, 
+                                        k = input$valueGraph)
+    runCatalystDR("Isomap", input$nrCellsRun, reactiveVals$featuresDR, 
+                  input$assayRunSelected, input$scaleRun, input$valueGraph)
   }
   reactiveVals$useMarkersRun <- c()
   reactiveVals$useClassesRun <- c()
@@ -194,6 +208,12 @@ observeEvent(input$startDimRed, {
       value <- renderTable(
         checkNullTable(reactiveVals$diffMapDF),
         caption = "Diffusion Map Run Features",
+        caption.placement = "top"
+      )
+    }else if(method == "Isomap"){
+      value <- renderTable(
+        checkNullTable(reactiveVals$isomapDF),
+        caption = "Isomap Run Features",
         caption.placement = "top"
       )
     }else{
@@ -284,10 +304,11 @@ output$expressionVis <- renderUI({
 output$runDRparBox <- renderUI({
   vis_methods <- c("UMAP", "T-SNE", "PCA", "MDS", "DiffusionMap", "Isomap")
   choices <- assayNames(reactiveVals$sce)
+  
   if(all(choices == c("counts", "exprs"))){
     choices <- c("Raw" = "counts", "Normalized" = "exprs")
   }
-  shinydashboard::box(
+  returnbox <- shinydashboard::box(
     selectizeInput(
       "selectedRunMethod",
       "Visualization method",
@@ -316,7 +337,14 @@ output$runDRparBox <- renderUI({
       label = "Scale ",
       choices = c("yes", "no"), 
       inline = TRUE
-    ), 
+    ), div(id = "isobox",
+           numericInput(
+             "valueGraph",
+             label = "Choose k for the KNN construction",
+             min = 0,
+             value = 5,
+             max = 200
+           )),
     div(
       bsButton(
         "runDRButton",
@@ -329,6 +357,7 @@ output$runDRparBox <- renderUI({
     ),
     width = 12
   )
+  return(returnbox)
 })
 
 output$methodsVis <- renderUI({
@@ -415,12 +444,22 @@ output$facet_by <- renderUI({
   )
 })
 
-runCatalystDR <- function(dr_chosen, cells_chosen, feature_chosen, assay_chosen, scale){
+runCatalystDR <- function(dr_chosen, cells_chosen, feature_chosen, assay_chosen, scale, k){
   if(scale == "yes"){
     scale <- T
   }else{
     scale <- F
   }
+  if(dr_chosen == "Isomap"){
+    reactiveVals$sce <- runIsomap(
+      reactiveVals$sce, 
+      cells = cells_chosen, 
+      features = feature_chosen, 
+      assay = assay_chosen, 
+      scale = scale, 
+      k = k)
+    
+  }else{
   reactiveVals$sce <- runDR(
     reactiveVals$sce, 
     dr = dr_chosen, 
@@ -428,6 +467,7 @@ runCatalystDR <- function(dr_chosen, cells_chosen, feature_chosen, assay_chosen,
                features = feature_chosen, 
                assay = assay_chosen, 
                scale = scale)
+  }
   reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
 }
 
