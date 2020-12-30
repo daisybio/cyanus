@@ -130,6 +130,7 @@ observeEvent(input$runDRButton, {
   reactiveVals$useMarkersRun <- c()
   reactiveVals$useClassesRun <- c()
   enable("visBox")
+  disable("startDimRed")
   enable("continue")
   enable("runDRButton")
 })
@@ -152,8 +153,8 @@ observeEvent(input$scaleVis, {
 
 observeEvent(input$plt_color_by, {
   shinyjs::hide("visPlotBox")
-  if(input$plt_color_by != ""){
-    updateButton(session, "startDimRed", disabled = FALSE)
+  if(input$plt_color_by != "" & input$selectedVisMethod != ""){
+    enable("startDimRed")
   }
 })
 
