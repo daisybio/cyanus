@@ -33,6 +33,5 @@ clusteringBody <- tabItem(
       width = 12
     )
   )),
-  fluidRow(uiOutput("clusteringVisualizationSelection")),
-  fluidRow(uiOutput("clusteringOutput"))
+  fluidRow(uiOutput("clusteringVisualizationSelection"))
 )
