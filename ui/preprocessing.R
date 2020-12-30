@@ -53,42 +53,73 @@ preprocessingBody <- function() {
   # box for counts plots
   countsBox <- shinydashboard::box(
     uiOutput("designCounts"),
-    title = "Barplot showing the numbers of cells measured for each sample",
+    title = span("Counts Plot", icon("question-circle"), id = "counts"),
     width = 12,
     height = plot_height
   )
+  
+  countsPopover <- bsPopover(
+    id = "counts",
+    title = "Barplot showing the numbers of cells measured for each sample.",
+    content = "This plot can be used as a guide to identify samples where not enough cells were assayed."
+  )
+  
   
   # box for mds plots
   mdsBox <- shinydashboard::box(
     uiOutput("designMDS"),
-    title = "MDS plot",
+    title = span("MDS Plot", icon("question-circle"), id = "mds"),
     width = 12,
     height = plot_height
   ) 
   
+  mdsPopover <- bsPopover(
+    id = "mds",
+    title = "Pseudobulk-level Multi-dimensional scaling plot.",
+    content = "Calculations are based on the median marker expression values. Ideally samples should cluster well within the same condition, although this depends on the magnitude of the difference between experimental conditions. With this diagnostic, outlier samples can be identified and eliminated if the circumstances warrant it."
+  )
+  
+
   # box for nrs plots
   nrsBox <- shinydashboard::box(
     uiOutput("designNRS"),
-    title = "NRS plot",
+    title = span("NRS Plot", icon("question-circle"), id = "nrs"),
     width = 12,
     height = plot_height
   ) 
+  
+  nrsPopover <- bsPopover(
+    id = "nrs",
+    title = "Plots non-redundancy scores (NRS) by feature in decreasing order of average NRS across samples.",
+    content = "The full points represent the per-sample NR scores, while empty black circles indicate the mean NR scores from all samples. Markers with higher score explain a larger portion of variability present in a given sample. The average NRS can be used to select a subset of markers that are non-redundant in each sample but at the same time capture the overall diversity between samples."  )
   
   # box for exprs plots
   exprsBox <- shinydashboard::box(
     uiOutput("designExprs"),
-    title = "Exprs",
+    title = span("Expression Densities", icon("question-circle"), id = "exprs"),
     width = 12,
     height = plot_height
   ) 
   
+  exprsPopover <- bsPopover(
+    id = "exprs",
+    title = "Plots smoothed densities of marker intensities, with a density curve for each sample ID.",
+    content = "This plot helps to distinguish markers between conditions.")
+  
+  
   # box for exprs heatmpa plots
   exprsHeatmapBox <- shinydashboard::box(
     uiOutput("designExprsHeatmap"),
-    title = "Heatmap",
+    title = span("Expression Heatmap", icon("question-circle"), id = "exprsHeatmap"),
     width = 12,
     height = plot_height
   )
+  
+  exprsHeatmapPopover <- bsPopover(
+    id = "exprsHeatmap",
+    title = "Heatmap of marker expressions aggregated by sample.",
+    content = "Similar to the MDS plot, a heatmap gives insight into the structure of the data. The heatmap shows the median marker intensities with clustered columns (markers) and rows (samples). This plot shows which markers drive the observed clustering of samples.")
+  
   
   # Preprocessing body
   preprocessingBody <- tabItem(
@@ -109,11 +140,11 @@ preprocessingBody <- function() {
     fluidRow(
       id = "plots",
       tabBox(
-        tabPanel(fluidRow(countsBox), value = "plotCounts", title = "Counts"),
-        tabPanel(fluidRow(mdsBox), value = "plotMDS", title = "MDS"),
-        tabPanel(fluidRow(nrsBox), value = "plotNRS", title = "NRS"),
-        tabPanel(fluidRow(exprsBox), value = "plotExpr", title = "Expr"),
-        tabPanel(fluidRow(exprsHeatmapBox),value = "plotHeatmapExpr",title = "Heatmap"),
+        tabPanel(fluidRow(countsBox, countsPopover), value = "plotCounts", title = "Counts"),
+        tabPanel(fluidRow(mdsBox, mdsPopover), value = "plotMDS", title = "MDS"),
+        tabPanel(fluidRow(nrsBox, nrsPopover), value = "plotNRS", title = "NRS"),
+        tabPanel(fluidRow(exprsBox, exprsPopover), value = "plotExpr", title = "Expr"),
+        tabPanel(fluidRow(exprsHeatmapBox, exprsHeatmapPopover),value = "plotHeatmapExpr",title = "Heatmap"),
         id = "plots",
         title = "Simple Data Visualization",
         width = 12,
