@@ -130,6 +130,7 @@ observeEvent(input$runDRButton, {
   reactiveVals$useMarkersRun <- c()
   reactiveVals$useClassesRun <- c()
   enable("visBox")
+  disable("startDimRed")
   enable("continue")
   enable("runDRButton")
 })
@@ -152,8 +153,8 @@ observeEvent(input$scaleVis, {
 
 observeEvent(input$plt_color_by, {
   shinyjs::hide("visPlotBox")
-  if(input$plt_color_by != ""){
-    updateButton(session, "startDimRed", disabled = FALSE)
+  if(input$plt_color_by != "" & input$selectedVisMethod != ""){
+    enable("startDimRed")
   }
 })
 
@@ -240,6 +241,16 @@ plotData <- function(sceObj, method, color, facet, assay, scale){
   return(g)
 }
 
+observeEvent(input$radioButtonsColor, {
+  if(input$radioButtonsColor == "expression"){
+    shinyjs::show("assayVis")
+    shinyjs::show("scaleVis")
+  }else{
+    shinyjs::hide("assayVis")
+    shinyjs::hide("scaleVis")
+  }
+})
+
 output$markerClassVis <- renderUI({
   classes <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
   choices <- c(as.vector(classes), "All features")
@@ -256,8 +267,13 @@ output$markerClassVis <- renderUI({
         multiple = FALSE
       ), 
       id = "classBoxVis",
-      title = "Select Class", 
-      width = 12),
+      title = span("Select Class", icon("question-circle"), id = "classQ"), 
+      width = 12), 
+    bsPopover(
+      id = "classQ",
+      title = "Compute your dimensionality reduction using all data or just a subclass of markers",
+      content = "The dimensionality reduction can be computed using all the data (By Marker Class -> All features), using just a certain marker class like \"type\" or using a subset of markers (By Marker). In order to obtain a meaningful visualization, you should choose the marker class that captures best how dissimilar your cells are."
+    )
   )
 })
 
@@ -295,11 +311,17 @@ output$expressionVis <- renderUI({
       multiple = TRUE
     ), 
     id = "markerBoxVis",
-    title = "Select Markers",
+    title = span("Select Markers", icon("question-circle"), id = "markersQ"),
     width = 12
+  ), 
+  bsPopover(
+    id = "markersQ",
+    title = "Compute your dimensionality reduction using all data or just a subclass of markers",
+    content = "Choose the markers that capture best how dissimilar your cells are. The dimensionality reduction can be computed using all the data (By Marker Class -> All features), using just a certain marker class like \"type\" or using a subset of markers (By Marker)."
   )
   )
 })
+
 
 output$runDRparBox <- renderUI({
   vis_methods <- c("UMAP", "T-SNE", "PCA", "MDS", "DiffusionMap", "Isomap")
@@ -311,7 +333,7 @@ output$runDRparBox <- renderUI({
   returnbox <- shinydashboard::box(
     selectizeInput(
       "selectedRunMethod",
-      "Visualization method",
+      "Dimensionality Reduction Method",
       vis_methods,
       options = list(
         placeholder = "Select your method",
@@ -320,30 +342,46 @@ output$runDRparBox <- renderUI({
     ), 
     selectizeInput(
       "assayRunSelected",
-      "Do you want to use raw counts or the normalization?",
+      label = "Do you want to use raw counts or the normalization?",
       choices = choices,
       multiple = FALSE
     ),
     numericInput(
       "nrCellsRun",
-      label = sprintf("From how many cells do you want to sample (all: %s)?", dim(reactiveVals$sce)[2]),
+      label = span(sprintf("From how many cells do you want to sample (all: %s)?", dim(reactiveVals$sce)[2]), icon("question-circle"), id = "cellQ"),
       value = 100,
       min = 0,
       max = dim(reactiveVals$sce)[2],
       step = 100
+    ), 
+    bsPopover(
+      id = "cellQ",
+      title = "Speed up your computations",
+      content = "Specify the maximal number of cells per sample to use for dimension reduction, e.g. 100. Then, from each sample 100 cells are randomly taken in order to compute the dimensionality reduction. This is considerably faster than computing the dimensionality reduction for all cells available. If you specify high values that exceed the number of cells per sample, all cells will be taken."
     ),
     radioButtons(
       inputId = "scaleRun",
-      label = "Scale ",
+      label = span("Scale ",  icon("question-circle"), id = "scaleQ"),
       choices = c("yes", "no"), 
       inline = TRUE
-    ), div(id = "isobox",
-           numericInput(
+    ), 
+    bsPopover(
+      id = "scaleQ",
+      title = "Should the expression values be standardized?",
+      content = "Run the dimensionality reduction either with standardized or unchanged counts / expression values"
+    ),
+    div(id = "isobox",
+           fluidRow(numericInput(
              "valueGraph",
-             label = "Choose k for the KNN construction",
+             label = span("Choose k for the KNN construction", icon("question-circle"), id = "kQ"),
              min = 0,
              value = 5,
              max = 200
+           )),
+           bsPopover(
+             id = "kQ", 
+             title = "Special parameter for Isomap",
+             content = "Isomap approximates a manifold using geodesic distances on a k nearest neighbor graph. You can specify k here, the number of nearest neighbors in the graph. "
            )),
     div(
       bsButton(
@@ -362,14 +400,20 @@ output$runDRparBox <- renderUI({
 
 output$methodsVis <- renderUI({
   vis_methods <- reactiveVals$availableDRs
-  selectizeInput(
-    "selectedVisMethod",
-    "Visualization method",
+  div(selectizeInput(
+    inputId = "selectedVisMethod",
+    label = span("Dimensionality Reduction Method", icon("question-circle"), id = "drVisQ"),
     vis_methods,
     options = list(
       placeholder = "Select how you want to visualize your data",
       onInitialize = I("function() { this.setValue(''); }")
     )
+  ),
+  bsPopover(
+    id = "drVisQ", 
+    title = "Available Dimensionality Reductions",
+    content = "Here, the dimensionality reductions you already ran are displayed. If you run the same dimensionality reduction twice with different parameters, the old one will be overwritten."
+  )
   )
 })
 
@@ -380,12 +424,19 @@ output$assayVis <- renderUI({
   if(all(choices == c("counts", "exprs"))){
     choices <- c("Raw" = "counts", "Normalized" = "exprs")
   }
-  return(selectizeInput(
+  return(div(selectizeInput(
     "assayVisSelected",
-    "Do you want to use raw counts or the normalization?",
+    label = span("Do you want to use raw counts or the normalization?", icon("question-circle"), id = "assayQ"),
     choices = choices,
     multiple = FALSE
-  ))
+  ), 
+  bsPopover(
+    id = "assayQ", 
+    title = "For coloring by expression",
+    content = "When you color by marker expression, the colors will either correspond to the raw counts or the normalized counts."
+  )
+  )
+  )
 })
 
 output$color_by <- renderUI({
@@ -420,7 +471,7 @@ output$selectColorBy <- renderUI({
         label = "Color by: ",
         choices = choices,
         options = list(
-          placeholder = "Select your coloring or nothing",
+          placeholder = "Select your coloring",
           onInitialize = I("function() { this.setValue(''); }")
         ),
         multiple = FALSE

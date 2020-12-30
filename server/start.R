@@ -37,16 +37,26 @@ observeEvent(input$panelFile, {
 
 observeEvent(input$exampleData, {
   reactiveVals$fcs <- readRDS(file.path(input$exampleData, "fcs.rds"))
-  reactiveVals$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
-  reactiveVals$md <- readRDS(file.path(input$exampleData, "md.rds"))
+  if (input$exampleData=="data/pbmc"){
+    reactiveVals$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
+    reactiveVals$md <- readRDS(file.path(input$exampleData, "md.rds"))
+  } else if (input$exampleData=="data/platelets"){
+    reactiveVals$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
+    reactiveVals$md <- NULL
+  } else if (input$exampleData=="data/mousedata"){
+    reactiveVals$md <- NULL
+    reactiveVals$panel <- NULL
+  }
 }, ignoreInit = TRUE)
 
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
   library(CATALYST)
   if (input$chooseDataTab == "dataUpload") {
+    dn <- dirname(input$fcsFiles$datapath)[1]
+    file.rename(input$fcsFiles$datapath, file.path(dn, "/", input$fcsFiles$name))
     reactiveVals$sce <- CATALYST::prepData(
-      dirname(input$fcsFiles$datapath)[1],
+      dn,
       reactiveVals$panel,
       reactiveVals$md,
       transform = FALSE
@@ -55,8 +65,7 @@ observeEvent(input$loadData, {
       #md_cols = names(reactiveVals$md)
     )
   } else if (input$chooseDataTab == "dataExample") {
-    reactiveVals$sce <-
-      readRDS(file.path(input$exampleData, "sce.rds"))
+    reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
   } else
     stop("Which tab is selected?")
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
@@ -65,8 +74,25 @@ observeEvent(input$loadData, {
   runjs("document.getElementById('continue').scrollIntoView();")
 })
 
+
+
+output$panelDT <- renderDT(
+  checkNullTable(reactiveVals$panel),
+  editable = "cell"
+)
+
 output$currentData <- renderInfoBox({
   status <- "warning"
+  if(input$chooseDataTab == "dataUpload"){
+    tableObj <- fluidRow(column(
+      12, h5(HTML("<b style=\"color:grey;\">If you provide a panel, you can alter its cells by double-clicking</b>")), hr(), DTOutput("panelDT")))
+  }else{
+    tableObj <- renderTable(
+      checkNullTable(reactiveVals$panel),
+      caption = "FCS Data",
+      caption.placement = "top"
+    )
+  }
   value <-
     list(
       renderTable(
@@ -74,11 +100,7 @@ output$currentData <- renderInfoBox({
         caption = "FCS Data",
         caption.placement = "top"
       ),
-      renderTable(
-        checkNullTable(reactiveVals$panel),
-        caption = "Panel Data",
-        caption.placement = "top"
-      ),
+      tableObj,
       renderTable(
         checkNullTable(reactiveVals$md),
         caption = "Metadata",
@@ -93,19 +115,44 @@ output$currentData <- renderInfoBox({
   else if (input$chooseDataTab == "dataExample" &
            input$exampleData != "") {
     status <- "success"
+    
+    if (input$exampleData=="data/pbmc"){
+      exampleData <- "PBMC"
+      infoText <- "Data with PBMCs samples from 6 patients.For each sample, the expression of 10 cell surface and 14 signaling markers was measured before (REF) and upon BCR/FcR-XL stimulation (BCRXL) with B cell receptor/ Fc receptor crosslinking for 30', resulting in a total of 12 samples."
+      paper <- "Bodenmiller B, Zunder ER, Finck R, et al. Multiplexed mass cytometry profiling of cellular states perturbed by small-molecule regulators. Nat Biotechnol. 2012;30(9):858-867. doi:10.1038/nbt.2317"
+      doiLink <- "https://doi.org/10.1038/nbt.2317"
+    } else if (input$exampleData=="data/mousedata"){
+      exampleData <- "Mouse"
+      infoText <- "Data from 10 replicates of mice bone marrow cells. A total of about 840 000 cells were measured using a CyTOF panel of N = 39 markers. "
+      paper <- "Samusik N, Good Z, Spitzer MH, Davis KL, Nolan GP. Automated mapping of phenotype space with single-cell data. Nat Methods. 2016;13(6):493-496. doi:10.1038/nmeth.3863"
+      doiLink <- "https://doi.org/10.1038/nmeth.3863"
+    } else if (input$exampleData=="data/platelets"){
+      exampleData <- "Platelets"
+      infoText <- "Data from human platelets of patients with chronic coronary syndrome undergoing different therapy: dual antiplatelet therapy versus triple antiplatelet therapy, before and after platelet activation with 10µm TRAP. There are files of 7 patients with triple therapy and 12 patients with dual therapy (each in two condtions)."
+      paper <- ""
+      doiLink <- ""
+    }
+    
     value <-
-      c(list(div(
-        sprintf(
-          "Found %s: %s",
-          input$exampleData,
-          file.exists(input$exampleData)
-        )
+      c(list(
+        #div(
+        #sprintf(
+         # "Found %s: %s",
+         # input$exampleData,
+         # file.exists(input$exampleData)
+        #)
+      #),
+      strong(sprintf("Info about %s Data :", exampleData)),
+      div(infoText),
+      a(href=doiLink,paper)
+    
       ),
-      div(
-        sprintf("info about %s", input$exampleData)
-      )),
       value)
+    
+    
+    
   }
+  
   if (status == "success") {
     value <- c(list(
       bsButton(
@@ -120,4 +167,8 @@ output$currentData <- renderInfoBox({
   }
   
   shinydashboard::box(value, title = "Selected Data", status = status)
+})
+
+observeEvent(input$panelDT_cell_edit, {
+  reactiveVals$panel <<- editData(reactiveVals$panel, input$panelDT_cell_edit, "panelDT")
 })
