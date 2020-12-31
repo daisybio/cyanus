@@ -29,6 +29,17 @@ tabs <- list(
   )
 )
 
+toggle_inputs <- function(enable_inputs = FALSE, input_list = input)
+{
+  # Toggle elements
+  for (x in names(input_list))
+    if (enable_inputs) {
+      shinyjs::enable(x)
+    } else {
+      shinyjs::disable(x)
+    }
+}
+
 observeEvent(input$continue, {
   reactiveVals$current_tab <- reactiveVals$current_tab + 1
   shinyjs::hide("continue")
