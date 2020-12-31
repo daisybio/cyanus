@@ -37,16 +37,8 @@ observeEvent(input$panelFile, {
 
 observeEvent(input$exampleData, {
   reactiveVals$fcs <- readRDS(file.path(input$exampleData, "fcs.rds"))
-  if (input$exampleData=="data/pbmc"){
-    reactiveVals$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
-    reactiveVals$md <- readRDS(file.path(input$exampleData, "md.rds"))
-  } else if (input$exampleData=="data/platelets"){
-    reactiveVals$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
-    reactiveVals$md <- NULL
-  } else if (input$exampleData=="data/mousedata"){
-    reactiveVals$md <- NULL
-    reactiveVals$panel <- NULL
-  }
+  reactiveVals$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
+  reactiveVals$md <- readRDS(file.path(input$exampleData, "md.rds"))
 }, ignoreInit = TRUE)
 
 observeEvent(input$loadData, {
@@ -115,41 +107,8 @@ output$currentData <- renderInfoBox({
   else if (input$chooseDataTab == "dataExample" &
            input$exampleData != "") {
     status <- "success"
-    
-    if (input$exampleData=="data/pbmc"){
-      exampleData <- "PBMC"
-      infoText <- "consisting of paired samples of healthy peripheral blood mononuclear cells (PBMCs), where one sample from each pair was stimulated with B cell receptor / Fc receptor cross-linker (BCR-XL). The dataset contains 16 samples (8 paired samples); a total of 172,791 cells; and a total of 24 protein markers."
-      paper <- "Bodenmiller B, Zunder ER, Finck R, et al. Multiplexed mass cytometry profiling of cellular states perturbed by small-molecule regulators. Nat Biotechnol. 2012;30(9):858-867. doi:10.1038/nbt.2317"
-      doiLink <- "https://doi.org/10.1038/nbt.2317"
-    } else if (input$exampleData=="data/mousedata"){
-      exampleData <- "Mouse"
-      infoText <- "Data from 10 replicates of mice bone marrow cells. A total of about 840 000 cells were measured using a CyTOF panel of N = 39 markers. "
-      paper <- "Samusik N, Good Z, Spitzer MH, Davis KL, Nolan GP. Automated mapping of phenotype space with single-cell data. Nat Methods. 2016;13(6):493-496. doi:10.1038/nmeth.3863"
-      doiLink <- "https://doi.org/10.1038/nmeth.3863"
-    } else if (input$exampleData=="data/platelets"){
-      exampleData <- "Platelets"
-      infoText <- "Data from human platelets of patients with chronic coronary syndrome undergoing different therapy: dual antiplatelet therapy versus triple antiplatelet therapy, before and after platelet activation with 10µm TRAP. There are files of 7 patients with triple therapy and 12 patients with dual therapy (each in two condtions)."
-      paper <- ""
-      doiLink <- ""
-    }
-    
-    value <-
-      c(list(
-        #div(
-        #sprintf(
-         # "Found %s: %s",
-         # input$exampleData,
-         # file.exists(input$exampleData)
-        #)
-      #),
-      strong(sprintf("Info about %s Data :", exampleData)),
-      div(infoText),
-      a(href=doiLink,paper)
-    
-      ),
-      value)
-    
-    
+    info <- readRDS(file.path(input$exampleData, "help.rds"))
+    value <- c(info,value)
     
   }
   

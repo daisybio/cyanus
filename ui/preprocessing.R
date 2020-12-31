@@ -37,16 +37,22 @@ preprocessingBody <- function() {
     uiOutput("patientsBox"),
     div(
       bsButton(
-        "prepVisButton",
-        "Visualize Selection",
-        icon = icon("palette"),
+        "prepSelectionButton",
+        "Confirm Selection",
+        icon = icon("mouse-pointer"),
         style = "success"
       ),
       style = "float: right;"
     ),
-    title = "Select Markers, Samples and Patients",
+    title = span("Selecting Markers, Samples, and Patients", icon("question-circle"), id = "selecting"),
     height = marker_sample_height,
     width = 6
+  )
+  
+  selectingPopover <- bsPopover(
+    id = "selecting",
+    title = "Visualize your data using all data or just a subclass.",
+    content = "After making a selection of markers, patients, and samples, click on the button to confirm your selection. The plots will then be updated."
   )
   
   
@@ -126,16 +132,18 @@ preprocessingBody <- function() {
     tabName = "preprocessing",
     fluidRow(shinydashboard::box(
       div(
-        "Preprocessing is essential in any mass cytometry analysis process. You have to choose a transformation to make the distributions more symmetric and to map them to a comparable range of expression."
+        "Preprocessing is essential in any mass cytometry analysis process. Usually, the raw marker intensities ready by a cytometer have stronly skewed distributions with varying of expression, thus making it difficult to distinguish between the negative and positive cell populations. The marker intensities are commonly transformed using arcsinh (inverse hyperbolic sine) to make the distributions more symmetric and  to map them to a comparable range of expression."
+        ),
+      div(
+        "This step also includes some simple visualization plots to verify whether the data represents what we expect, for example, whether samples that are replicates of one condition are more similar and are distinct from samples from another condition. Depending on the situation, one can then consider removing problematic markers or samples from further analysis."
       ),
       title = h2("Data preprocessing"),
       width = 12
     )),
     
     # box for selecting transformation, markers, patients and samples
-    fluidRow(transformationBox, cofactorPopover, selectingBox),
+    fluidRow(transformationBox, cofactorPopover, selectingBox, selectingPopover),
     
-
     # tabBox with simple visualization plots
     fluidRow(
       id = "plots",

@@ -36,14 +36,14 @@ observeEvent({
       (length(input$patientSelection) != 0)) {
     updateActionButton(session, "continue", label = "Visualization")
     shinyjs::show("continue")
-    shinyjs::enable("prepVisButton")
+    shinyjs::enable("prepSelectionButton")
   } else {
-    shinyjs::disable("prepVisButton")
+    shinyjs::disable("prepSelectionButton")
   }
 })
 
 observe({
-  if (reactiveVals$current_tab == 3){
+  if (reactiveVals$current_tab == 3) {
     plotPreprocessing(reactiveVals$sce)
   }
 })
@@ -103,33 +103,41 @@ output$patientsBox <- renderUI({
 observeEvent(input$prepButton, {
   # data transformation
   reactiveVals$sce <-
-    transformData(
-      sce = reactiveVals$sce,
-      cf = as.numeric(input$cofactor)
-    )
+    transformData(sce = reactiveVals$sce,
+                  cf = as.numeric(input$cofactor))
 })
 
 # if start visualization button is clicked
-observeEvent(input$prepVisButton, {
+observeEvent(input$prepSelectionButton, {
+  allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
+  allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
+  if ((length(input$patientSelection) != allpatients) || (length(input$sampleSelection) != allsamples)){
+    showNotification(HTML(
+      "<b>Attention!</b><br>
+      The unselected samples and patients are deleted from the data in the next step!"
+    ),
+    duration = 10,
+    type = "warning")
+  }
   markers <- isolate(input$markerSelection)
   samples <- isolate(input$sampleSelection)
   patients <- isolate(input$patientSelection)
   sce <- reactiveVals$sce[, reactiveVals$sce$sample_id %in% samples]
   sce <- sce[, sce$patient_id %in% patients]
-  sce <- sce[rownames(sce) %in% markers,]
+  sce <- sce[rownames(sce) %in% markers, ]
   plotPreprocessing(sce)
 })
 
 # method for plotting all kinds of preprocessing plots
 plotPreprocessing <- function(sce) {
-  
   groupColorLabelBy <- names(colData(sce))
   possAssays <- assayNames(sce)
-  if(all(possAssays == c("counts", "exprs"))){
+  if (all(possAssays == c("counts", "exprs"))) {
     possAssays <- c("Raw" = "counts", "Normalized" = "exprs")
   }
-  features <- c("all", as.character(unique(rowData(sce)$marker_class)))
-
+  features <-
+    c("all", as.character(unique(rowData(sce)$marker_class)))
+  
   output$designCounts <- renderUI({
     fluidRow(column(
       4,
@@ -158,7 +166,7 @@ plotPreprocessing <- function(sce) {
       )
     ),
     column(8, shinycssloaders::withSpinner(
-      plotlyOutput("countsPlot", width = "100%", height = "400px")
+      plotOutput("countsPlot", width = "100%", height = "400px")
     )))
   })
   
@@ -179,12 +187,10 @@ plotPreprocessing <- function(sce) {
           possAssays,
           multiple = F
         ),
-        selectizeInput(
-          "mdsFeatures",
-          "Features:",
-          features,
-          multiple = F
-        ),
+        selectizeInput("mdsFeatures",
+                       "Features:",
+                       features,
+                       multiple = F),
         circle = TRUE,
         status = "info",
         icon = icon("gear"),
@@ -193,7 +199,7 @@ plotPreprocessing <- function(sce) {
       )
     ),
     column(8, shinycssloaders::withSpinner(
-      plotlyOutput("mdsPlot", width = "100%", height = "400px")
+      plotOutput("mdsPlot", width = "100%", height = "400px")
     )))
   })
   
@@ -211,12 +217,10 @@ plotPreprocessing <- function(sce) {
           possAssays,
           multiple = F
         ),
-        selectizeInput(
-          "nrsFeatures",
-          "Features:",
-          features,
-          multiple = F
-        ),
+        selectizeInput("nrsFeatures",
+                       "Features:",
+                       features,
+                       multiple = F),
         circle = TRUE,
         status = "info",
         icon = icon("gear"),
@@ -225,7 +229,7 @@ plotPreprocessing <- function(sce) {
       )
     ),
     column(8, shinycssloaders::withSpinner(
-      plotlyOutput("nrsPlot", width = "100%", height = "400px")
+      plotOutput("nrsPlot", width = "100%", height = "400px")
     )))
   })
   
@@ -243,12 +247,10 @@ plotPreprocessing <- function(sce) {
           possAssays,
           multiple = F
         ),
-        selectizeInput(
-          "exprsFeatures",
-          "Features:",
-          features,
-          multiple = F
-        ),
+        selectizeInput("exprsFeatures",
+                       "Features:",
+                       features,
+                       multiple = F),
         circle = TRUE,
         status = "info",
         icon = icon("gear"),
@@ -257,7 +259,7 @@ plotPreprocessing <- function(sce) {
       )
     ),
     column(8, shinycssloaders::withSpinner(
-      plotlyOutput("exprsPlot", width = "100%", height = "400px")
+      plotOutput("exprsPlot", width = "100%", height = "400px")
     )))
   })
   
@@ -278,12 +280,10 @@ plotPreprocessing <- function(sce) {
           possAssays,
           multiple = F
         ),
-        selectizeInput(
-          "exprsHeatmapFeatures",
-          "Features:",
-          features,
-          multiple = F
-        ),
+        selectizeInput("exprsHeatmapFeatures",
+                       "Features:",
+                       features,
+                       multiple = F),
         circle = TRUE,
         status = "info",
         icon = icon("gear"),
@@ -297,61 +297,58 @@ plotPreprocessing <- function(sce) {
   })
   
   # render counts plot
-  output$countsPlot <- renderPlotly({
-    ggplotly(
-      CATALYST::plotCounts(
-        sce,
-        group_by = input$countsGroupBy,
-        color_by = input$countsColorBy,
-        prop = as.logical(input$countsProp)
-      )
+  output$countsPlot <- renderPlot({
+    CATALYST::plotCounts(
+      sce,
+      group_by = input$countsGroupBy,
+      color_by = input$countsColorBy,
+      prop = as.logical(input$countsProp)
     )
+    
   })
   
   # render mds plot
-  output$mdsPlot <- renderPlotly({
+  output$mdsPlot <- renderPlot({
     feature <- input$mdsFeatures
     if (feature == "all") {
       feature <- NULL
     }
-    g <- CATALYST::pbMDS(
+    CATALYST::pbMDS(
       sce,
       label_by = input$mdsLabelBy,
       color_by = input$mdsColorBy,
       features = feature,
       assay = input$mdsAssay,
     )
-    ggplotly(g)
+    
   })
   
   # render nrs plot
-  output$nrsPlot <- renderPlotly({
+  output$nrsPlot <- renderPlot({
     feature <- input$nrsFeatures
     if (feature == "all") {
       feature <- NULL
     }
-    g <- CATALYST::plotNRS(
+    CATALYST::plotNRS(
       sce,
       color_by = input$nrsColorBy,
       features = feature,
       assay = input$nrsAssay
     )
-    ggplotly(g)
   })
   
   # render exprs plot
-  output$exprsPlot <- renderPlotly({
+  output$exprsPlot <- renderPlot({
     feature <- input$exprsFeatures
     if (feature == "all") {
       feature <- NULL
     }
-    g <- CATALYST::plotExprs(
+    CATALYST::plotExprs(
       sce,
       color_by = input$exprsColorBy,
       features = feature,
       assay = input$exprsAssay
     )
-    ggplotly(g)
   })
   
   # render exprs heatmap plot
