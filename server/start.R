@@ -118,7 +118,7 @@ output$currentData <- renderInfoBox({
     
     if (input$exampleData=="data/pbmc"){
       exampleData <- "PBMC"
-      infoText <- "Data with PBMCs samples from 6 patients.For each sample, the expression of 10 cell surface and 14 signaling markers was measured before (REF) and upon BCR/FcR-XL stimulation (BCRXL) with B cell receptor/ Fc receptor crosslinking for 30', resulting in a total of 12 samples."
+      infoText <- "consisting of paired samples of healthy peripheral blood mononuclear cells (PBMCs), where one sample from each pair was stimulated with B cell receptor / Fc receptor cross-linker (BCR-XL). The dataset contains 16 samples (8 paired samples); a total of 172,791 cells; and a total of 24 protein markers."
       paper <- "Bodenmiller B, Zunder ER, Finck R, et al. Multiplexed mass cytometry profiling of cellular states perturbed by small-molecule regulators. Nat Biotechnol. 2012;30(9):858-867. doi:10.1038/nbt.2317"
       doiLink <- "https://doi.org/10.1038/nbt.2317"
     } else if (input$exampleData=="data/mousedata"){
