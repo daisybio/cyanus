@@ -31,8 +31,10 @@ tabs <- list(
 
 toggle_inputs <- function(enable_inputs = FALSE, input_list = input)
 {
+  
+  
   # Toggle elements
-  for (x in names(input_list))
+  for (x in c(names(input_list), "downloadClusters"))  #TODO: disable all downloadButtons automatically
     if (enable_inputs) {
       shinyjs::enable(x)
     } else {

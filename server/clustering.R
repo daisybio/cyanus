@@ -8,17 +8,34 @@ observeEvent(input$startClustering, {
                label = " Clustering...",
                disabled = TRUE)
   toggle_inputs()
+  showNotification(
+    ui =
+      HTML(
+        sprintf(
+          "<div id='clusteringProgress'><b>Clustering Progress with %s:</b><div>",
+          input$clusteringMethod
+        )),
+    duration = NULL,
+    id = "clusteringProgressNote"
+  )
   
-  reactiveVals$sce <-
-    clusterSCE(
-      reactiveVals$sce,
-      input$clusteringMethod,
-      input$assayTypeIn,
-      input$featuresIn,
-      input$xdim,
-      input$ydim,
-      input$k
-    )
+  withCallingHandlers({
+    reactiveVals$sce <-
+      clusterSCE(
+        reactiveVals$sce,
+        input$clusteringMethod,
+        input$assayTypeIn,
+        input$featuresIn,
+        input$xdim,
+        input$ydim,
+        input$k
+      )
+  },
+  message = function(m) {
+    shinyjs::html(id = "clusteringProgress",
+                  html = sprintf("<br>%s", HTML(m$message)),
+                  add = TRUE)
+  })
   
   toggle_inputs(enable_inputs = TRUE)
   updateButton(session,
@@ -27,6 +44,7 @@ observeEvent(input$startClustering, {
                disabled = FALSE)
   updateButton(session, "continue", label = " Differential Expression Analysis")
   shinyjs::show("continue")
+  removeNotification("clusteringProgressNote")
   showNotification(HTML(
     sprintf(
       "<b>Finished clustering with %s.</b><br>
@@ -41,24 +59,37 @@ observeEvent(input$startClustering, {
 observeEvent(input$visualizeClustering, {
   method <- isolate(input$clusteringRuns)
   sce <- isolate(reactiveVals$sce)
+  clusterCode <- isolate(input$clusterCode)
+  assay <- isolate(input$assayTypeVisIn)
   
-  reactiveVals[[method]]$clusterExprsPlot <- 
+  reactiveVals[[method]]$clusterExprsPlot <-
     plotClusterExprsCustom(
       sce,
       method = method,
-      k = ifelse(method == "flowSOM", isolate(input$clusterCode), NULL),
-      features = metadata(sce)$cluster_run[[method]]$features
+      k = ifelse(method == "flowSOM", clusterCode, NULL),
+      features = metadata(sce)$cluster_run[[method]]$features,
+      assay
     )
   
-  reactiveVals[[method]]$clusterHeatmapPlot <- 
-    plotFreqHeatmapCustom(isolate(reactiveVals$sce), method, isolate(input$clusterCode)) # TODO: implement other parameters
+  reactiveVals[[method]]$clusterHeatmapPlot <-
+    plotFreqHeatmapCustom(isolate(reactiveVals$sce),
+                          method,
+                          clusterCode) # TODO: implement other parameters
   
   
   
 })
 
+observeEvent(input$featuresIn, {
+  if (input$useFeaturesIn == "Marker by Class")
+    reactiveVals$featureNames <-
+      rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) %in% input$featuresIn]
+  else
+    reactiveVals$featureNames <- input$featuresIn
+})
+
 observe({
-  if (is.null(input$featuresIn))
+  if (length(reactiveVals$featureNames) < 2)
     disable("startClustering")
   else
     enable("startClustering")
@@ -95,17 +126,20 @@ output$featuresOut <- renderUI({
   if (input$useFeaturesIn == "Marker by Class") {
     choices <-
       levels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+    selected <- "type"
   } else if (input$useFeaturesIn == "Marker by Name") {
     choices <- rownames(reactiveVals$sce)
     names(choices) <-
-      sprintf("%s (%s)", choices, as.character(rowData(reactiveVals$sce)$marker_class))
+      sprintf("%s (%s)", choices, as.character(marker_classes(reactiveVals$sce)))
+    selected <-
+      rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == "type"]
   } else
     stop("by name or by class?")
   shinyWidgets::pickerInput(
     inputId = "featuresIn",
     label = "Features to use for clustering",
     choices = choices,
-    selected = choices[1],
+    selected = selected,
     multiple = TRUE,
     options = list(
       `actions-box` = TRUE,
@@ -124,7 +158,8 @@ output$assayTypeOut <- renderUI({
 })
 
 output$k <- renderUI({
-  req(input$clusteringMethod != "clusterX", input$featuresIn)
+  req(input$clusteringMethod != "clusterX",
+      length(reactiveVals$featureNames) > 1)
   
   if (input$clusteringMethod == "flowSOM") {
     label = "Maximum Number of Clusters to Evaluate in the Metaclustering"
@@ -133,7 +168,7 @@ output$k <- renderUI({
   } else if (input$clusteringMethod == "rphenoGraph") {
     label = "Number of Nearest Neighbours"
     value = 30
-    maxK = length(.get_features(reactiveVals$sce, input$featuresIn)) - 1
+    maxK = length(reactiveVals$featureNames) - 1
   } else
     stop("which clustermethod was chosen?")
   sliderInput(
@@ -173,11 +208,16 @@ output$clusteringVisualizationSelection <- renderUI({
   
   
   shinydashboard::box(
-    selectizeInput(
-      "clusteringRuns",
-      "Successfull Run",
-      names(metadata(reactiveVals$sce)$cluster_run)
+    column(
+      selectizeInput(
+        "clusteringRuns",
+        "Successfull Run",
+        names(metadata(reactiveVals$sce)$cluster_run)
+      ),
+      width = 6
     ),
+    column(uiOutput("assayTypeVisOut"),
+           width = 6),
     div(
       bsButton(
         "visualizeClustering",
@@ -189,7 +229,7 @@ output$clusteringVisualizationSelection <- renderUI({
     ),
     div(
       downloadButton("downloadClusters", "Download Cluster Assignments"),
-      style = "float: right;"
+      style = "float: left;"
     ),
     column(
       tableOutput("clusterRunParams"),
@@ -199,7 +239,9 @@ output$clusteringVisualizationSelection <- renderUI({
       style = "overflow-x: scroll;"
     ),
     fluidRow(withSpinner(uiOutput("delta_area"))),
-    fluidRow(uiOutput("clusteringOutput")),
+    fluidRow(withSpinner(uiOutput(
+      "clusteringOutput"
+    ))),
     title = "Visualize Clustering Results",
     width = 12
   )
@@ -224,6 +266,14 @@ output$selectClusterCode <- renderUI({
   selectInput("clusterCode",
               "Clusters",
               rev(names(cluster_codes(reactiveVals$sce))))
+})
+
+output$assayTypeVisOut <- renderUI({
+  choices <- c("Transformed" = "exprs", "Raw" = "counts")
+  choices <- choices[choices %in% assayNames(reactiveVals$sce)]
+  selectizeInput("assayTypeVisIn",
+                 "Expression Type",
+                 choices = choices)
 })
 
 output$clusterSizes <- renderTable({
@@ -273,14 +323,14 @@ output$clusteringOutput <- renderUI({
   
   shinydashboard::box(fluidRow(
     shinydashboard::tabBox(
-      tabPanel("Densities", withSpinner(plotOutput(
-        "clusterExprsPlot",
-        height = "800px"
-      ))),
-      tabPanel("Frequencies", withSpinner(plotOutput(
-        "clusterHeatmapPlot",
-        height = "800px"
-      ))),
+      tabPanel("Densities", withSpinner(
+        plotOutput("clusterExprsPlot",
+                   height = "800px")
+      )),
+      tabPanel("Frequencies", withSpinner(
+        plotOutput("clusterHeatmapPlot",
+                   height = "800px")
+      )),
       title = "Cluster Visualization",
       width = 12
     )
@@ -290,7 +340,9 @@ output$clusteringOutput <- renderUI({
 })
 
 output$clusterExprsPlot <- renderPlot({
-  reactiveVals[[input$clusteringRuns]]$clusterExprsPlot})
+  reactiveVals[[input$clusteringRuns]]$clusterExprsPlot
+})
 
 output$clusterHeatmapPlot <- renderPlot({
-  reactiveVals[[input$clusteringRuns]]$clusterHeatmapPlot})
+  reactiveVals[[input$clusteringRuns]]$clusterHeatmapPlot
+})

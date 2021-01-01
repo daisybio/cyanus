@@ -2,7 +2,8 @@ plotClusterExprsCustom <-
   function (x,
             method = c("flowSOM", "clusterX", "rphenoGraph"),
             k = "meta20",
-            features = "type")
+            features = "type",
+            assay = "exprs")
   {
     library(data.table)
     library(ggplot2)
@@ -18,7 +19,7 @@ plotClusterExprsCustom <-
     d <- dist(ms, method = "euclidean")
     o <- hclust(d, method = "average")$order
     cd <- colData(x)
-    es <- assay(x[features,], "exprs")
+    es <- assay(x[features,], assay)
     df <- as.data.table(data.frame(t(es), cd, check.names = FALSE))
     df <- melt(
       df,
