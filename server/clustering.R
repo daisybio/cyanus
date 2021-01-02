@@ -133,7 +133,7 @@ output$k <- renderUI({
   } else if (input$clusteringMethod == "rphenoGraph") {
     label = "Number of Nearest Neighbours"
     value = 30
-    maxK = length(.get_features(reactiveVals$sce, input$featuresIn)) - 1
+    maxK = length(CATALYST:::.get_features(reactiveVals$sce, input$featuresIn)) - 1
   } else
     stop("which clustermethod was chosen?")
   sliderInput(

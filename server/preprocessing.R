@@ -45,6 +45,9 @@ observeEvent({
 observe({
   if (reactiveVals$current_tab == 3) {
     plotPreprocessing(reactiveVals$sce)
+  } else if (reactiveVals$current_tab == 4){
+    sce <- reactiveVals$sce[, reactiveVals$sce$sample_id %in% input$sampleSelection]
+    reactiveVals$sce <- sce[,sce$patient_id %in% input$patientSelection]
   }
 })
 
@@ -114,7 +117,7 @@ observeEvent(input$prepSelectionButton, {
   if ((length(input$patientSelection) != allpatients) || (length(input$sampleSelection) != allsamples)){
     showNotification(HTML(
       "<b>Attention!</b><br>
-      The unselected samples and patients are deleted from the data in the next step!"
+      The unselected samples and patients are deleted from the data in the next step. Further analysis is being performed only on the selected patients and samples!"
     ),
     duration = 10,
     type = "warning")

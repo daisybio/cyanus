@@ -27,7 +27,7 @@ preprocessingBody <- function() {
     bsPopover(
       id = "cofactor",
       title = "Cofactor of the inverse hyperbolic sine transformation",
-      content = "Recommended values for the cofactor parameter are 5 for mass cytometry (CyTOF) or 150 for fluorescence flow cytometry."
+      content = "Recommended values for the cofactor parameter are 5 for mass cytometry (CyTOF) or 150 for fluorescence flow cytometry. Click on the Start Transformation button to do the arcsinh transformation."
     )
   
   # box with markers, samples and patients (all markers, patients, samples selected by default)
