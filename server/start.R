@@ -5,41 +5,44 @@ checkNullTable <- function(toCheck) {
     return(toCheck)
 }
 
+reactiveVals$data <- list(upload = list(fcs=NULL, panel=NULL, md=NULL), example = list(fcs=NULL, panel=NULL, md=NULL) )
+
 observeEvent(input$fcsFiles, {
   fileTable <- input$fcsFiles
   fileTable <- fileTable[, c("name", "size")]
   fileTable$size <- sprintf("%.2f MB", fileTable$size / 1000000)
-  reactiveVals$fcs <- fileTable
+  reactiveVals$data$upload$fcs <- fileTable
 })
 
 observeEvent(input$metaFile, {
   if(endsWith(input$metaFile$datapath, ".csv")){
-    reactiveVals$md <- read.table(input$metaFile$datapath, header = T, sep = ",")
+    reactiveVals$data$upload$md <- read.table(input$metaFile$datapath, header = T, sep = ",")
   }else if(endsWith(input$metaFile$datapath, ".xls") | 
            endsWith(input$metaFile$datapath, ".xlsx")){
     library(xlsx)
     showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
-    reactiveVals$md <- read.xlsx2(input$metaFile$datapath, 1)
+    reactiveVals$data$upload$md <- read.xlsx2(input$metaFile$datapath, 1)
   }
 })
 
 observeEvent(input$panelFile, {
   if(endsWith(input$panelFile$datapath, ".csv")){
-    reactiveVals$panel <-
+    reactiveVals$data$upload$panel <-
       read.table(input$panelFile$datapath, header = T, sep = ",")
   }else if(endsWith(input$panelFile$datapath, ".xls") | 
             endsWith(input$panelFile$datapath, ".xlsx")){
     library(xlsx)
     showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
-    reactiveVals$panel <- read.xlsx2(input$panelFile$datapath, 1)
+    reactiveVals$data$upload$panel <- read.xlsx2(input$panelFile$datapath, 1)
   }
 })
 
 observeEvent(input$exampleData, {
-  reactiveVals$fcs <- readRDS(file.path(input$exampleData, "fcs.rds"))
-  reactiveVals$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
-  reactiveVals$md <- readRDS(file.path(input$exampleData, "md.rds"))
+  reactiveVals$data$example$fcs <- readRDS(file.path(input$exampleData, "fcs.rds"))
+  reactiveVals$data$example$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
+  reactiveVals$data$example$md <- readRDS(file.path(input$exampleData, "md.rds"))
 }, ignoreInit = TRUE)
+
 
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
@@ -49,8 +52,8 @@ observeEvent(input$loadData, {
     file.rename(input$fcsFiles$datapath, file.path(dn, "/", input$fcsFiles$name))
     reactiveVals$sce <- CATALYST::prepData(
       dn,
-      reactiveVals$panel,
-      reactiveVals$md,
+      reactiveVals$data$upload$panel,
+      reactiveVals$data$upload$md,
       transform = FALSE
       #TODO: check if we have other columns
       #panel_cols = names(reactiveVals$panel),
@@ -74,13 +77,26 @@ output$panelDT <- renderDT(
 )
 
 output$currentData <- renderInfoBox({
+  if(input$chooseDataTab == "dataUpload"){
+    fcs <- reactiveVals$data$upload$fcs
+    panel <- reactiveVals$data$upload$panel
+    md <- reactiveVals$data$upload$md
+  } else {
+    fcs <- reactiveVals$data$example$fcs
+    panel <- reactiveVals$data$example$panel
+     md <- reactiveVals$data$example$md
+  }
+  
   status <- "warning"
+  # if current data tab is upload data
   if(input$chooseDataTab == "dataUpload"){
     tableObj <- fluidRow(column(
       12, h5(HTML("<b style=\"color:grey;\">If you provide a panel, you can alter its cells by double-clicking</b>")), hr(), DTOutput("panelDT")))
+  
+  # if current data tab is example data  
   }else{
     tableObj <- renderTable(
-      checkNullTable(reactiveVals$panel),
+      checkNullTable(panel),
       caption = "FCS Data",
       caption.placement = "top"
     )
@@ -88,13 +104,13 @@ output$currentData <- renderInfoBox({
   value <-
     list(
       renderTable(
-        checkNullTable(reactiveVals$fcs),
+        checkNullTable(fcs),
         caption = "FCS Data",
         caption.placement = "top"
       ),
       tableObj,
       renderTable(
-        checkNullTable(reactiveVals$md),
+        checkNullTable(md),
         caption = "Metadata",
         caption.placement = "top"
       )
@@ -129,5 +145,5 @@ output$currentData <- renderInfoBox({
 })
 
 observeEvent(input$panelDT_cell_edit, {
-  reactiveVals$panel <<- editData(reactiveVals$panel, input$panelDT_cell_edit, "panelDT")
+  reactiveVals$data$upload$panel <<- editData(reactiveVals$data$upload$panel, input$panelDT_cell_edit, "panelDT")
 })

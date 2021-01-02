@@ -51,8 +51,8 @@ preprocessingBody <- function() {
   
   selectingPopover <- bsPopover(
     id = "selecting",
-    title = "Visualize your data using all data or just a subclass.",
-    content = "After making a selection of markers, patients, and samples, click on the button to confirm your selection. The plots will then be updated."
+    title = "Analyse your data using all data or just a subclass.",
+    content = "After making a selection of markers, patients, and samples, click on the button to confirm your selection. <b>Unselected samples/patients are deleted in the next step of the analysis!</b>"
   )
   
   
