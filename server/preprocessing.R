@@ -45,6 +45,9 @@ observeEvent({
 observe({
   if (reactiveVals$current_tab == 3) {
     plotPreprocessing(reactiveVals$sce)
+    if ("patient_id" %in% colnames(colData(sce))){
+      shinyjs::hide("patientsBox")
+    }
   } else if (reactiveVals$current_tab == 4){
     sce <- reactiveVals$sce[, reactiveVals$sce$sample_id %in% input$sampleSelection]
     reactiveVals$sce <- sce[,sce$patient_id %in% input$patientSelection]
