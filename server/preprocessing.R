@@ -147,7 +147,7 @@ plotPreprocessing <- function(sce) {
   output$designCounts <- renderUI({
     fluidRow(column(
       4,
-      dropdownButton(
+      div(dropdownButton(
         tags$h3("Plot Options"),
         selectizeInput("countsGroupBy",
                        "Group by:",
@@ -169,6 +169,12 @@ plotPreprocessing <- function(sce) {
         icon = icon("gear"),
         width = "100%",
         tooltip = tooltipOptions(title = "Click to see plot options")
+      ),
+      div(
+        downloadButton("downloadPlotCounts", "Download Plot"),
+        style = "position: absolute; bottom: 5px;"
+      ),
+      style = "position: relative; height: 400px;"
       )
     ),
     column(8, shinycssloaders::withSpinner(
@@ -179,7 +185,7 @@ plotPreprocessing <- function(sce) {
   output$designMDS <- renderUI({
     fluidRow(column(
       4,
-      dropdownButton(
+      div(dropdownButton(
         tags$h3("Plot Options"),
         selectizeInput("mdsLabelBy",
                        "Label by:",
@@ -200,9 +206,15 @@ plotPreprocessing <- function(sce) {
         circle = TRUE,
         status = "info",
         icon = icon("gear"),
-        width = "100%",
+        width = "70%",
         tooltip = tooltipOptions(title = "Click to see plot options")
-      )
+      ),
+      div(
+        downloadButton("downloadPlotMDS", "Download Plot"),
+        style = "right: 1px;; position: absolute; bottom: 5px;"
+      ),
+      style = "position: relative; height: 400px;"
+      ),
     ),
     column(8, shinycssloaders::withSpinner(
       plotOutput("mdsPlot", width = "100%", height = "400px")
@@ -212,7 +224,7 @@ plotPreprocessing <- function(sce) {
   output$designNRS <- renderUI({
     fluidRow(column(
       4,
-      dropdownButton(
+      div(dropdownButton(
         tags$h3("Plot Options"),
         selectizeInput("nrsColorBy",
                        "Color by:",
@@ -232,6 +244,12 @@ plotPreprocessing <- function(sce) {
         icon = icon("gear"),
         width = "100%",
         tooltip = tooltipOptions(title = "Click to see plot options")
+      ),
+      div(
+        downloadButton("downloadPlotNRS", "Download Plot"),
+        style = "position: absolute; bottom: 5px;"
+      ),
+      style = "position: relative; height: 400px;"
       )
     ),
     column(8, shinycssloaders::withSpinner(
@@ -242,7 +260,7 @@ plotPreprocessing <- function(sce) {
   output$designExprs <- renderUI({
     fluidRow(column(
       4,
-      dropdownButton(
+      div(dropdownButton(
         tags$h3("Plot Options"),
         selectizeInput("exprsColorBy",
                        "Color by:",
@@ -262,6 +280,12 @@ plotPreprocessing <- function(sce) {
         icon = icon("gear"),
         width = "100%",
         tooltip = tooltipOptions(title = "Click to see plot options")
+      ),
+      div(
+        downloadButton("downloadPlotExprs", "Download Plot"),
+        style = "position: absolute; bottom: 5px;"
+      ),
+      style = "position: relative; height: 400px;"
       )
     ),
     column(8, shinycssloaders::withSpinner(
@@ -272,7 +296,7 @@ plotPreprocessing <- function(sce) {
   output$designExprsHeatmap <- renderUI({
     fluidRow(column(
       4,
-      dropdownButton(
+      div(dropdownButton(
         tags$h3("Plot Options"),
         selectizeInput(
           "exprsHeatmapScale",
@@ -295,6 +319,12 @@ plotPreprocessing <- function(sce) {
         icon = icon("gear"),
         width = "100%",
         tooltip = tooltipOptions(title = "Click to see plot options")
+      ),
+      div(
+        downloadButton("downloadPlotExprsHeatmap", "Download Plot"),
+        style = "position: absolute; bottom: 5px;"
+      ),
+      style = "position: relative; height: 400px;"
       )
     ),
     column(8, shinycssloaders::withSpinner(
@@ -304,14 +334,16 @@ plotPreprocessing <- function(sce) {
   
   # render counts plot
   output$countsPlot <- renderPlot({
-    CATALYST::plotCounts(
+    reactiveVals$countsPlot <-  CATALYST::plotCounts(
       sce,
       group_by = input$countsGroupBy,
       color_by = input$countsColorBy,
       prop = as.logical(input$countsProp)
     )
-    
+    reactiveVals$countsPlot
   })
+  
+  output$downloadPlotCounts <- downloadPlotFunction("Counts_Plot", reactiveVals$countsPlot)
   
   # render mds plot
   output$mdsPlot <- renderPlot({
@@ -319,15 +351,18 @@ plotPreprocessing <- function(sce) {
     if (feature == "all") {
       feature <- NULL
     }
-    CATALYST::pbMDS(
+    reactiveVals$mdsPlot <- CATALYST::pbMDS(
       sce,
       label_by = input$mdsLabelBy,
       color_by = input$mdsColorBy,
       features = feature,
       assay = input$mdsAssay,
     )
+    reactiveVals$mdsPlot
     
   })
+  
+  output$downloadPlotMDS <- downloadPlotFunction("MDS_Plot", reactiveVals$mdsPlot)
   
   # render nrs plot
   output$nrsPlot <- renderPlot({
@@ -335,13 +370,16 @@ plotPreprocessing <- function(sce) {
     if (feature == "all") {
       feature <- NULL
     }
-    CATALYST::plotNRS(
+    reactiveVals$nrsPlot <- CATALYST::plotNRS(
       sce,
       color_by = input$nrsColorBy,
       features = feature,
       assay = input$nrsAssay
     )
+    reactiveVals$nrsPlot
   })
+  
+  output$downloadPlotNRS <- downloadPlotFunction("NRS_Plot", reactiveVals$nrsPlot)
   
   # render exprs plot
   output$exprsPlot <- renderPlot({
@@ -349,13 +387,16 @@ plotPreprocessing <- function(sce) {
     if (feature == "all") {
       feature <- NULL
     }
-    CATALYST::plotExprs(
+    reactiveVals$exprsPlot <- CATALYST::plotExprs(
       sce,
       color_by = input$exprsColorBy,
       features = feature,
       assay = input$exprsAssay
     )
+    reactiveVals$exprsPlot
   })
+  
+  output$downloadPlotExprs <- downloadPlotFunction("Expr_Plot", reactiveVals$exprsPlot)
   
   # render exprs heatmap plot
   output$exprsHeatmapPlot <- renderPlot({
@@ -363,13 +404,22 @@ plotPreprocessing <- function(sce) {
     if (feature == "all") {
       feature <- NULL
     }
-    CATALYST::plotExprHeatmap(
+    reactiveVals$exprsPlotHeatmap <- CATALYST::plotExprHeatmap(
       sce,
       scale = input$exprsHeatmapScale,
       features = feature,
       assay = input$exprsHeatmapAssay
     )
+    reactiveVals$exprsPlotHeatmap
   })
   
+  output$downloadPlotExprsHeatmap <- downloadHandler(
+    filename = "Expression_Heatmap.pdf", 
+    content = function(file){
+      pdf(file, width = 12, height = 8)
+      draw(reactiveVals$exprsPlotHeatmap)
+      dev.off()
+    }
+  )
   
 }
