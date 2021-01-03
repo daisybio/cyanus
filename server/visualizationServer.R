@@ -1,5 +1,8 @@
 shinyjs::hide("visPlotBox")
-#reactiveVals$sce <- readRDS("data/plateletsSCE1-4.Rds")
+
+output$downloadPlot <- downloadPlotFunction(reactiveVals$lastMethod, reactiveVals$lastPlot)
+
+
 observeEvent(input$markersState, {
   shinyjs::hide("visPlotBox")
   reactiveVals$useClassesRun <- F
@@ -137,6 +140,12 @@ observeEvent(input$runDRButton, {
 
 observeEvent(input$selectedVisMethod, {
   shinyjs::hide("visPlotBox")
+  req(input$selectedVisMethod)
+  if(input$plt_color_by != "" & input$selectedVisMethod != ""){
+    enable("startDimRed")
+  }else{
+    disable("startDimRed")
+  }
 })
 
 observeEvent(reactiveVals$featuresDR, {
@@ -155,6 +164,8 @@ observeEvent(input$plt_color_by, {
   shinyjs::hide("visPlotBox")
   if(input$plt_color_by != "" & input$selectedVisMethod != ""){
     enable("startDimRed")
+  }else{
+    disable("startDimRed")
   }
 })
 
@@ -163,21 +174,27 @@ observeEvent(input$plt_facet_by, {
   shinyjs::hide("visPlotBox")
 })
 
-observeEvent(input$nrCells, {
+observeEvent(input$nrCellsRun, {
   shinyjs::hide("visPlotBox")
+  if(input$nrCellsRun > min(metadata(reactiveVals$sce)$experiment_info$n_cells)){
+    showNotification("This number is higher than the smallest sample count. Therefore, a different number of cells will be sampled from each sample.", type = "warning")
+  }
 })
 
 observeEvent(input$startDimRed, {
   library(ggplot2)
   library(CATALYST)
-  output$visPlot <- renderPlotly({
+  output$visPlot <- renderPlot({
     color <- isolate(input$plt_color_by)
     facet <- isolate(input$plt_facet_by)
     method <- isolate(input$selectedVisMethod)
+    reactiveVals$lastMethod <- method
     assay <- isolate(input$assayVisSelected)
     scale <- isolate(input$scaleVis)
     sceObj <- isolate(reactiveVals$sce)
-    plotData(sceObj, method, color, facet, assay, scale)
+    ggplotObject <- plotData(sceObj, method, color, facet, assay, scale)
+    reactiveVals$lastPlot <- ggplotObject
+    return(ggplotObject)
   })
   output$plotInfo <- renderUI({
     method <- isolate(input$selectedVisMethod)
@@ -223,8 +240,6 @@ observeEvent(input$startDimRed, {
     shinydashboard::box(value, title = "Info", width = 4)
   })
   shinyjs::show("visPlotBox")
-  updateActionButton(session, "continue", label = "Clustering")
-  shinyjs::show("continue")
 })
 
 plotData <- function(sceObj, method, color, facet, assay, scale){
@@ -233,8 +248,6 @@ plotData <- function(sceObj, method, color, facet, assay, scale){
   disable("runDRButton")
   
   g <- makeDR(sceObj, method, color, facet, assay, scale)
-  g <- g + theme(plot.margin = unit(c(1, 1, 1, 2), "cm"))
-  g <- ggplotly(g)
   enable("startDimRed")
   enable("continue")
   enable("runDRButton")
@@ -254,16 +267,17 @@ observeEvent(input$radioButtonsColor, {
 output$markerClassVis <- renderUI({
   classes <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
   choices <- c(as.vector(classes), "All features")
+  selected <- "All features"
+  if("type" %in% choices){
+    selected <- "type"
+  }
   fluidRow(
     shinydashboard::box(
       selectizeInput(
         inputId = "classes",
         label = "Available marker classes",
         choices = choices,
-        options = list(
-          placeholder = "Select your marker class",
-          onInitialize = I("function() { this.setValue(''); }")
-        ),
+        selected = selected,
         multiple = FALSE
       ), 
       id = "classBoxVis",
@@ -326,38 +340,37 @@ output$expressionVis <- renderUI({
 output$runDRparBox <- renderUI({
   vis_methods <- c("UMAP", "T-SNE", "PCA", "MDS", "DiffusionMap", "Isomap")
   choices <- assayNames(reactiveVals$sce)
-  
+  selected <- "counts"
   if(all(choices == c("counts", "exprs"))){
     choices <- c("Raw" = "counts", "Normalized" = "exprs")
+    selected <- "exprs"
   }
   returnbox <- shinydashboard::box(
     selectizeInput(
       "selectedRunMethod",
       "Dimensionality Reduction Method",
       vis_methods,
-      options = list(
-        placeholder = "Select your method",
-        onInitialize = I("function() { this.setValue(''); }")
-      )
+      selected = "UMAP"
     ), 
     selectizeInput(
       "assayRunSelected",
       label = "Do you want to use raw counts or the normalization?",
       choices = choices,
-      multiple = FALSE
+      multiple = FALSE, 
+      selected = selected
     ),
     numericInput(
       "nrCellsRun",
-      label = span(sprintf("From how many cells do you want to sample (all: %s)?", dim(reactiveVals$sce)[2]), icon("question-circle"), id = "cellQ"),
+      label = span(sprintf("From how many cells do you want to sample (minimal number of cells in a sample: %s)?", min(metadata(reactiveVals$sce)$experiment_info$n_cells)), icon("question-circle"), id = "cellQ"),
       value = 100,
       min = 0,
-      max = dim(reactiveVals$sce)[2],
+      max = 10000,
       step = 100
     ), 
     bsPopover(
       id = "cellQ",
       title = "Speed up your computations",
-      content = "Specify the maximal number of cells per sample to use for dimension reduction, e.g. 100. Then, from each sample 100 cells are randomly taken in order to compute the dimensionality reduction. This is considerably faster than computing the dimensionality reduction for all cells available. If you specify high values that exceed the number of cells per sample, all cells will be taken."
+      content = "Specify the maximal number of cells per sample to use for dimension reduction, e.g. 100. Then, from each sample 100 cells are randomly taken in order to compute the dimensionality reduction. If you specify values higher than the number of cells in one sample, all cells from these samples will be taken. For the bigger samples, the number you specified will be taken."
     ),
     radioButtons(
       inputId = "scaleRun",
@@ -403,11 +416,7 @@ output$methodsVis <- renderUI({
   div(selectizeInput(
     inputId = "selectedVisMethod",
     label = span("Dimensionality Reduction Method", icon("question-circle"), id = "drVisQ"),
-    vis_methods,
-    options = list(
-      placeholder = "Select how you want to visualize your data",
-      onInitialize = I("function() { this.setValue(''); }")
-    )
+    vis_methods
   ),
   bsPopover(
     id = "drVisQ", 
@@ -421,14 +430,17 @@ output$methodsVis <- renderUI({
 
 output$assayVis <- renderUI({
   choices <- assayNames(reactiveVals$sce)
+  selected <- "counts"
   if(all(choices == c("counts", "exprs"))){
     choices <- c("Raw" = "counts", "Normalized" = "exprs")
+    selected <- "exprs"
   }
   return(div(selectizeInput(
     "assayVisSelected",
     label = span("Do you want to use raw counts or the normalization?", icon("question-circle"), id = "assayQ"),
     choices = choices,
-    multiple = FALSE
+    multiple = FALSE,
+    selected = selected
   ), 
   bsPopover(
     id = "assayQ", 
@@ -445,11 +457,33 @@ output$color_by <- renderUI({
     inputId = "radioButtonsColor",
     label = "Color by: ",
     choices = c("expression", "condition / sample"), 
-    inline = TRUE
+    inline = TRUE,
+    selected = "condition / sample"
   ), 
   uiOutput("selectColorBy")
     )
 })
+
+renameColorColumn <- function(columnNames, color_by = T){
+  returnVector <- c()
+  if("sample_id" %in% columnNames){
+    returnVector <- c(returnVector, "Sample ID" = "sample_id")
+    columnNames <- columnNames[columnNames != "sample_id"]
+  }
+  if("patient_id" %in% columnNames){
+    returnVector <- c(returnVector, "Patient ID" = "patient_id")
+    columnNames <- columnNames[columnNames != "patient_id"]
+  }
+  if("cluster_id" %in% columnNames){
+    returnVector <- c(returnVector, "flowSOM ID" = "cluster_id")
+    columnNames <- columnNames[columnNames != "cluster_id"]
+    if(color_by){
+      returnVector <- c( returnVector, names(cluster_codes(reactiveVals$sce))[-1] )
+    }
+  }
+  returnVector <- c(returnVector, columnNames)
+  return(returnVector)
+}
 
 output$selectColorBy <- renderUI({
   if(input$radioButtonsColor == "expression"){
@@ -458,29 +492,22 @@ output$selectColorBy <- renderUI({
       inputId = "plt_color_by",
       label = "Color by: ",
       choices = choices,
-      options = list(
-        onInitialize = I("function() { this.setValue(''); }"), 
-        `actions-box` = TRUE
-      ),
+      selected = choices[1],
       multiple = TRUE
     ))
     }else{
-      choices = names(colData(reactiveVals$sce))
+      choices = renameColorColumn(names(colData(reactiveVals$sce)), T)
       return(selectizeInput(
         inputId = "plt_color_by",
         label = "Color by: ",
         choices = choices,
-        options = list(
-          placeholder = "Select your coloring",
-          onInitialize = I("function() { this.setValue(''); }")
-        ),
         multiple = FALSE
       ))
     }
 })
 
 output$facet_by <- renderUI({
-  choices = names(colData(reactiveVals$sce))
+  choices = renameColorColumn(names(colData(reactiveVals$sce)), F)
   shinydashboard::box(
   selectizeInput(
     inputId = "plt_facet_by",
@@ -493,6 +520,11 @@ output$facet_by <- renderUI({
     multiple = FALSE
   )
   )
+})
+
+output$visUI <- renderUI({
+  updateActionButton(session, "continue", label = "Clustering")
+  shinyjs::show("continue")
 })
 
 runCatalystDR <- function(dr_chosen, cells_chosen, feature_chosen, assay_chosen, scale, k){
