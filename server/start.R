@@ -50,14 +50,19 @@ observeEvent(input$loadData, {
   if (input$chooseDataTab == "dataUpload") {
     dn <- dirname(input$fcsFiles$datapath)[1]
     file.rename(input$fcsFiles$datapath, file.path(dn, "/", input$fcsFiles$name))
+
+    conditions <- names(reactiveVals$data$upload$md)[!names(reactiveVals$data$upload$md) 
+                                                     %in% c("sample_id", "file_name")]
+    md_cols <- list(file = "file_name", id = "sample_id", factors = conditions)
+    
     reactiveVals$sce <- CATALYST::prepData(
       dn,
-      reactiveVals$data$upload$panel,
-      reactiveVals$data$upload$md,
-      transform = FALSE
+      panel = reactiveVals$data$upload$panel,
+      md = reactiveVals$data$upload$md,
+      transform = FALSE,
+      md_cols = md_cols
       #TODO: check if we have other columns
       #panel_cols = names(reactiveVals$panel),
-      #md_cols = names(reactiveVals$md)
     )
   } else if (input$chooseDataTab == "dataExample") {
     reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
@@ -72,7 +77,7 @@ observeEvent(input$loadData, {
 
 
 output$panelDT <- renderDT(
-  checkNullTable(reactiveVals$panel),
+  checkNullTable(reactiveVals$data$upload$panel),
   editable = "cell"
 )
 
