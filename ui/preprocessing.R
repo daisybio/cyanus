@@ -3,8 +3,8 @@
 preprocessingBody <- function() {
   
   marker_sample_height <- "25em"
-  panel_height <- "40em"
-  plot_height <- "35em"
+  panel_height <- "45em"
+  plot_height <- "40em"
   
   # box with transformations: arcsinh, log or none
   transformationBox <- shinydashboard::box(

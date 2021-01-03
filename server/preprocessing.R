@@ -29,11 +29,8 @@ transformData <-
 observeEvent({
   input$markerSelection
   input$sampleSelection
-  input$patientSelection
 }, {
-  if ((length(input$markerSelection) != 0) &&
-      (length(input$sampleSelection) != 0) &&
-      (length(input$patientSelection) != 0)) {
+  if (length(input$sampleSelection) != 0){
     updateActionButton(session, "continue", label = "Visualization")
     shinyjs::show("continue")
     shinyjs::enable("prepSelectionButton")
@@ -45,12 +42,14 @@ observeEvent({
 observe({
   if (reactiveVals$current_tab == 3) {
     plotPreprocessing(reactiveVals$sce)
-    if ("patient_id" %in% colnames(colData(sce))){
+    if (!("patient_id" %in% colnames(colData(reactiveVals$sce)))){
       shinyjs::hide("patientsBox")
     }
   } else if (reactiveVals$current_tab == 4){
     sce <- reactiveVals$sce[, reactiveVals$sce$sample_id %in% input$sampleSelection]
-    reactiveVals$sce <- sce[,sce$patient_id %in% input$patientSelection]
+    if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
+      reactiveVals$sce <- sce[,sce$patient_id %in% input$patientSelection]
+    }
   }
 })
 
@@ -107,14 +106,23 @@ output$patientsBox <- renderUI({
 
 # if start transformation button is clicked
 observeEvent(input$prepButton, {
+  shinyjs::disable("prepButton")
+  shinyjs::disable("prepSelectionButton")
+  shinyjs::disable("continue")
   # data transformation
   reactiveVals$sce <-
     transformData(sce = reactiveVals$sce,
                   cf = as.numeric(input$cofactor))
+  shinyjs::enable("prepButton")
+  shinyjs::enable("prepSelectionButton")
+  shinyjs::enable("continue")
 })
 
 # if start visualization button is clicked
 observeEvent(input$prepSelectionButton, {
+  shinyjs::disable("prepButton")
+  shinyjs::disable("prepSelectionButton")
+  shinyjs::disable("continue")
   allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
   if ((length(input$patientSelection) != allpatients) || (length(input$sampleSelection) != allsamples)){
@@ -129,9 +137,14 @@ observeEvent(input$prepSelectionButton, {
   samples <- isolate(input$sampleSelection)
   patients <- isolate(input$patientSelection)
   sce <- reactiveVals$sce[, reactiveVals$sce$sample_id %in% samples]
-  sce <- sce[, sce$patient_id %in% patients]
+  if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
+    sce <- sce[, sce$patient_id %in% patients]
+  }
   sce <- sce[rownames(sce) %in% markers, ]
   plotPreprocessing(sce)
+  shinyjs::enable("prepButton")
+  shinyjs::enable("prepSelectionButton")
+  shinyjs::enable("continue")
 })
 
 # method for plotting all kinds of preprocessing plots
@@ -172,13 +185,13 @@ plotPreprocessing <- function(sce) {
       ),
       div(
         downloadButton("downloadPlotCounts", "Download Plot"),
-        style = "position: absolute; bottom: 5px;"
+        style = "position: absolute; bottom: 10px;"
       ),
-      style = "position: relative; height: 400px;"
+      style = "position: relative; height: 500px;"
       )
     ),
     column(8, shinycssloaders::withSpinner(
-      plotOutput("countsPlot", width = "100%", height = "400px")
+      plotOutput("countsPlot", width = "100%", height = "500px")
     )))
   })
   
@@ -211,13 +224,13 @@ plotPreprocessing <- function(sce) {
       ),
       div(
         downloadButton("downloadPlotMDS", "Download Plot"),
-        style = "right: 1px;; position: absolute; bottom: 5px;"
+        style = "position: absolute; bottom: 10px;"
       ),
-      style = "position: relative; height: 400px;"
+      style = "position: relative; height: 500px;"
       ),
     ),
     column(8, shinycssloaders::withSpinner(
-      plotOutput("mdsPlot", width = "100%", height = "400px")
+      plotOutput("mdsPlot", width = "100%", height = "500px")
     )))
   })
   
@@ -247,13 +260,13 @@ plotPreprocessing <- function(sce) {
       ),
       div(
         downloadButton("downloadPlotNRS", "Download Plot"),
-        style = "position: absolute; bottom: 5px;"
+        style = "position: absolute; bottom: 10px;"
       ),
-      style = "position: relative; height: 400px;"
+      style = "position: relative; height: 500px;"
       )
     ),
     column(8, shinycssloaders::withSpinner(
-      plotOutput("nrsPlot", width = "100%", height = "400px")
+      plotOutput("nrsPlot", width = "100%", height = "500px")
     )))
   })
   
@@ -283,13 +296,13 @@ plotPreprocessing <- function(sce) {
       ),
       div(
         downloadButton("downloadPlotExprs", "Download Plot"),
-        style = "position: absolute; bottom: 5px;"
+        style = "position: absolute; bottom: 10px;"
       ),
-      style = "position: relative; height: 400px;"
+      style = "position: relative; height: 500px;"
       )
     ),
     column(8, shinycssloaders::withSpinner(
-      plotOutput("exprsPlot", width = "100%", height = "400px")
+      plotOutput("exprsPlot", width = "100%", height = "500px")
     )))
   })
   
@@ -322,13 +335,13 @@ plotPreprocessing <- function(sce) {
       ),
       div(
         downloadButton("downloadPlotExprsHeatmap", "Download Plot"),
-        style = "position: absolute; bottom: 5px;"
+        style = "position: absolute; bottom: 10px;"
       ),
-      style = "position: relative; height: 400px;"
+      style = "position: relative; height: 500px;"
       )
     ),
     column(8, shinycssloaders::withSpinner(
-      plotOutput("exprsHeatmapPlot", width = "100%", height = "400px")
+      plotOutput("exprsHeatmapPlot", width = "100%", height = "500px")
     )))
   })
   
