@@ -11,7 +11,6 @@ markerSelectionBox <- shinydashboard::tabBox(
 )
 
 visbody <- function(){
-  
   visualizationBox <- shinydashboard::box(
     uiOutput("methodsVis"),
     uiOutput("assayVis"),
@@ -46,11 +45,15 @@ visbody <- function(){
   
   plotBox <- shinydashboard::box(
     fluidRow(
-      box(shinycssloaders::withSpinner(plotlyOutput("visPlot", width = "90%")), 
+      box(shinycssloaders::withSpinner(plotOutput("visPlot", width = "90%")), 
           id = "imageBox",
           title = "Plot",
           width = 8),
-      uiOutput("plotInfo")
+      uiOutput("plotInfo"), 
+      div(
+        downloadButton("downloadPlot", "Download Plot"),
+        style = "float: left;"
+      )
     ),
     id = "visPlotBox",
     title = "Dimensionality Reduction",
@@ -78,7 +81,8 @@ visbody <- function(){
     ),
     fluidRow(
       plotBox
-    )
+    ), 
+    uiOutput("visUI")
   )
   return(visbody)
 }

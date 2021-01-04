@@ -8,6 +8,7 @@ observeEvent(input$startClustering, {
                label = " Clustering...",
                disabled = TRUE)
   toggle_inputs()
+  
   showNotification(
     ui =
       HTML(
@@ -323,13 +324,23 @@ output$clusteringOutput <- renderUI({
   
   shinydashboard::box(fluidRow(
     shinydashboard::tabBox(
-      tabPanel("Densities", withSpinner(
-        plotOutput("clusterExprsPlot",
-                   height = "800px")
+      tabPanel("Densities", fluidRow(withSpinner(plotOutput(
+        "clusterExprsPlot",
+        height = "800px"
       )),
-      tabPanel("Frequencies", withSpinner(
-        plotOutput("clusterHeatmapPlot",
-                   height = "800px")
+      div(
+        downloadButton("downloadPlotDensity", "Download Plot"),
+        style = "float: right;"
+      )
+      )),
+      tabPanel("Frequencies", fluidRow(withSpinner(plotOutput(
+        "clusterHeatmapPlot",
+        height = "800px"
+      )),
+      div(
+        downloadButton("downloadPlotFrequency", "Download Plot"),
+        style = "float: right;"
+      )
       )),
       title = "Cluster Visualization",
       width = 12
@@ -340,9 +351,23 @@ output$clusteringOutput <- renderUI({
 })
 
 output$clusterExprsPlot <- renderPlot({
-  reactiveVals[[input$clusteringRuns]]$clusterExprsPlot
-})
+  reactiveVals$exprsCluster <- reactiveVals[[input$clusteringRuns]]$clusterExprsPlot
+  reactiveVals$exprsCluster
+  })
 
 output$clusterHeatmapPlot <- renderPlot({
-  reactiveVals[[input$clusteringRuns]]$clusterHeatmapPlot
-})
+  reactiveVals$heatmapCluster <- reactiveVals[[input$clusteringRuns]]$clusterHeatmapPlot
+  reactiveVals$heatmapCluster
+  })
+
+output$downloadPlotDensity <- downloadPlotFunction("Cluster_Expression", reactiveVals$exprsCluster)
+
+output$downloadPlotFrequency <- downloadHandler(
+  filename = "Cluster_Heatmap.pdf", 
+  content = function(file){
+    pdf(file, width = 12, height = 8)
+    draw(reactiveVals$heatmapCluster)
+    dev.off()
+  }
+  )
+

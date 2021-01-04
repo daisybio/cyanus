@@ -1,5 +1,18 @@
 server <- function(input, output, session) {
   
+  downloadPlotFunction <- function(name, ggplotObject){
+    return(
+      downloadHandler(
+        filename = function(){
+          paste0(name, ".pdf")
+        },
+        content = function(file){
+          ggsave(file, plot = ggplotObject)
+        }
+      )
+    )
+  }
+  
   # make reactiveValues and server-wide variables
   tab_ids <- c("welcome", "start", "preprocessing", "visualization", "clustering", "de")
   reactiveVals <- reactiveValues()
