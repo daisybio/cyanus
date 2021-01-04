@@ -330,7 +330,7 @@ output$clusteringOutput <- renderUI({
         height = "800px"
       )),
       div(
-        downloadButton("downloadPlotDensity", "Download Plot"),
+        uiOutput("clusterDensitiyDownload"),
         style = "float: right;"
       )
       )),
@@ -339,7 +339,7 @@ output$clusteringOutput <- renderUI({
         height = "800px"
       )),
       div(
-        downloadButton("downloadPlotFrequency", "Download Plot"),
+        uiOutput("clusterHeatmapDownload"),
         style = "float: right;"
       )
       )),
@@ -349,6 +349,18 @@ output$clusteringOutput <- renderUI({
   ),
   title = "Cluster Visualizations",
   width = 12)
+})
+
+output$clusterDensitiyDownload <- renderUI({
+  req(reactiveVals$exprsCluster)
+  
+  downloadButton("downloadPlotDensity", "Download Plot")
+})
+
+output$clusterHeatmapDownload <- renderUI({
+  req(reactiveVals$heatmapCluster)
+  
+  downloadButton("downloadPlotFrequency", "Download Plot")
 })
 
 output$clusterExprsPlot <- renderPlot({
@@ -361,7 +373,7 @@ output$clusterHeatmapPlot <- renderPlot({
   reactiveVals$heatmapCluster
   })
 
-output$downloadPlotDensity <- downloadPlotFunction("Cluster_Expression", reactiveVals$exprsCluster)
+output$downloadPlotDensity <- downloadPlotFunction("Cluster_Expression", reactiveVals$exprsCluster, width = 16, height = 12)
 
 output$downloadPlotFrequency <- downloadHandler(
   filename = "Cluster_Heatmap.pdf", 
