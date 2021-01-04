@@ -9,16 +9,15 @@ observeEvent(input$startClustering, {
                disabled = TRUE)
   toggle_inputs()
   
-  showNotification(
-    ui =
-      HTML(
-        sprintf(
-          "<div id='clusteringProgress'><b>Clustering Progress with %s:</b><div>",
-          input$clusteringMethod
-        )),
-    duration = NULL,
-    id = "clusteringProgressNote"
-  )
+  showNotification(ui =
+                     HTML(
+                       sprintf(
+                         "<div id='clusteringProgress'><b>Clustering Progress with %s:</b><div>",
+                         input$clusteringMethod
+                       )
+                     ),
+                   duration = NULL,
+                   id = "clusteringProgressNote")
   
   withCallingHandlers({
     reactiveVals$sce <-
@@ -62,20 +61,37 @@ observeEvent(input$visualizeClustering, {
   sce <- isolate(reactiveVals$sce)
   clusterCode <- isolate(input$clusterCode)
   assay <- isolate(input$assayTypeVisIn)
+  by <- isolate(input$abundanceBy)
+  group_by <- isolate(input$abundanceGroup)
+  shape_by <- isolate(input$abundanceShape)
+  if (is.null(shape_by) | shape_by == "")
+    shape_by <- NULL
+  if (is.null(clusterCode) | method != "flowSOM")
+    clusterCode <- NULL
   
-  reactiveVals[[method]]$clusterExprsPlot <-
-    plotClusterExprsCustom(
+  reactiveVals[[method]]$clusterAbundancePlot <-
+    plotAbundances(
       sce,
-      method = method,
-      k = ifelse(method == "flowSOM", clusterCode, NULL),
-      features = metadata(sce)$cluster_run[[method]]$features,
-      assay
-    )
+      k = clusterCode,
+      by = by,
+      group_by = group_by,
+      shape_by = shape_by
+      )
+    
   
   reactiveVals[[method]]$clusterHeatmapPlot <-
     plotFreqHeatmapCustom(isolate(reactiveVals$sce),
                           method,
                           clusterCode) # TODO: implement other parameters
+  
+  reactiveVals[[method]]$clusterExprsPlot <-
+    plotClusterExprsCustom(
+      sce,
+      method = method,
+      k = clusterCode,
+      features = metadata(sce)$cluster_run[[method]]$features,
+      assay
+    )
   
   
   
@@ -207,9 +223,13 @@ output$xdim <- renderUI({
 output$clusteringVisualizationSelection <- renderUI({
   req(metadata(reactiveVals$sce)$cluster_run)
   
+  abundanceByChoices <-
+      c("Samples" = "sample_id", "Clusters" = "cluster_id")
+  abundanceChoices <- names(colData(reactiveVals$sce))
+  names(abundanceChoices) <- names(abundanceChoices)
   
   shinydashboard::box(
-    column(
+    fluidRow(column(
       selectizeInput(
         "clusteringRuns",
         "Successfull Run",
@@ -218,7 +238,25 @@ output$clusteringVisualizationSelection <- renderUI({
       width = 6
     ),
     column(uiOutput("assayTypeVisOut"),
-           width = 6),
+           width = 6)),
+    fluidRow(
+      column(
+        width = 4,
+        selectizeInput("abundanceBy", "By Samples or Clusters?", abundanceByChoices)
+      ),
+      column(
+        width = 4,
+        selectizeInput("abundanceGroup", "Group By", abundanceChoices[!abundanceChoices %in% abundanceByChoices])
+      ),
+      column(
+        width = 4,
+        selectizeInput(
+          "abundanceShape",
+          "Shape by",
+          c("Nothing" = "", abundanceChoices[!abundanceChoices %in% abundanceByChoices]),
+        )
+      )
+    ),
     div(
       bsButton(
         "visualizeClustering",
@@ -324,31 +362,50 @@ output$clusteringOutput <- renderUI({
   
   shinydashboard::box(fluidRow(
     shinydashboard::tabBox(
-      tabPanel("Marker Densities", div("Smoothed densities of marker intensities by cluster."),
-               fluidRow(withSpinner(plotOutput(
-        "clusterExprsPlot",
-        height = "800px"
-      )),
-      div(
-        uiOutput("clusterDensitiyDownload"),
-        style = "float: right;"
-      )
-      )),
-      tabPanel("Cluster Frequencies", div("Heatmap of relative cluster abundances (frequencies) by sample."), fluidRow(withSpinner(plotOutput(
-        "clusterHeatmapPlot",
-        height = "800px"
-      )),
-      div(
-        uiOutput("clusterHeatmapDownload"),
-        style = "float: right;"
-      )
-      )),
+      tabPanel(
+        "Cluster Abundances",
+        div("Relative population abundances of the specified clustering."),
+        fluidRow(
+          withSpinner(plotOutput("clusterAbundancePlot",
+                                 height = "800px")),
+          div(uiOutput("clusterAbundanceDownload"),
+              style = "float: right;")
+        )
+      ),
+      tabPanel(
+        "Cluster Frequencies",
+        div(
+          "Heatmap of relative cluster abundances (frequencies) by sample."
+        ),
+        fluidRow(
+          withSpinner(plotOutput("clusterHeatmapPlot",
+                                 height = "800px")),
+          div(uiOutput("clusterHeatmapDownload"),
+              style = "float: right;")
+        )
+      ),
+      tabPanel(
+        "Marker Densities",
+        div("Smoothed densities of marker intensities by cluster."),
+        fluidRow(
+          withSpinner(plotOutput("clusterExprsPlot",
+                                 height = "800px")),
+          div(uiOutput("clusterDensitiyDownload"),
+              style = "float: right;")
+        )
+      ),
       title = "Cluster Visualization",
       width = 12
     )
   ),
   title = "Cluster Visualizations",
   width = 12)
+})
+
+output$clusterAbundanceDownload <- renderUI({
+  req(reactiveVals$abundanceCluster)
+  
+  downloadButton("downloadPlotAbundance", "Download Plot")
 })
 
 output$clusterDensitiyDownload <- renderUI({
@@ -363,24 +420,40 @@ output$clusterHeatmapDownload <- renderUI({
   downloadButton("downloadPlotFrequency", "Download Plot")
 })
 
-output$clusterExprsPlot <- renderPlot({
-  reactiveVals$exprsCluster <- reactiveVals[[input$clusteringRuns]]$clusterExprsPlot
-  reactiveVals$exprsCluster
-  })
+output$clusterAbundancePlot <- renderPlot({
+  reactiveVals$abundanceCluster <-
+    reactiveVals[[input$clusteringRuns]]$clusterAbundancePlot
+  reactiveVals$abundanceCluster
+})
 
 output$clusterHeatmapPlot <- renderPlot({
-  reactiveVals$heatmapCluster <- reactiveVals[[input$clusteringRuns]]$clusterHeatmapPlot
+  reactiveVals$heatmapCluster <-
+    reactiveVals[[input$clusteringRuns]]$clusterHeatmapPlot
   reactiveVals$heatmapCluster
-  })
+})
 
-output$downloadPlotDensity <- downloadPlotFunction("Cluster_Expression", reactiveVals$exprsCluster, width = 16, height = 12)
+output$clusterExprsPlot <- renderPlot({
+  reactiveVals$exprsCluster <-
+    reactiveVals[[input$clusteringRuns]]$clusterExprsPlot
+  reactiveVals$exprsCluster
+})
+
+output$downloadPlotAbundance <-
+  downloadPlotFunction("Population_Abundances", reactiveVals$abundanceCluster)
+
+output$downloadPlotDensity <-
+  downloadPlotFunction(
+    "Cluster_Expression",
+    reactiveVals$exprsCluster,
+    width = 16,
+    height = 12
+  )
 
 output$downloadPlotFrequency <- downloadHandler(
-  filename = "Cluster_Heatmap.pdf", 
-  content = function(file){
+  filename = "Cluster_Heatmap.pdf",
+  content = function(file) {
     pdf(file, width = 12, height = 8)
     draw(reactiveVals$heatmapCluster)
     dev.off()
   }
-  )
-
+)
