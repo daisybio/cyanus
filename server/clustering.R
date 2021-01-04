@@ -324,7 +324,8 @@ output$clusteringOutput <- renderUI({
   
   shinydashboard::box(fluidRow(
     shinydashboard::tabBox(
-      tabPanel("Densities", fluidRow(withSpinner(plotOutput(
+      tabPanel("Marker Densities", div("Smoothed densities of marker intensities by cluster."),
+               fluidRow(withSpinner(plotOutput(
         "clusterExprsPlot",
         height = "800px"
       )),
@@ -333,7 +334,7 @@ output$clusteringOutput <- renderUI({
         style = "float: right;"
       )
       )),
-      tabPanel("Frequencies", fluidRow(withSpinner(plotOutput(
+      tabPanel("Cluster Frequencies", div("Heatmap of relative cluster abundances (frequencies) by sample."), fluidRow(withSpinner(plotOutput(
         "clusterHeatmapPlot",
         height = "800px"
       )),
