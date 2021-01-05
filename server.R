@@ -1,13 +1,13 @@
 server <- function(input, output, session) {
   
-  downloadPlotFunction <- function(name, ggplotObject){
+  downloadPlotFunction <- function(name, ggplotObject, width = 7, height = 7){
     return(
       downloadHandler(
         filename = function(){
           paste0(name, ".pdf")
         },
         content = function(file){
-          ggsave(file, plot = ggplotObject)
+          ggsave(file, plot = ggplotObject, width=width, height=height)
         }
       )
     )

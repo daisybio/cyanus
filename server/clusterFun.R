@@ -2,7 +2,8 @@ plotClusterExprsCustom <-
   function (x,
             method = c("flowSOM", "clusterX", "rphenoGraph"),
             k = "meta20",
-            features = "type")
+            features = "type",
+            assay = "exprs")
   {
     library(data.table)
     library(ggplot2)
@@ -14,11 +15,11 @@ plotClusterExprsCustom <-
       x$cluster_id <- cluster_ids(x, k)
     } else x$cluster_id <- colData(x)[[sprintf("%s_id", method)]]
     features <- CATALYST:::.get_features(x, features)
-    ms <- t(CATALYST:::.agg(x[features,], "cluster_id", "median"))
+    ms <- t(CATALYST:::.agg(x[features,], "cluster_id", "median", assay = assay))
     d <- dist(ms, method = "euclidean")
     o <- hclust(d, method = "average")$order
     cd <- colData(x)
-    es <- assay(x[features,], "exprs")
+    es <- assay(x[features,], assay)
     df <- as.data.table(data.frame(t(es), cd, check.names = FALSE))
     df <- melt(
       df,
@@ -178,7 +179,7 @@ clusterSCE <-
         maxK = maxK
       )
     } else if (method == "clusterX") {
-      library(cytofkit)
+      suppressPackageStartupMessages(library(cytofkit))
       clusterx <-
         cytofkit::ClusterX(t(assay(x, assayType)[features, ]))
       colData(x)$clusterX_id <- clusterx$cluster
@@ -186,7 +187,7 @@ clusterSCE <-
       metadata(x)$cluster_run$clusterX <- list(features = features,
                                                assayType = assays[assayType])
     } else if (method == "rphenoGraph") {
-      library(cytofkit)
+      suppressPackageStartupMessages(library(cytofkit))
       rphenograph <-
         cytofkit::Rphenograph(t(assay(x, assayType)[features, ]), maxK)
       colData(x)$rphenoGraph_id[as.numeric(rphenograph$names)] <-
