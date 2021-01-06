@@ -33,14 +33,23 @@ preprocessingBody <- function() {
   # box with markers, samples and patients (all markers, patients, samples selected by default)
   selectingBox <- shinydashboard::box(
     uiOutput("markersBox"),
-    uiOutput("samplesBox"),
     uiOutput("patientsBox"),
+    uiOutput("samplesBox"),
     div(
       bsButton(
         "prepSelectionButton",
-        "Confirm Selection",
-        icon = icon("mouse-pointer"),
+        "Visualize Selection",
+        icon = icon("palette"),
         style = "success"
+      ),
+      style = "float: left;"
+    ),
+    div(
+      bsButton(
+        "filterSelectionButton",
+        "Confirm Selection",
+        icon = icon("filter"),
+        style = "warning"
       ),
       style = "float: right;"
     ),
@@ -52,7 +61,7 @@ preprocessingBody <- function() {
   selectingPopover <- bsPopover(
     id = "selecting",
     title = "Analyse your data using all data or just a subclass.",
-    content = "After making a selection of markers, patients, and samples, click on the button to confirm your selection. <b>Unselected samples/patients are deleted in the next step of the analysis!</b>"
+    content = "After making a selection of markers, patients, and samples, press the <b>Visualize Selection</b> button to update the plots. By pressing the <b>Confirm Selection</b> button, the selection is applied to your data. <b>Unselected samples/patients are deleted permanently for further steps!</b>"
   )
   
   

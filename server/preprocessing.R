@@ -50,19 +50,6 @@ observe({
 })
 
 
-observeEvent(input$continue,{
-  if (reactiveVals$current_tab == 4){
-    if (length(unique(colData(reactiveVals$sce)$sample_id))!=length(input$sampleSelection)){
-      reactiveVals$sce <- filterSCE(reactiveVals$sce,sample_id %in% input$sampleSelection)
-      if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
-        if (length(unique(colData(reactiveVals$sce)$patient_id))!=length(input$patientSelection)){
-          reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% input$patientSelection)
-        }
-      }
-    }
-  }
-})
-
 # render markers box
 output$markersBox <- renderUI({
   pickerInput(
@@ -118,6 +105,7 @@ output$patientsBox <- renderUI({
 observeEvent(input$prepButton, {
   shinyjs::disable("prepButton")
   shinyjs::disable("prepSelectionButton")
+  shinyjs::disable("filterSelectionButton")
   shinyjs::disable("continue")
   # data transformation
   reactiveVals$sce <-
@@ -125,10 +113,11 @@ observeEvent(input$prepButton, {
                   cf = as.numeric(input$cofactor))
   shinyjs::enable("prepButton")
   shinyjs::enable("prepSelectionButton")
+  shinyjs::enable("filterSelectionButton")
   shinyjs::enable("continue")
 })
 
-# if start visualization button is clicked
+# if visualize selection button is clicked
 observeEvent(input$prepSelectionButton, {
   shinyjs::disable("prepButton")
   shinyjs::disable("prepSelectionButton")
@@ -138,7 +127,7 @@ observeEvent(input$prepSelectionButton, {
   if ((length(input$patientSelection) != allpatients) || (length(input$sampleSelection) != allsamples)){
     showNotification(HTML(
       "<b>Attention!</b><br>
-      The unselected samples and patients are deleted from the data in the next step. Further analysis is being performed only on the selected patients and samples!"
+      The unselected samples and patients are <b>deleted</b> from the data when pressing the <b>Confirm Selection</b> button. Further analysis is being performed only on the selected patients and samples!"
     ),
     duration = 10,
     type = "warning")
@@ -155,6 +144,26 @@ observeEvent(input$prepSelectionButton, {
   plotPreprocessing(sce)
   shinyjs::enable("prepButton")
   shinyjs::enable("prepSelectionButton")
+  shinyjs::enable("continue")
+})
+
+# if filtering button is clicked -> selection is applied to sce
+observeEvent(input$filterSelectionButton,{
+  shinyjs::disable("prepButton")
+  shinyjs::disable("prepSelectionButton")
+  shinyjs::disable("filterSelectionButton")
+  shinyjs::disable("continue")
+  if (length(unique(colData(reactiveVals$sce)$sample_id))!=length(input$sampleSelection)){
+    reactiveVals$sce <- filterSCE(reactiveVals$sce,sample_id %in% input$sampleSelection)
+    if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
+      if (length(unique(colData(reactiveVals$sce)$patient_id))!=length(input$patientSelection)){
+        reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% input$patientSelection)
+      }
+    }
+  }
+  shinyjs::enable("prepButton")
+  shinyjs::enable("prepSelectionButton")
+  shinyjs::enable("filterSelectionButton")
   shinyjs::enable("continue")
 })
 
