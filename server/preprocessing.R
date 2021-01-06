@@ -39,6 +39,7 @@ observeEvent({
   }
 })
 
+# check current tab
 observe({
   if (reactiveVals$current_tab == 3) {
     plotPreprocessing(reactiveVals$sce)
@@ -46,9 +47,9 @@ observe({
       shinyjs::hide("patientsBox")
     }
   } else if (reactiveVals$current_tab == 4){
-    sce <- reactiveVals$sce[, reactiveVals$sce$sample_id %in% input$sampleSelection]
+    reactiveVals$sce <- filterSCE(reactiveVals$sce,sample_id %in% input$sampleSelection)
     if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
-      reactiveVals$sce <- sce[,sce$patient_id %in% input$patientSelection]
+      reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% input$patientSelection)
     }
   }
 })
@@ -136,10 +137,11 @@ observeEvent(input$prepSelectionButton, {
   markers <- isolate(input$markerSelection)
   samples <- isolate(input$sampleSelection)
   patients <- isolate(input$patientSelection)
-  sce <- reactiveVals$sce[, reactiveVals$sce$sample_id %in% samples]
+  sce <- filterSCE(reactiveVals$sce,sample_id %in% samples)
   if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
-    sce <- sce[, sce$patient_id %in% patients]
+    sce <- filterSCE(sce,patient_id %in% patients)
   }
+  
   sce <- sce[rownames(sce) %in% markers, ]
   plotPreprocessing(sce)
   shinyjs::enable("prepButton")
@@ -157,6 +159,9 @@ plotPreprocessing <- function(sce) {
   features <-
     c("all", as.character(unique(rowData(sce)$marker_class)))
   
+  ## COUNTS
+  
+  # ui for counts
   output$designCounts <- renderUI({
     fluidRow(column(
       4,
@@ -184,7 +189,7 @@ plotPreprocessing <- function(sce) {
         tooltip = tooltipOptions(title = "Click to see plot options")
       ),
       div(
-        downloadButton("downloadPlotCounts", "Download Plot"),
+        uiOutput("countsPlotDownload"),
         style = "position: absolute; bottom: 10px;"
       ),
       style = "position: relative; height: 500px;"
@@ -195,6 +200,29 @@ plotPreprocessing <- function(sce) {
     )))
   })
   
+  # render counts plot
+  output$countsPlot <- renderPlot({
+    reactiveVals$countsPlot <-  CATALYST::plotCounts(
+      sce,
+      group_by = input$countsGroupBy,
+      color_by = input$countsColorBy,
+      prop = as.logical(input$countsProp)
+    )
+    reactiveVals$countsPlot
+  })
+  
+  # ui for download button
+  output$countsPlotDownload <- renderUI({
+    req(reactiveVals$countsPlot)
+    downloadButton("downloadPlotCounts", "Download Plot")
+  })
+  
+  # function for downloading count plot
+  output$downloadPlotCounts <- downloadPlotFunction("Counts_Plot", reactiveVals$countsPlot)
+  
+  ## MDS 
+  
+  # ui for MDS
   output$designMDS <- renderUI({
     fluidRow(column(
       4,
@@ -223,7 +251,7 @@ plotPreprocessing <- function(sce) {
         tooltip = tooltipOptions(title = "Click to see plot options")
       ),
       div(
-        downloadButton("downloadPlotMDS", "Download Plot"),
+        uiOutput("mdsPlotDownload"),
         style = "position: absolute; bottom: 10px;"
       ),
       style = "position: relative; height: 500px;"
@@ -234,6 +262,35 @@ plotPreprocessing <- function(sce) {
     )))
   })
   
+  # render mds plot
+  output$mdsPlot <- renderPlot({
+    feature <- input$mdsFeatures
+    if (feature == "all") {
+      feature <- NULL
+    }
+    reactiveVals$mdsPlot <- CATALYST::pbMDS(
+      sce,
+      label_by = input$mdsLabelBy,
+      color_by = input$mdsColorBy,
+      features = feature,
+      assay = input$mdsAssay,
+    )
+    reactiveVals$mdsPlot
+    
+  })
+  
+  # ui for download button
+  output$mdsPlotDownload <- renderUI({
+    req(reactiveVals$mdsPlot)
+    downloadButton("downloadPlotMDS", "Download Plot")
+  })
+  
+  # function for downloading MDS plot
+  output$downloadPlotMDS <- downloadPlotFunction("MDS_Plot", reactiveVals$mdsPlot)
+  
+  ## NRS
+  
+  # ui for NRS
   output$designNRS <- renderUI({
     fluidRow(column(
       4,
@@ -259,7 +316,7 @@ plotPreprocessing <- function(sce) {
         tooltip = tooltipOptions(title = "Click to see plot options")
       ),
       div(
-        downloadButton("downloadPlotNRS", "Download Plot"),
+        uiOutput("nrsPlotDownload"),
         style = "position: absolute; bottom: 10px;"
       ),
       style = "position: relative; height: 500px;"
@@ -270,6 +327,33 @@ plotPreprocessing <- function(sce) {
     )))
   })
   
+  # render nrs plot
+  output$nrsPlot <- renderPlot({
+    feature <- input$nrsFeatures
+    if (feature == "all") {
+      feature <- NULL
+    }
+    reactiveVals$nrsPlot <- CATALYST::plotNRS(
+      sce,
+      color_by = input$nrsColorBy,
+      features = feature,
+      assay = input$nrsAssay
+    )
+    reactiveVals$nrsPlot
+  })
+  
+  # ui for download button
+  output$nrsPlotDownload <- renderUI({
+    req(reactiveVals$nrsPlot)
+    downloadButton("downloadPlotNRS", "Download Plot")
+  })
+  
+  # function for downloading NRS plot
+  output$downloadPlotNRS <- downloadPlotFunction("NRS_Plot", reactiveVals$nrsPlot)
+  
+  ## Exprs
+
+  # ui for expr
   output$designExprs <- renderUI({
     fluidRow(column(
       4,
@@ -295,7 +379,7 @@ plotPreprocessing <- function(sce) {
         tooltip = tooltipOptions(title = "Click to see plot options")
       ),
       div(
-        downloadButton("downloadPlotExprs", "Download Plot"),
+        uiOutput("exprsPlotDownload"),
         style = "position: absolute; bottom: 10px;"
       ),
       style = "position: relative; height: 500px;"
@@ -306,6 +390,34 @@ plotPreprocessing <- function(sce) {
     )))
   })
   
+  # render exprs plot
+  output$exprsPlot <- renderPlot({
+    feature <- input$exprsFeatures
+    if (feature == "all") {
+      feature <- NULL
+    }
+    reactiveVals$exprsPlot <- CATALYST::plotExprs(
+      sce,
+      color_by = input$exprsColorBy,
+      features = feature,
+      assay = input$exprsAssay
+    )
+    reactiveVals$exprsPlot
+  })
+  
+  # ui for download button
+  output$exprsPlotDownload <- renderUI({
+    req(reactiveVals$exprsPlot)
+    downloadButton("downloadPlotExprs", "Download Plot")
+  })
+  
+  # function for downloading exprs plot
+  output$downloadPlotExprs <- downloadPlotFunction("Expr_Plot", reactiveVals$exprsPlot)
+  
+
+  ## Exprs Heatmap
+  
+  # ui for exprs heatmap
   output$designExprsHeatmap <- renderUI({
     fluidRow(column(
       4,
@@ -334,7 +446,7 @@ plotPreprocessing <- function(sce) {
         tooltip = tooltipOptions(title = "Click to see plot options")
       ),
       div(
-        downloadButton("downloadPlotExprsHeatmap", "Download Plot"),
+        uiOutput("exprsHeatmapPlotDownload"),
         style = "position: absolute; bottom: 10px;"
       ),
       style = "position: relative; height: 500px;"
@@ -344,72 +456,6 @@ plotPreprocessing <- function(sce) {
       plotOutput("exprsHeatmapPlot", width = "100%", height = "500px")
     )))
   })
-  
-  # render counts plot
-  output$countsPlot <- renderPlot({
-    reactiveVals$countsPlot <-  CATALYST::plotCounts(
-      sce,
-      group_by = input$countsGroupBy,
-      color_by = input$countsColorBy,
-      prop = as.logical(input$countsProp)
-    )
-    reactiveVals$countsPlot
-  })
-  
-  output$downloadPlotCounts <- downloadPlotFunction("Counts_Plot", reactiveVals$countsPlot)
-  
-  # render mds plot
-  output$mdsPlot <- renderPlot({
-    feature <- input$mdsFeatures
-    if (feature == "all") {
-      feature <- NULL
-    }
-    reactiveVals$mdsPlot <- CATALYST::pbMDS(
-      sce,
-      label_by = input$mdsLabelBy,
-      color_by = input$mdsColorBy,
-      features = feature,
-      assay = input$mdsAssay,
-    )
-    reactiveVals$mdsPlot
-    
-  })
-  
-  output$downloadPlotMDS <- downloadPlotFunction("MDS_Plot", reactiveVals$mdsPlot)
-  
-  # render nrs plot
-  output$nrsPlot <- renderPlot({
-    feature <- input$nrsFeatures
-    if (feature == "all") {
-      feature <- NULL
-    }
-    reactiveVals$nrsPlot <- CATALYST::plotNRS(
-      sce,
-      color_by = input$nrsColorBy,
-      features = feature,
-      assay = input$nrsAssay
-    )
-    reactiveVals$nrsPlot
-  })
-  
-  output$downloadPlotNRS <- downloadPlotFunction("NRS_Plot", reactiveVals$nrsPlot)
-  
-  # render exprs plot
-  output$exprsPlot <- renderPlot({
-    feature <- input$exprsFeatures
-    if (feature == "all") {
-      feature <- NULL
-    }
-    reactiveVals$exprsPlot <- CATALYST::plotExprs(
-      sce,
-      color_by = input$exprsColorBy,
-      features = feature,
-      assay = input$exprsAssay
-    )
-    reactiveVals$exprsPlot
-  })
-  
-  output$downloadPlotExprs <- downloadPlotFunction("Expr_Plot", reactiveVals$exprsPlot)
   
   # render exprs heatmap plot
   output$exprsHeatmapPlot <- renderPlot({
@@ -426,6 +472,13 @@ plotPreprocessing <- function(sce) {
     reactiveVals$exprsPlotHeatmap
   })
   
+  # ui for download button
+  output$exprsHeatmapPlotDownload <- renderUI({
+    req(reactiveVals$exprsPlot)
+    downloadButton("downloadPlotExprsHeatmap", "Download Plot")
+  })
+  
+  # function for downloading exprs heatmap
   output$downloadPlotExprsHeatmap <- downloadHandler(
     filename = "Expression_Heatmap.pdf", 
     content = function(file){

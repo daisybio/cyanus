@@ -22,7 +22,8 @@ body <-
              startBody(),
               preprocessingBody(),
              visbody(),
-             clusteringBody),
+             clusteringBody, 
+             deBody()),
     bsButton("continue", "Start Analysis", icon("arrow-right"), style = "success", block = TRUE)
   )
 

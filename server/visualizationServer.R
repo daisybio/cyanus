@@ -2,6 +2,11 @@ shinyjs::hide("visPlotBox")
 
 output$downloadPlot <- downloadPlotFunction(reactiveVals$lastMethod, reactiveVals$lastPlot)
 
+observeEvent(input$visTabs, {
+  if(input$visTabs == "expressionTab"){
+    disable("runDRButton")
+  }
+})
 
 observeEvent(input$markersState, {
   shinyjs::hide("visPlotBox")
@@ -9,7 +14,7 @@ observeEvent(input$markersState, {
   reactiveVals$useMarkersRun <- T
   req(input$selectedRunMethod)
   if(input$markersState != "" & input$selectedRunMethod != ""){
-    updateButton(session, "runDRButton", disabled = FALSE)
+    enable("runDRButton")
   }
 })
 
@@ -19,7 +24,7 @@ observeEvent(input$markersType, {
     reactiveVals$useMarkersRun <- T
     req(input$selectedRunMethod)
     if(input$markersType != "" & input$selectedRunMethod != ""){
-      updateButton(session, "runDRButton", disabled = FALSE)
+      enable("runDRButton")
     }
   })
 
@@ -29,7 +34,7 @@ observeEvent(input$markersNone, {
   reactiveVals$useMarkersRun <- T
   req(input$selectedRunMethod)
   if(input$markersNone != "" & input$selectedRunMethod != ""){
-    updateButton(session, "runDRButton", disabled = FALSE)
+    enable("runDRButton")
   }
 })
 
@@ -39,19 +44,19 @@ observeEvent(input$classes, {
   reactiveVals$useMarkersRun <- F
   req(input$selectedRunMethod)
   if(input$classes != "" & input$selectedRunMethod != ""){
-    updateButton(session, "runDRButton", disabled = FALSE)
+    enable("runDRButton")
   }
 })
 
 observeEvent(input$selectedRunMethod, {
   if(!is.null(reactiveVals$useClassesRun)){
     if(input$selectedRunMethod != "" & reactiveVals$useClassesRun){
-      updateButton(session, "runDRButton", disabled = FALSE)
+      enable("runDRButton")
     }
   }
   if(!is.null(reactiveVals$useMarkersRun)){
     if(input$selectedRunMethod != "" & reactiveVals$useMarkersRun){
-      updateButton(session, "runDRButton", disabled = FALSE)
+      enable("runDRButton")
     }
   }
   if(input$selectedRunMethod == "Isomap"){
@@ -130,10 +135,12 @@ observeEvent(input$runDRButton, {
     runCatalystDR("Isomap", input$nrCellsRun, reactiveVals$featuresDR, 
                   input$assayRunSelected, input$scaleRun, input$valueGraph)
   }
-  reactiveVals$useMarkersRun <- c()
-  reactiveVals$useClassesRun <- c()
   enable("visBox")
-  disable("startDimRed")
+  if(input$plt_color_by != "" & input$selectedVisMethod != ""){
+    enable("startDimRed")
+  }else{
+    disable("startDimRed")
+  }
   enable("continue")
   enable("runDRButton")
 })
@@ -383,7 +390,7 @@ output$runDRparBox <- renderUI({
       title = "Should the expression values be standardized?",
       content = "Run the dimensionality reduction either with standardized or unchanged counts / expression values"
     ),
-    div(id = "isobox",
+    hidden(div(id = "isobox",
            fluidRow(numericInput(
              "valueGraph",
              label = span("Choose k for the KNN construction", icon("question-circle"), id = "kQ"),
@@ -395,14 +402,13 @@ output$runDRparBox <- renderUI({
              id = "kQ", 
              title = "Special parameter for Isomap",
              content = "Isomap approximates a manifold using geodesic distances on a k nearest neighbor graph. You can specify k here, the number of nearest neighbors in the graph. "
-           )),
+           ))),
     div(
       bsButton(
         "runDRButton",
         "Run with these parameters",
         icon = icon("mouse-pointer"),
-        style = "success", 
-        disabled = TRUE
+        style = "success"
       ),
       style = "float: right;"
     ),
