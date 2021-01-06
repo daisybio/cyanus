@@ -182,7 +182,7 @@ plotPreprocessing <- function(sce) {
   # ui for counts
   output$designCounts <- renderUI({
     fluidRow(column(
-      4,
+      1,
       div(dropdownButton(
         tags$h3("Plot Options"),
         selectizeInput("countsGroupBy",
@@ -203,19 +203,20 @@ plotPreprocessing <- function(sce) {
         circle = TRUE,
         status = "info",
         icon = icon("gear"),
-        width = "100%",
+        width = "400px",
         tooltip = tooltipOptions(title = "Click to see plot options")
       ),
-      div(
-        uiOutput("countsPlotDownload"),
-        style = "position: absolute; bottom: 10px;"
-      ),
+
       style = "position: relative; height: 500px;"
       )
     ),
-    column(8, shinycssloaders::withSpinner(
+    column(11, shinycssloaders::withSpinner(
       plotOutput("countsPlot", width = "100%", height = "500px")
-    )))
+    )),
+    div(
+      uiOutput("countsPlotDownload"),
+      style = "position: absolute; bottom: 10px; right:10px;"
+    ))
   })
   
   # render counts plot
@@ -243,7 +244,7 @@ plotPreprocessing <- function(sce) {
   # ui for MDS
   output$designMDS <- renderUI({
     fluidRow(column(
-      4,
+      1,
       div(dropdownButton(
         tags$h3("Plot Options"),
         selectizeInput("mdsLabelBy",
@@ -265,19 +266,19 @@ plotPreprocessing <- function(sce) {
         circle = TRUE,
         status = "info",
         icon = icon("gear"),
-        width = "70%",
+        width = "400px",
         tooltip = tooltipOptions(title = "Click to see plot options")
-      ),
-      div(
-        uiOutput("mdsPlotDownload"),
-        style = "position: absolute; bottom: 10px;"
       ),
       style = "position: relative; height: 500px;"
       ),
     ),
-    column(8, shinycssloaders::withSpinner(
+    column(11, shinycssloaders::withSpinner(
       plotOutput("mdsPlot", width = "100%", height = "500px")
-    )))
+    )),
+    div(
+      uiOutput("mdsPlotDownload"),
+      style = "position: absolute; bottom: 10px;right:10px"
+    ),)
   })
   
   # render mds plot
@@ -311,7 +312,7 @@ plotPreprocessing <- function(sce) {
   # ui for NRS
   output$designNRS <- renderUI({
     fluidRow(column(
-      4,
+      1,
       div(dropdownButton(
         tags$h3("Plot Options"),
         selectizeInput("nrsColorBy",
@@ -330,19 +331,19 @@ plotPreprocessing <- function(sce) {
         circle = TRUE,
         status = "info",
         icon = icon("gear"),
-        width = "100%",
+        width = "400px",
         tooltip = tooltipOptions(title = "Click to see plot options")
-      ),
-      div(
-        uiOutput("nrsPlotDownload"),
-        style = "position: absolute; bottom: 10px;"
       ),
       style = "position: relative; height: 500px;"
       )
     ),
-    column(8, shinycssloaders::withSpinner(
+    column(11, shinycssloaders::withSpinner(
       plotOutput("nrsPlot", width = "100%", height = "500px")
-    )))
+    )),
+    div(
+      uiOutput("nrsPlotDownload"),
+      style = "position: absolute; bottom: 10px;right:10px;"
+    ))
   })
   
   # render nrs plot
@@ -374,7 +375,7 @@ plotPreprocessing <- function(sce) {
   # ui for expr
   output$designExprs <- renderUI({
     fluidRow(column(
-      4,
+      1,
       div(dropdownButton(
         tags$h3("Plot Options"),
         selectizeInput("exprsColorBy",
@@ -393,19 +394,19 @@ plotPreprocessing <- function(sce) {
         circle = TRUE,
         status = "info",
         icon = icon("gear"),
-        width = "100%",
+        width = "400px",
         tooltip = tooltipOptions(title = "Click to see plot options")
-      ),
-      div(
-        uiOutput("exprsPlotDownload"),
-        style = "position: absolute; bottom: 10px;"
       ),
       style = "position: relative; height: 500px;"
       )
     ),
-    column(8, shinycssloaders::withSpinner(
+    column(11, shinycssloaders::withSpinner(
       plotOutput("exprsPlot", width = "100%", height = "500px")
-    )))
+    )),
+    div(
+      uiOutput("exprsPlotDownload"),
+      style = "position: absolute; bottom: 10px;right:10px;"
+    ),)
   })
   
   # render exprs plot
@@ -438,7 +439,7 @@ plotPreprocessing <- function(sce) {
   # ui for exprs heatmap
   output$designExprsHeatmap <- renderUI({
     fluidRow(column(
-      4,
+      1,
       div(dropdownButton(
         tags$h3("Plot Options"),
         selectizeInput(
@@ -460,19 +461,19 @@ plotPreprocessing <- function(sce) {
         circle = TRUE,
         status = "info",
         icon = icon("gear"),
-        width = "100%",
+        width = "400px",
         tooltip = tooltipOptions(title = "Click to see plot options")
-      ),
-      div(
-        uiOutput("exprsHeatmapPlotDownload"),
-        style = "position: absolute; bottom: 10px;"
       ),
       style = "position: relative; height: 500px;"
       )
     ),
-    column(8, shinycssloaders::withSpinner(
+    column(11, shinycssloaders::withSpinner(
       plotOutput("exprsHeatmapPlot", width = "100%", height = "500px")
-    )))
+    )),
+    div(
+      uiOutput("exprsHeatmapPlotDownload"),
+      style = "position: absolute; bottom: 10px;right:10px;"
+    ),)
   })
   
   # render exprs heatmap plot
