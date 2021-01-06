@@ -271,7 +271,7 @@ observeEvent(input$diffExpButton,{
   out <- call_diffcyt()
   
   # add method to DAruns
-  reactiveVals$DAruns[[as.character(DAmethod)]] <- out
+  reactiveVals$DAruns[[DAmethod]] <- out
   
   # other method can be performed
   updateButton(session,
@@ -309,7 +309,7 @@ output$heatmapBox <- renderUI({
 
 # Render Heatmap Plot
 output$heatmapDEPlot <- renderPlot({
-  out <- reactiveVals$DEruns[[as.character(reactiveVals$visMethod)]] 
+  out <- reactiveVals$DEruns[[reactiveVals$visMethod]] 
   print(out)
   reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(
     x=reactiveVals$sce,
