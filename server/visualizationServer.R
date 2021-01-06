@@ -412,7 +412,8 @@ output$runDRparBox <- renderUI({
       ),
       style = "float: right;"
     ),
-    width = 12
+    width = 12,
+    title = "Choose Method and Parameters"
   )
   return(returnbox)
 })

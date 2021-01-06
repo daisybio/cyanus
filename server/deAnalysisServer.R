@@ -1,5 +1,64 @@
 library(diffcyt)
 
+plotbox_height <- "45em"
+methods_height <- "35em"
+
+# checks which methods is selected and executes the diffcyt function accordingly
+call_diffcyt <- function(){
+  ei <- metadata(reactiveVals$sce)$experiment_info
+  contrast <- createContrast(c(0, 1))  # TODO: contrast matrix must be reactive
+  if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DA-voom")){
+    design <- createDesignMatrix(ei, cols_design = input$colsDesign)
+    out <- diffcyt::diffcyt(
+      d_input = reactiveVals$sce,
+      design = design,
+      contrast = contrast,
+      analysis_type = reactiveVals$methodType,
+      method_DA = input$chosenDAMethod,
+      clustering_to_use = input$deCluster,
+    )
+  } else if (input$chosenDAMethod %in% c("diffcyt-DS-limma")){
+    design <- createDesignMatrix(ei, cols_design = input$colsDesign)
+    out <- diffcyt::diffcyt(
+      d_input = reactiveVals$sce,
+      design = design,
+      contrast = contrast,
+      analysis_type = reactiveVals$methodType,
+      method_DS = input$chosenDAMethod,
+      clustering_to_use = input$deCluster,
+    )
+  } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
+    formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
+    out <- diffcyt::diffcyt(
+      d_input = reactiveVals$sce,
+      formula = formula,
+      contrast = contrast,
+      analysis_type = reactiveVals$methodType,
+      method_DS = input$chosenDAMethod,
+      clustering_to_use = input$deCluster,
+    )
+  } else if (input$chosenDAMethod %in% c("diffcyt-DA-GLMM")){
+    formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
+    out <- diffcyt::diffcyt(
+      d_input = reactiveVals$sce,
+      formula = formula,
+      contrast = contrast,
+      analysis_type = reactiveVals$methodType,
+      method_DA = input$chosenDAMethod,
+      clustering_to_use = input$deCluster,
+    )
+  }
+  out
+}
+
+observe({
+  if (reactiveVals$current_tab==6){
+    shinyjs::hide("visDiffExp")
+    shinyjs::hide("heatmapBox")
+  }
+})
+
+
 observeEvent(input$deBoxFacet, {
   if(input$deBoxFacet == "cluster_id"){
     shinyjs::show("deBoxK")
@@ -8,6 +67,7 @@ observeEvent(input$deBoxFacet, {
   }
 })
 
+# displays available methods and selection of DA or DS
 output$deMethodSelection <- renderUI({
    methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
    methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM")
@@ -23,6 +83,7 @@ output$deMethodSelection <- renderUI({
       inputId = "chosenDAMethod",
       label = span("Available Methods", icon("question-circle"), id = "deMethodsQ"),
       choices = choices,
+      
       multiple = F
     ),
     bsPopover(
@@ -33,6 +94,7 @@ output$deMethodSelection <- renderUI({
    )
 })
 
+# box with cluster populations you want to compare
 output$clusterSelection <- renderUI({
   selectizeInput(
     inputId = "deCluster",
@@ -42,16 +104,7 @@ output$clusterSelection <- renderUI({
   )
 })
 
-output$markerSelection <- renderUI({
-  selectizeInput(
-    inputId = "deMarker",
-    label = "Choose the markers you want to compare",
-    # make reactiveVals of features where a cluster id is provided
-    choices = input$featuresIn, 
-    multiple = F
-  )
-})
-
+# checks whether designMatrix or formula box must be visualized
 output$modelSelection <- renderUI({
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DS-limma","diffcyt-DA-voom")){
     uiOutput("designMatrixSelection")
@@ -60,6 +113,7 @@ output$modelSelection <- renderUI({
   }
 })
 
+# if method using a design matrix is selected -> cols_design must be specified
 output$designMatrixSelection <- renderUI({
   colsDesign <- colnames(metadata(reactiveVals$sce)$experiment_info)
   colsDesign <- colsDesign[!colsDesign %in% "n_cells"]
@@ -89,6 +143,7 @@ output$designMatrixSelection <- renderUI({
   )
 })
 
+# if method using a formula is selected -> cols_fixed and cols_random must be specified
 output$formulaSelection <- renderUI({
   cols <- colnames(metadata(reactiveVals$sce)$experiment_info)
   cols <- cols[!cols %in% "n_cells"]
@@ -140,113 +195,145 @@ output$formulaSelection <- renderUI({
   )
 })
 
-observeEvent(input$diffExpButton,{
-  shinyjs::disable("diffExpButton")
-  ei <- metadata(reactiveVals$sce)$experiment_info
-  contrast <- createContrast(c(0, 1))
-  if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DA-voom")){
-    design <- createDesignMatrix(ei, cols_design = input$colsDesign)
-    out <- diffcyt::diffcyt(
-      d_input = reactiveVals$sce,
-      design = design,
-      contrast = contrast,
-      analysis_type = reactiveVals$methodType,
-      method_DA = input$chosenDAMethod,
-      clustering_to_use = input$deCluster,
-      markers_to_test = input$deMarker
-    )
-  } else if (input$chosenDAMethod %in% c("diffcyt-DS-limma")){
-    design <- createDesignMatrix(ei, cols_design = input$colsDesign)
-    out <- diffcyt::diffcyt(
-      d_input = reactiveVals$sce,
-      design = design,
-      contrast = contrast,
-      analysis_type = reactiveVals$methodType,
-      method_DS = input$chosenDAMethod,
-      clustering_to_use = input$deCluster,
-      markers_to_test = input$deMarker
-    )
-  } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
-    formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
-    out <- diffcyt::diffcyt(
-      d_input = reactiveVals$sce,
-      formula = formula,
-      contrast = contrast,
-      analysis_type = reactiveVals$methodType,
-      method_DS = input$chosenDAMethod,
-      clustering_to_use = input$deCluster,
-      markers_to_test = input$deMarker
-    )
-  } else if (input$chosenDAMethod %in% c("diffcyt-DA-GLMM")){
-    formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
-    out <- diffcyt::diffcyt(
-      d_input = reactiveVals$sce,
-      formula = formula,
-      contrast = contrast,
-      analysis_type = reactiveVals$methodType,
-      method_DA = input$chosenDAMethod,
-      clustering_to_use = input$deCluster,
-      markers_to_test = input$deMarker
-    )
+# choose method and parameter box
+output$visDiffExp <- renderUI({
+  if (reactiveVals$methodType == "DS") {
+    sort_by <-  c("P-adjusted" = "padj", "None" = "none")
+  } else {
+    sort_by <- c("P-adjusted" = "padj",
+                 "LogFC" = "lfc",
+                 "None" = "none")
   }
   
-  reactiveVals$out <- out
+ shinydashboard::box(
+  selectizeInput(
+    inputId = "deVisMethod",
+    label = "Successfull Run",
+    choices = names(reactiveVals$DAruns),
+    multiple = F
+  ),
+  numericInput("fdrThreshold",
+               label = "FDR Threshold",
+               value = 0.05,
+               step = 0.05),
+  numericInput("lfcThreshold",
+               label = "Log2FC Threshold",
+               value = 1,
+               step = 0.5),
+  selectizeInput(
+    "heatmapSortBy",
+    "Sort by:",
+    choices = c(
+      "P-adjusted" = "padj",
+      "LogFC" = "lfc",
+      "None" = "none"
+    ),
+    multiple = F
+  ),
+  selectizeInput(
+    "heatmapNormalize",
+    "Z-score normalization:",
+    c("Yes" = "TRUE", "No" = "FALSE"),
+    multiple = F
+  ),
+  div(
+    bsButton(
+      "visExpButton",
+      "Visualize Differential Expression",
+      icon = icon("palette"),
+      style = "success"
+    ),
+    style = "float: right;"
+  ),
   
-  output$heatmapDEPlot <- renderPlot({
-    reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(x=reactiveVals$sce,y=rowData(reactiveVals$out$res), k=input$deCluster,fdr=as.numeric(input$fdrThreshold), lfc=as.numeric(input$lfcThreshold), sort_by = input$heatmapSortBy, all=TRUE, normalize=as.logical(input$heatmapNormalize))
-    reactiveVals$diffHeatmapPlot
-  })
+  title = "Visualize Differential Expression Results",
+  width = 6,
+  height = methods_height,
+ )
+})
+
+# if Start Analysis button is clicked -> diffcyt method should be performed
+observeEvent(input$diffExpButton,{
+  DAmethod <- isolate(input$chosenDAMethod)
   
-  output$deHeatmapBox <- renderUI({
-    fluidRow(column(4,
-                    div(dropdownButton(
-                      tags$h3("Plot Options"),
-                      textInput("fdrThreshold", "Fdr Threshold:", value ="0.05"),
-                      textInput("lfcThreshold", "Log2FC Threshold:", value ="1"),
-                      selectizeInput(
-                        "heatmapSortBy",
-                        "Sort by:",
-                        choices = c("P-adjusted"="padj", "LogFC"="lfc", "None"="none"),
-                        multiple = F
-                      ),
-                      selectizeInput(
-                        "heatmapNormalize",
-                        "Z-score normalization:",
-                        c("Yes"="TRUE","No"="FALSE"),
-                        multiple=F
-                      ),
-                      circle = TRUE,
-                      status = "info",
-                      icon = icon("gear"),
-                      width = "100%",
-                      tooltip = tooltipOptions(title = "Click to see plot options")
-                    ),
-                    div(
-                      uiOutput("heatmapPlotDownload"),
-                      style = "position: absolute; bottom: 5px;"
-                    ),
-                    style = "position: relative; height: 550px;"
-                    ),
-              ),
-             column(8, shinycssloaders::withSpinner(
-               plotOutput("heatmapDEPlot", width = "100%", height = "550px")
-             )), 
-             )
-    
-  })
+  # update button and disable it
+  updateButton(session,
+               "diffExpButton",
+               label = " Analysis...",
+               disabled = TRUE)
   
-  # ui for download button
-  output$heatmapPlotDownload <- renderUI({
-    req(reactiveVals$diffHeatmapPlot)
-    downloadButton("downloadPlotDiffHeatmap", "Download Plot")
-  })
+  # check if a methods was already performed else create the list
+  if (is.null(reactiveVals$DAruns)){
+    reactiveVals$DAruns <- list()
+  }
   
-  # function for downloading MDS plot
-  output$downloadPlotDiffHeatmap <- downloadPlotFunction("Heatmap_DiffExp_Plot", reactiveVals$diffHeatmapPLot)
+  # call diffcyt function
+  out <- call_diffcyt()
   
-  shinyjs::enable("diffExpButton")
+  # add method to DAruns
+  reactiveVals$DAruns[[as.character(DAmethod)]] <- out
+  
+  # other method can be performed
+  updateButton(session,
+               "diffExpButton",
+               label = " Start Analysis",
+               disabled = FALSE)
+  
+  shinyjs::show("visDiffExp")
+})
+
+# if Visualize Differential Analysis Button is clicked -> plotDiffHeatmap is called
+observeEvent(input$visExpButton,{
+  reactiveVals$visMethod <- isolate(input$deVisMethod)
+  reactiveVals$fdrThreshold <- isolate(input$fdrThreshold)
+  reactiveVals$lfcThreshold <- isolate(input$lfcThreshold)
+  reactiveVals$heatmapSortBy <- isolate(input$heatmapSortBy)
+  reactiveVals$heatmapNormalize <- isolate(input$heatmapNormalize)
+  shinyjs::show("heatmapBox")
   
 })
+
+### HEATMAP FUNCTIONS
+
+# Box including Heatmap
+output$heatmapBox <- renderUI({
+  shinydashboard::box(
+    shinycssloaders::withSpinner(
+      plotOutput("heatmapDEPlot", width = "100%", height = "550px")
+    ),
+    title = "Heatmap",
+    width = 12,
+    height = plotbox_height
+  )
+})
+
+# Render Heatmap Plot
+output$heatmapDEPlot <- renderPlot({
+  out <- reactiveVals$DEruns[[as.character(reactiveVals$visMethod)]] 
+  print(out)
+  reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(
+    x=reactiveVals$sce,
+    y=rowData(out$res), 
+    fdr=as.numeric(reactiveVals$fdrThreshold), 
+    lfc=as.numeric(reactiveVals$lfcThreshold), 
+    sort_by = reactiveVals$heatmapSortBy, 
+    normalize=as.logical(reactiveVals$heatmapNormalize ),
+    top_n = as.numeric(input$top_n)
+  )
+  reactiveVals$diffHeatmapPlot
+})
+
+# ui for download button
+output$heatmapPlotDownload <- renderUI({
+  req(reactiveVals$diffHeatmapPlot)
+  downloadButton("downloadPlotDiffHeatmap", "Download Plot")
+})
+
+# function for downloading MDS plot
+output$downloadPlotDiffHeatmap <- downloadPlotFunction("Heatmap_DiffExp_Plot", reactiveVals$diffHeatmapPLot)
+
+
+### BOXPLOT FUNCTIONS
 
 output$deBoxPlots <- renderUI({
   uiOutput("deExprsCluster")

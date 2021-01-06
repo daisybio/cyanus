@@ -46,10 +46,19 @@ observe({
     if (!("patient_id" %in% colnames(colData(reactiveVals$sce)))){
       shinyjs::hide("patientsBox")
     }
-  } else if (reactiveVals$current_tab == 4){
-    reactiveVals$sce <- filterSCE(reactiveVals$sce,sample_id %in% input$sampleSelection)
-    if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
-      reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% input$patientSelection)
+  }
+})
+
+
+observeEvent(input$continue,{
+  if (reactiveVals$current_tab == 4){
+    if (length(unique(colData(reactiveVals$sce)$sample_id))!=length(input$sampleSelection)){
+      reactiveVals$sce <- filterSCE(reactiveVals$sce,sample_id %in% input$sampleSelection)
+      if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
+        if (length(unique(colData(reactiveVals$sce)$patient_id))!=length(input$patientSelection)){
+          reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% input$patientSelection)
+        }
+      }
     }
   }
 })
