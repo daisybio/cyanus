@@ -1,4 +1,5 @@
 
+box_height <- "45em"
 
 deBody <- function(){
   selectionBox <- shinydashboard::box(
@@ -15,14 +16,36 @@ deBody <- function(){
       ),
       uiOutput("deMethodSelection"),
       uiOutput("clusterSelection"),
+      uiOutput("markerSelection"),
+      uiOutput("modelSelection"),
+      
+      div(
+        bsButton(
+          "diffExpButton",
+          "Start Analysis",
+          icon = icon("tools"),
+          style = "success"
+        ),
+        style = "float: right;"
+      ),
+      
     title = "Select your parameters",
-    width = 4
+    width = 4,
+    height = box_height
   )
   
   plotBox <- shinydashboard::box(
     uiOutput("deBoxPlots"),
     title = "Boxplots",
-    width = 8
+    width = 8,
+    height = box_height
+  )
+  
+  heatmapBox <- shinydashboard::box(
+    uiOutput("deHeatmapBox"),
+    title = "Heatmap",
+    width = 12,
+    height = box_height
   )
   
   debody <- tabItem(
@@ -39,7 +62,9 @@ deBody <- function(){
     fluidRow(
       selectionBox, 
       plotBox
-    )
+    ),
+    
+    fluidRow(heatmapBox)
   )
   
   return(debody)
