@@ -153,14 +153,20 @@ observeEvent(input$filterSelectionButton,{
   shinyjs::disable("prepSelectionButton")
   shinyjs::disable("filterSelectionButton")
   shinyjs::disable("continue")
-  if (length(unique(colData(reactiveVals$sce)$sample_id))!=length(input$sampleSelection)){
+  browser()
+  allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
+  allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
+  
+  if (length(input$sampleSelection) != allsamples){
     reactiveVals$sce <- filterSCE(reactiveVals$sce,sample_id %in% input$sampleSelection)
-    if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
-      if (length(unique(colData(reactiveVals$sce)$patient_id))!=length(input$patientSelection)){
-        reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% input$patientSelection)
-      }
+  }
+  if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
+    if (length(input$patientSelection) != allpatients){
+      reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% input$patientSelection)
     }
   }
+  
+  print(colData(reactiveVals$sce))
   shinyjs::enable("prepButton")
   shinyjs::enable("prepSelectionButton")
   shinyjs::enable("filterSelectionButton")
