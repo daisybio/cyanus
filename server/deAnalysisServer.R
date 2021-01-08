@@ -361,7 +361,7 @@ output$deBoxPlots <- renderUI({
 
 output$deExprsCluster <- renderUI({
   factors <- names(colData(reactiveVals$sce))[!names(colData(reactiveVals$sce)) %in% c("patient_id", "sample_id")]
-  fluidRow(column(4,
+  fluidRow(column(1,
                   div(dropdownButton(
                     tags$h3("Plot Options"),
                     selectizeInput("deBoxFacet",
@@ -396,19 +396,20 @@ output$deExprsCluster <- renderUI({
                     circle = TRUE,
                     status = "info",
                     icon = icon("gear"),
-                    width = "100%",
+                    width = "400px",
                     tooltip = tooltipOptions(title = "Click to see plot options")
-                  ),
-                  div(
-                    uiOutput("pbExprsPlotDownload"),
-                    style = "position: absolute; bottom: 5px;"
                   ),
                   style = "position: relative; height: 550px;"
                   )
                 ),
-           column(8, shinycssloaders::withSpinner(
+           column(11, shinycssloaders::withSpinner(
              plotOutput("clusterDEPlot", width = "100%", height = "500px")
-           )))
+           )),
+           div(
+             uiOutput("pbExprsPlotDownload"),
+             style = "position: absolute; bottom: 5px; right:5px"
+           ),
+           )
 })
 
 output$clusterDEPlot <- renderPlot({
