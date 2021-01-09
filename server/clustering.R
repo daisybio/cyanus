@@ -43,9 +43,11 @@ observeEvent(input$startClustering, {
       table = data.frame(old_cluster = seq_len(20), new_cluster = "all")
     )
   
+  assays <- c("exprs" = "Transformed", "counts" = "Raw")
+  
   reactiveVals$clusterRun <- list(
-    features = reactiveVals$featureNames,
-    assayType = input$assayTypeIn,
+    features = CATALYST:::.get_features(reactiveVals$sce, input$featuresIn),
+    assayType = assays[input$assayTypeIn],
     xdim = input$xdim,
     ydim = input$ydim,
     maxK = input$k
@@ -67,21 +69,6 @@ observeEvent(input$startClustering, {
     duration = 10,
     type = "message"
   )
-})
-
-observeEvent(input$featuresIn, {
-  if (input$useFeaturesIn == "Marker by Class")
-    reactiveVals$featureNames <-
-      rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) %in% input$featuresIn]
-  else
-    reactiveVals$featureNames <- input$featuresIn
-}, ignoreNULL = FALSE)
-
-observe({
-  if (length(reactiveVals$featureNames) < 2)
-    disable("startClustering")
-  else
-    enable("startClustering")
 })
 
 observeEvent(input$clusterCode, {
@@ -162,7 +149,8 @@ output$clusteringVisualizationSelection <- renderUI({
   
   shinydashboard::box(
     column(tableOutput("clusterRunParams"),
-           width = 8),
+           width = 8, 
+           style = "overflow-x: scroll;"),
     column(
       uiOutput("selectClusterCode"),
       div(
