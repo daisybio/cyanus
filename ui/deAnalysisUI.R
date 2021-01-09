@@ -1,10 +1,13 @@
 
+plotbox_height <- "45em"
+methods_height <- "35em"
 
 deBody <- function(){
+  
   selectionBox <- shinydashboard::box(
       radioButtons(
         inputId = "da_ds",
-        label = span("What type of analysis method do you want?", icon("question-circle"), id = "da_dsQ"),
+        label = span("What type of analysis method do you want to perform?", icon("question-circle"), id = "da_dsQ"),
         choices = c("Differential Abundance", "Differential States"), 
         inline = T
       ),
@@ -15,14 +18,34 @@ deBody <- function(){
       ),
       uiOutput("deMethodSelection"),
       uiOutput("clusterSelection"),
-    title = "Select your parameters",
-    width = 4
+      uiOutput("modelSelection"),
+      
+      div(
+        bsButton(
+          "diffExpButton",
+          "Start Analysis",
+          icon = icon("tools"),
+          style = "success"
+        ),
+        style = "float: right;"
+      ),
+      
+    title = "Choose Method and Parameters",
+    width = 6,
+    height = methods_height
   )
   
   plotBox <- shinydashboard::box(
     uiOutput("deBoxPlots"),
-    title = "Boxplots",
-    width = 8
+    title = span("Boxplots", icon("question-circle"), id = "boxplotPopover"),
+    width = 12,
+    height = plotbox_height
+  )
+  
+  boxplotPopover <- bsPopover(
+    id = "boxplotPopover",
+    title = "Median expression of markers",
+    content = "This plots helps to get a rough image of how strong the differences might be."
   )
   
   debody <- tabItem(
@@ -37,11 +60,14 @@ deBody <- function(){
         )
     ), 
     fluidRow(
-      selectionBox, 
-      plotBox
-    )
-  )
+      plotBox,
+      boxplotPopover,
+      selectionBox,
+      uiOutput("visDiffExp"),
+      uiOutput("heatmapBox")
+    ),
   
+  )
   return(debody)
   
 }
