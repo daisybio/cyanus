@@ -290,7 +290,7 @@ clusterSCE <-
     pdf(NULL)
     mc <-
       suppressWarnings(suppressMessages(
-        ConsensusClusterPlus(
+        ConsensusClusterPlus::ConsensusClusterPlus(
           t(som$map$codes),
           maxK = maxK,
           reps = 100,
