@@ -4,7 +4,7 @@ clusteringBody <- tabItem(tabName = "clustering",
                               "Detect and define cell populations for further downstream analysis via
         <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://bioconductor.org/packages/release/bioc/html/FlowSOM.html>FlowSOM</a> clustering &
         <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://bioconductor.org/packages/release/bioc/html/ConsensusClusterPlus.html>ConsensusClusterPlus</a> metaclustering:
-        First group cells into clusters with FlowSOM using Self-Organizing Map clustering and Minimal Spanning Trees, <br>and subsequently perform metaclustering with ConsensusClusterPlus which determines cluster count and membership by stability evidence."
+        First group cells into clusters with FlowSOM using Self-Organizing Map clustering and Minimal Spanning Trees, and subsequently perform metaclustering with ConsensusClusterPlus which determines cluster count and membership by stability evidence."
                             ),
                             title = h2("Clustering"),
                             width = 12

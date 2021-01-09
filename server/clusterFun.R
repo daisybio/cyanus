@@ -1,49 +1,3 @@
-# cluster_ids <-
-#   function(x,
-#            k = NULL,
-#            method = "flowSOM") {
-#     if (method == "flowSOM") {
-#       if (is.null(k)) return(x$flowSOM_id)
-#       codes <- cluster_codes(x)
-#       m <- match(x$flowSOM_id, codes[, 1])
-#       return(droplevels(codes[m, k]))
-#     } else
-#       return(colData(x)[[sprintf("%s_id", method)]])
-# }
-#
-# mergeClusters <- function (x, k, table, id, overwrite = FALSE)
-# {
-#   CATALYST:::.check_sce(x)
-#   #.check_k(x, k)
-#   #TODO: kae this work for rphenograph
-#   table <- data.frame(table)
-#   stopifnot(
-#     is.character(id),
-#     length(id) == 1,
-#     dim(table) !=
-#       0,
-#     ncol(table) == 2,
-#     nrow(table) == length(unique(table[,
-#                                        1])),
-#     all(table[, 1] %in% levels(cluster_codes(x)[,
-#                                                 k])),
-#     is.logical(overwrite),
-#     length(overwrite) == 1
-#   )
-#   if (!overwrite && id %in% names(cluster_codes(x)))
-#     stop(
-#       "There already exists a clustering ",
-#       dQuote(id),
-#       ";\n",
-#       "specify a different 'id' or use 'overwrite = TRUE'."
-#     )
-#   m <- match(cluster_codes(x)[, k], table[, 1])
-#   new_ids <- table[m, 2]
-#   metadata(x)$cluster_codes[, id] <- factor(new_ids)
-#   return(x)
-# }
-
-
 plotAbundancesCustom <-
   function (x,
             k = "meta20",
@@ -246,6 +200,7 @@ plotFreqHeatmapCustom <- function (x,
                                    k_pal = CATALYST:::.cluster_cols,
                                    m_pal = k_pal)
 {
+  library(ComplexHeatmap)
   args <- as.list(environment())
   CATALYST:::.check_args_plotFreqHeatmap(args)
   x$cluster_id <- cluster_ids(x, k)
