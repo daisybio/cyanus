@@ -9,21 +9,19 @@ observeEvent(input$startClustering, {
                disabled = TRUE)
   toggle_inputs()
   
-  showNotification(ui =
-                     HTML(
-                       sprintf(
-                         "<div id='clusteringProgress'><b>Clustering Progress with %s:</b><div>",
-                         input$clusteringMethod
-                       )
-                     ),
-                   duration = NULL,
-                   id = "clusteringProgressNote")
+  showNotification(
+    ui =
+      HTML(
+        "<div id='clusteringProgress'><b>Clustering Progress:</b><div>"
+      ),
+    duration = NULL,
+    id = "clusteringProgressNote"
+  )
   
   withCallingHandlers({
     reactiveVals$sce <-
       clusterSCE(
         reactiveVals$sce,
-        input$clusteringMethod,
         input$assayTypeIn,
         input$featuresIn,
         input$xdim,
@@ -37,6 +35,14 @@ observeEvent(input$startClustering, {
                   add = TRUE)
   })
   
+  reactiveVals$clusterRun <- list(
+    features = reactiveVals$featureNames,
+    assayType = input$assayTypeIn,
+    xdim = input$xdim,
+    ydim = input$ydim,
+    maxK = input$k
+  )
+  
   toggle_inputs(enable_inputs = TRUE)
   updateButton(session,
                "startClustering",
@@ -45,57 +51,14 @@ observeEvent(input$startClustering, {
   updateButton(session, "continue", label = " Differential Expression Analysis")
   shinyjs::show("continue")
   removeNotification("clusteringProgressNote")
-  showNotification(HTML(
-    sprintf(
-      "<b>Finished clustering with %s.</b><br>
-      You can visualize the newly assigned clusters in the Visualization tab.",
-      input$clusteringMethod
-    )
-  ),
-  duration = 10,
-  type = "message")
-})
-
-observeEvent(input$visualizeClustering, {
-  method <- isolate(input$clusteringRuns)
-  sce <- isolate(reactiveVals$sce)
-  clusterCode <- isolate(input$clusterCode)
-  assay <- isolate(input$assayTypeVisIn)
-  by <- isolate(input$abundanceBy)
-  group_by <- isolate(input$abundanceGroup)
-  shape_by <- isolate(input$abundanceShape)
-  if (is.null(shape_by) | shape_by == "")
-    shape_by <- NULL
-  if (is.null(clusterCode) | method != "flowSOM")
-    clusterCode <- NULL
-  
-  reactiveVals[[method]]$clusterAbundancePlot <-
-    plotAbundancesCustom(
-      sce,
-      method = method,
-      k = clusterCode,
-      by = by,
-      group_by = group_by,
-      shape_by = shape_by
-    )
-  # TODO: implement for rphenograph
-  
-  reactiveVals[[method]]$clusterHeatmapPlot <-
-    plotFreqHeatmapCustom(isolate(reactiveVals$sce),
-                          method,
-                          clusterCode)
-  
-  reactiveVals[[method]]$clusterExprsPlot <-
-    plotClusterExprsCustom(
-      sce,
-      method = method,
-      k = clusterCode,
-      features = metadata(sce)$cluster_run[[method]]$features,
-      assay
-    )
-  
-  
-  
+  showNotification(
+    HTML(
+      "<b>Finished clustering.</b><br>
+      You can visualize the newly assigned clusters in the Visualization tab."
+    ),
+    duration = 10,
+    type = "message"
+  )
 })
 
 observeEvent(input$featuresIn, {
@@ -104,7 +67,7 @@ observeEvent(input$featuresIn, {
       rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) %in% input$featuresIn]
   else
     reactiveVals$featureNames <- input$featuresIn
-})
+}, ignoreNULL = FALSE)
 
 observe({
   if (length(reactiveVals$featureNames) < 2)
@@ -126,37 +89,12 @@ observeEvent(input$mergeClusteringButton, {
       id = sprintf("merged_%s", isolate(input$clusterCode)),
       overwrite = TRUE
     )
-  runjs("('#mergeClusteringButton').closest('.box-header').find('[data-widget=collapse]').click();")
+  runjs(
+    "('#mergeClusteringButton').closest('.box-header').find('[data-widget=collapse]').click();"
+  )
 })
 
 ### Renderer ----
-output$parameters <- renderUI({
-  shinydashboard::box(
-    column(
-      uiOutput("useFeaturesOut"),
-      uiOutput("featuresOut"),
-      uiOutput("assayTypeOut"),
-      width = 6
-    ),
-    column(uiOutput("k"),
-           uiOutput("xdim"),
-           uiOutput("ydim"),
-           width = 6),
-    title = "Choose Clustering Parameters",
-    width = 12,
-    collapsible = TRUE,
-    collapsed = FALSE
-  )
-})
-
-output$useFeaturesOut <- renderUI({
-  selectInput(
-    "useFeaturesIn",
-    label = "Features to choose from",
-    choices = c("Marker by Class",
-                "Marker by Name")
-  )
-})
 
 output$featuresOut <- renderUI({
   req(input$useFeaturesIn)
@@ -194,54 +132,8 @@ output$assayTypeOut <- renderUI({
                  choices = choices)
 })
 
-output$k <- renderUI({
-  req(input$clusteringMethod != "clusterX",
-      length(reactiveVals$featureNames) > 1)
-  
-  if (input$clusteringMethod == "flowSOM") {
-    label = "Maximum Number of Clusters to Evaluate in the Metaclustering"
-    value = 20
-    maxK = 100
-  } else if (input$clusteringMethod == "rphenoGraph") {
-    label = "Number of Nearest Neighbours"
-    value = 30
-    maxK = length(reactiveVals$featureNames) - 1
-  } else
-    stop("which clustermethod was chosen?")
-  sliderInput(
-    inputId = "k",
-    label = label,
-    value = min(value, maxK),
-    min = 1,
-    max = maxK
-  )
-})
-
-output$ydim <- renderUI({
-  req(input$clusteringMethod == "flowSOM")
-  sliderInput(
-    inputId = "ydim",
-    label = "ydim of the grid size of the self-organizing map",
-    value = 10,
-    min = 2,
-    max = 100
-  )
-  
-})
-
-output$xdim <- renderUI({
-  req(input$clusteringMethod == "flowSOM")
-  sliderInput(
-    inputId = "xdim",
-    label = "xdim of the grid size of the self-organizing map",
-    value = 10,
-    min = 2,
-    max = 100
-  )
-})
-
 output$clusteringVisualizationSelection <- renderUI({
-  req(metadata(reactiveVals$sce)$cluster_run)
+  req(reactiveVals$clusterRun)
   
   abundanceByChoices <-
     c("Samples" = "sample_id", "Clusters" = "cluster_id")
@@ -250,14 +142,6 @@ output$clusteringVisualizationSelection <- renderUI({
   
   shinydashboard::box(
     fluidRow(
-      column(
-        selectizeInput(
-          "clusteringRuns",
-          "Successfull Run",
-          names(metadata(reactiveVals$sce)$cluster_run)
-        ),
-        width = 6
-      ),
       column(uiOutput("assayTypeVisOut"),
              width = 6)
     ),
@@ -269,8 +153,6 @@ output$clusteringVisualizationSelection <- renderUI({
            width = 12,
            style = "overflow-x: scroll;"),
     fluidRow(withSpinner(uiOutput("delta_area"))),
-    fluidRow(withSpinner(uiOutput("clusterMergingBox")),
-    ),
     fluidRow(withSpinner(uiOutput(
       "clusteringOutput"
     ))),
@@ -303,6 +185,9 @@ output$clusteringVisualizationSelection <- renderUI({
       ),
       style = "float: right;"
     ),
+    fluidRow(withSpinner(uiOutput(
+      "clusterMergingBox"
+    ))),
     title = "Visualize Clustering Results",
     width = 12
   )
@@ -313,7 +198,7 @@ output$clusterRunParams <- renderTable({
     "document.getElementById('clusteringVisualizationSelection').scrollIntoView();"
   )
   runParams <-
-    metadata(reactiveVals$sce)$cluster_run[[input$clusteringRuns]]
+    reactiveVals$clusterRun
   runParams$features <- paste(runParams$features, collapse = ",")
   data.frame(runParams)
 },
@@ -321,8 +206,7 @@ caption = "Run Parameters",
 caption.placement = "top")
 
 output$selectClusterCode <- renderUI({
-  req(input$clusteringRuns == "flowSOM")
-  
+  req(reactiveVals$clusterRun)
   
   selectInput("clusterCode",
               "Clusters",
@@ -338,9 +222,10 @@ output$assayTypeVisOut <- renderUI({
 })
 
 output$clusterSizes <- renderTable({
+  req(input$clusterCode)
   res <-
     as.data.frame(table(
-      cluster_ids(reactiveVals$sce, input$clusterCode, input$clusteringRuns),
+      cluster_ids(reactiveVals$sce, input$clusterCode),
       useNA =
         "ifany"
     ))
@@ -351,13 +236,12 @@ caption = "Cluster Sizes",
 caption.placement = "top", rownames = TRUE, colnames = FALSE)
 
 output$mergeClusters <- renderDT({
-  req(input$clusteringRuns)
+  req(reactiveVals$clusterRun)
   curr_cluster_ids <-
     levels(
       cluster_ids(
         x = reactiveVals$sce,
-        k = input$clusterCode,
-        method = input$clusteringRuns
+        k = input$clusterCode
       )
     )
   reactiveVals$mergingFrame <-
@@ -371,14 +255,12 @@ editable = list(target = "cell", disable = list(columns = 1)),
 options = list(pageLength = nlevels(
   cluster_ids(
     x = reactiveVals$sce,
-    k = input$clusterCode,
-    method = input$clusteringRuns
+    k = input$clusterCode
   )
 )))
 
 output$delta_area <- renderUI({
-  req(input$clusteringRuns == "flowSOM")
-  
+  req(reactiveVals$clusterRun)
   
   runjs(
     "document.getElementById('clusteringVisualizationSelection').scrollIntoView();"
@@ -395,7 +277,7 @@ output$delta_area <- renderUI({
 })
 
 output$clusterMergingBox <- renderUI({
-  req(input$clusteringRuns == "flowSOM")
+  req(reactiveVals$clusterRun)
   
   shinydashboard::box(
     HTML(
@@ -416,25 +298,21 @@ output$clusterMergingBox <- renderUI({
     width = 12,
     collapsible = TRUE,
     collapsed = TRUE
-  )})
+  )
+})
 
 output$downloadClusters <- downloadHandler(
-  filename = function() {
-    paste(input$clusteringRuns, ".csv", sep = "")
-  },
+  filename = "Clustering_Assignments.csv",
   content = function(file) {
-    to_write <- colData(reactiveVals$sce)
-    if (input$clusteringRuns == "flowSOM") {
-      add_meta <- list(cluster_ids(reactiveVals$sce, input$clusterCode))
-      names(add_meta) <- input$clusterCode
-      to_write <- cbind(to_write, add_meta)
-    }
-    write.csv(to_write, file, row.names = FALSE)
+    add_meta <- list(cluster_ids(reactiveVals$sce, input$clusterCode))
+    names(add_meta) <- input$clusterCode
+    
+    write.csv(cbind(colData(reactiveVals$sce), add_meta), file, row.names = FALSE)
   }
 )
 
 output$clusteringOutput <- renderUI({
-  req(input$visualizeClustering, reactiveVals[[input$clusteringRuns]])
+  req(input$visualizeClustering, reactiveVals$clusterRun)
   
   shinydashboard::box(
     fluidRow(
@@ -472,10 +350,11 @@ output$clusteringOutput <- renderUI({
           )
         ),
         title = "Cluster Visualization",
+        id = "clusterVisTabBox",
         width = 12
       )
     ),
-    title = "Cluster Visualizations",
+    title = "Clustering Output",
     width = 12,
     collapsible = TRUE,
     collapsed = FALSE
@@ -502,19 +381,31 @@ output$clusterHeatmapDownload <- renderUI({
 
 output$clusterAbundancePlot <- renderPlot({
   reactiveVals$abundanceCluster <-
-    reactiveVals[[input$clusteringRuns]]$clusterAbundancePlot
+    plotAbundancesCustom(
+      reactiveVals$sce,
+      k = input$clusterCode,
+      by = input$abundanceBy,
+      group_by = input$abundanceGroup,
+      shape_by = input$abundanceShape
+    )
   reactiveVals$abundanceCluster
 })
 
 output$clusterHeatmapPlot <- renderPlot({
   reactiveVals$heatmapCluster <-
-    reactiveVals[[input$clusteringRuns]]$clusterHeatmapPlot
+    plotFreqHeatmapCustom(reactiveVals$sce,
+                          input$clusterCode)
   reactiveVals$heatmapCluster
 })
 
 output$clusterExprsPlot <- renderPlot({
   reactiveVals$exprsCluster <-
-    reactiveVals[[input$clusteringRuns]]$clusterExprsPlot
+    plotClusterExprsCustom(
+      reactiveVals$sce,
+      k = input$clusterCode,
+      features = reactiveVals$clusterRun$features,
+      input$assayTypeVisIn
+    )
   reactiveVals$exprsCluster
 })
 

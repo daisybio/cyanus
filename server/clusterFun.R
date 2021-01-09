@@ -1,39 +1,51 @@
-cluster_ids <-
-  function(x,
-           k = NULL,
-           method = "flowSOM") {
-    if (method == "flowSOM") {
-      if (is.null(k)) return(x$flowSOM_id)
-      codes <- cluster_codes(x)
-      m <- match(x$flowSOM_id, codes[, 1])
-      return(droplevels(codes[m, k]))
-    } else
-      return(colData(x)[[sprintf("%s_id", method)]])
-  }
-
-mergeClusters <- function (x, k, table, id, overwrite = FALSE) 
-{
-  CATALYST:::.check_sce(x)
-  #.check_k(x, k)
-  #TODO: kae this work for rphenograph
-  table <- data.frame(table)
-  stopifnot(is.character(id), length(id) == 1, dim(table) != 
-              0, ncol(table) == 2, nrow(table) == length(unique(table[, 
-                                                                      1])), all(table[, 1] %in% levels(cluster_codes(x)[, 
-                                                                                                                        k])), is.logical(overwrite), length(overwrite) == 1)
-  if (!overwrite && id %in% names(cluster_codes(x))) 
-    stop("There already exists a clustering ", dQuote(id), 
-         ";\n", "specify a different 'id' or use 'overwrite = TRUE'.")
-  m <- match(cluster_codes(x)[, k], table[, 1])
-  new_ids <- table[m, 2]
-  metadata(x)$cluster_codes[, id] <- factor(new_ids)
-  return(x)
-}
+# cluster_ids <-
+#   function(x,
+#            k = NULL,
+#            method = "flowSOM") {
+#     if (method == "flowSOM") {
+#       if (is.null(k)) return(x$flowSOM_id)
+#       codes <- cluster_codes(x)
+#       m <- match(x$flowSOM_id, codes[, 1])
+#       return(droplevels(codes[m, k]))
+#     } else
+#       return(colData(x)[[sprintf("%s_id", method)]])
+# }
+#
+# mergeClusters <- function (x, k, table, id, overwrite = FALSE)
+# {
+#   CATALYST:::.check_sce(x)
+#   #.check_k(x, k)
+#   #TODO: kae this work for rphenograph
+#   table <- data.frame(table)
+#   stopifnot(
+#     is.character(id),
+#     length(id) == 1,
+#     dim(table) !=
+#       0,
+#     ncol(table) == 2,
+#     nrow(table) == length(unique(table[,
+#                                        1])),
+#     all(table[, 1] %in% levels(cluster_codes(x)[,
+#                                                 k])),
+#     is.logical(overwrite),
+#     length(overwrite) == 1
+#   )
+#   if (!overwrite && id %in% names(cluster_codes(x)))
+#     stop(
+#       "There already exists a clustering ",
+#       dQuote(id),
+#       ";\n",
+#       "specify a different 'id' or use 'overwrite = TRUE'."
+#     )
+#   m <- match(cluster_codes(x)[, k], table[, 1])
+#   new_ids <- table[m, 2]
+#   metadata(x)$cluster_codes[, id] <- factor(new_ids)
+#   return(x)
+# }
 
 
 plotAbundancesCustom <-
   function (x,
-            method = c("flowSOM", "clusterX", "rphenoGraph"),
             k = "meta20",
             by = c("sample_id", "cluster_id"),
             group_by = "condition",
@@ -58,11 +70,9 @@ plotAbundancesCustom <-
             k_pal = CATALYST:::.cluster_cols)
   {
     library(ggplot2)
-    method <- match.arg(method)
     by <- match.arg(by)
-    CATALYST:::.check_sce(x)
-    cluster_ids <- cluster_ids(x, k, method)
-    # k <- CATALYST:::.check_k(x, k)
+    CATALYST:::.check_sce(x, TRUE)
+    k <- CATALYST:::.check_k(x, k)
     CATALYST:::.check_cd_factor(x, group_by)
     CATALYST:::.check_cd_factor(x, shape_by)
     CATALYST:::.check_pal(k_pal)
@@ -73,12 +83,12 @@ plotAbundancesCustom <-
     if (is.null(shapes))
       shape_by <- NULL
     if (by == "sample_id") {
-      nk <- nlevels(cluster_ids)
+      nk <- nlevels(cluster_ids(x, k))
       if (length(k_pal) < nk)
         k_pal <- colorRampPalette(k_pal)(nk)
     }
     ns <-
-      table(cluster_id = cluster_ids, sample_id = sample_ids(x))
+      table(cluster_id = cluster_ids(x, k), sample_id = sample_ids(x))
     fq <- prop.table(ns, 2) * 100
     df <- as.data.frame(fq)
     m <- match(df$sample_id, x$sample_id)
@@ -166,32 +176,29 @@ plotAbundancesCustom <-
 
 plotClusterExprsCustom <-
   function (x,
-            method = c("flowSOM", "clusterX", "rphenoGraph"),
             k = "meta20",
             features = "type",
             assay = "exprs")
   {
-    library(data.table)
-    library(ggplot2)
-    
-    method <- match.arg(method)
-    CATALYST:::.check_sce(x)
-    x$cluster_id <- cluster_ids(x, k, method)
-    x$cluster_id <- colData(x)[[sprintf("%s_id", method)]]
+    CATALYST:::.check_sce(x, TRUE)
+    k <- CATALYST:::.check_k(x, k)
+    x$cluster_id <- cluster_ids(x, k)
     features <- CATALYST:::.get_features(x, features)
     ms <-
-      t(CATALYST:::.agg(x[features,], "cluster_id", "median", assay = assay))
+      t(CATALYST:::.agg(x[features, ], "cluster_id", "median", assay = assay))
     d <- dist(ms, method = "euclidean")
     o <- hclust(d, method = "average")$order
     cd <- colData(x)
-    es <- assay(x[features,], assay)
-    df <- as.data.table(data.frame(t(es), cd, check.names = FALSE))
-    df <- melt(
-      df,
-      id.vars = names(cd),
-      variable.name = "antigen",
-      value.name = "expression"
-    )
+    es <- assay(x[features, ], "exprs")
+    df <-
+      data.table::as.data.table(data.frame(t(es), cd, check.names = FALSE))
+    df <-
+      data.table::melt(
+        df,
+        id.vars = names(cd),
+        variable.name = "antigen",
+        value.name = "expression"
+      )
     df$avg <- "no"
     avg <- df
     avg$cluster_id <- "avg"
@@ -213,8 +220,8 @@ plotClusterExprsCustom <-
              y = "cluster_id",
              col = "avg",
              fill = "avg"
-           )) + facet_wrap( ~ antigen, scales = "free_x",
-                            nrow = 2) + ggridges::geom_density_ridges(alpha = 0.2) + ggridges::theme_ridges() +
+           )) + facet_wrap(~ antigen, scales = "free_x",
+                           nrow = 2) + ggridges::geom_density_ridges(alpha = 0.2) + ggridges::theme_ridges() +
       theme(
         legend.position = "none",
         strip.background = element_blank(),
@@ -223,7 +230,6 @@ plotClusterExprsCustom <-
   }
 
 plotFreqHeatmapCustom <- function (x,
-                                   method = c("flowSOM", "clusterX", "rphenoGraph"),
                                    k = "meta20",
                                    m = NULL,
                                    normalize = TRUE,
@@ -240,12 +246,9 @@ plotFreqHeatmapCustom <- function (x,
                                    k_pal = CATALYST:::.cluster_cols,
                                    m_pal = k_pal)
 {
-  library(ComplexHeatmap)
-  
-  method <- match.arg(method)
   args <- as.list(environment())
-  #CATALYST:::.check_args_plotFreqHeatmap(args)
-  x$cluster_id <- cluster_ids(x, k, method)
+  CATALYST:::.check_args_plotFreqHeatmap(args)
+  x$cluster_id <- cluster_ids(x, k)
   ns <- table(x$cluster_id, x$sample_id)
   fq <- prop.table(ns, 2)
   y <- as.matrix(unclass(fq))
@@ -291,7 +294,6 @@ plotFreqHeatmapCustom <- function (x,
 
 clusterSCE <-
   function (x,
-            method = c("flowSOM", "clusterX", "rphenoGraph"),
             assayType,
             features = "type",
             xdim = 10,
@@ -309,86 +311,52 @@ clusterSCE <-
                     is.numeric(arg) &&
                length(arg) == 1, logical(1))
     )
-    method <- match.arg(method)
     features <- CATALYST:::.get_features(x, features)
     if (is.null(marker_classes(x))) {
       rowData(x)$marker_class <-
         factor(c("state", "type")[as.numeric(rownames(x) %in%
                                                features) + 1], levels = c("type", "state", "none"))
     }
-    rowData(x)[[sprintf("used_for_clustering_%s", method)]] <-
-      rownames(x) %in% features
-    
-    assays = c("exprs" = "Transformed", "counts" = "Raw")
-    if (method == "flowSOM") {
-      if (verbose)
-        message("o running FlowSOM clustering...")
-      fsom <-
-        FlowSOM::ReadInput(flowCore::flowFrame(t(assay(x, assayType))))
-      som <- FlowSOM::BuildSOM(
+    rowData(x)$used_for_clustering <- rownames(x) %in% features
+    if (verbose)
+      message("o running FlowSOM clustering...")
+    fsom <-
+      FlowSOM::ReadInput(flowCore::flowFrame(t(assay(x, assayType))))
+    som <-
+      FlowSOM::BuildSOM(
         fsom,
         colsToUse = features,
         silent = TRUE,
         xdim = xdim,
         ydim = ydim
       )
-      if (verbose)
-        message("o running ConsensusClusterPlus metaclustering...")
-      pdf(NULL)
-      mc <-
-        suppressWarnings(suppressMessages(
-          ConsensusClusterPlus::ConsensusClusterPlus(
-            t(som$map$codes),
-            maxK = maxK,
-            reps = 100,
-            distance = "euclidean",
-            seed = seed,
-            plot = NULL
-          )
-        ))
-      dev.off()
-      k <- xdim * ydim
-      mcs <- seq_len(maxK)[-1]
-      codes <-
-        data.frame(seq_len(k), purrr::map(mc[-1], "consensusClass"))
-      codes <-
-        dplyr::mutate_all(codes, function(u)
-          factor(u, levels = sort(unique(u))))
-      colnames(codes) <- c(sprintf("som%s", k), sprintf("meta%s",
-                                                        mcs))
-      #x$cluster_id <- factor(som$map$mapping[, 1])
-      x$flowSOM_id <- factor(som$map$mapping[, 1])
-      metadata(x)$cluster_codes <- codes
-      metadata(x)$SOM_codes <- som$map$codes
-      metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
-      metadata(x)$cluster_run$flowSOM <- list(
-        features = features,
-        assayType = assays[assayType],
-        xdim = xdim,
-        ydim = ydim,
-        maxK = maxK
-      )
-    } else if (method == "clusterX") {
-      suppressPackageStartupMessages(library(cytofkit))
-      clusterx <-
-        cytofkit::ClusterX(t(assay(x, assayType)[features, ]))
-      colData(x)$clusterX_id <- clusterx$cluster
-      colData(x)$clusterX_id <- as.factor(colData(x)$clusterX_id)
-      metadata(x)$cluster_run$clusterX <- list(features = features,
-                                               assayType = assays[assayType])
-    } else if (method == "rphenoGraph") {
-      suppressPackageStartupMessages(library(cytofkit))
-      rphenograph <-
-        cytofkit::Rphenograph(t(assay(x, assayType)[features, ]), maxK)
-      colData(x)$rphenoGraph_id[as.numeric(rphenograph$names)] <-
-        rphenograph$membership
-      colData(x)$rphenoGraph_id <-
-        as.factor(colData(x)$rphenoGraph_id)
-      metadata(x)$cluster_run$rphenoGraph <-
-        list(features = features,
-             assayType = assays[assayType],
-             k = maxK)
-    } else
-      stop("which method was selected?")
+    if (verbose)
+      message("o running ConsensusClusterPlus metaclustering...")
+    pdf(NULL)
+    mc <-
+      suppressWarnings(suppressMessages(
+        ConsensusClusterPlus(
+          t(som$map$codes),
+          maxK = maxK,
+          reps = 100,
+          distance = "euclidean",
+          seed = seed,
+          plot = NULL
+        )
+      ))
+    dev.off()
+    k <- xdim * ydim
+    mcs <- seq_len(maxK)[-1]
+    codes <-
+      data.frame(seq_len(k), purrr::map(mc[-1], "consensusClass"))
+    codes <-
+      dplyr::mutate_all(codes, function(u)
+        factor(u, levels = sort(unique(u))))
+    colnames(codes) <- c(sprintf("som%s", k), sprintf("meta%s",
+                                                      mcs))
+    x$cluster_id <- factor(som$map$mapping[, 1])
+    metadata(x)$cluster_codes <- codes
+    metadata(x)$SOM_codes <- som$map$codes
+    metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
     return(x)
   }
