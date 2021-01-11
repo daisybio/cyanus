@@ -19,6 +19,7 @@ deBody <- function(){
       uiOutput("deMethodSelection"),
       uiOutput("clusterSelection"),
       uiOutput("modelSelection"),
+      uiOutput("contrastSelection"),
       
       div(
         bsButton(
