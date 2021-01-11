@@ -7,52 +7,52 @@ markerSelectionBox <- shinydashboard::tabBox(
            title = "By Marker"),
   id = "visTabs",
   title = "Run your dimensionality reduction", 
-  width = 12
+  width = 6
 )
 
 visbody <- function(){
-  visualizationBox <- shinydashboard::box(
-    uiOutput("methodsVis"),
-    uiOutput("assayVis"),
-    radioButtons(
-      inputId = "scaleVis",
-      label = span("Scale ",  icon("question-circle"), id = "scaleVisQ"),
-      choices = c("yes", "no"), 
-      inline = TRUE
-    ),
-    bsPopover(
-      id = "scaleVisQ",
-      title = "For coloring by expression",
-      content = "Should the counts / the expression data be scaled between 0 and 1 using lower (1%) and upper (99%) expression quantiles?"
-    ),
-    uiOutput("color_by"),
-    uiOutput("facet_by"),
-    div(
-      bsButton(
-        "startDimRed",
-        "Start Visualization",
-        icon = icon("palette"),
-        style = "success", 
-        disabled = TRUE
-      ),
-      style = "float: right;", 
-      id = "divStartDimRed"
-    ),
-    id = "visBox", 
-    title = "Visualize your dimensionality reduction(s)", 
-    width = 6
-  )
   
   plotBox <- shinydashboard::box(
     fluidRow(
-      box(shinycssloaders::withSpinner(plotOutput("visPlot", width = "90%")), 
-          id = "imageBox",
-          title = "Plot",
-          width = 8),
-      uiOutput("plotInfo"), 
+      column(
+        2,
+        div(
+          uiOutput("methodsVis"),
+          uiOutput("radioButtonsColorVis"),
+          uiOutput("selectColorBy"),
+          uiOutput("assayVis"),
+          uiOutput("radioButtonsScale"),
+          bsPopover(
+            id = "scaleVisQ",
+            title = "For coloring by expression",
+            content = "Should the counts / the expression data be scaled between 0 and 1 using lower (1%) and upper (99%) expression quantiles?"
+          ),
+          uiOutput("facet_by"),
+          div(
+            bsButton(
+              "startDimRed",
+              "Start Visualization",
+              icon = icon("palette"),
+              style = "success", 
+              disabled = TRUE
+            ),
+            style = "float: right;", 
+            id = "divStartDimRed"
+          ),
+        style = "position: relative; height: 500px;"
+        ),
+      ),
+      column(
+        9,
+        shinycssloaders::withSpinner(plotOutput("visPlot", width = "90%")), 
+        ),
+      column(
+        1,
+        uiOutput("plotInfo")
+        ), 
       div(
         downloadButton("downloadPlot", "Download Plot"),
-        style = "float: left;"
+        style = "position: absolute; bottom: 10px;right:10px"
       )
     ),
     id = "visPlotBox",
@@ -75,9 +75,8 @@ visbody <- function(){
       box(
         markerSelectionBox,
         uiOutput("runDRparBox"),
-        width = 6
+        width = 12
       ),
-        visualizationBox,
     ),
     fluidRow(
       plotBox
