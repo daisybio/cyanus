@@ -9,7 +9,6 @@ observeEvent(input$visTabs, {
 })
 
 observeEvent(input$markersState, {
-  shinyjs::hide("visPlotBox")
   reactiveVals$useClassesRun <- F
   reactiveVals$useMarkersRun <- T
   req(input$selectedRunMethod)
@@ -19,7 +18,6 @@ observeEvent(input$markersState, {
 })
 
 observeEvent(input$markersType, {
-    shinyjs::hide("visPlotBox")
     reactiveVals$useClassesRun <- F
     reactiveVals$useMarkersRun <- T
     req(input$selectedRunMethod)
@@ -29,7 +27,6 @@ observeEvent(input$markersType, {
   })
 
 observeEvent(input$markersNone, {
-  shinyjs::hide("visPlotBox")
   reactiveVals$useClassesRun <- F
   reactiveVals$useMarkersRun <- T
   req(input$selectedRunMethod)
@@ -39,7 +36,6 @@ observeEvent(input$markersNone, {
 })
 
 observeEvent(input$classes, {
-  shinyjs::hide("visPlotBox")
   reactiveVals$useClassesRun <- T
   reactiveVals$useMarkersRun <- F
   req(input$selectedRunMethod)
@@ -70,6 +66,7 @@ observeEvent(input$runDRButton, {
   disable("continue")
   disable("runDRButton")
   disable("visBox")
+  disable("visPlotBox")
   if(reactiveVals$useClassesRun){
     if(input$classes != "All features"){
       reactiveVals$classes <- input$classes
@@ -136,39 +133,29 @@ observeEvent(input$runDRButton, {
                   input$assayRunSelected, input$scaleRun, input$valueGraph)
   }
   enable("visBox")
-  if(input$plt_color_by != "" & input$selectedVisMethod != ""){
-    enable("startDimRed")
-  }else{
-    disable("startDimRed")
-  }
+  enable("visPlotBox")
   enable("continue")
   enable("runDRButton")
+  shinyjs::show("visPlotBox")
+  if(length(reactiveVals$availableDRs) == 1){
+    output$visPlot <- renderPlot({
+      ggplotObject <- ggplot() + theme_void()
+      return(ggplotObject)
+    })
+  }
 })
 
 observeEvent(input$selectedVisMethod, {
-  shinyjs::hide("visPlotBox")
   req(input$selectedVisMethod)
+  req(input$plt_color_by)
   if(input$plt_color_by != "" & input$selectedVisMethod != ""){
     enable("startDimRed")
   }else{
     disable("startDimRed")
   }
-})
-
-observeEvent(reactiveVals$featuresDR, {
-  shinyjs::hide("visPlotBox")
-})
-
-observeEvent(input$assayVisSelected, {
-  shinyjs::hide("visPlotBox")
-})
-
-observeEvent(input$scaleVis, {
-  shinyjs::hide("visPlotBox")
 })
 
 observeEvent(input$plt_color_by, {
-  shinyjs::hide("visPlotBox")
   if(input$plt_color_by != "" & input$selectedVisMethod != ""){
     enable("startDimRed")
   }else{
@@ -177,12 +164,8 @@ observeEvent(input$plt_color_by, {
 })
 
 
-observeEvent(input$plt_facet_by, {
-  shinyjs::hide("visPlotBox")
-})
 
 observeEvent(input$nrCellsRun, {
-  shinyjs::hide("visPlotBox")
   if(input$nrCellsRun > min(metadata(reactiveVals$sce)$experiment_info$n_cells)){
     showNotification("This number is higher than the smallest sample count. Therefore, a different number of cells will be sampled from each sample.", type = "warning")
   }
@@ -244,9 +227,13 @@ observeEvent(input$startDimRed, {
     }else{
       value <- "failed"
     }
-    shinydashboard::box(value, title = "Info", width = 4)
+    dropdownButton(
+      shinydashboard::box(value, title = "Info", width = 12),
+      icon = icon("info-circle"),
+      status = "info",
+      right = TRUE
+    )
   })
-  shinyjs::show("visPlotBox")
 })
 
 plotData <- function(sceObj, method, color, facet, assay, scale){
@@ -263,10 +250,8 @@ plotData <- function(sceObj, method, color, facet, assay, scale){
 
 observeEvent(input$radioButtonsColor, {
   if(input$radioButtonsColor == "expression"){
-    shinyjs::show("assayVis")
     shinyjs::show("scaleVis")
   }else{
-    shinyjs::hide("assayVis")
     shinyjs::hide("scaleVis")
   }
 })
@@ -412,11 +397,31 @@ output$runDRparBox <- renderUI({
       ),
       style = "float: right;"
     ),
-    width = 12,
+    width = 6,
     title = "Choose Method and Parameters"
   )
   return(returnbox)
 })
+
+output$radioButtonsColorVis <- renderUI({
+  radioButtons(
+    inputId = "radioButtonsColor",
+    label = "Color by: ",
+    choices = c("expression", "condition / sample"), 
+    inline = TRUE,
+    selected = "condition / sample"
+  )
+})
+
+output$radioButtonsScale <- renderUI({
+  radioButtons(
+    inputId = "scaleVis",
+    label = span("Scale ",  icon("question-circle"), id = "scaleVisQ"),
+    choices = c("yes", "no"), 
+    inline = TRUE
+  )
+})
+
 
 output$methodsVis <- renderUI({
   vis_methods <- reactiveVals$availableDRs
@@ -458,18 +463,6 @@ output$assayVis <- renderUI({
   )
 })
 
-output$color_by <- renderUI({
-  shinydashboard::box(
-  radioButtons(
-    inputId = "radioButtonsColor",
-    label = "Color by: ",
-    choices = c("expression", "condition / sample"), 
-    inline = TRUE,
-    selected = "condition / sample"
-  ), 
-  uiOutput("selectColorBy")
-    )
-})
 
 renameColorColumn <- function(columnNames, color_by = T){
   returnVector <- c()
@@ -493,6 +486,7 @@ renameColorColumn <- function(columnNames, color_by = T){
 }
 
 output$selectColorBy <- renderUI({
+  req(input$radioButtonsColor)
   if(input$radioButtonsColor == "expression"){
     choices = c(rownames(reactiveVals$sce))
     return(pickerInput(
@@ -515,7 +509,6 @@ output$selectColorBy <- renderUI({
 
 output$facet_by <- renderUI({
   choices = renameColorColumn(names(colData(reactiveVals$sce)), F)
-  shinydashboard::box(
   selectizeInput(
     inputId = "plt_facet_by",
     label = "Facet by: ",
@@ -525,7 +518,6 @@ output$facet_by <- renderUI({
       onInitialize = I("function() { this.setValue(''); }")
     ),
     multiple = FALSE
-  )
   )
 })
 
@@ -568,9 +560,6 @@ makeDR <- function(sce, dr_chosen, color_chosen, facet_chosen, assay_chosen, sca
   if(facet_chosen == ""){
     facet_chosen <- NULL
   } 
-  if(assay_chosen == ""){
-    assay_chosen <- NULL
-  }
   if(scale == "yes"){
     scale <- T
   }else{
