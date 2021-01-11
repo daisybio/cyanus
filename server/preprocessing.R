@@ -153,7 +153,6 @@ observeEvent(input$filterSelectionButton,{
   shinyjs::disable("prepSelectionButton")
   shinyjs::disable("filterSelectionButton")
   shinyjs::disable("continue")
-  browser()
   allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
   
@@ -166,7 +165,10 @@ observeEvent(input$filterSelectionButton,{
     }
   }
   
-  print(colData(reactiveVals$sce))
+  markers <- isolate(input$markerSelection)
+  sce <- reactiveVals$sce[rownames(reactiveVals$sce) %in% markers, ]
+  plotPreprocessing(sce)
+  
   shinyjs::enable("prepButton")
   shinyjs::enable("prepSelectionButton")
   shinyjs::enable("filterSelectionButton")
