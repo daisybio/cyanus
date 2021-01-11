@@ -106,6 +106,7 @@ output$clusterSelection <- renderUI({
 
 # checks whether designMatrix or formula box must be visualized
 output$modelSelection <- renderUI({
+  req(input$chosenDAMethod)
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DS-limma","diffcyt-DA-voom")){
     uiOutput("designMatrixSelection")
   } else {
