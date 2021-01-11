@@ -55,6 +55,7 @@ observe({
   if (reactiveVals$current_tab==6){
     shinyjs::hide("visDiffExp")
     shinyjs::hide("heatmapBox")
+    shinyjs::hide("deTopTable")
   }
 })
 
@@ -291,8 +292,41 @@ observeEvent(input$visExpButton,{
   reactiveVals$heatmapSortBy <- isolate(input$heatmapSortBy)
   reactiveVals$heatmapNormalize <- isolate(input$heatmapNormalize)
   shinyjs::show("heatmapBox")
+  shinyjs::show("deTopTable")
+})
+
+
+## TOP TABLE FUNCTIONS
+output$deTopTable <- renderUI({
+  shinydashboard::box(
+    dataTableOutput("topTable"),
+    div(
+      downloadButton("downloadTopTable", "Download Table Results"),
+      style = "float: right;"
+    ),
+    title = "Table of results for top clusters or cluster-marker combinations",
+    width = 12,
+    height = plotbox_height
+  )
   
 })
+
+output$topTable <- renderDataTable({
+  out <- reactiveVals$DAruns[[reactiveVals$visMethod]] 
+  reactiveVals$topTable <- data.frame(diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE))
+  DT::datatable(reactiveVals$topTable,
+                rownames = FALSE,
+                options = list(pageLength=10, searching=FALSE))
+})
+
+
+output$downloadTopTable <- downloadHandler(
+  filename = "Differential_Expression_Results.csv",
+  content = function(file) {
+    write.csv(reactiveVals$topTable, file, row.names = FALSE)
+  }
+)
+
 
 ### HEATMAP FUNCTIONS
 
@@ -310,8 +344,7 @@ output$heatmapBox <- renderUI({
 
 # Render Heatmap Plot
 output$heatmapDEPlot <- renderPlot({
-  out <- reactiveVals$DEruns[[reactiveVals$visMethod]] 
-  print(out)
+  out <- reactiveVals$DAruns[[reactiveVals$visMethod]] 
   reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(
     x=reactiveVals$sce,
     y=rowData(out$res), 
@@ -319,7 +352,6 @@ output$heatmapDEPlot <- renderPlot({
     lfc=as.numeric(reactiveVals$lfcThreshold), 
     sort_by = reactiveVals$heatmapSortBy, 
     normalize=as.logical(reactiveVals$heatmapNormalize ),
-    top_n = as.numeric(input$top_n)
   )
   reactiveVals$diffHeatmapPlot
 })

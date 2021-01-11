@@ -39,7 +39,7 @@ deBody <- function(){
     uiOutput("deBoxPlots"),
     title = span("Boxplots", icon("question-circle"), id = "boxplotPopover"),
     width = 12,
-    height = plotbox_height
+    height = plotbox_height,
   )
   
   boxplotPopover <- bsPopover(
@@ -62,10 +62,16 @@ deBody <- function(){
     fluidRow(
       plotBox,
       boxplotPopover,
-      selectionBox,
-      uiOutput("visDiffExp"),
-      uiOutput("heatmapBox")
     ),
+    
+    fluidRow(
+      selectionBox,
+      uiOutput("visDiffExp")
+    ),
+    
+    fluidRow(
+             uiOutput("heatmapBox"),
+             uiOutput("deTopTable")),
   
   )
   return(debody)

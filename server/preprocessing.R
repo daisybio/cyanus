@@ -122,6 +122,7 @@ observeEvent(input$prepSelectionButton, {
   shinyjs::disable("prepButton")
   shinyjs::disable("prepSelectionButton")
   shinyjs::disable("continue")
+  shinyjs::disable("filterSelectionButton")
   allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
   if ((length(input$patientSelection) != allpatients) || (length(input$sampleSelection) != allsamples)){
@@ -145,6 +146,7 @@ observeEvent(input$prepSelectionButton, {
   shinyjs::enable("prepButton")
   shinyjs::enable("prepSelectionButton")
   shinyjs::enable("continue")
+  shinyjs::enable("filterSelectionButton")
 })
 
 # if filtering button is clicked -> selection is applied to sce
