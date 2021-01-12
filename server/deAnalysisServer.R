@@ -10,8 +10,13 @@ call_diffcyt <- function(){
   contrastVars <- isolate(input$contrastVars)
   nr_samples <- length(levels(colData(reactiveVals$sce)$sample_id))
 
-  if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DA-voom")){
-    
+  if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR")){
+    if(input$normalizeDE == "Yes"){
+      normalize <- TRUE
+    }else{
+      normalize <- FALSE
+    }
+
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
     contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
     if(ncol(design) >= nr_samples){
@@ -25,10 +30,49 @@ call_diffcyt <- function(){
       analysis_type = reactiveVals$methodType,
       method_DA = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
+      normalize = normalize,
+      trend_method = input$edgeR_trendMethod
     )
     }
-  } else if (input$chosenDAMethod %in% c("diffcyt-DS-limma")){
-    
+  } else if(input$chosenDAMethod %in% c("diffcyt-DA-voom")){
+    if(input$normalizeDE == "Yes"){
+      normalize <- TRUE
+    }else{
+      normalize <- FALSE
+    }
+    if(input$blockID_voom != ""){
+      blockID <- input$blockID_voom
+    }else{
+      blockID <- NULL
+    }
+    design <- createDesignMatrix(ei, cols_design = input$colsDesign)
+    contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
+    if(ncol(design) >= nr_samples){
+      showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
+      out <- NULL
+    }else{
+      out <- diffcyt::diffcyt(
+        d_input = reactiveVals$sce,
+        design = design,
+        contrast = contrast,
+        analysis_type = reactiveVals$methodType,
+        method_DA = input$chosenDAMethod,
+        clustering_to_use = input$deCluster,
+        normalize = normalize,
+        block_id = blockID
+      )
+    }
+  }else if (input$chosenDAMethod %in% c("diffcyt-DS-limma")){
+    if(input$blockID_limma != ""){
+      blockID <- input$blockID_limma
+    }else{
+      blockID <- NULL
+    }
+    if(input$trend_limma == "Yes"){
+      trend <- TRUE
+    }else{
+      trend <- FALSE
+    }
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
     contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
     if(ncol(design) >= nr_samples){
@@ -42,6 +86,8 @@ call_diffcyt <- function(){
       analysis_type = reactiveVals$methodType,
       method_DS = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
+      block_id = blockID,
+      trend = trend
     )
     }
   } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
@@ -57,10 +103,15 @@ call_diffcyt <- function(){
       contrast = contrast,
       analysis_type = reactiveVals$methodType,
       method_DS = input$chosenDAMethod,
-      clustering_to_use = input$deCluster,
+      clustering_to_use = input$deCluster
     )
     }
   } else if (input$chosenDAMethod %in% c("diffcyt-DA-GLMM")){
+    if(input$normalizeDE == "Yes"){
+      normalize <- TRUE
+    }else{
+      normalize <- FALSE
+    }
     
     formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
     contrast <- createCustomContrastMatix(contrastVars, input$colsFixed, designMatrix = F)
@@ -75,6 +126,7 @@ call_diffcyt <- function(){
       analysis_type = reactiveVals$methodType,
       method_DA = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
+      normalize = normalize
     )
     }
   }
@@ -160,6 +212,25 @@ output$clusterSelection <- renderUI({
     choices = names(cluster_codes(reactiveVals$sce)), 
     multiple = F
   )
+})
+
+output$normalizeSelection <- renderUI({
+  req(input$chosenDAMethod)
+  if(input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DA-GLMM","diffcyt-DA-voom")){
+    div(
+      radioButtons(
+        inputId = "normalizeDE",
+        label = span("Normalize?", icon("question-circle"), id = "normalizeDEQ"),
+        choices = c("Yes", "No"),
+        inline = T
+      ),
+      bsPopover(
+        id = "normalizeDEQ",
+        title = "Composition Effects",
+        content = "Whether to include optional normalization factors to adjust for composition effects. Only relevant for Differential Abundance methods."
+      )
+    )
+  }
 })
 
 # checks whether designMatrix or formula box must be visualized
@@ -279,6 +350,80 @@ output$contrastSelection <- renderUI({
       content = "Here, you specify the comparison of interest, i.e. the combination of model parameters to test whether they are equal to zero."
     )
   )
+})
+
+output$extraFeatures <- renderUI({
+  req(input$chosenDAMethod)
+  if(input$chosenDAMethod == "diffcyt-DA-edgeR"){
+    div(
+      selectizeInput(
+        inputId = "edgeR_trendMethod",
+        label = span("Trend Method", icon("question-circle"), id = "trendMethodQ"),
+        choices = c("locfit", "none", "movingave", "loess", "locfit.mixed"),
+        multiple = F
+      ),
+      bsPopover(
+        id = "trendMethodQ",
+        title = "Method for estimating dispersion trend",
+        content = "EdgeR specific parameter for estimating the dispersion trend. See more in their estimateDisp function documentation.",
+        placement = "top"
+      )
+    )
+  }else if(input$chosenDAMethod == "diffcyt-DA-voom"){
+    cols <- colnames(metadata(reactiveVals$sce)$experiment_info)
+    cols <- cols[!cols %in% c("n_cells", "sample_id")]
+    div(
+      selectizeInput(
+        inputId = "blockID_voom",
+        label = span("Block ID", icon("question-circle"), id = "blockIDvoomQ"),
+        choices = cols,
+        options = list(
+          placeholder = "Select your block IDs or nothing",
+          onInitialize = I("function() { this.setValue(''); }")
+        ),
+        multiple = F
+      ),
+      bsPopover(
+        id = "blockIDvoomQ",
+        title = "Vector or factor of block IDs",
+        content = "Vector or factor of block IDs (e.g. patient IDs) for paired experimental designs, to be included as random effects (for method testDA_voom or testDS_limma). If provided, the block IDs will be included as random effects using the limma duplicateCorrelation methodology. Alternatively, block IDs can be included as fixed effects in the design matrix.",
+        placement = "top"
+      )
+    )
+  }else if(input$chosenDAMethod == "diffcyt-DS-limma"){
+    cols <- colnames(metadata(reactiveVals$sce)$experiment_info)
+    cols <- cols[!cols %in% c("n_cells", "sample_id")]
+    div(
+      selectizeInput(
+        inputId = "blockID_limma",
+        label = span("Block ID", icon("question-circle"), id = "blockIDlimmaQ"),
+        choices = cols,
+        options = list(
+          placeholder = "Select your block IDs or nothing",
+          onInitialize = I("function() { this.setValue(''); }")
+        ),
+        multiple = F
+      ),
+      bsPopover(
+        id = "blockIDlimmaQ",
+        title = "Vector or factor of block IDs",
+        content = "Vector or factor of block IDs (e.g. patient IDs) for paired experimental designs, to be included as random effects (for method testDA_voom or testDS_limma). If provided, the block IDs will be included as random effects using the limma duplicateCorrelation methodology. Alternatively, block IDs can be included as fixed effects in the design matrix.",
+        placement = "top"
+      ),
+      radioButtons(
+        inputId = "trend_limma",
+        label = span("Limma Trend Method", icon("question-circle"), id = "trendlimmaQ"),
+        choices = c("Yes", "No"),
+        inline = T
+      ),
+      bsPopover(
+        id = "trendlimmaQ",
+        title = "Limma Trend Method",
+        content = "Whether to fit a mean-variance trend when calculating moderated tests with function eBayes from limma package (for method testDS_limma). When trend = TRUE, this is known as the limma-trend method (Law et al., 2014; Phipson et al., 2016).",
+        placement = "top"
+      )
+    )
+  }
 })
 
 # heatmap can be visualized for subset of clusters (DA)
@@ -428,6 +573,7 @@ observeEvent(input$visExpButton,{
   heatmapSortBy <- isolate(input$heatmapSortBy)
   heatmapNormalize <- isolate(input$heatmapNormalize)
   deCluster <- isolate(input$deCluster)
+  runs <- isolate(reactiveVals$DAruns)
 
   methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
   
@@ -467,7 +613,7 @@ observeEvent(input$visExpButton,{
       x <- reactiveVals$sce[rownames(reactiveVals$sce) %in% heatmapSelection, ]
     }
     
-    out <- reactiveVals$DAruns[[visMethod]]
+    out <- runs[[visMethod]]
     
     reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(
       x=x,

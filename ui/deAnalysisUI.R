@@ -1,6 +1,6 @@
 
 plotbox_height <- "45em"
-methods_height <- "40em"
+methods_height <- "45em"
 
 deBody <- function(){
   
@@ -18,8 +18,10 @@ deBody <- function(){
       ),
       uiOutput("deMethodSelection"),
       uiOutput("clusterSelection"),
+      uiOutput("normalizeSelection"),
       uiOutput("modelSelection"),
       uiOutput("contrastSelection"),
+      uiOutput("extraFeatures"),
       
       div(
         bsButton(
