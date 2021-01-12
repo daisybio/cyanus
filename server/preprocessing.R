@@ -34,10 +34,12 @@ observeEvent({
     updateActionButton(session, "continue", label = "Visualization")
     shinyjs::show("continue")
     shinyjs::enable("prepSelectionButton")
+    shinyjs::enable("filterSelectionButton")
   } else {
     shinyjs::disable("prepSelectionButton")
+    shinyjs::disable("filterSelectionButton")
   }
-})
+}, ignoreNULL = FALSE)
 
 # check current tab
 observe({
@@ -48,7 +50,6 @@ observe({
     }
   }
 })
-
 
 # render markers box
 output$markersBox <- renderUI({
@@ -503,7 +504,7 @@ plotPreprocessing <- function(sce) {
   
   # ui for download button
   output$exprsHeatmapPlotDownload <- renderUI({
-    req(reactiveVals$exprsPlot)
+    req(reactiveVals$exprsPlotHeatmap)
     downloadButton("downloadPlotExprsHeatmap", "Download Plot")
   })
   
