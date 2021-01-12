@@ -148,9 +148,11 @@ output$clusteringVisualizationSelection <- renderUI({
   req(reactiveVals$clusterRun)
   
   shinydashboard::box(
-    column(tableOutput("clusterRunParams"),
-           width = 8, 
-           style = "overflow-x: scroll;"),
+    column(
+      tableOutput("clusterRunParams"),
+      width = 8,
+      style = "overflow-x: scroll;"
+    ),
     column(
       uiOutput("selectClusterCode"),
       div(
@@ -193,7 +195,7 @@ output$selectClusterCode <- renderUI({
   choicesClusterCode <-
     c('all', choicesClusterCode[choicesClusterCode != 'all'])
   selectInput("clusterCode",
-              "Clusters",
+              "Meta-Clusters",
               rev(choicesClusterCode))
 })
 
@@ -229,10 +231,17 @@ output$delta_area <- renderUI({
     "document.getElementById('clusteringVisualizationSelection').scrollIntoView();"
   )
   shinydashboard::box(
+    div(
+      'It is recommended to choose a metacluster where the plateau is reached.
+                          "The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups.
+                          It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fits the data.
+                          The "natural" number of clusters present in the data should thus corresponds to the value of k where there is no longer a considerable increase in stability (plateau onset)."',
+      style = "text-align: center;vertical-align: middle;"
+    ),
     renderPlotly(ggplotly(
       CATALYST::delta_area(reactiveVals$sce)
     )),
-    title = "Delta Area",
+    title = "1. Delta Area",
     width = 12,
     collapsible = TRUE,
     collapsed = TRUE
@@ -257,7 +266,7 @@ output$clusterMergingBox <- renderUI({
       ),
       style = "margin-top: 5px; float: right;"
     ),
-    title = "Merge Clusters",
+    title = "3. Merge Clusters",
     width = 12,
     collapsible = TRUE,
     collapsed = TRUE
@@ -291,8 +300,6 @@ output$clusteringOutput <- renderUI({
       shinydashboard::tabBox(
         tabPanel(
           "Cluster Abundances",
-          div("Relative population abundances of the specified clustering."),
-          br(),
           div(
             dropdownButton(
               tags$h3("Plot Options"),
@@ -314,8 +321,12 @@ output$clusteringOutput <- renderUI({
             ),
             style = "position: relative; z-index: 99; float: left;"
           ),
+          div(
+            "Relative population abundances of the specified clustering.",
+            style = "text-align: center;vertical-align: middle;"
+          ),
           div(uiOutput("clusterAbundanceDownload"),
-              style = "float: right;"),
+              style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
             plotOutput("clusterAbundancePlot",
                        height = "800px")
@@ -325,9 +336,11 @@ output$clusteringOutput <- renderUI({
           "Cluster Frequencies",
           div(
             "Heatmap of relative cluster abundances (frequencies) by sample."
+            ,
+            style = "text-align: center;vertical-align: middle;"
           ),
           div(uiOutput("clusterHeatmapDownload"),
-              style = "float: right;"),
+              style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
             plotOutput("clusterHeatmapPlot",
                        height = "800px")
@@ -335,8 +348,7 @@ output$clusteringOutput <- renderUI({
         ),
         tabPanel(
           "Marker Densities",
-          div("Smoothed densities of marker intensities by cluster."),
-          br(),
+          
           div(
             dropdownButton(
               tags$h3("Plot Options"),
@@ -351,10 +363,25 @@ output$clusteringOutput <- renderUI({
             ),
             style = "position: relative; z-index: 99; float: left;"
           ),
+          div("Smoothed densities of marker intensities by cluster.", style = "text-align: center;vertical-align: middle;"),
           div(uiOutput("clusterDensitiyDownload"),
-              style = "float: right;"),
+              style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
             plotOutput("clusterExprsPlot",
+                       height = "800px")
+          ))
+        ),
+        tabPanel(
+          "Star Charts",
+          div(
+            "Tree, where each node is represented by a star chart indicating median marker values."
+            ,
+            style = "text-align: center;vertical-align: middle;"
+          ),
+          div(uiOutput("clusterStarDownload"),
+              style = "position: relative; z-index: 99; float: right;"),
+          fluidRow(withSpinner(
+            plotOutput("clusterStarPlot",
                        height = "800px")
           ))
         ),
@@ -363,11 +390,17 @@ output$clusteringOutput <- renderUI({
         width = 12
       )
     ),
-    title = "Visualize Clustering Results",
+    title = "2. Visualize Clustering",
     width = 12,
     collapsible = TRUE,
     collapsed = TRUE
   )
+})
+
+output$clusterStarDownload <- renderUI({
+  req(reactiveVals$starCluster)
+  
+  downloadButton("downloadPlotStar", "Download Plot")
 })
 
 output$clusterAbundanceDownload <- renderUI({
@@ -386,6 +419,12 @@ output$clusterHeatmapDownload <- renderUI({
   req(reactiveVals$heatmapCluster)
   
   downloadButton("downloadPlotFrequency", "Download Plot")
+})
+
+output$clusterStarPlot <- renderPlot({
+  reactiveVals$starCluster <-
+    plotStarsCustom(reactiveVals$sce, backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]])
+  reactiveVals$starCluster
 })
 
 output$clusterAbundancePlot <- renderPlot({
@@ -420,6 +459,15 @@ output$clusterExprsPlot <- renderPlot({
     )
   reactiveVals$exprsCluster
 })
+
+output$downloadPlotStar <- downloadHandler(
+  filename = "Star_Charts.pdf",
+  content = function(file) {
+    pdf(file, width = 12, height = 8)
+    reactiveVals$starCluster
+    dev.off()
+  }
+)
 
 output$downloadPlotAbundance <-
   downloadPlotFunction("Population_Abundances", reactiveVals$abundanceCluster)
