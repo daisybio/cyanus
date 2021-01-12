@@ -1,3 +1,204 @@
+############
+## mystar ##
+############
+# Internal use only:
+# Add a new vertex shape to iGraph to make star charts
+mystar <- function(coords, v = NULL, params) {
+  vertex.color <- params("vertex", "color")
+  if (length(vertex.color) != 1 && !is.null(v)) {
+    vertex.color <- vertex.color[v]
+  }
+  vertex.size    <- 1 / 200 * params("vertex", "size")
+  if (length(vertex.size) != 1 && !is.null(v)) {
+    vertex.size <- vertex.size[v]
+  }
+  data <- params("vertex", "data")
+  cP <- params("vertex", "cP")
+  scale <- params("vertex", "scale")
+  bg <- params("vertex", "bg")
+  graphics::symbols(
+    coords[, 1],
+    coords[, 2],
+    circles = vertex.size,
+    inches = FALSE,
+    bg = bg,
+    bty = 'n',
+    add = TRUE
+  )
+  graphics::stars(
+    data,
+    locations = coords,
+    labels = NULL,
+    scale = scale,
+    len = vertex.size,
+    col.segments = cP,
+    draw.segments = TRUE,
+    mar = c(0, 0, 0, 0),
+    add = TRUE,
+    inches = FALSE
+  )
+  
+}
+
+plotStarsCustom <-
+  function (sce,
+            markers = CATALYST:::.get_features(sce, "type"),
+            view = "MST",
+            colorPalette = grDevices::colorRampPalette(
+              c(
+                "#00007F",
+                "blue",
+                "#007FFF",
+                "cyan",
+                "#7FFF7F",
+                "yellow",
+                "#FF7F00",
+                "red",
+                "#7F0000"
+              )
+            ),
+            starBg = "white",
+            backgroundValues = NULL,
+            backgroundColor = function(n) {
+              grDevices::rainbow(n, alpha = 0.3)
+            },
+            backgroundLim = NULL,
+            backgroundBreaks = NULL,
+            backgroundSize = NULL,
+            thresholds = NULL,
+            legend = TRUE,
+            query = NULL,
+            range = "all",
+            main = "")
+  {
+    igraph::add.vertex.shape(
+      "star",
+      clip = igraph::igraph.shape.noclip,
+      plot = mystar,
+      parameters = list(
+        vertex.data = NULL,
+        vertex.cP = colorPalette,
+        vertex.scale = FALSE,
+        vertex.bg = starBg
+      )
+    )
+    if (is.null(thresholds)) {
+      data <- metadata(sce)$SOM_medianValues[, markers, drop = FALSE]
+      if (range == "all") {
+        min_data <- min(data, na.rm = TRUE)
+        max_data <- max(data, na.rm = TRUE)
+        data <- (data - min_data) / (max_data - min_data)
+      }
+      else if (range == "one") {
+        data <- apply(data, 2, function(x) {
+          min_x <- min(x, na.rm = TRUE)
+          max_x <- max(x, na.rm = TRUE)
+          (x - min_x) / (max_x - min_x)
+        })
+      }
+    }
+    else {
+      if (fsom$transform) {
+        warning("Thresholds should be given in the transformed space")
+      }
+      if (!is.null(fsom$scaled.center)) {
+        thresholds <-
+          scale(
+            t(thresholds),
+            center = fsom$scaled.center[markers],
+            scale = fsom$scaled.scale[markers]
+          )
+      }
+      data <- t(sapply(seq_len(fsom$map$nNodes), function(i) {
+        res = NULL
+        for (m in seq_along(markers)) {
+          res = c(res,
+                  sum(
+                    subset(fsom$data, fsom$map$mapping[,
+                                                       1] == i)[, markers[m]] > thresholds[m]
+                  ) / sum(fsom$map$mapping[,
+                                           1] == i))
+        }
+        res
+      }))
+    }
+    switch(view,
+           MST = {
+             layout <- metadata(sce)$SOM_MST$l
+             lty <- 1
+           },
+           grid = {
+             layout <- as.matrix(fsom$map$grid)
+             lty <- 0
+           },
+           tSNE = {
+             layout <- fsom$MST$l2
+             lty <- 0
+           },
+           stop(
+             "The view should be MST, grid or tSNE. tSNE will only work\n                   if you specified this when building the MST."
+           ))
+    if (!is.null(backgroundValues)) {
+      background <- FlowSOM:::computeBackgroundColor(backgroundValues,
+                                                     backgroundColor,
+                                                     backgroundLim,
+                                                     backgroundBreaks)
+      if (is.null(backgroundSize)) {
+        backgroundSize <- metadata(sce)$SOM_MST$size
+        backgroundSize[backgroundSize == 0] <- 3
+      }
+    }
+    else {
+      background <- NULL
+    }
+    oldpar <- graphics::par(no.readonly = TRUE)
+    graphics::par(mar = c(1, 1, 1, 1))
+    if (legend) {
+      if (!is.null(backgroundValues)) {
+        graphics::layout(matrix(c(1, 3, 2, 3), 2, 2, byrow = TRUE),
+                         widths = c(1, 2),
+                         heights = c(1))
+      }
+      else {
+        graphics::layout(matrix(c(1, 2), 1, 2, byrow = TRUE),
+                         widths = c(1, 2),
+                         heights = c(1))
+      }
+      if (is.null(query)) {
+        FlowSOM:::plotStarLegend(markers, colorPalette(ncol(data)))#, "Marker")
+      }
+      else {
+        plotStarQuery(fsom$prettyColnames[markers],
+                      values = query ==
+                        "high",
+                      colorPalette(ncol(data)))
+      }
+      if (!is.null(backgroundValues)) {
+        FlowSOM:::PlotBackgroundLegend(backgroundValues, background, "Cluster")
+      }
+    }
+    igraph::plot.igraph(
+      metadata(sce)$SOM_MST$g,
+      vertex.shape = "star",
+      vertex.label = NA,
+      vertex.size = metadata(sce)$SOM_MST$size,
+      vertex.data = data,
+      vertex.cP = colorPalette(ncol(data)),
+      vertex.scale = FALSE,
+      layout = layout,
+      edge.lty = lty,
+      mark.groups = background$groups,
+      mark.col = background$col[background$values],
+      mark.border = background$col[background$values],
+      mark.expand = backgroundSize,
+      main = main
+    )
+    graphics::par(oldpar)
+    graphics::layout(1)
+    return(recordPlot())
+  }
+
+
 plotAbundancesCustom <-
   function (x,
             k = "meta20",
@@ -139,11 +340,11 @@ plotClusterExprsCustom <-
     x$cluster_id <- cluster_ids(x, k)
     features <- CATALYST:::.get_features(x, features)
     ms <-
-      t(CATALYST:::.agg(x[features, ], "cluster_id", "median", assay = assay))
+      t(CATALYST:::.agg(x[features,], "cluster_id", "median", assay = assay))
     d <- dist(ms, method = "euclidean")
     o <- hclust(d, method = "average")$order
     cd <- colData(x)
-    es <- assay(x[features, ], "exprs")
+    es <- assay(x[features,], "exprs")
     df <-
       data.table::as.data.table(data.frame(t(es), cd, check.names = FALSE))
     df <-
@@ -174,8 +375,8 @@ plotClusterExprsCustom <-
              y = "cluster_id",
              col = "avg",
              fill = "avg"
-           )) + facet_wrap(~ antigen, scales = "free_x",
-                           nrow = 2) + ggridges::geom_density_ridges(alpha = 0.2) + ggridges::theme_ridges() +
+           )) + facet_wrap( ~ antigen, scales = "free_x",
+                            nrow = 2) + ggridges::geom_density_ridges(alpha = 0.2) + ggridges::theme_ridges() +
       theme(
         legend.position = "none",
         strip.background = element_blank(),
@@ -285,6 +486,7 @@ clusterSCE <-
         xdim = xdim,
         ydim = ydim
       )
+    som <- FlowSOM::BuildMST(som)
     if (verbose)
       message("o running ConsensusClusterPlus metaclustering...")
     pdf(NULL)
@@ -312,6 +514,8 @@ clusterSCE <-
     x$cluster_id <- factor(som$map$mapping[, 1])
     metadata(x)$cluster_codes <- codes
     metadata(x)$SOM_codes <- som$map$codes
+    metadata(x)$SOM_medianValues <- som$map$medianValues
+    metadata(x)$SOM_MST <- som$MST
     metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
     return(x)
   }
