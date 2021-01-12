@@ -1,13 +1,14 @@
 library(diffcyt)
 
 plotbox_height <- "45em"
-methods_height <- "35em"
+methods_height <- "40em"
 
 # checks which methods is selected and executes the diffcyt function accordingly
 call_diffcyt <- function(){
   ei <- metadata(reactiveVals$sce)$experiment_info
-  #contrast <- createContrast(c(0, 1))  # TODO: contrast matrix must be reactive
+  
   contrastVars <- isolate(input$contrastVars)
+  
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DA-voom")){
     
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
@@ -98,11 +99,8 @@ getBools <- function(names, contrastVars){
 observe({
   if (reactiveVals$current_tab==6){
     shinyjs::hide("visDiffExp")
-    shinyjs::hide("heatmapBox")
-    shinyjs::hide("deTopTable")
   }
 })
-
 
 observeEvent(input$deBoxFacet, {
   if(input$deBoxFacet == "cluster_id"){
@@ -128,7 +126,6 @@ output$deMethodSelection <- renderUI({
       inputId = "chosenDAMethod",
       label = span("Available Methods", icon("question-circle"), id = "deMethodsQ"),
       choices = choices,
-      
       multiple = F
     ),
     bsPopover(
@@ -268,23 +265,69 @@ output$contrastSelection <- renderUI({
   )
 })
 
+# heatmap can be visualized for subset of clusters (DA)
+output$visClusterSelection <- renderUI({
+  out <- reactiveVals$DAruns[[input$deVisMethod]]
+  div(
+    pickerInput(
+      "DEClusterSelection",
+      choices = unique(rowData(out$res)$cluster_id),
+      selected = unique(rowData(out$res)$cluster_id),
+      label = "Visualize results for subset of clusters:",
+      options = list(
+        `actions-box` = TRUE,
+        size = 4,
+        `selected-text-format` = "count > 3",
+        "dropup-auto" = FALSE
+      ),
+      multiple = TRUE
+    )
+  )
+})
+
+# heatmap can be visualized for selected features (DS)
+output$visMarkerSelection <- renderUI({
+  out <- reactiveVals$DAruns[[input$deVisMethod]]
+  div(
+    pickerInput(
+      "DEMarkerSelection",
+      choices = as.character(unique(rowData(out$res)$marker_id)),
+      selected = as.character(unique(rowData(out$res)$marker_id)),
+      label = "Visualize results for subset of markers:",
+      options = list(
+        `actions-box` = TRUE,
+        size = 4,
+        `selected-text-format` = "count > 3",
+        "dropup-auto" = FALSE
+      ),
+      multiple = TRUE
+    )
+  )
+})
+
+# check whether cluster selection or marker selection should be displayed
+output$visSelection <- renderUI({
+  methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
+  if(input$deVisMethod %in% methodsDA){
+    uiOutput("visClusterSelection")
+  } else {
+    uiOutput("visMarkerSelection")
+  }
+})
+
 # choose method and parameter box
 output$visDiffExp <- renderUI({
-  if (reactiveVals$methodType == "DS") {
-    sort_by <-  c("P-adjusted" = "padj", "None" = "none")
-  } else {
-    sort_by <- c("P-adjusted" = "padj",
-                 "LogFC" = "lfc",
-                 "None" = "none")
-  }
+ runs <- names(reactiveVals$DAruns)
   
  shinydashboard::box(
   selectizeInput(
     inputId = "deVisMethod",
     label = "Successful Run",
-    choices = names(reactiveVals$DAruns),
+    choices = runs,
+    selected = runs[1],
     multiple = F
   ),
+  uiOutput("visSelection"),
   numericInput("fdrThreshold",
                label = "FDR Threshold",
                value = 0.05,
@@ -296,11 +339,7 @@ output$visDiffExp <- renderUI({
   selectizeInput(
     "heatmapSortBy",
     "Sort by:",
-    choices = c(
-      "P-adjusted" = "padj",
-      "LogFC" = "lfc",
-      "None" = "none"
-    ),
+    choices = c("P-adjusted" = "padj", "None" = "none"),
     multiple = F
   ),
   selectizeInput(
@@ -327,6 +366,7 @@ output$visDiffExp <- renderUI({
 
 # if Start Analysis button is clicked -> diffcyt method should be performed
 observeEvent(input$diffExpButton,{
+  shinyjs:: disable("visExpButton")
   DAmethod <- isolate(input$chosenDAMethod)
  
   # update button and disable it
@@ -340,6 +380,7 @@ observeEvent(input$diffExpButton,{
     reactiveVals$DAruns <- list()
   }
   
+
   # call diffcyt function
   out <- call_diffcyt()
   
@@ -353,88 +394,141 @@ observeEvent(input$diffExpButton,{
                disabled = FALSE)
   
   shinyjs::show("visDiffExp")
+  shinyjs::enable("visExpButton")
 })
 
 # if Visualize Differential Analysis Button is clicked -> plotDiffHeatmap is called
 observeEvent(input$visExpButton,{
-  reactiveVals$visMethod <- isolate(input$deVisMethod)
-  reactiveVals$fdrThreshold <- isolate(input$fdrThreshold)
-  reactiveVals$lfcThreshold <- isolate(input$lfcThreshold)
-  reactiveVals$heatmapSortBy <- isolate(input$heatmapSortBy)
-  reactiveVals$heatmapNormalize <- isolate(input$heatmapNormalize)
-  shinyjs::show("heatmapBox")
-  shinyjs::show("deTopTable")
-})
+  visMethod <- isolate(input$deVisMethod)
+  fdrThreshold <- isolate(input$fdrThreshold)
+  lfcThreshold <- isolate(input$lfcThreshold)
+  heatmapSortBy <- isolate(input$heatmapSortBy)
+  heatmapNormalize <- isolate(input$heatmapNormalize)
+  deCluster <- isolate(input$deCluster)
 
-
-## TOP TABLE FUNCTIONS
-output$deTopTable <- renderUI({
-  shinydashboard::box(
-    dataTableOutput("topTable"),
-    div(
-      downloadButton("downloadTopTable", "Download Table Results"),
-      style = "float: right;"
-    ),
-    title = "Table of results for top clusters or cluster-marker combinations",
-    width = 12,
-    height = plotbox_height
+  methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
+  
+  if(visMethod %in% methodsDA){
+    heatmapSelection <- isolate(input$DEClusterSelection)
+  } else {
+    heatmapSelection <- isolate(input$DEMarkerSelection)
+  }
+  
+  ### HEATMAP FUNCTIONS
+  
+  # Box including Heatmap
+  output$heatmapBox <- renderUI({
+    shinydashboard::box(
+      shinycssloaders::withSpinner(
+        plotOutput("heatmapDEPlot", width = "100%", height = "550px")
+      ),
+      div(
+        uiOutput("heatmapPlotDownload"),
+        style = "position: absolute; bottom: 5px; right:5px"
+      ),
+      title = "Heatmap",
+      width = 12,
+      height = plotbox_height
+    )
+  })
+  
+  # Render Heatmap Plot
+  output$heatmapDEPlot <- renderPlot({
+    methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
+    methodsDS <- c("diffcyt-DS-limma","diffcyt-DS-LMM")
+    
+    if(visMethod %in% methodsDA){
+      sub <- filterSCE(reactiveVals$sce, cluster_id %in% heatmapSelection, k=deCluster)
+      x <- sub
+    } else {
+      x <- reactiveVals$sce[rownames(reactiveVals$sce) %in% heatmapSelection, ]
+    }
+    
+    out <- reactiveVals$DAruns[[visMethod]]
+    
+    reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(
+      x=x,
+      y=rowData(out$res), 
+      fdr=as.numeric(fdrThreshold), 
+      lfc=as.numeric(lfcThreshold), 
+      sort_by = heatmapSortBy, 
+      normalize=as.logical(heatmapNormalize ),
+      all = TRUE
+    )
+    reactiveVals$diffHeatmapPlot
+  })
+  
+  
+  # ui for download button
+  output$heatmapPlotDownload <- renderUI({
+    req(reactiveVals$diffHeatmapPlot)
+    downloadButton("downloadPlotDiffHeatmap", "Download Plot")
+  })
+  
+  # function for downloading heatmap
+  output$downloadPlotDiffHeatmap <- downloadHandler(
+    filename = "DE_Heatmap.pdf", 
+    content = function(file){
+      pdf(file, width = 12, height = 8)
+      draw(reactiveVals$diffHeatmapPlot)
+      dev.off()
+    }
+  )
+  
+  ## TOP TABLE FUNCTIONS
+  output$deTopTable <- renderUI({
+    shinydashboard::box(
+      dataTableOutput("topTable"),
+      div(
+        downloadButton("downloadTopTable", "Download Table Results"),
+        style = "float: right;"
+      ),
+      title = "Table of results for top clusters or cluster-marker combinations",
+      width = 12,
+      height = plotbox_height
+    )
+    
+  })
+  
+  output$topTable <- renderDataTable({
+    out <- reactiveVals$DAruns[[visMethod]] 
+    reactiveVals$topTable <- data.frame(diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE))
+    DT::datatable(reactiveVals$topTable,
+                  rownames = FALSE,
+                  options = list(pageLength=10, searching=FALSE))
+  })
+  
+  output$downloadTopTable <- downloadHandler(
+    filename = "Differential_Expression_Results.csv",
+    content = function(file) {
+      write.csv(reactiveVals$topTable, file, row.names = FALSE)
+    }
   )
   
 })
 
-output$topTable <- renderDataTable({
-  out <- reactiveVals$DAruns[[reactiveVals$visMethod]] 
-  reactiveVals$topTable <- data.frame(diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE))
-  DT::datatable(reactiveVals$topTable,
-                rownames = FALSE,
-                options = list(pageLength=10, searching=FALSE))
-})
-
-
-output$downloadTopTable <- downloadHandler(
-  filename = "Differential_Expression_Results.csv",
-  content = function(file) {
-    write.csv(reactiveVals$topTable, file, row.names = FALSE)
+# check if clusters or markers are selected (to visualize heatmap)
+observeEvent({
+  input$DEClusterSelection
+  input$DEMarkerSelection
+}, {
+  methodsDA <-
+    c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM")
+  if (input$deVisMethod %in% methodsDA) {
+    if (length(input$DEClusterSelection) == 0) {
+      print("disable")
+      shinyjs::disable("visExpButton")
+    } else {
+      shinyjs::enable("visExpButton")
+    }
+  } else {
+    if (length(input$DEMarkerSelection) == 0) {
+      shinyjs::disable("visExpButton")
+    } else {
+      shinyjs::enable("visExpButton")
+    }
   }
-)
-
-
-### HEATMAP FUNCTIONS
-
-# Box including Heatmap
-output$heatmapBox <- renderUI({
-  shinydashboard::box(
-    shinycssloaders::withSpinner(
-      plotOutput("heatmapDEPlot", width = "100%", height = "550px")
-    ),
-    title = "Heatmap",
-    width = 12,
-    height = plotbox_height
-  )
 })
-
-# Render Heatmap Plot
-output$heatmapDEPlot <- renderPlot({
-  out <- reactiveVals$DAruns[[reactiveVals$visMethod]] 
-  reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(
-    x=reactiveVals$sce,
-    y=rowData(out$res), 
-    fdr=as.numeric(reactiveVals$fdrThreshold), 
-    lfc=as.numeric(reactiveVals$lfcThreshold), 
-    sort_by = reactiveVals$heatmapSortBy, 
-    normalize=as.logical(reactiveVals$heatmapNormalize ),
-  )
-  reactiveVals$diffHeatmapPlot
-})
-
-# ui for download button
-output$heatmapPlotDownload <- renderUI({
-  req(reactiveVals$diffHeatmapPlot)
-  downloadButton("downloadPlotDiffHeatmap", "Download Plot")
-})
-
-# function for downloading MDS plot
-output$downloadPlotDiffHeatmap <- downloadPlotFunction("Heatmap_DiffExp_Plot", reactiveVals$diffHeatmapPLot)
 
 
 ### BOXPLOT FUNCTIONS

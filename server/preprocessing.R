@@ -49,7 +49,6 @@ observe({
   }
 })
 
-
 # render markers box
 output$markersBox <- renderUI({
   pickerInput(
@@ -503,7 +502,7 @@ plotPreprocessing <- function(sce) {
   
   # ui for download button
   output$exprsHeatmapPlotDownload <- renderUI({
-    req(reactiveVals$exprsPlot)
+    req(reactiveVals$exprsPlotHeatmap)
     downloadButton("downloadPlotExprsHeatmap", "Download Plot")
   })
   
