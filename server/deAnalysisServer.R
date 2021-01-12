@@ -528,7 +528,7 @@ observeEvent({
       shinyjs::enable("visExpButton")
     }
   }
-})
+}, ignoreNULL = FALSE, ignoreInit=TRUE)
 
 
 ### BOXPLOT FUNCTIONS

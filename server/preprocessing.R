@@ -34,10 +34,12 @@ observeEvent({
     updateActionButton(session, "continue", label = "Visualization")
     shinyjs::show("continue")
     shinyjs::enable("prepSelectionButton")
+    shinyjs::enable("filterSelectionButton")
   } else {
     shinyjs::disable("prepSelectionButton")
+    shinyjs::disable("filterSelectionButton")
   }
-})
+}, ignoreNULL = FALSE)
 
 # check current tab
 observe({
