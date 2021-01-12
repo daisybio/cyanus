@@ -6,9 +6,13 @@ methods_height <- "35em"
 # checks which methods is selected and executes the diffcyt function accordingly
 call_diffcyt <- function(){
   ei <- metadata(reactiveVals$sce)$experiment_info
-  contrast <- createContrast(c(0, 1))  # TODO: contrast matrix must be reactive
+  #contrast <- createContrast(c(0, 1))  # TODO: contrast matrix must be reactive
+  contrastVars <- isolate(input$contrastVars)
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DA-voom")){
+    
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
+    contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
+    
     out <- diffcyt::diffcyt(
       d_input = reactiveVals$sce,
       design = design,
@@ -18,7 +22,10 @@ call_diffcyt <- function(){
       clustering_to_use = input$deCluster,
     )
   } else if (input$chosenDAMethod %in% c("diffcyt-DS-limma")){
+    
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
+    contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
+    
     out <- diffcyt::diffcyt(
       d_input = reactiveVals$sce,
       design = design,
@@ -28,7 +35,10 @@ call_diffcyt <- function(){
       clustering_to_use = input$deCluster,
     )
   } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
+    
     formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
+    contrast <- createCustomContrastMatix(contrastVars, input$colsFixed, designMatrix = F)
+    
     out <- diffcyt::diffcyt(
       d_input = reactiveVals$sce,
       formula = formula,
@@ -38,7 +48,10 @@ call_diffcyt <- function(){
       clustering_to_use = input$deCluster,
     )
   } else if (input$chosenDAMethod %in% c("diffcyt-DA-GLMM")){
+    
     formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
+    contrast <- createCustomContrastMatix(contrastVars, input$colsFixed, designMatrix = F)
+    
     out <- diffcyt::diffcyt(
       d_input = reactiveVals$sce,
       formula = formula,
@@ -51,10 +64,42 @@ call_diffcyt <- function(){
   out
 }
 
+createCustomContrastMatix <- function(contrastVars, matrix, designMatrix = T){
+  if(designMatrix){
+    #the entries have to correspond to the columns of the design matrix
+    cnames <- colnames(matrix)
+    bool <- getBools(cnames, contrastVars)
+    bool <- as.numeric(bool)
+    contrast <- createContrast(bool)
+    return(createContrast(contrast))
+  }else{
+    #the entries have to correspond to the levels of the fixed effect terms in the model formula
+    lvlList <- lapply(matrix, function(x){levels(colData(reactiveVals$sce)[[x]])})
+    names(lvlList) <- matrix
+    bool <- getBools(matrix, contrastVars)
+    bool <- as.numeric(bool)
+    names(bool) <- matrix
+    contrast <- unlist(lapply(names(lvlList), function(x){
+      return( c(rep(bool[x], length(lvlList[[x]]))) ) 
+      }))
+    return(createContrast(unname(contrast)))
+  }
+}
+
+getBools <- function(names, contrastVars){
+  bool <- unlist(lapply(names, function(x){
+    any(lapply(contrastVars, function(y){
+      grepl(y,x, fixed = T )
+    }))
+  }))
+  return(bool)
+}
+
 observe({
   if (reactiveVals$current_tab==6){
     shinyjs::hide("visDiffExp")
     shinyjs::hide("heatmapBox")
+    shinyjs::hide("deTopTable")
   }
 })
 
@@ -196,6 +241,33 @@ output$formulaSelection <- renderUI({
   )
 })
 
+output$contrastSelection <- renderUI({
+  req(input$chosenDAMethod)
+  if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DS-limma","diffcyt-DA-voom")){
+    choices <- input$colsDesign
+  } else {
+    choices <- input$colsFixed
+  }
+  div(
+    pickerInput(
+      "contrastVars",
+      choices = choices,
+      selected = choices[1],
+      label = span(
+        "What condition(s) do you want to analyse?",
+        icon("question-circle"),
+        id = "deContrastQ"
+      ),
+      multiple = TRUE
+    ),
+    bsPopover(
+      id = "deContrastQ",
+      title = "Contrast Matrix Design",
+      content = "Here, you specify the comparison of interest, i.e. the combination of model parameters to test whether they are equal to zero."
+    )
+  )
+})
+
 # choose method and parameter box
 output$visDiffExp <- renderUI({
   if (reactiveVals$methodType == "DS") {
@@ -209,7 +281,7 @@ output$visDiffExp <- renderUI({
  shinydashboard::box(
   selectizeInput(
     inputId = "deVisMethod",
-    label = "Successfull Run",
+    label = "Successful Run",
     choices = names(reactiveVals$DAruns),
     multiple = F
   ),
@@ -256,7 +328,7 @@ output$visDiffExp <- renderUI({
 # if Start Analysis button is clicked -> diffcyt method should be performed
 observeEvent(input$diffExpButton,{
   DAmethod <- isolate(input$chosenDAMethod)
-  
+ 
   # update button and disable it
   updateButton(session,
                "diffExpButton",
@@ -291,8 +363,41 @@ observeEvent(input$visExpButton,{
   reactiveVals$heatmapSortBy <- isolate(input$heatmapSortBy)
   reactiveVals$heatmapNormalize <- isolate(input$heatmapNormalize)
   shinyjs::show("heatmapBox")
+  shinyjs::show("deTopTable")
+})
+
+
+## TOP TABLE FUNCTIONS
+output$deTopTable <- renderUI({
+  shinydashboard::box(
+    dataTableOutput("topTable"),
+    div(
+      downloadButton("downloadTopTable", "Download Table Results"),
+      style = "float: right;"
+    ),
+    title = "Table of results for top clusters or cluster-marker combinations",
+    width = 12,
+    height = plotbox_height
+  )
   
 })
+
+output$topTable <- renderDataTable({
+  out <- reactiveVals$DAruns[[reactiveVals$visMethod]] 
+  reactiveVals$topTable <- data.frame(diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE))
+  DT::datatable(reactiveVals$topTable,
+                rownames = FALSE,
+                options = list(pageLength=10, searching=FALSE))
+})
+
+
+output$downloadTopTable <- downloadHandler(
+  filename = "Differential_Expression_Results.csv",
+  content = function(file) {
+    write.csv(reactiveVals$topTable, file, row.names = FALSE)
+  }
+)
+
 
 ### HEATMAP FUNCTIONS
 
@@ -310,8 +415,7 @@ output$heatmapBox <- renderUI({
 
 # Render Heatmap Plot
 output$heatmapDEPlot <- renderPlot({
-  out <- reactiveVals$DEruns[[reactiveVals$visMethod]] 
-  print(out)
+  out <- reactiveVals$DAruns[[reactiveVals$visMethod]] 
   reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(
     x=reactiveVals$sce,
     y=rowData(out$res), 
@@ -319,7 +423,6 @@ output$heatmapDEPlot <- renderPlot({
     lfc=as.numeric(reactiveVals$lfcThreshold), 
     sort_by = reactiveVals$heatmapSortBy, 
     normalize=as.logical(reactiveVals$heatmapNormalize ),
-    top_n = as.numeric(input$top_n)
   )
   reactiveVals$diffHeatmapPlot
 })
@@ -431,8 +534,6 @@ output$pbExprsPlotDownload <- renderUI({
 
 # function for downloading MDS plot
 output$downloadPlotPbExprs <- downloadPlotFunction("Pb_Exprs_plot", reactiveVals$pbExprsPlot)
-
-
 
 
 

@@ -122,6 +122,7 @@ observeEvent(input$prepSelectionButton, {
   shinyjs::disable("prepButton")
   shinyjs::disable("prepSelectionButton")
   shinyjs::disable("continue")
+  shinyjs::disable("filterSelectionButton")
   allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
   if ((length(input$patientSelection) != allpatients) || (length(input$sampleSelection) != allsamples)){
@@ -145,6 +146,7 @@ observeEvent(input$prepSelectionButton, {
   shinyjs::enable("prepButton")
   shinyjs::enable("prepSelectionButton")
   shinyjs::enable("continue")
+  shinyjs::enable("filterSelectionButton")
 })
 
 # if filtering button is clicked -> selection is applied to sce
@@ -153,14 +155,22 @@ observeEvent(input$filterSelectionButton,{
   shinyjs::disable("prepSelectionButton")
   shinyjs::disable("filterSelectionButton")
   shinyjs::disable("continue")
-  if (length(unique(colData(reactiveVals$sce)$sample_id))!=length(input$sampleSelection)){
+  allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
+  allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
+  
+  if (length(input$sampleSelection) != allsamples){
     reactiveVals$sce <- filterSCE(reactiveVals$sce,sample_id %in% input$sampleSelection)
-    if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
-      if (length(unique(colData(reactiveVals$sce)$patient_id))!=length(input$patientSelection)){
-        reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% input$patientSelection)
-      }
+  }
+  if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
+    if (length(input$patientSelection) != allpatients){
+      reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% input$patientSelection)
     }
   }
+  
+  markers <- isolate(input$markerSelection)
+  sce <- reactiveVals$sce[rownames(reactiveVals$sce) %in% markers, ]
+  plotPreprocessing(sce)
+  
   shinyjs::enable("prepButton")
   shinyjs::enable("prepSelectionButton")
   shinyjs::enable("filterSelectionButton")
