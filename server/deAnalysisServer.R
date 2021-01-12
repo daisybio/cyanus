@@ -50,7 +50,7 @@ call_diffcyt <- function(){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
       out <- NULL
     }else{
-    out <- diffcyt_function(
+    out <- diffcyt::diffcyt(
       d_input = reactiveVals$sce,
       formula = formula,
       contrast = contrast,
@@ -178,7 +178,7 @@ output$modelSelection <- renderUI({
 # if method using a design matrix is selected -> cols_design must be specified
 output$designMatrixSelection <- renderUI({
   colsDesign <- colnames(metadata(reactiveVals$sce)$experiment_info)
-  colsDesign <- colsDesign[!colsDesign %in% "n_cells"]
+  colsDesign <- colsDesign[!colsDesign %in% c("n_cells", "sample_id")]
   div(
     pickerInput(
       "colsDesign",
@@ -208,7 +208,7 @@ output$designMatrixSelection <- renderUI({
 # if method using a formula is selected -> cols_fixed and cols_random must be specified
 output$formulaSelection <- renderUI({
   cols <- colnames(metadata(reactiveVals$sce)$experiment_info)
-  cols <- cols[!cols %in% "n_cells"]
+  cols <- cols[!cols %in% c("n_cells", "sample_id")]
   div(
     pickerInput(
       "colsFixed",
