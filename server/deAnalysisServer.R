@@ -8,11 +8,15 @@ call_diffcyt <- function(){
   ei <- metadata(reactiveVals$sce)$experiment_info
   #contrast <- createContrast(c(0, 1))  # TODO: contrast matrix must be reactive
   contrastVars <- isolate(input$contrastVars)
+  nr_samples <- length(levels(colData(reactiveVals$sce)$sample_id))
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DA-voom")){
     
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
     contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
-    
+    if(ncol(design) >= nr_samples){
+      showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
+      out <- NULL
+    }else{
     out <- diffcyt::diffcyt(
       d_input = reactiveVals$sce,
       design = design,
@@ -21,11 +25,15 @@ call_diffcyt <- function(){
       method_DA = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
     )
+    }
   } else if (input$chosenDAMethod %in% c("diffcyt-DS-limma")){
     
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
     contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
-    
+    if(ncol(design) >= nr_samples){
+      showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
+      out <- NULL
+    }else{
     out <- diffcyt::diffcyt(
       d_input = reactiveVals$sce,
       design = design,
@@ -34,12 +42,15 @@ call_diffcyt <- function(){
       method_DS = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
     )
+    }
   } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
-    
     formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
     contrast <- createCustomContrastMatix(contrastVars, input$colsFixed, designMatrix = F)
-    
-    out <- diffcyt::diffcyt(
+    if(nrow(contrast) >= nr_samples){
+      showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
+      out <- NULL
+    }else{
+    out <- diffcyt_function(
       d_input = reactiveVals$sce,
       formula = formula,
       contrast = contrast,
@@ -47,11 +58,15 @@ call_diffcyt <- function(){
       method_DS = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
     )
+    }
   } else if (input$chosenDAMethod %in% c("diffcyt-DA-GLMM")){
     
     formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
     contrast <- createCustomContrastMatix(contrastVars, input$colsFixed, designMatrix = F)
-    
+    if(nrow(contrast) >= nr_samples){
+      showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
+      out <- NULL
+    }else{
     out <- diffcyt::diffcyt(
       d_input = reactiveVals$sce,
       formula = formula,
@@ -60,6 +75,7 @@ call_diffcyt <- function(){
       method_DA = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
     )
+    }
   }
   out
 }
@@ -342,17 +358,23 @@ observeEvent(input$diffExpButton,{
   
   # call diffcyt function
   out <- call_diffcyt()
+  if(!is.null(out)){
+    # add method to DAruns
+    reactiveVals$DAruns[[DAmethod]] <- out
   
-  # add method to DAruns
-  reactiveVals$DAruns[[DAmethod]] <- out
-  
-  # other method can be performed
-  updateButton(session,
+    # other method can be performed
+    updateButton(session,
                "diffExpButton",
                label = " Start Analysis",
                disabled = FALSE)
   
-  shinyjs::show("visDiffExp")
+    shinyjs::show("visDiffExp")
+  }else{
+    updateButton(session,
+                 "diffExpButton",
+                 label = " Start Analysis",
+                 disabled = FALSE)
+  }
 })
 
 # if Visualize Differential Analysis Button is clicked -> plotDiffHeatmap is called
