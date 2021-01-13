@@ -41,7 +41,7 @@ call_diffcyt <- function(){
       normalize <- FALSE
     }
     if(input$blockID_voom != ""){
-      blockID <- input$blockID_voom
+      blockID <- metadata(reactiveVals$sce)$experiment_info[[input$blockID_voom]]
     }else{
       blockID <- NULL
     }
@@ -49,6 +49,9 @@ call_diffcyt <- function(){
     contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
     if(ncol(design) >= nr_samples){
       showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
+      out <- NULL
+    }else if(input$blockID_voom %in% input$colsDesign){
+      showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
       out <- NULL
     }else{
       out <- diffcyt::diffcyt(
@@ -64,7 +67,7 @@ call_diffcyt <- function(){
     }
   }else if (input$chosenDAMethod %in% c("diffcyt-DS-limma")){
     if(input$blockID_limma != ""){
-      blockID <- input$blockID_limma
+      blockID <- metadata(reactiveVals$sce)$experiment_info[[input$blockID_limma]]
     }else{
       blockID <- NULL
     }
@@ -77,6 +80,9 @@ call_diffcyt <- function(){
     contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
     if(ncol(design) >= nr_samples){
       showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
+      out <- NULL
+    }else if(input$blockID_limma %in% input$colsDesign){
+      showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
       out <- NULL
     }else{
     out <- diffcyt::diffcyt(
@@ -206,10 +212,14 @@ output$deMethodSelection <- renderUI({
 
 # box with cluster populations you want to compare
 output$clusterSelection <- renderUI({
+  clusters <- rev(names(cluster_codes(reactiveVals$sce)))
+  if(reactiveVals$methodType == "DA"){
+    clusters <- clusters[!clusters %in% c("all")]
+  }
   selectizeInput(
     inputId = "deCluster",
     label = "Choose the cluster populations you want to compare",
-    choices = names(cluster_codes(reactiveVals$sce)), 
+    choices = clusters, 
     multiple = F
   )
 })
@@ -385,8 +395,8 @@ output$extraFeatures <- renderUI({
       ),
       bsPopover(
         id = "blockIDvoomQ",
-        title = "Vector or factor of block IDs",
-        content = "Vector or factor of block IDs (e.g. patient IDs) for paired experimental designs, to be included as random effects (for method testDA_voom or testDS_limma). If provided, the block IDs will be included as random effects using the limma duplicateCorrelation methodology. Alternatively, block IDs can be included as fixed effects in the design matrix.",
+        title = "Block IDs if you have replicates",
+        content = "Block IDs (e.g. patient IDs if you have replicates in the same conditions) for paired experimental designs, to be included as random effects (for method testDA_voom or testDS_limma). If provided, the block IDs will be included as random effects using the limma duplicateCorrelation methodology. Alternatively, block IDs can be included as fixed effects in the design matrix.",
         placement = "top"
       )
     )
@@ -406,8 +416,8 @@ output$extraFeatures <- renderUI({
       ),
       bsPopover(
         id = "blockIDlimmaQ",
-        title = "Vector or factor of block IDs",
-        content = "Vector or factor of block IDs (e.g. patient IDs) for paired experimental designs, to be included as random effects (for method testDA_voom or testDS_limma). If provided, the block IDs will be included as random effects using the limma duplicateCorrelation methodology. Alternatively, block IDs can be included as fixed effects in the design matrix.",
+        title = "Block IDs if you have replicates",
+        content = "Block IDs (e.g. patient IDs if you have replicates in the same conditions) for paired experimental designs, to be included as random effects (for method testDA_voom or testDS_limma). If provided, the block IDs will be included as random effects using the limma duplicateCorrelation methodology. Alternatively, block IDs can be included as fixed effects in the design matrix.",
         placement = "top"
       ),
       radioButtons(
@@ -728,6 +738,12 @@ output$deBoxPlots <- renderUI({
 
 output$deExprsCluster <- renderUI({
   factors <- names(colData(reactiveVals$sce))[!names(colData(reactiveVals$sce)) %in% c("patient_id", "sample_id")]
+  markers <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+  if("state" %in% markers){
+    selected_marker <- "state"
+  }else{
+    selected_marker <- markers[1]
+  }
   fluidRow(column(1,
                   div(dropdownButton(
                     tags$h3("Plot Options"),
@@ -745,7 +761,8 @@ output$deExprsCluster <- renderUI({
                     )),
                     selectizeInput("deBoxFeatures",
                                    "Markers:",
-                                   unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class), 
+                                   markers, 
+                                   selected = selected_marker,
                                    multiple = F),
                     selectizeInput(
                       "deBoxColor",
@@ -780,11 +797,18 @@ output$deExprsCluster <- renderUI({
 })
 
 output$clusterDEPlot <- renderPlot({
+  if(input$deBoxK == "all"){
+    k <- NULL
+    facet_by <- NULL
+  }else{
+    k <- input$deBoxK
+    facet_by <- input$deBoxFacet
+  }
   reactiveVals$pbExprsPlot <- plotPbExprs(reactiveVals$sce, 
-              k = input$deBoxK, 
+              k = k, 
               features = input$deBoxFeatures, 
               color_by = input$deBoxColor, 
-              facet_by = input$deBoxFacet, 
+              facet_by = facet_by, 
               shape_by = input$deBoxShape)
   reactiveVals$pbExprsPlot
 })
