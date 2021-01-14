@@ -1,40 +1,50 @@
 
-plotbox_height <- "45em"
-methods_height <- "45em"
+plotbox_height <- "50em"
+methods_height <- "35em"
 
 deBody <- function(){
   
   selectionBox <- shinydashboard::box(
+    column(
       radioButtons(
         inputId = "da_ds",
-        label = span("What type of analysis method do you want to perform?", icon("question-circle"), id = "da_dsQ"),
-        choices = c("Differential Abundance", "Differential States"), 
+        label = span(
+          "What type of analysis method do you want to perform?",
+          icon("question-circle"),
+          id = "da_dsQ"
+        ),
+        choices = c("Differential Abundance", "Differential States"),
         inline = T
       ),
       bsPopover(
         id = "da_dsQ",
         title = "Analysis type",
-        content = HTML("Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential abundance:</b> Differential analysis of cell population abundance. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential States:</b> Differential analysis of the median expression of the state markers in each cell population (i.e. cluster).")
+        content = HTML(
+          "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential abundance:</b> Differential analysis of cell population abundance. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential States:</b> Differential analysis of the median expression of the state markers in each cell population (i.e. cluster)."
+        )
       ),
       uiOutput("deMethodSelection"),
-      uiOutput("clusterSelection"),
-      uiOutput("normalizeSelection"),
       uiOutput("modelSelection"),
       uiOutput("contrastSelection"),
+      width = 6
+    ),
+    column(
+      uiOutput("clusterSelection"),
+      uiOutput("markerToTestSelection"),
       uiOutput("extraFeatures"),
-      
-      div(
-        bsButton(
-          "diffExpButton",
-          "Start Analysis",
-          icon = icon("tools"),
-          style = "success"
-        ),
-        style = "float: right;"
+      uiOutput("normalizeSelection"),
+      width = 6),
+    div(
+      bsButton(
+        "diffExpButton",
+        "Start Analysis",
+        icon = icon("tools"),
+        style = "success"
       ),
-      
+      style = "float: right; bottom:5px"
+    ),
     title = "Choose Method and Parameters",
-    width = 6,
+    width = 12,
     height = methods_height
   )
   
@@ -69,12 +79,15 @@ deBody <- function(){
     
     fluidRow(
       selectionBox,
-      uiOutput("visDiffExp")
     ),
     
     fluidRow(
-             uiOutput("heatmapBox"),
-             uiOutput("deTopTable")),
+      uiOutput("DEVisualization"),
+    ),
+    
+    fluidRow(
+      uiOutput("deTopTable")
+    ),
   
   )
   return(debody)

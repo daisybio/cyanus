@@ -463,7 +463,6 @@ output$assayVis <- renderUI({
   )
 })
 
-
 renameColorColumn <- function(columnNames, color_by = T){
   returnVector <- c()
   if("sample_id" %in% columnNames){

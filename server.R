@@ -22,4 +22,3 @@ server <- function(input, output, session) {
   sapply(list.files("server", full.names = TRUE), source, environment())
 }
 
-
