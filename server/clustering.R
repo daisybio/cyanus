@@ -120,6 +120,7 @@ output$featuresOut <- renderUI({
       sprintf("%s (%s)", choices, as.character(marker_classes(reactiveVals$sce)))
     selected <-
       rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == "type"]
+    choices <- sortMarkerNames(choices, as.character(marker_classes(reactiveVals$sce)), first = "type")
   } else
     stop("by name or by class?")
   shinyWidgets::pickerInput(

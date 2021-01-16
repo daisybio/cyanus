@@ -1,10 +1,6 @@
-markerSelectionBox <- shinydashboard::tabBox(
-  tabPanel(uiOutput("markerClassVis"), 
-           value = "classTab",
-           title = "By Marker Class"),
-  tabPanel(uiOutput("expressionVis"),
-           value = "expressionTab",
-           title = "By Marker"),
+markerSelectionBox <- shinydashboard::box(
+  uiOutput("useFeaturesInVis"),
+  uiOutput("markersVis"),
   id = "visTabs",
   title = "Run your dimensionality reduction", 
   width = 6

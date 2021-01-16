@@ -13,6 +13,13 @@ server <- function(input, output, session) {
     )
   }
   
+  sortMarkerNames <- function(choices, classes, first = "type"){
+    classes[classes == first] <- paste0("a", first)
+    ret <- choices[order(factor(sprintf("%s %s", classes, choices)))]
+    return(ret)
+  }
+  
+  
   # make reactiveValues and server-wide variables
   tab_ids <- c("welcome", "start", "preprocessing", "visualization", "clustering", "de")
   reactiveVals <- reactiveValues()

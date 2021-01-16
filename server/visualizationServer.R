@@ -8,41 +8,22 @@ observeEvent(input$visTabs, {
   }
 })
 
-observeEvent(input$markersState, {
-  reactiveVals$useClassesRun <- F
-  reactiveVals$useMarkersRun <- T
-  req(input$selectedRunMethod)
-  if(input$markersState != "" & input$selectedRunMethod != ""){
-    enable("runDRButton")
-  }
-})
-
-observeEvent(input$markersType, {
+observeEvent(input$useFeaturesInVis, {
+  req(input$useFeaturesInVis)
+  if(input$useFeaturesInVis == "Marker by Class"){
+    reactiveVals$useClassesRun <- T
+    reactiveVals$useMarkersRun <- F
+  }else{
     reactiveVals$useClassesRun <- F
     reactiveVals$useMarkersRun <- T
-    req(input$selectedRunMethod)
-    if(input$markersType != "" & input$selectedRunMethod != ""){
-      enable("runDRButton")
-    }
-  })
-
-observeEvent(input$markersNone, {
-  reactiveVals$useClassesRun <- F
-  reactiveVals$useMarkersRun <- T
+  }
   req(input$selectedRunMethod)
-  if(input$markersNone != "" & input$selectedRunMethod != ""){
+  req(input$pickedFeaturesVis)
+  if(input$pickedFeaturesVis != "" & input$selectedRunMethod != ""){
     enable("runDRButton")
   }
 })
 
-observeEvent(input$classes, {
-  reactiveVals$useClassesRun <- T
-  reactiveVals$useMarkersRun <- F
-  req(input$selectedRunMethod)
-  if(input$classes != "" & input$selectedRunMethod != ""){
-    enable("runDRButton")
-  }
-})
 
 observeEvent(input$selectedRunMethod, {
   if(!is.null(reactiveVals$useClassesRun)){
@@ -68,15 +49,19 @@ observeEvent(input$runDRButton, {
   disable("visBox")
   disable("visPlotBox")
   if(reactiveVals$useClassesRun){
-    if(input$classes != "All features"){
-      reactiveVals$classes <- input$classes
-    }else{
+    if(all( unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class %in% input$pickedFeaturesVis) ) ){
       reactiveVals$classes <- NULL
+    }else if(length(input$pickedFeaturesVis) > 1){
+      reactiveVals$classes <- unname(unlist(sapply(input$pickedFeaturesVis, function(x){
+        rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == x]
+      })))
+    }else{
+      reactiveVals$classes <- input$pickedFeaturesVis
     }
     reactiveVals$featuresDR <- reactiveVals$classes
     reactiveVals$markers <- c()
   }else if(reactiveVals$useMarkersRun){
-    reactiveVals$markers <- c(input$markersState, input$markersType, input$markersNone)
+    reactiveVals$markers <- input$pickedFeaturesVis
     reactiveVals$featuresDR <- reactiveVals$markers
     reactiveVals$classes <- c()
   }
@@ -256,77 +241,54 @@ observeEvent(input$radioButtonsColor, {
   }
 })
 
-output$markerClassVis <- renderUI({
-  classes <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
-  choices <- c(as.vector(classes), "All features")
-  selected <- "All features"
-  if("type" %in% choices){
-    selected <- "type"
-  }
-  fluidRow(
-    shinydashboard::box(
-      selectizeInput(
-        inputId = "classes",
-        label = "Available marker classes",
-        choices = choices,
-        selected = selected,
-        multiple = FALSE
-      ), 
-      id = "classBoxVis",
-      title = span("Select Class", icon("question-circle"), id = "classQ"), 
-      width = 12), 
-    bsPopover(
-      id = "classQ",
-      title = "Compute your dimensionality reduction using all data or just a subclass of markers",
-      content = "The dimensionality reduction can be computed using all the data (By Marker Class -> All features), using just a certain marker class like \"type\" or using a subset of markers (By Marker). In order to obtain a meaningful visualization, you should choose the marker class that captures best how dissimilar your cells are."
-    )
+output$useFeaturesInVis <- renderUI({
+  selectInput(
+    "useFeaturesInVis",
+    label = "Features to choose from",
+    choices = c("Marker by Class",
+                "Marker by Name")
   )
 })
 
-output$expressionVis <- renderUI({
-  fluidRow(
-    shinydashboard::box(
-    pickerInput(
-      inputId = "markersState",
-      label = "Markers from class state",
-      choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "state"],
-      options = list(
-        onInitialize = I("function() { this.setValue(''); }"), 
-        `actions-box` = TRUE
-      ),
-      multiple = TRUE
-    ), 
-    pickerInput(
-      inputId = "markersType",
-      label = "Markers from class type",
-      choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "type"],
-      options = list(
-        onInitialize = I("function() { this.setValue(''); }"), 
-        `actions-box` = TRUE
-      ),
-      multiple = TRUE
-    ), 
-    pickerInput(
-      inputId = "markersNone",
-      label = "Markers from class none",
-      choices = rownames(reactiveVals$sce)[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class == "none"],
-      options = list(
-        onInitialize = I("function() { this.setValue(''); }"), 
-        `actions-box` = TRUE
-      ),
-      multiple = TRUE
-    ), 
-    id = "markerBoxVis",
-    title = span("Select Markers", icon("question-circle"), id = "markersQ"),
-    width = 12
-  ), 
+output$markersVis <- renderUI({
+  req(input$useFeaturesInVis)
+  if (input$useFeaturesInVis == "Marker by Class") {
+    classes <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+    choices <- as.vector(classes)
+    selected <- choices[1]
+    if("type" %in% choices){
+      selected <- "type"
+    }
+  } else if (input$useFeaturesInVis == "Marker by Name") {
+    choices <- rownames(reactiveVals$sce)
+    names(choices) <-
+      sprintf("%s (%s)", choices, as.character(marker_classes(reactiveVals$sce)))
+    selected <-
+      rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == "type"]
+    choices <- sortMarkerNames(choices, as.character(marker_classes(reactiveVals$sce)), first = "type")
+  } else
+    stop("by name or by class?")
+  div(
+  shinyWidgets::pickerInput(
+    inputId = "pickedFeaturesVis",
+    label = span("Features to use for the dimensionality reduction", icon("question-circle"), id = "pickedFeaturesVisQ"),
+    choices = choices,
+    selected = selected,
+    multiple = TRUE,
+    options = list(
+      `actions-box` = TRUE,
+      `selected-text-format` = "count > 3",
+      "dropup-auto" = FALSE
+    )
+  ),
   bsPopover(
-    id = "markersQ",
+    id = "pickedFeaturesVisQ",
     title = "Compute your dimensionality reduction using all data or just a subclass of markers",
-    content = "Choose the markers that capture best how dissimilar your cells are. The dimensionality reduction can be computed using all the data (By Marker Class -> All features), using just a certain marker class like \"type\" or using a subset of markers (By Marker)."
+    content = "The dimensionality reduction can be computed using all the data (Marker by Class -> type + state), using just a certain marker class like \"type\" or using a subset of markers (Marker by Name). In order to obtain a meaningful visualization, you should choose the marker class that captures best how dissimilar your cells are."
   )
   )
 })
+
 
 
 output$runDRparBox <- renderUI({

@@ -24,16 +24,26 @@ call_diffcyt <- function(){
       showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
       out <- NULL
     }else{
-    out <- diffcyt::diffcyt(
-      d_input = reactiveVals$sce,
-      design = design,
-      contrast = contrast,
-      analysis_type = reactiveVals$methodType,
-      method_DA = input$chosenDAMethod,
-      clustering_to_use = input$deCluster,
-      normalize = normalize,
-      trend_method = input$edgeR_trendMethod
-    )
+      reactiveVals$methodsInfo[["diffcyt-DA-edgeR"]] <- data.frame(
+        analysis_type = "Differential Abundance", 
+        method = "edgeR",
+        designmatrix = toString(isolate(input$colsDesign)),
+        conditions = toString(contrastVars),
+        clustering = toString(isolate(input$deCluster)),
+        trend_method = toString(isolate(input$edgeR_trendMethod)),
+        normalize = toString(isolate(input$normalizeDE))
+      )
+      
+      out <- diffcyt::diffcyt(
+        d_input = reactiveVals$sce,
+        design = design,
+        contrast = contrast,
+        analysis_type = reactiveVals$methodType,
+        method_DA = input$chosenDAMethod,
+        clustering_to_use = input$deCluster,
+        normalize = normalize,
+        trend_method = input$edgeR_trendMethod
+      )
     }
   } else if(input$chosenDAMethod %in% c("diffcyt-DA-voom")){
     if(input$normalizeDE == "Yes"){
@@ -55,16 +65,25 @@ call_diffcyt <- function(){
       showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
       out <- NULL
     }else{
-      out <- diffcyt::diffcyt(
-        d_input = reactiveVals$sce,
-        design = design,
-        contrast = contrast,
-        analysis_type = reactiveVals$methodType,
-        method_DA = input$chosenDAMethod,
-        clustering_to_use = input$deCluster,
-        normalize = normalize,
-        block_id = blockID
+      reactiveVals$methodsInfo[["diffcyt-DA-voom"]] <- data.frame(
+        analysis_type = "Differential Abundance", 
+        method = "Voom",
+        designmatrix = toString(isolate(input$colsDesign)),
+        conditions = toString(contrastVars),
+        clustering = toString(isolate(input$deCluster)),
+        block_id = toString(isolate(input$blockID_voom)),
+        normalize = toString(isolate(input$normalizeDE))
       )
+        out <- diffcyt::diffcyt(
+          d_input = reactiveVals$sce,
+          design = design,
+          contrast = contrast,
+          analysis_type = reactiveVals$methodType,
+          method_DA = input$chosenDAMethod,
+          clustering_to_use = input$deCluster,
+          normalize = normalize,
+          block_id = blockID
+        )
     }
   }else if (input$chosenDAMethod %in% c("diffcyt-DS-limma")){
     if(input$blockID_limma != ""){
@@ -93,32 +112,52 @@ call_diffcyt <- function(){
       showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
       out <- NULL
     }else{
-    out <- diffcyt::diffcyt(
-      d_input = reactiveVals$sce,
-      design = design,
-      contrast = contrast,
-      analysis_type = reactiveVals$methodType,
-      method_DS = input$chosenDAMethod,
-      clustering_to_use = input$deCluster,
-      block_id = blockID,
-      trend = trend,
-      markers_to_test = markersToTest
-    )
+      reactiveVals$methodsInfo[["diffcyt-DS-limma"]] <- data.frame(
+        analysis_type = "Differential States", 
+        method = "limma",
+        designmatrix = toString(isolate(input$colsDesign)),
+        conditions = toString(contrastVars),
+        clustering = toString(isolate(input$deCluster)),
+        features = toString(isolate(input$DEFeaturesIn)),
+        block_id = toString(isolate(input$blockID_limma)),
+        normalize = toString(isolate(input$normalizeDE))
+      )
+      out <- diffcyt::diffcyt(
+        d_input = reactiveVals$sce,
+        design = design,
+        contrast = contrast,
+        analysis_type = reactiveVals$methodType,
+        method_DS = input$chosenDAMethod,
+        clustering_to_use = input$deCluster,
+        block_id = blockID,
+        trend = trend,
+        markers_to_test = markersToTest
+      )
     }
   } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
     formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
     contrast <- createCustomContrastMatix(contrastVars, input$colsFixed, designMatrix = F)
     
-    markersToTest <- isolate(input$featuresIn)
+    markersToTest <- isolate(input$DEFeaturesIn)
     if (input$DEMarkerToTest == "Marker by Class") {
-      markersToTest <- rowData(sce)[rowData(sce)$marker_class == markersToTest,]$marker_name
+      markersToTest <- rowData(reactiveVals$sce)[rowData(reactiveVals$sce)$marker_class == markersToTest,]$marker_name
     }
-    markersToTest <- rownames(sce) %in% markersToTest
+    markersToTest <- rownames(reactiveVals$sce) %in% markersToTest
     
     if(nrow(contrast) >= nr_samples){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
       out <- NULL
     }else{
+      reactiveVals$methodsInfo[["diffcyt-DS-LMM"]] <- data.frame(
+        analysis_type = "Differential States", 
+        method = "LMM",
+        fixed_effects = toString(isolate(input$colsFixed)),
+        random_effects = toString(isolate(input$colsRandom)),
+        conditions = toString(contrastVars),
+        clustering = toString(isolate(input$deCluster)),
+        features = toString(isolate(input$DEFeaturesIn))
+      )
+      
     out <- diffcyt::diffcyt(
       d_input = reactiveVals$sce,
       formula = formula,
@@ -142,6 +181,15 @@ call_diffcyt <- function(){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
       out <- NULL
     }else{
+      reactiveVals$methodsInfo[["diffcyt-DA-GLMM"]] <- data.frame(
+        analysis_type = "Differential Abundance", 
+        method = "GLMM",
+        fixed_effects = toString(isolate(input$colsFixed)),
+        random_effects = toString(isolate(input$colsRandom)),
+        conditions = toString(contrastVars),
+        clustering = toString(isolate(input$deCluster)),
+        normalize = toString(isolate(input$normalizeDE))
+      )
     out <- diffcyt::diffcyt(
       d_input = reactiveVals$sce,
       formula = formula,
@@ -462,13 +510,23 @@ output$DEFeatureSelection <- renderUI({
   if (input$DEMarkerToTest == "Marker by Class") {
     choices <-
       levels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
-    selected <- "state"
+    if("state" %in% choices){
+      selected <- "state"
+    }else{
+      selected <- choices[1]
+    }
   } else if (input$DEMarkerToTest == "Marker by Name") {
     choices <- rownames(reactiveVals$sce)
     names(choices) <-
       sprintf("%s (%s)", choices, as.character(marker_classes(reactiveVals$sce)))
-    selected <-
-      rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == "state"]
+    if("state" %in% marker_classes(reactiveVals$sce)){
+      selected <-
+        rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == "state"]
+      choices <- sortMarkerNames(choices, as.character(marker_classes(reactiveVals$sce)), first = "state")
+    }else{
+      selected <- rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == "type"]
+      choices <- sortMarkerNames(choices, as.character(marker_classes(reactiveVals$sce)), first = "type")
+    }
   } else
     stop("by name or by class?")
   shinyWidgets::pickerInput(
@@ -495,10 +553,14 @@ output$DEVisualization <- renderUI({
           style = "position: relative; height: 500px;"),
     ),
     column(
-      width = 9,
+      width = 8,
       shinycssloaders::withSpinner(plotOutput(
         "heatmapDEPlot", width = "100%", height = "550px"
       )),
+    ),
+    column(
+      width = 1,
+      uiOutput("infoDE")
     ),
     title = "Visualize Differential Expression Results",
     height = plotbox_height,
@@ -662,6 +724,14 @@ observeEvent(input$diffExpButton,{
   # check if a methods was already performed else create the list
   if (is.null(reactiveVals$DAruns)){
     reactiveVals$DAruns <- list()
+    output$heatmapDEPlot <- renderPlot({
+      ggplotObject <- ggplot() + theme_void()
+      return(ggplotObject)
+    })
+  }
+  
+  if(is.null(reactiveVals$methodsInfo)){
+    reactiveVals$methodsInfo <- list()
   }
   
 
@@ -753,6 +823,22 @@ observeEvent(input$visExpButton,{
       dev.off()
     }
   )
+  
+  ## Info button
+  output$infoDE <- renderUI({
+    table <- isolate(reactiveVals$methodsInfo[[visMethod]])
+    value <- renderTable(
+      checkNullTable(table),
+      caption.placement = "top"
+    )
+    
+    dropdownButton(
+      shinydashboard::box(value, title = "Info", width = 12),
+      icon = icon("info-circle"),
+      status = "info",
+      right = TRUE
+    )
+  })
   
   ## TOP TABLE FUNCTIONS
   output$deTopTable <- renderUI({
