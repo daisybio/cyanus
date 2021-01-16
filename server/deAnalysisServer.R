@@ -1,6 +1,6 @@
 library(diffcyt)
 
-plotbox_height <- "50em"
+plotbox_height <- "48em"
 methods_height <- "40em"
 
 # checks which methods is selected and executes the diffcyt function accordingly
@@ -631,7 +631,7 @@ output$topNSelection <- renderUI({
     numericInput(
       "topN",
       label = label,
-      value = 20,
+      value = min(20,nrow(rowData(out$res))),
       min = 1,
       max = nrow(rowData(out$res)),
       step = 1
@@ -846,7 +846,7 @@ observeEvent(input$visExpButton,{
       dataTableOutput("topTable"),
       div(
         downloadButton("downloadTopTable", "Download Table Results"),
-        style = "float: right;"
+        style = "float: right; bottom:5px"
       ),
       title = "Table of results for top clusters or cluster-marker combinations",
       width = 12,

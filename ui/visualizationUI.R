@@ -32,7 +32,7 @@ visbody <- function(){
               style = "success", 
               disabled = TRUE
             ),
-            style = "float: right;", 
+            style = "float: right;",  
             id = "divStartDimRed"
           ),
         style = "position: relative; height: 500px;"
@@ -68,11 +68,8 @@ visbody <- function(){
       width = 12)
       ),
     fluidRow(
-      box(
-        markerSelectionBox,
         uiOutput("runDRparBox"),
         width = 12
-      ),
     ),
     fluidRow(
       plotBox

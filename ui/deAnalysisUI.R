@@ -1,5 +1,5 @@
 
-plotbox_height <- "50em"
+plotbox_height <- "48em"
 methods_height <- "35em"
 
 deBody <- function(){
