@@ -120,7 +120,7 @@ call_diffcyt <- function(){
         clustering = toString(isolate(input$deCluster)),
         features = toString(isolate(input$DEFeaturesIn)),
         block_id = toString(isolate(input$blockID_limma)),
-        normalize = toString(isolate(input$normalizeDE))
+        trend_method = toString(isolate(input$trend_limma))
       )
       out <- diffcyt::diffcyt(
         d_input = reactiveVals$sce,
