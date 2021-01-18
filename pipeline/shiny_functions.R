@@ -115,6 +115,71 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
 
 ############### Clustering ###############
 
+SigEMD <- function(sce, k, assay=names(assays(sce)), seed=1) {
+  library(aod)
+  library(arm)
+  library(fdrtool)
+  library(lars)
+  library(emdist)
+  library(data.table)
+  source("SigEMD/FunImpute.R")
+  source("SigEMD/SigEMDHur.R")
+  source("SigEMD/SigEMDnonHur.R")
+  source("SigEMD/plot_sig.R")
+  
+  set.seed(1)
+  
+  CATALYST:::.check_sce(sce, TRUE)
+  k <- CATALYST:::.check_k(sce, k)
+  assay <- match.arg(assay, assay)
+  
+  cluster_ids <- cluster_ids(sce, k)
+  res <- sapply(levels(cluster_ids), function(cluster_id) {
+    print(sprintf("calculating SigEMD for cluster %s", cluster_id))
+    data <- assay(sce[, cluster_ids == cluster_id], assay)
+    
+    # norm_factor <- table(sce[, cluster_ids == cluster_id]$sample_id) / 1000
+    # norm_vector <- norm_factor[sce[, cluster_ids == cluster_id]$sample_id]
+    # data <- sweep(data, 2, norm_vector, "/")
+    
+    data <- dataclean((abs(data)+data)/2)
+    databinary <- databin(data)
+    colnames(data) <- as.character(seq.int(to = ncol(data)))
+    
+    # library(data.table)
+    # dt <- as.data.table(as.data.frame(t(data)))
+    # dt$condition <- colData(sce[, cluster_ids == cluster_id])$condition
+    # dt <- melt(dt, id.vars = "condition", variable.name = "marker", variable.factor = T)
+    # library(ggplot2)
+    # p <- ggplot(dt, aes(x = value, color = condition)) + 
+    #   geom_density(alpha = .5, position = "identity") + 
+    #   facet_wrap(. ~ marker, scales = "free") +
+    #   labs(title = sprintf("cluster: %s", cluster_id))
+    # print(p)
+    
+    condition <- colData(sce[, cluster_ids == cluster_id])$condition
+    names(condition) <- colnames(data)
+    
+    results <- calculate_single(data =  data,condition =  condition,Hur_gene = NULL, binSize=0.1,nperm=10)
+    
+    results$emdall$cluster_id <- cluster_id
+    
+    #print(emd[order(-emd[,"padjust"]),])
+    # condition_perm <- sample(condition)
+    # names(condition_perm) <- colnames(data)
+    # 
+    # results_perm<- calculate_single(data =  data,condition =  condition_perm,Hur_gene = NULL, binSize=0.1,nperm=10)
+    # 
+    # emd_perm <- results_perm$emdall$
+    # 
+    # print(emd_perm[order(-emd_perm[,"padjust"]),])
+    
+    results
+  })
+  
+  return(res)
+}
+
 
 ############### Differential Expression ###############
 

@@ -31,41 +31,27 @@ Data from human platelets of patients with chronic coronary syndrome undergoing 
 Fcs files, as well as metadata and a panel file are given for this dataset and uploaded in this section. You just have to specify the path to your files. The Single Cell Experiment is then created using the prepData function of CATALYST. The function prepData can directly transform the marker intesities using arcsinh (inverse hyerpoblic sine) to make the distributions more symmetrix and to map them to a comparable range of expression. Recommended values for the cofactor parameter are 5 for mass cytometry (CyTOF) or 150 for fluorescence flow cytometry
 
 ```{r,eval=FALSE}
-path <- "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/HumanPlatelets"
-#path <- "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/systems_biomedicine_spill_applied_fcs_files/"
+path <- "../extdata/HumanPlatelets"
 cofactor <- 5
 
-exp <-list.files(path,pattern = "\\.fcs$",full.names = T)#[1:14]
-names <- list.files(path,pattern = "*.fcs")#[1:14]
-samples <-sapply(names, function(x) {
-    strsplit(x, split = ".fcs")[[1]]
-  })
-patients <-sapply(names, function(x) {
-    str_sub(strsplit(x, split = "_")[[1]][1], end = -2)
-  })
-a_b <- sapply(names, function(x) {
-    str_sub(strsplit(x, split = "_")[[1]][1], start = 8)
-  })
-dual_triple <-
-  sapply(names, function(x) {
-    strsplit(strsplit(x, split = "_")[[1]][2], split = ".fcs")[[1]][1]
-  })
+full_paths <- list.files(path, "\\.fcs$", full.names = T)
+filename_sans_path <- sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(full_paths))
+metadata <- split(unlist(strsplit(filename_sans_path, "_(?!.*_)", perl=TRUE)), c("patient_id", "dual_triple"))
+nchar_id <- nchar(metadata$patient_id)
+metadata$activated_baseline <- substring(metadata$patient_id, nchar_id)
+metadata$patient_id <- substr(metadata$patient_id, 1, nchar_id - 1)
+metadata <- lapply(metadata, as.factor)
 
-metadata <- data.table(
-  "file_name" = names,
-  "sample_id" = samples,
-  "patient_id" = patients,
-  "activated_baseline" = a_b,
-  "dual_triple" = dual_triple
-)
+metadata$file_name <- basename(full_paths)
+metadata$sample_id <- filename_sans_path
 
-panel <-read_excel(paste0(path,"panel_platelets.xlsx"))
+panel <-read_excel(file.path(path,"panel_platelets.xlsx"))
 
 sce <-
   prepData(
     exp,
     panel,
-    metadata,
+    as.data.frame(metadata),
     transform = TRUE,
     cofactor = cofactor,
     md_cols = list(
@@ -78,7 +64,7 @@ sce <-
 
 Otherwise, you can load the "sce_transformed.rds" file which already contains the transformed SingleCellExperiment.
 ```{r}
-path_to_rds <- "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/cytof/data/platelets/sce_transformed.rds"
+path_to_rds <- "../data/platelets/sce_transformed.rds"
 sce <- readRDS(path_to_rds)
 ```
 
@@ -110,7 +96,7 @@ CATALYST::plotNRS(
 
 CATALYST::plotExprs(
       sce,
-      color_by = "patient_id",
+      color_by = "dual_triple",
       features = "type",
       assay = "exprs"
     )
@@ -119,7 +105,6 @@ These plots can then be used to select patients as well as samples and filter th
 
 ```{r}
 # Patients that should not be included
-deselected_patients <- c("RPS 124")
 sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 124"))
 
 # You can also select sampels that should not be included
@@ -170,13 +155,49 @@ for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
 ```
 
 # Clustering
+
 ```{r}
-sce <- CATALYST::cluster(sce, features = "type", xdim = 10, ydim = 10, maxK = 20, verbose = T, seed = 1)
+sce <- cluster(sce)
 ```
+
+Let's have a look at the clusters:
+
+```{r}
+plotly::ggplotly(delta_area(sce))
+
+CATALYST::plotAbundances(sce, "meta12", group_by = "dual_triple")
+
+CATALYST::plotAbundances(sce, "meta12", by = "cluster_id", group_by = "dual_triple")
+```
+
+As we can see above, some patients have odd clusters. 
+Further investigation might be necessary to uncover the reasons for that.
+For now we will exclude the patients from the analysis.
+Hence, we will repeat the clustering step
+
+```{r}
+sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 108", "RPS 124", "RPS 096"))
+sce <- cluster(sce)
+```
+
+```{r}
+plotly::ggplotly(delta_area(sce))
+
+CATALYST::plotAbundances(sce, "meta10", group_by = "dual_triple")
+
+CATALYST::plotAbundances(sce, "meta10", by = "cluster_id", group_by = "dual_triple")
+```
+
+```{r}
+CATALYST::plotClusterExprs(sce, "meta10")
+
+CATALYST::plotFreqHeatmap(sce, "meta10")
+```
+
 
 Now, we can visualize the different clusters: 
 ```{r}
-for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
+for (method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")) {
   g <- CATALYST::plotDR(sce, dr = method, color_by = "meta10")
   print(g)
 }
