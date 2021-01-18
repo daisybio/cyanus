@@ -4,6 +4,7 @@ library(ggplot2)
 library(SingleCellExperiment)
 library(data.table)
 library(readxl)
+library(stringr)
 
 checkNullTable <- function(toCheck) {
   if (is.null(toCheck))
@@ -19,6 +20,7 @@ exp <-
     pattern = "\\.fcs$",
     full.names = T
   )
+
 names <-
   list.files(
     "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/HumanPlatelets/",
@@ -44,10 +46,11 @@ metadata <- data.table(
   "file_name" = names,
   "sample_id" = samples,
   "patient_id" = patients,
-  "activated/baseline" = a_b,
-  "dual/triple" = dual_triple
+  "activated_baseline" = a_b,
+  "dual_triple" = dual_triple
 )
 m <- match("condition", names(metadata))
+
 
 
 storage <-
@@ -81,15 +84,13 @@ sce <-
     md_cols = list(
       file = "file_name",
       id = "sample_id",
-      factors = c("activated/baseline", "dual/triple")
+      factors = c("activated_baseline", "dual_triple","patient_id")
     )
   )
-saveRDS(sce, file = "sce.rds")
+saveRDS(sce, file = "sce_transformed.rds")
 saveRDS(fcs_data, file = "fcs.rds")
 saveRDS(metadata, file = "md.rds")
 saveRDS(panel, file = "panel.rds")
-
-
 
 
 # Info for PBMC data

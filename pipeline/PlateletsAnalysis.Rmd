@@ -1,0 +1,138 @@
+---
+title: "Differential Marker Expression Analysis of Platelet Data"
+author: "Arend Lis, Bernett Judith, Manz Quirin "
+date: "1/18/2021"
+output: 
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(CATALYST)
+library(flowCore)
+library(ggplot2)
+library(SingleCellExperiment)
+library(data.table)
+library(readxl)
+library(diffcyt)
+library(RColorBrewer)
+library(grid)
+library(futile.logger)
+library(VennDiagram)
+
+source("shiny_functions.R")
+```
+
+Data from human platelets of patients with chronic coronary syndrome undergoing different therapy: dual antiplatelet therapy versus triple antiplatelet therapy, before and after platelet activation with 10µm TRAP. There are files of 7 patients with triple therapy and 12 patients with dual therapy (each in two condtions)."
+
+# Data Upload and Data Preprocessing
+Fcs files, as well as metadata and a panel file are given for this dataset and uploaded in this section. You just have to specify the path to your files. The Single Cell Experiment is then created using the prepData function of CATALYST. The function prepData can directly transform the marker intesities using arcsinh (inverse hyerpoblic sine) to make the distributions more symmetrix and to map them to a comparable range of expression. Recommended values for the cofactor parameter are 5 for mass cytometry (CyTOF) or 150 for fluorescence flow cytometry
+
+```{r,eval=FALSE}
+path <- "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/HumanPlatelets"
+cofactor <- 5
+
+exp <-list.files(path,pattern = "\\.fcs$",full.names = T)
+names <- list.files(path,pattern = "*.fcs")
+samples <-sapply(names, function(x) {
+    strsplit(x, split = ".fcs")[[1]]
+  })
+patients <-sapply(names, function(x) {
+    str_sub(strsplit(x, split = "_")[[1]][1], end = -2)
+  })
+a_b <- sapply(names, function(x) {
+    str_sub(strsplit(x, split = "_")[[1]][1], start = 8)
+  })
+dual_triple <-
+  sapply(names, function(x) {
+    strsplit(strsplit(x, split = "_")[[1]][2], split = ".fcs")[[1]][1]
+  })
+
+metadata <- data.table(
+  "file_name" = names,
+  "sample_id" = samples,
+  "patient_id" = patients,
+  "activated_baseline" = a_b,
+  "dual_triple" = dual_triple
+)
+
+panel <-read_excel(paste0(path,"panel_platelets.xlsx"))
+
+sce <-
+  prepData(
+    exp,
+    panel,
+    metadata,
+    transform = TRUE,
+    cofactor = cofactor,
+    md_cols = list(
+      file = "file_name",
+      id = "sample_id",
+      factors = c("activated_baseline", "dual_triple","patient_id")
+    )
+  )
+```
+
+Otherwise, you can load the "sce_transformed.rds" file which already contains the transformed SingleCellExperiment.
+```{r}
+path_to_rds <- "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/cytof/data/platelets/sce_transformed.rds"
+sce <- readRDS(path_to_rds)
+```
+
+
+The shiny app also includes some simple visualization plots to verify whether the data represents what we expect, for example, whether samples that are replicates of one condition are more similar and are distinct from samples from another condition. Depending on the situation, one can then consider removing problematic markers or samples from further analysis.
+
+```{r}
+CATALYST::plotCounts(
+    sce,
+    group_by = "patient_id", # possible inputs: names(colData(sce))
+    color_by = "dual_triple", # possible inputs: names(colData(sce))
+    prop = FALSE # TRUE for stacked relative abundances, FALSE for total cell counts
+  )
+
+CATALYST::pbMDS(
+      sce,
+      label_by = "patient_id", 
+      color_by = "dual_triple",
+      features = "type", # possible inputs: unique(rowData(sce)$marker_class) or NULL (to use all features)
+      assay = "exprs", # possible inputs: assayNames(sce)
+    )
+
+CATALYST::plotNRS(
+      sce,
+      color_by = "patient_id",
+      features = "type",
+      assay = "exprs"
+    )
+
+CATALYST::plotExprs(
+      sce,
+      color_by = "patient_id",
+      features = "type",
+      assay = "exprs"
+    )
+```
+These plots can then be used to select patients as well as samples and filter the Single Cell Experiment. As one can see, the number of cells in patient RPS124 is notably lower than in the other patients.
+
+```{r}
+# Patients that should not be included
+deselected_patients <- c("RPS 124")
+sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 124"))
+
+# You can also select sampels that should not be included
+# sce <- makeSampleSelection(sce = sce, deselected_samples = c())
+```
+
+
+# Data Visualization
+
+
+
+
+# Clustering
+
+
+
+
+# Differential Expression Analysis
