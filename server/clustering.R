@@ -394,8 +394,8 @@ output$clusteringOutput <- renderUI({
             ,
             style = "text-align: center;vertical-align: middle;"
           ),
-          div(uiOutput("clusterStarDownload"),
-              style = "position: relative; z-index: 99; float: right;"),
+          # div(uiOutput("clusterStarDownload"),
+          #     style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
             plotOutput("clusterStarPlot",
                        height = "800px")
