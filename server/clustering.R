@@ -23,7 +23,7 @@ observeEvent(input$startClustering, {
       clusterSCE(
         reactiveVals$sce,
         input$assayTypeIn,
-        reactiveVals$featureNames,
+        reactiveVals$clusterFeatureNames,
         input$xdim,
         input$ydim,
         input$k
@@ -46,7 +46,7 @@ observeEvent(input$startClustering, {
   assays <- c("exprs" = "Transformed", "counts" = "Raw")
   
   reactiveVals$clusterRun <- list(
-    features = reactiveVals$featureNames,
+    features = reactiveVals$clusterFeatureNames,
     assayType = assays[input$assayTypeIn],
     xdim = input$xdim,
     ydim = input$ydim,
@@ -73,14 +73,14 @@ observeEvent(input$startClustering, {
 
 observeEvent(input$featuresIn, {
   if (input$useFeaturesIn == "Marker by Class")
-    reactiveVals$featureNames <-
+    reactiveVals$clusterFeatureNames <-
       rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) %in% input$featuresIn]
   else
-    reactiveVals$featureNames <- input$featuresIn
+    reactiveVals$clusterFeatureNames <- input$featuresIn
 }, ignoreNULL = FALSE, ignoreInit = TRUE)
 
 observe({
-  if (length(reactiveVals$featureNames) == 0)
+  if (length(reactiveVals$clusterFeatureNames) == 0)
     disable("startClustering")
   else
     enable("startClustering")
