@@ -23,7 +23,7 @@ observeEvent(input$startClustering, {
       clusterSCE(
         reactiveVals$sce,
         input$assayTypeIn,
-        input$featuresIn,
+        reactiveVals$clusterFeatureNames,
         input$xdim,
         input$ydim,
         input$k
@@ -46,7 +46,7 @@ observeEvent(input$startClustering, {
   assays <- c("exprs" = "Transformed", "counts" = "Raw")
   
   reactiveVals$clusterRun <- list(
-    features = CATALYST:::.get_features(reactiveVals$sce, input$featuresIn),
+    features = reactiveVals$clusterFeatureNames,
     assayType = assays[input$assayTypeIn],
     xdim = input$xdim,
     ydim = input$ydim,
@@ -69,6 +69,21 @@ observeEvent(input$startClustering, {
     duration = 10,
     type = "message"
   )
+})
+
+observeEvent(input$featuresIn, {
+  if (input$useFeaturesIn == "Marker by Class")
+    reactiveVals$clusterFeatureNames <-
+      rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) %in% input$featuresIn]
+  else
+    reactiveVals$clusterFeatureNames <- input$featuresIn
+}, ignoreNULL = FALSE, ignoreInit = TRUE)
+
+observe({
+  if (length(reactiveVals$clusterFeatureNames) == 0)
+    disable("startClustering")
+  else
+    enable("startClustering")
 })
 
 observeEvent(input$clusterCode, {
@@ -379,8 +394,8 @@ output$clusteringOutput <- renderUI({
             ,
             style = "text-align: center;vertical-align: middle;"
           ),
-          div(uiOutput("clusterStarDownload"),
-              style = "position: relative; z-index: 99; float: right;"),
+          # div(uiOutput("clusterStarDownload"),
+          #     style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
             plotOutput("clusterStarPlot",
                        height = "800px")
