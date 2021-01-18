@@ -19,7 +19,7 @@ call_diffcyt <- function(){
     }
 
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
-    contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
+    contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
     if(ncol(design) >= nr_samples){
       showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
       out <- NULL
@@ -57,7 +57,7 @@ call_diffcyt <- function(){
       blockID <- NULL
     }
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
-    contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
+    contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
     if(ncol(design) >= nr_samples){
       showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
       out <- NULL
@@ -104,7 +104,7 @@ call_diffcyt <- function(){
     markersToTest <- rownames(reactiveVals$sce) %in% markersToTest
     
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
-    contrast <- createCustomContrastMatix(contrastVars, design, designMatrix = T)
+    contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
     if(ncol(design) >= nr_samples){
       showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
       out <- NULL
@@ -136,7 +136,7 @@ call_diffcyt <- function(){
     }
   } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
     formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
-    contrast <- createCustomContrastMatix(contrastVars, input$colsFixed, designMatrix = F)
+    contrast <- createCustomContrastMatrix(contrastVars, input$colsFixed, designMatrix = F)
     
     markersToTest <- isolate(input$DEFeaturesIn)
     if (input$DEMarkerToTest == "Marker by Class") {
@@ -176,7 +176,7 @@ call_diffcyt <- function(){
     }
     
     formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
-    contrast <- createCustomContrastMatix(contrastVars, input$colsFixed, designMatrix = F)
+    contrast <- createCustomContrastMatrix(contrastVars, input$colsFixed, designMatrix = F)
     if(nrow(contrast) >= nr_samples){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
       out <- NULL
@@ -203,7 +203,7 @@ call_diffcyt <- function(){
   }
 }
 
-createCustomContrastMatix <- function(contrastVars, matrix, designMatrix = T){
+createCustomContrastMatrix <- function(contrastVars, matrix, designMatrix = T){
   if(designMatrix){
     #the entries have to correspond to the columns of the design matrix
     cnames <- colnames(matrix)

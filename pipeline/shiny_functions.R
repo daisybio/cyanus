@@ -5,7 +5,10 @@ library(ggplot2)
 library(dimRed)
 library(RANN)
 
-###Visualization
+############### Preprocessing ###############
+
+
+############### Visualization ###############
 
 #run the dimensionality reduction; function either calls CATALYST::runDR or runIsomap
 runDimRed <- function(sce, dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap"), 
@@ -80,3 +83,76 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
   reducedDim(x, "Isomap") <- m
   return(x)
 }
+
+############### Clustering ###############
+
+
+############### Differential Expression ###############
+
+prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom,
+                        method = c( "diffcyt-DA-edgeR", "diffcyt-DA-voom","diffcyt-DA-GLMM", "diffcyt-DS-limma", "diffcyt-DS-LMM") ){
+  match.arg(method)
+  parameters <- list()
+  parameters[["ei"]] <- metadata(sce)$experiment_info
+  
+  if(method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DS-limma")){
+    
+    parameters[["design"]] <- diffcyt::createDesignMatrix(parameters[["ei"]], cols_design = colsDesign)
+    parameters[["contrast"]] <- createCustomContrastMatrix(contrastVars, parameters[["design"]], designMatrix = T)
+    
+  }else{
+    
+    parameters[["formula"]] <- diffcyt::createFormula(parameters[["ei"]], cols_fixed = colsFixed, cols_random = colsRandom)
+    parameters[["contrast"]] <- createCustomContrastMatrix(contrastVars, colsFixed, designMatrix = F)
+    
+  }
+  return(parameters) 
+}
+
+#Then run: 
+#diffcyt::diffcyt(d_input = sce,
+#                 design = parameters[["design"]],
+#                 formula = parameters[["formula"]],
+#                 contrast = parameters[["contrast"]],
+#                 analysis_type = c("DA", "DS"),
+#                 method_DS = c("diffcyt-DS-limma", "diffcyt-DS-LMM"),
+#                 method_DA = c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM"),
+#                 clustering_to_use = "all",
+#                 markers_to_test = markersToTest, 
+#                 trend = trend, 
+#                 normalize = T, ...)
+
+#Then run: CATALYST::plotDiffHeatmap(...) and CATALYST::plotPbExprs(...)
+
+createCustomContrastMatrix <- function(contrastVars, matrix, designMatrix = T){
+  if(designMatrix){
+    #the entries have to correspond to the columns of the design matrix
+    cnames <- colnames(matrix)
+    bool <- getBools(cnames, contrastVars)
+    bool <- as.numeric(bool)
+    contrast <- createContrast(bool)
+    return(createContrast(contrast))
+  }else{
+    #the entries have to correspond to the levels of the fixed effect terms in the model formula
+    lvlList <- lapply(matrix, function(x){levels(colData(reactiveVals$sce)[[x]])})
+    names(lvlList) <- matrix
+    bool <- getBools(matrix, contrastVars)
+    bool <- as.numeric(bool)
+    names(bool) <- matrix
+    contrast <- unlist(lapply(names(lvlList), function(x){
+      return( c(rep(bool[x], length(lvlList[[x]]))) ) 
+    }))
+    return(createContrast(unname(contrast)))
+  }
+}
+
+getBools <- function(names, contrastVars){
+  bool <- unlist(lapply(names, function(x){
+    any(lapply(contrastVars, function(y){
+      grepl(y,x, fixed = T )
+    }))
+  }))
+  return(bool)
+}
+
+
