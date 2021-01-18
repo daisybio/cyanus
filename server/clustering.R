@@ -23,7 +23,7 @@ observeEvent(input$startClustering, {
       clusterSCE(
         reactiveVals$sce,
         input$assayTypeIn,
-        input$featuresIn,
+        reactiveVals$featureNames,
         input$xdim,
         input$ydim,
         input$k
@@ -46,7 +46,7 @@ observeEvent(input$startClustering, {
   assays <- c("exprs" = "Transformed", "counts" = "Raw")
   
   reactiveVals$clusterRun <- list(
-    features = CATALYST:::.get_features(reactiveVals$sce, input$featuresIn),
+    features = reactiveVals$featureNames,
     assayType = assays[input$assayTypeIn],
     xdim = input$xdim,
     ydim = input$ydim,
@@ -69,6 +69,21 @@ observeEvent(input$startClustering, {
     duration = 10,
     type = "message"
   )
+})
+
+observeEvent(input$featuresIn, {
+  if (input$useFeaturesIn == "Marker by Class")
+    reactiveVals$featureNames <-
+      rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) %in% input$featuresIn]
+  else
+    reactiveVals$featureNames <- input$featuresIn
+}, ignoreNULL = FALSE, ignoreInit = TRUE)
+
+observe({
+  if (length(reactiveVals$featureNames) == 0)
+    disable("startClustering")
+  else
+    enable("startClustering")
 })
 
 observeEvent(input$clusterCode, {
