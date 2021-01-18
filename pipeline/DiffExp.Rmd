@@ -1,0 +1,240 @@
+---
+title: "Differential Marker Expression Analysis"
+author: "Arend Lis, Bernett Judith, Manz Quirin "
+date: "12.01.2021"
+output: :
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(CATALYST)
+library(flowCore)
+library(ggplot2)
+library(SingleCellExperiment)
+library(data.table)
+library(readxl)
+library(diffcyt)
+library(RColorBrewer)
+library(grid)
+library(futile.logger)
+library(VennDiagram)
+```
+
+# Data Upload and Conversion to Single Cell Experiment
+
+```{r data}
+data(PBMC_fs, PBMC_panel, PBMC_md)
+sce <- prepData(PBMC_fs, PBMC_panel, PBMC_md)
+sce <- cluster(
+  sce,
+  features = "type",
+  xdim = 10,
+  ydim = 10,
+  maxK = 20,
+  verbose = FALSE,
+  seed = 1
+)
+
+```
+
+# Set up of contrast matrix, formula and design matrix
+```{r set_up}
+ei <- metadata(sce)$experiment_info
+contrast <- createContrast(c(0, 1))
+formula <- createFormula(ei, cols_fixed = "condition")
+formula2 <- createFormula(ei, cols_fixed = "condition", cols_random = "patient_id")
+design <- createDesignMatrix(ei, cols_design = c("condition"))
+
+clustering_to_use = "meta12"
+
+```
+
+# Differential States
+
+## Performance of limma
+```{r limma}
+out_limma <- diffcyt(
+  d_input = sce,
+  design = design,
+  contrast = contrast,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-limma",
+  clustering_to_use = clustering_to_use
+)
+
+plotDiffHeatmap(sce,
+                rowData(out_limma$res),
+                fdr = 0.05,
+                sort_by = "padj",
+                col_anno = "condition")
+
+topTable(out_limma$res)
+```
+
+## Performance of Linear Mixed Models
+```{r LMM}
+out_LMM <- diffcyt(
+  d_input = sce,
+  formula = formula,
+  contrast = contrast,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-LMM",
+  clustering_to_use = clustering_to_use
+)
+
+plotDiffHeatmap(sce,
+                rowData(out_LMM$res),
+                fdr = 0.05,
+                sort_by = "padj",
+                col_anno = "condition")
+
+topTable(out_LMM$res)
+```
+## Significant markers found by all methods
+
+```{r  DA_venn}
+sign_limma <- data.frame(rowData(out_limma$res))
+sign_LMM <- data.frame(rowData(out_LMM$res))
+sign_limma <- sign_limma[c("cluster_id","marker_id","p_val","p_adj")]
+sign_LMM <- sign_LMM[c("cluster_id","marker_id","p_val","p_adj")]
+
+sign_limma$significant <- sign_limma$p_adj < 0.05
+sign_LMM$significant <- sign_LMM$p_adj < 0.05
+
+
+limma <- unlist(subset(sign_limma, significant==TRUE, select=c(marker_id, cluster_id), use.names=FALSE))
+LMM <- unlist(subset(sign_LMM, significant==TRUE, select=c(marker_id, cluster_id), use.names=FALSE))
+  
+venn <- venn.diagram(
+  x = list(limma,LMM),
+  filename = "plots/diff_marker_expr_DS.png",
+  category.names = c("limma","LMM"),
+  image.type = "png",
+  cex = 2.0,
+  fontfamily = "sans",
+  col=c("#99CC99", '#CC3333'),
+  fill = c(alpha("#99CC99",0.3), alpha('#CC3333',0.3)),
+  cat.cex = 1.8,
+  cat.fontface = "bold",
+  cat.fontfamily = "sans",
+  main = paste("Limma vs. LMM"),
+  main.fontface = "bold",
+  main.fontfamily = "sans",
+  main.cex = 2.0,
+  sub = paste("P-adjusted < 0.05"),
+  sub.cex=1.5 ,
+  sub.fontfamily="sans"
+  )
+
+```
+
+
+# Differential Abundances
+
+## Performance of edgeR
+```{r edgeR}
+out_edgeR <- diffcyt(
+  d_input = sce,
+  design = design,
+  contrast = contrast,
+  analysis_type = "DA",
+  method_DA = "diffcyt-DA-edgeR",
+  clustering_to_use = clustering_to_use
+)
+
+plotDiffHeatmap(sce,
+                rowData(out_edgeR$res),
+                fdr = 0.05,
+                sort_by = "padj",
+                col_anno = "condition")
+
+topTable(out_edgeR$res)
+```
+
+## Performance of edgeR
+```{r voom}
+out_voom <- diffcyt(
+  d_input = sce,
+  design = design,
+  contrast = contrast,
+  analysis_type = "DA",
+  method_DA = "diffcyt-DA-voom",
+  clustering_to_use = clustering_to_use
+)
+
+plotDiffHeatmap(sce,
+                rowData(out_voom$res),
+                fdr = 0.05,
+                sort_by = "padj",
+                col_anno = "condition")
+
+topTable(out_voom$res)
+```
+
+
+## Performance of Generalized Linear Mixed Models
+```{r GLMM}
+out_GLMM <- diffcyt(
+  d_input = sce,
+  formula = formula2,  # attention -> other formula as edgeR
+  contrast = contrast,
+  analysis_type = "DA",
+  method_DA = "diffcyt-DA-GLMM",
+  clustering_to_use = clustering_to_use
+)
+
+plotDiffHeatmap(sce,
+                rowData(out_GLMM$res),
+                fdr = 0.05,
+                sort_by = "padj",
+                col_anno = "condition")
+
+topTable(out_GLMM$res)
+````
+## Significant markers found by all methods
+
+```{r  DA_venn}
+sign_edgeR <- data.frame(rowData(out_edgeR$res))
+sign_voom <- data.frame(rowData(out_voom$res))
+sign_GLMM <- data.frame(rowData(out_GLMM$res))
+
+sign_edgeR <- sign_edgeR[c("cluster_id","p_val","p_adj")]
+sign_voom <- sign_voom[c("cluster_id","p_val","p_adj")]
+sign_GLMM <- sign_GLMM[c("cluster_id","p_val","p_adj")]
+
+sign_edgeR$significant <- sign_edgeR$p_adj < 0.05
+sign_voom$significant <- sign_voom$p_adj < 0.05
+sign_GLMM$significant <- sign_GLMM$p_adj < 0.05
+
+
+edgeR <- unlist(subset(sign_edgeR, significant==TRUE, select=c(cluster_id), use.names=FALSE))
+voom <- unlist(subset(sign_voom, significant==TRUE, select=c(cluster_id), use.names=FALSE))
+GLMM <- unlist(subset(sign_GLMM, significant==TRUE, select=c(cluster_id), use.names=FALSE))
+  
+venn <- venn.diagram(
+  x = list(edgeR,GLMM,voom),
+  filename = "plots/diff_marker_expr_DA.png",
+  category.names = c("edgeR","GLMM","Voom"),
+  image.type = "png",
+  cex = 2.0,
+  fontfamily = "sans",
+  col=c("#99CC99", '#CC3333','#3366CC'),
+  fill = c(alpha("#99CC99",0.3), alpha('#CC3333',0.3),alpha('#3366CC',0.3)),
+  cat.cex = 1.8,
+  cat.fontface = "bold",
+  cat.fontfamily = "sans",
+  main = paste("EdgeR vs. GLMM vs. Voom"),
+  main.fontface = "bold",
+  main.fontfamily = "sans",
+  main.cex = 2.0,
+  sub = paste("P-adjusted < 0.05"),
+  sub.cex=1.5 ,
+  sub.fontfamily="sans"
+  )
+
+````
+
+
+
