@@ -20,6 +20,7 @@ library(RColorBrewer)
 library(grid)
 library(futile.logger)
 library(VennDiagram)
+library(stringr)
 
 source("shiny_functions.R")
 ```
@@ -31,10 +32,11 @@ Fcs files, as well as metadata and a panel file are given for this dataset and u
 
 ```{r,eval=FALSE}
 path <- "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/HumanPlatelets"
+#path <- "/Users/judith_bernett/Desktop/Bioinfo/SystemsBioMedicine/systems_biomedicine_spill_applied_fcs_files/"
 cofactor <- 5
 
-exp <-list.files(path,pattern = "\\.fcs$",full.names = T)
-names <- list.files(path,pattern = "*.fcs")
+exp <-list.files(path,pattern = "\\.fcs$",full.names = T)#[1:14]
+names <- list.files(path,pattern = "*.fcs")#[1:14]
 samples <-sapply(names, function(x) {
     strsplit(x, split = ".fcs")[[1]]
   })
@@ -124,15 +126,86 @@ sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 124"))
 # sce <- makeSampleSelection(sce = sce, deselected_samples = c())
 ```
 
-
 # Data Visualization
 
+You can now run various dimensionality reduction methods on your data. The options are (parameter dr_chosen): 
+<ul>
+<li>"UMAP"</li>
+<li>"TSNE"</li>
+<li>"PCA"</li>
+<li>"MDS"</li> 
+<li>"DiffusionMap" and </li>
+<li>"Isomap"</li>
+</ul>
+Other run options are:
+<ul>
+<li> cells_chosen: number of cells to sample from.  </li>
+<li> feature_chosen: markers or marker class. We recommend using "type" </li>
+<li>assay_chosen: "counts" or "exprs". We recommend using "exprs" </li> 
+<li> scale: TRUE or FALSE. We recommend using TRUE </li>
+<li> k: Isomap-specific parameter. Specifies the number of neighbours for the graph constructed by isomap </li>
+
+Let's run all methods so that we can compare them later:
+```{r}
+for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
+  print(method)
+  sce <- runDimRed(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
+}
+```
+You can now simply visualize the dimensionality reduction by using the CATALYST function plotDR. For now, let's color by activated_baseline and facet by dual_triple. Later, we can also color by cluster.
+```{r}
+for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
+  g <- CATALYST::plotDR(sce, dr = method, color_by = "dual_triple", facet_by = "activated_baseline")
+  print(g)
+}
+```
 
 
+We can also colour by marker expression. Before, we saw that CD36, CD47 and PAR1 were the top three markers: 
+```{r}
+for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
+  g <- CATALYST::plotDR(sce, dr = method, color_by = c("CD36", "CD47"), facet_by = "activated_baseline", assay = "exprs", scale = T)
+  print(g)
+}
+```
 
 # Clustering
+```{r}
+sce <- CATALYST::cluster(sce, features = "type", xdim = 10, ydim = 10, maxK = 20, verbose = T, seed = 1)
+```
 
+Now, we can visualize the different clusters: 
+```{r}
+for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
+  g <- CATALYST::plotDR(sce, dr = method, color_by = "meta10")
+  print(g)
+}
+```
 
-
+Now that we've done the clustering, we can do the differential expression analysis
 
 # Differential Expression Analysis
+
+Depending on the method you want to run ("diffcyt-DA-edgeR", "diffcyt-DA-voom","diffcyt-DA-GLMM", "diffcyt-DS-limma", "diffcyt-DS-LMM"), you either have to specify columns to include in the design matrix or for linear models fixed and random effects. For both, you have to specify the condition you want to analyse because this will be converted to a contrast matrix:
+
+```{r}
+parameters <- prepDiffExp(sce, contrastVars = c("dual_triple", "activated_baseline"), colsDesign = c("dual_triple", "activated_baseline"), method = "diffcyt-DA-edgeR")
+out <- diffcyt::diffcyt(d_input = sce,
+                 design = parameters[["design"]],
+                 contrast = parameters[["contrast"]],
+                 analysis_type = "DA",
+                 method_DA = "diffcyt-DA-edgeR",
+                 clustering_to_use = "meta10",
+                 trend_method = "locfit",
+                 normalize = T)
+
+```
+
+Now, we can visualize that: 
+```{r}
+CATALYST::plotPbExprs(sce, k = "meta10", features = "state", color_by = "activated_baseline", 
+              facet_by = "cluster_id", shape_by = "dual_triple")
+CATALYST::plotPbExprs(sce, features = "state", facet_by = "antigen", color_by = "activated_baseline", shape_by = "dual_triple")
+CATALYST::plotDiffHeatmap(sce, rowData(out$res), all = T)
+```
+
