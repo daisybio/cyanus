@@ -1,0 +1,95 @@
+---
+title: "Differential Marker Expression Analysis of Platelet Data"
+author: "Arend Lis, Bernett Judith, Manz Quirin "
+date: "1/18/2021"
+output: 
+  html_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(CATALYST)
+library(flowCore)
+library(ggplot2)
+library(SingleCellExperiment)
+library(data.table)
+library(readxl)
+library(diffcyt)
+library(RColorBrewer)
+library(grid)
+library(futile.logger)
+library(VennDiagram)
+```
+
+Data from human platelets of patients with chronic coronary syndrome undergoing different therapy: dual antiplatelet therapy versus triple antiplatelet therapy, before and after platelet activation with 10µm TRAP. There are files of 7 patients with triple therapy and 12 patients with dual therapy (each in two condtions)."
+
+# Data Upload and Conversion to Single Cell Experiment
+You can create a Single Cell Experiment of the fcs files using this code. You just have to specify the path to your data folder. 
+```{r,eval=FALSE}
+path <- "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/HumanPlatelets"
+exp <-list.files(path,pattern = "\\.fcs$",full.names = T)
+names <- list.files(path,pattern = "*.fcs")
+samples <-sapply(names, function(x) {
+    strsplit(x, split = ".fcs")[[1]]
+  })
+patients <-sapply(names, function(x) {
+    str_sub(strsplit(x, split = "_")[[1]][1], end = -2)
+  })
+a_b <- sapply(names, function(x) {
+    str_sub(strsplit(x, split = "_")[[1]][1], start = 8)
+  })
+dual_triple <-
+  sapply(names, function(x) {
+    strsplit(strsplit(x, split = "_")[[1]][2], split = ".fcs")[[1]][1]
+  })
+
+metadata <- data.table(
+  "file_name" = names,
+  "sample_id" = samples,
+  "patient_id" = patients,
+  "activated_baseline" = a_b,
+  "dual_triple" = dual_triple
+)
+
+panel <-read_excel(paste0(path,"panel_platelets.xlsx"))
+
+sce <-
+  prepData(
+    exp,
+    panel,
+    metadata,
+    transform = TRUE,
+    cofactor = 5,
+    md_cols = list(
+      file = "file_name",
+      id = "sample_id",
+      factors = c("activated_baseline", "dual_triple","patient_id")
+    )
+  )
+```
+
+Otherwise, you can load the "sce_transformed.rds" file which already contains the SingleCellExperiment.
+```{r}
+path_to_rds <- "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/cytof/data/platelets/sce_transformed.rds"
+sce <- readRDS(path_to_rds)
+```
+
+
+# Data Preprocessing
+
+
+
+
+
+# Data Visualization
+
+
+
+
+# Clustering
+
+
+
+
+# Differential Expression Analysis
