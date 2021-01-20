@@ -19,8 +19,6 @@ makeSampleSelection <- function(sce=sce, deselected_samples){
   
   return (sce)
 }
-
-
 makePatientSelection <- function(sce,deselected_patients){
   # All patients
   all_patients <- as.character(unique(colData(sce)$patient_id))
