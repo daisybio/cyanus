@@ -9,6 +9,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=12, fig.height=8)
 library(CATALYST)
 library(flowCore)
 library(ggplot2)
@@ -21,8 +22,10 @@ library(grid)
 library(futile.logger)
 library(VennDiagram)
 library(stringr)
+set.seed(1234)
 
 source("shiny_functions.R")
+source("../server/clusterFun.R")
 ```
 
 Data from human platelets of patients with chronic coronary syndrome undergoing different therapy: dual antiplatelet therapy versus triple antiplatelet therapy, before and after platelet activation with 10µm TRAP. There are files of 7 patients with triple therapy and 12 patients with dual therapy (each in two condtions)."
@@ -191,8 +194,10 @@ For now we will exclude the patients from the analysis.
 Hence, we will repeat the clustering step
 
 ```{r}
-sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 108"))
+sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 108", "RPS 096"))
+sce <- makeSampleSelection(sce, c("149A_dual"))
 sce <- cluster(sce)
+sce <- mergeClusters(sce, k = "meta20", id = "all", table = data.frame(old_cluster = seq_len(20), new_cluster = "all"))
 ```
 
 ```{r}
@@ -200,7 +205,7 @@ plotly::ggplotly(delta_area(sce))
 
 CATALYST::plotAbundances(sce, "meta10", group_by = "dual_triple")
 
-CATALYST::plotAbundances(sce, "meta10", by = "cluster_id", group_by = "dual_triple")
+CATALYST::plotAbundances(sce, "meta10", by = "cluster_id", group_by = "patient_id", shape_by = "dual_triple")
 ```
 
 ```{r}
@@ -251,7 +256,37 @@ Now, we can visualize that:
 ```{r}
 CATALYST::plotPbExprs(sce, k = "meta10", features = "state", color_by = "activated_baseline", 
               facet_by = "cluster_id", shape_by = "dual_triple")
-CATALYST::plotPbExprs(sce, features = "state", facet_by = "antigen", color_by = "activated_baseline", shape_by = "dual_triple")
+CATALYST::plotPbExprs(sce, features = "state", facet_by = "antigen", color_by = "dual_triple", shape_by = "activated_baseline")
 CATALYST::plotDiffHeatmap(sce, rowData(out$res), all = T)
+```
+
+Let's try out SigEMD:
+
+```{r}
+library(BiocParallel)
+# Set the parameters and register the back-end to be used
+param <- MulticoreParam(workers = 22, progressbar = TRUE)
+register(param)
+
+system.time(emd_result <- SigEMD(sce, "all", "dual_triple", nperm=10, parallel=param))
+# user   system  elapsed 
+# 3512.914  434.689 3949.872 
+
+print(emd_result$all$emdall)
+
+```
+
+Let's try out DEsingle:
+
+```{r}
+library(DEsingle)
+
+group <- colData(sce)[["dual_triple"]]
+
+# Detecting the DE genes in parallelization with 22 cores
+results <- DEsingle(counts = sce, group = group, parallel = TRUE, BPPARAM = param)
+
+# Dividing the DE genes into 3 categories at threshold of FDR < 0.05
+results.classified <- DEtype(results = results, threshold = 0.05)
 ```
 

@@ -115,26 +115,28 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
 
 ############### Clustering ###############
 
-SigEMD <- function(sce, k, assay=names(assays(sce)), seed=1) {
+SigEMD <- function(sce, k, condition, binSize=.2, nperm=100, assay="exprs", seed=1, parallel=NULL) {
   library(aod)
   library(arm)
   library(fdrtool)
   library(lars)
   library(emdist)
   library(data.table)
-  source("SigEMD/FunImpute.R")
-  source("SigEMD/SigEMDHur.R")
-  source("SigEMD/SigEMDnonHur.R")
-  source("SigEMD/plot_sig.R")
+  source("../SigEMD/FunImpute.R")
+  source("../SigEMD/SigEMDHur.R")
+  source("../SigEMD/SigEMDnonHur.R")
+  source("../SigEMD/plot_sig.R")
   
   set.seed(1)
   
   CATALYST:::.check_sce(sce, TRUE)
   k <- CATALYST:::.check_k(sce, k)
-  assay <- match.arg(assay, assay)
+  CATALYST:::.check_cd_factor(sce, condition)
+  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
+  
   
   cluster_ids <- cluster_ids(sce, k)
-  res <- sapply(levels(cluster_ids), function(cluster_id) {
+  res <- lapply(levels(cluster_ids), function(cluster_id) {
     print(sprintf("calculating SigEMD for cluster %s", cluster_id))
     data <- assay(sce[, cluster_ids == cluster_id], assay)
     
@@ -157,12 +159,12 @@ SigEMD <- function(sce, k, assay=names(assays(sce)), seed=1) {
     #   labs(title = sprintf("cluster: %s", cluster_id))
     # print(p)
     
-    condition <- colData(sce[, cluster_ids == cluster_id])$condition
-    names(condition) <- colnames(data)
+    condition_cluster <- colData(sce[, cluster_ids == cluster_id])[[condition]]
+    names(condition_cluster) <- colnames(data)
     
-    results <- calculate_single(data =  data,condition =  condition,Hur_gene = NULL, binSize=0.1,nperm=10)
+    results <- calculate_single(data =  data,condition =  condition_cluster,Hur_gene = NULL, binSize=binSize, nperm=nperm)
     
-    results$emdall$cluster_id <- cluster_id
+    results$cluster_id <- cluster_id
     
     #print(emd[order(-emd[,"padjust"]),])
     # condition_perm <- sample(condition)
@@ -176,6 +178,8 @@ SigEMD <- function(sce, k, assay=names(assays(sce)), seed=1) {
     
     results
   })
+  
+  names(res) <- levels(cluster_ids)
   
   return(res)
 }
