@@ -98,10 +98,12 @@ call_diffcyt <- function(){
     }
     
     markersToTest <- input$DEFeaturesIn
+    is_marker <- rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
     if (input$DEMarkerToTest == "Marker by Class") {
-      markersToTest <- rowData(reactiveVals$sce)[rowData(reactiveVals$sce)$marker_class == markersToTest,]$marker_name
+      markersToTest <- (rowData(reactiveVals$sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
+    }else{
+      markersToTest <- rownames(reactiveVals$sce)[is_marker] %in% markersToTest
     }
-    markersToTest <- rownames(reactiveVals$sce) %in% markersToTest
     
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
     contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
@@ -139,10 +141,12 @@ call_diffcyt <- function(){
     contrast <- createCustomContrastMatrix(contrastVars, input$colsFixed, designMatrix = F)
     
     markersToTest <- isolate(input$DEFeaturesIn)
+    is_marker <- rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
     if (input$DEMarkerToTest == "Marker by Class") {
-      markersToTest <- rowData(reactiveVals$sce)[rowData(reactiveVals$sce)$marker_class == markersToTest,]$marker_name
+      markersToTest <- (rowData(reactiveVals$sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
+    }else{
+      markersToTest <- rownames(reactiveVals$sce)[is_marker] %in% markersToTest
     }
-    markersToTest <- rownames(reactiveVals$sce) %in% markersToTest
     
     if(nrow(contrast) >= nr_samples){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
@@ -511,12 +515,14 @@ output$DEFeatureSelection <- renderUI({
   if (input$DEMarkerToTest == "Marker by Class") {
     choices <-
       levels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+    choices <- choices[choices %in% c("type", "state")]
     if("state" %in% choices){
       selected <- "state"
     }else{
       selected <- choices[1]
     }
   } else if (input$DEMarkerToTest == "Marker by Name") {
+    is_marker <- rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
     choices <- rownames(reactiveVals$sce)
     names(choices) <-
       sprintf("%s (%s)", choices, as.character(marker_classes(reactiveVals$sce)))
@@ -528,6 +534,7 @@ output$DEFeatureSelection <- renderUI({
       selected <- rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == "type"]
       choices <- sortMarkerNames(choices, as.character(marker_classes(reactiveVals$sce)), first = "type")
     }
+    choices <- choices[is_marker]
   } else
     stop("by name or by class?")
   shinyWidgets::pickerInput(
