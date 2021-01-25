@@ -230,7 +230,7 @@ createCustomContrastMatrix <- function(contrastVars, matrix, designMatrix = T){
     return(createContrast(contrast))
   }else{
     #the entries have to correspond to the levels of the fixed effect terms in the model formula
-    lvlList <- lapply(matrix, function(x){levels(colData(reactiveVals$sce)[[x]])})
+    lvlList <- lapply(matrix, function(x){levels(colData(sce)[[x]])})
     names(lvlList) <- matrix
     bool <- getBools(matrix, contrastVars)
     bool <- as.numeric(bool)

@@ -20,38 +20,111 @@ library(RColorBrewer)
 library(grid)
 library(futile.logger)
 library(VennDiagram)
+
+set.seed(1234)
+
+source("shiny_functions.R")
+source("../server/clusterFun.R")
 ```
 
-# Data Upload and Conversion to Single Cell Experiment
+# Data Upload and Selection of Patients
 
 ```{r data}
-data(PBMC_fs, PBMC_panel, PBMC_md)
-sce <- prepData(PBMC_fs, PBMC_panel, PBMC_md)
-sce <- cluster(
-  sce,
-  features = "type",
-  xdim = 10,
-  ydim = 10,
-  maxK = 20,
-  verbose = FALSE,
-  seed = 1
-)
-
+path_to_rds <- "../data/platelets/sce_transformed.rds"
+sce <- readRDS(path_to_rds)
 ```
 
-# Set up of contrast matrix, formula and design matrix
-```{r set_up}
+```{r, selection}
+sce <- makePatientSelection(sce, c("RPS 124", "RPS 108", "RPS 96", "RPS 149"))
+```
+
+
+```{r, sampling}
+set.seed(1234)
+
 ei <- metadata(sce)$experiment_info
-contrast <- createContrast(c(0, 1))
-formula <- createFormula(ei, cols_fixed = "condition")
-formula2 <- createFormula(ei, cols_fixed = "condition", cols_random = "patient_id")
-design <- createDesignMatrix(ei, cols_design = c("condition"))
+dual <- unique(ei[ei$dual_triple == "dual",]$patient_id)
+sampled_duals <- as.character(dual[sample(length(dual), 4, replace=FALSE)])
 
-clustering_to_use = "meta12"
+triple <- unique(ei[ei$dual_triple == "triple",]$patient_id)
+sampled_triples <- as.character(triple[sample(length(triple), 4, replace=FALSE)])
+
+sampled_patients <- c(sampled_triples, sampled_duals)
+sampled_patients
+
+sce <- filterSCE(sce, patient_id %in% sampled_patients)
+```
+
+# Clustering
+```{r}
+sce <- cluster(sce)
+
+sce <- mergeClusters(
+      sce,
+      k = "meta20",
+      id = "all",
+      table = data.frame(old_cluster = seq_len(20), new_cluster = "all")
+    )
 
 ```
 
-# Differential States
+# Comparison of Differential Marker Expression Analysis Methods
+
+```{r, markerSpecification, include=FALSE}
+is_marker <- rowData(sce_dual_ab)$marker_class != "none"
+id_all_markers <- (rowData(sce_dual_ab)$marker_class %in% c("type", "state"))[is_marker] # type and state (but not none)
+id_type_markers <- (rowData(sce_dual_ab)$marker_class == "type")[is_marker] # type markers
+id_state_markers <- (rowData(sce_dual_ab)$marker_class == "state")[is_marker] # state markers
+```
+
+## Dual Activated vs. Dual Baseline
+First, make the subselection of dual patients to compare activated and baseline platelets.
+```{r, dualAB_selection}
+allsamples <- unique(colData(sce)$sample_id)
+dual_ab <- grep("dual",allsamples,value=TRUE)
+sce_dual_ab <- filterSCE(sce, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
+```
+
+Running diffcyt methods on the sce_dual_ab:
+```{r, diffcyt}
+parameters <- prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsDesign = c("activated_baseline"), method = "diffcyt-DS-limma")
+
+limma_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
+                 design = parameters[["design"]],
+                 contrast = parameters[["contrast"]],
+                 analysis_type = "DS",
+                 method_DS = "diffcyt-DS-limma",
+                 clustering_to_use = "all",
+                 markers_to_test = id_all_markers
+                 #block_id = c("patient_id","sample_id")
+                 )
+
+
+parameters <-  prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline"), colsRandom=NULL, method = "diffcyt-DS-LMM")
+LMM_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
+                 formula = parameters[["formula"]],
+                 contrast = parameters[["contrast"]],
+                 analysis_type = "DS",
+                 method_DS = "diffcyt-DS-LMM",
+                 clustering_to_use = "all",
+                 markers_to_test = id_all_markers)
+```
+
+Show top results of all methods:
+```{r, results_diffcyt}
+results_limma_ab <- as.data.table(diffcyt::topTable(limma_dual_ab$res, all=TRUE))
+results_LMM_ab <- as.data.table(diffcyt::topTable(LMM_dual_ab$res, all=TRUE))
+```
+
+
+
+## Triple Activated vs. Triple Baseline
+
+## Dual Activated vs. Triple Activated
+
+## Dual Baseline vs. Triple Basleline
+
+
 
 ## Performance of limma
 ```{r limma}

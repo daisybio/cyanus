@@ -267,7 +267,7 @@ CATALYST::plotDiffHeatmap(sce, rowData(out$res), all = T)
 
 
 ## Comparison of stimulated and unstimulated platelets of dual patients
-First, make the subselection of dual patients and cluster again.
+First, make the subselection of dual patients.
 ```{r}
 allsamples <- unique(colData(sce)$sample_id)
 dual_ab <- grep("dual",allsamples,value=TRUE)
