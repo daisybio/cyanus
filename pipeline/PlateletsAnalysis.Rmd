@@ -126,6 +126,53 @@ sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 124"))
 # sce <- makeSampleSelection(sce = sce, deselected_samples = c())
 ```
 
+
+# Clustering
+
+```{r}
+sce <- clusterSCE(sce)
+```
+
+Let's have a look at the clusters:
+
+```{r}
+plotly::ggplotly(delta_area(sce))
+
+CATALYST::plotAbundances(sce, "meta12", group_by = "dual_triple")
+
+CATALYST::plotAbundances(sce, "meta12", by = "cluster_id", group_by = "dual_triple")
+```
+
+As we can see above, some patients have odd clusters. 
+Further investigation might be necessary to uncover the reasons for that.
+For now we will exclude the patients from the analysis.
+Hence, we will repeat the clustering step
+
+```{r}
+sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 108", "RPS 096", "RPS 149"))
+#sce <- makeSampleSelection(sce, c("149A_dual"))
+sce <- clusterSCE(sce)
+sce <- mergeClusters(sce, k = "meta20", id = "all", table = data.frame(old_cluster = seq_len(20), new_cluster = "all"))
+```
+
+```{r}
+plotly::ggplotly(delta_area(sce))
+
+CATALYST::plotAbundances(sce, "meta10", group_by = "dual_triple")
+
+CATALYST::plotAbundances(sce, "meta10", by = "cluster_id", group_by = "patient_id", shape_by = "dual_triple")
+
+invisible(plotStarsCustom(sce, backgroundValues = cluster_codes(sce)[["meta10"]]))
+```
+
+```{r}
+CATALYST::plotClusterExprs(sce, "meta10")
+
+CATALYST::plotFreqHeatmap(sce, "meta10")
+```
+
+
+Now, we can visualize the different clusters, but first we have to run the methods:
 # Data Visualization
 
 You can now run various dimensionality reduction methods on your data. The options are (parameter dr_chosen): 
@@ -148,7 +195,9 @@ Other run options are:
 Let's run all methods so that we can compare them later:
 
 ```{r}
-for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
+DR_methods <- c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")
+
+for( method in DR_methods ){
   print(method)
   sce <- runDimRed(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
 }
@@ -157,7 +206,7 @@ for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
 You can now simply visualize the dimensionality reduction by using the CATALYST function plotDR. For now, let's color by activated_baseline and facet by dual_triple. Later, we can also color by cluster.
 
 ```{r}
-for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
+for( method in DR_methods ){
   g <- CATALYST::plotDR(sce, dr = method, color_by = "dual_triple", facet_by = "activated_baseline")
   print(g)
 }
@@ -166,75 +215,18 @@ for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
 We can also colour by marker expression. Before, we saw that CD36, CD47 and PAR1 were the top three markers: 
 
 ```{r}
-for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
+for( method in DR_methods ){
   g <- CATALYST::plotDR(sce, dr = method, color_by = c("CD36", "CD47"), facet_by = "activated_baseline", assay = "exprs", scale = T)
   print(g)
 }
 ```
 
-# Clustering
-
-```{r}
-sce <- cluster(sce)
-```
-
-Let's have a look at the clusters:
-
-```{r}
-plotly::ggplotly(delta_area(sce))
-
-CATALYST::plotAbundances(sce, "meta12", group_by = "dual_triple")
-
-CATALYST::plotAbundances(sce, "meta12", by = "cluster_id", group_by = "dual_triple")
-```
-
-As we can see above, some patients have odd clusters. 
-Further investigation might be necessary to uncover the reasons for that.
-For now we will exclude the patients from the analysis.
-Hence, we will repeat the clustering step
-
-```{r}
-sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 108", "RPS 096"))
-sce <- makeSampleSelection(sce, c("149A_dual"))
-sce <- cluster(sce)
-sce <- mergeClusters(sce, k = "meta20", id = "all", table = data.frame(old_cluster = seq_len(20), new_cluster = "all"))
-```
-
-```{r}
-plotly::ggplotly(delta_area(sce))
-
-CATALYST::plotAbundances(sce, "meta10", group_by = "dual_triple")
-
-CATALYST::plotAbundances(sce, "meta10", by = "cluster_id", group_by = "patient_id", shape_by = "dual_triple")
-```
-
-```{r}
-CATALYST::plotClusterExprs(sce, "meta10")
-
-CATALYST::plotFreqHeatmap(sce, "meta10")
-```
-
-
-Now, we can visualize the different clusters, but first we have to run the methods again, since we subsetted:
-
-```{r}
-for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
-  print(method)
-  sce <- runDimRed(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
-}
-```
-
-
-```{r}
-for (method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")) {
-  g <- CATALYST::plotDR(sce, dr = method, color_by = "meta10")
-  print(g)
-}
-```
 
 After clustering, we can move to the differential expression analysis.
 
 # Differential Expression Analysis
+
+## Differential Abundance
 
 Depending on the method you want to run ("diffcyt-DA-edgeR", "diffcyt-DA-voom","diffcyt-DA-GLMM", "diffcyt-DS-limma", "diffcyt-DS-LMM"), you either have to specify columns to include in the design matrix or for linear models fixed and random effects. For both, you have to specify the condition you want to analyse because this will be converted to a contrast matrix:
 
@@ -260,15 +252,21 @@ CATALYST::plotPbExprs(sce, features = "state", facet_by = "antigen", color_by = 
 CATALYST::plotDiffHeatmap(sce, rowData(out$res), all = T)
 ```
 
+```{r}
+
+#CATALYST::plotPbExprs(sce_triple_ab, k = "all", features = "state", color_by = "activated_baseline")
+```
+
+
 Let's try out SigEMD:
 
-```{r}
+```{r, eval=FALSE}
 library(BiocParallel)
 # Set the parameters and register the back-end to be used
 param <- MulticoreParam(workers = 22, progressbar = TRUE)
 register(param)
 
-system.time(emd_result <- SigEMD(sce, "all", "dual_triple", nperm=10, parallel=param))
+system.time(emd_result <- SigEMD(sce, "all", "dual_triple", nperm=100, parallel=TRUE))
 # user   system  elapsed 
 # 3512.914  434.689 3949.872 
 
@@ -278,7 +276,7 @@ print(emd_result$all$emdall)
 
 Let's try out DEsingle:
 
-```{r}
+```{r, eval=FALSE}
 library(DEsingle)
 
 group <- colData(sce)[["dual_triple"]]
@@ -288,5 +286,24 @@ results <- DEsingle(counts = sce, group = group, parallel = TRUE, BPPARAM = para
 
 # Dividing the DE genes into 3 categories at threshold of FDR < 0.05
 results.classified <- DEtype(results = results, threshold = 0.05)
+```
+
+test on pbmc data
+```{r, eval=FALSE}
+scePBMC <- readRDS("~/hiwi/cytof/data/pbmc/sceTransformed.rds")
+scePBMC <- cluster(scePBMC)
+scePBMC <- mergeClusters(scePBMC, k = "meta20", id = "all", table = data.frame(old_cluster = seq_len(20), new_cluster = "all"))
+
+library(BiocParallel)
+# Set the parameters and register the back-end to be used
+param <- MulticoreParam(workers = 22, progressbar = TRUE)
+register(param)
+
+system.time(emd_result <- SigEMD(scePBMC, "all", "condition", nperm=10, parallel=TRUE))
+# user   system  elapsed 
+# 3512.914  434.689 3949.872 
+
+print(emd_result$all$emdall)
+
 ```
 

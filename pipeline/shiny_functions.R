@@ -115,7 +115,7 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
 
 ############### Clustering ###############
 
-SigEMD <- function(sce, k, condition, binSize=.2, nperm=100, assay="exprs", seed=1, parallel=NULL) {
+SigEMD <- function(sce, k, condition, binSize=.2, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
   library(aod)
   library(arm)
   library(fdrtool)
@@ -162,7 +162,7 @@ SigEMD <- function(sce, k, condition, binSize=.2, nperm=100, assay="exprs", seed
     condition_cluster <- colData(sce[, cluster_ids == cluster_id])[[condition]]
     names(condition_cluster) <- colnames(data)
     
-    results <- calculate_single(data =  data,condition =  condition_cluster,Hur_gene = NULL, binSize=binSize, nperm=nperm)
+    results <- calculate_single(data =  data,condition =  condition_cluster,Hur_gene = NULL, binSize=binSize, nperm=nperm, parallel = parallel)
     
     results$cluster_id <- cluster_id
     
