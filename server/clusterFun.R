@@ -450,7 +450,7 @@ plotFreqHeatmapCustom <- function (x,
 
 clusterSCE <-
   function (x,
-            assayType,
+            assayType = "exprs",
             features = "type",
             xdim = 10,
             ydim = 10,
