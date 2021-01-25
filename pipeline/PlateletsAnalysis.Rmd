@@ -77,12 +77,16 @@ Otherwise, you can load the "sce_transformed.rds" file which already contains th
 ```{r}
 path_to_rds <- "../data/platelets/sce_transformed.rds"
 sce <- readRDS(path_to_rds)
+
+#or load already clustered SingleCellExperiment
+path_to_rds <- "../data/platelets/sceClusteredFiltered.rds"
+sce <- readRDS(path_to_rds)
 ```
 
 
 The shiny app also includes some simple visualization plots to verify whether the data represents what we expect, for example, whether samples that are replicates of one condition are more similar and are distinct from samples from another condition. Depending on the situation, one can then consider removing problematic markers or samples from further analysis.
 
-```{r}
+```{r, fig.width=6, fig.height=4}
 CATALYST::plotCounts(
     sce,
     group_by = "patient_id", # possible inputs: names(colData(sce))
@@ -111,15 +115,22 @@ CATALYST::plotExprs(
       features = "type",
       assay = "exprs"
     )
+
+
+CATALYST::plotExprHeatmap(
+      sce,
+      features = NULL,
+      assay = "exprs"
+    )
 ```
 
 These plots can then be used to select patients as well as samples and filter the Single Cell Experiment. As one can see, the number of cells in patient RPS124 is notably lower than in the other patients.
 
 ```{r}
 # Patients that should not be included
-sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 124"))
+#sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 124"))
 
-# You can also select sampels that should not be included
+# You can also select samples that should not be included
 # sce <- makeSampleSelection(sce = sce, deselected_samples = c())
 ```
 
@@ -160,7 +171,7 @@ for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
 }
 ```
 
-We can also colour by marker expression. Before, we saw that CD36, CD47 and PAR1 were the top three markers: 
+We can also color by marker expression. Before, we saw that CD36, CD47 and PAR1 were the top three markers: 
 
 ```{r}
 for( method in c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap") ){
@@ -193,6 +204,14 @@ Hence, we will repeat the clustering step
 ```{r}
 sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 108"))
 sce <- cluster(sce)
+
+# merge all cluster in 1
+#CATALYST::mergeClusters(
+#      sce_triple_ab,
+#      k = "meta20",
+#      id = "all",
+#      table = data.frame(old_cluster = seq_len(20), new_cluster = "all")
+#)
 ```
 
 ```{r}
@@ -234,8 +253,8 @@ After clustering, we can move to the differential expression analysis.
 Depending on the method you want to run ("diffcyt-DA-edgeR", "diffcyt-DA-voom","diffcyt-DA-GLMM", "diffcyt-DS-limma", "diffcyt-DS-LMM"), you either have to specify columns to include in the design matrix or for linear models fixed and random effects. For both, you have to specify the condition you want to analyse because this will be converted to a contrast matrix:
 
 ```{r}
-parameters <- prepDiffExp(sce, contrastVars = c("dual_triple", "activated_baseline"), colsDesign = c("dual_triple", "activated_baseline"), method = "diffcyt-DA-edgeR")
-out <- diffcyt::diffcyt(d_input = sce,
+parameters <- prepDiffExp(sce, contrastVars = c("dual_triple", "activated_basline"), colsDesign = c("dual_triple", "activated_baseline"), method = "diffcyt-DA-edgeR")
+out_edgeR <- diffcyt::diffcyt(d_input = sce,
                  design = parameters[["design"]],
                  contrast = parameters[["contrast"]],
                  analysis_type = "DA",
@@ -244,14 +263,79 @@ out <- diffcyt::diffcyt(d_input = sce,
                  trend_method = "locfit",
                  normalize = T)
 
+
 ```
 
 Now, we can visualize that: 
 
-```{r}
-CATALYST::plotPbExprs(sce, k = "meta10", features = "state", color_by = "activated_baseline", 
+```{r,fig.with=12, fig.height=8}
+CATALYST::plotPbExprs(sce, k = "meta10", features = "state", color_by = "dual_triple", 
               facet_by = "cluster_id", shape_by = "dual_triple")
-CATALYST::plotPbExprs(sce, features = "state", facet_by = "antigen", color_by = "activated_baseline", shape_by = "dual_triple")
+CATALYST::plotPbExprs(sce, features = "state", facet_by = "antigen", color_by = "dual_triple", shape_by = "dual_triple")
 CATALYST::plotDiffHeatmap(sce, rowData(out$res), all = T)
 ```
+
+
+## Comparison of stimulated and unstimulated platelets of dual patients
+First, make the subselection of dual patients and cluster again.
+```{r}
+allsamples <- unique(colData(sce)$sample_id)
+dual_ab <- grep("dual",allsamples,value=TRUE)
+sce_dual_ab <- filterSCE(sce, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
+```
+
+Running limma on the dataset:
+```{r}
+parameters <- prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsDesign = c("activated_baseline"), method = "diffcyt-DS-limma")
+out_limma <- diffcyt::diffcyt(d_input = sce_dual_ab,
+                 design = parameters[["design"]],
+                 contrast = parameters[["contrast"]],
+                 analysis_type = "DS",
+                 method_DS = "diffcyt-DS-limma",
+                 clustering_to_use = "all")
+
+diffcyt::topTable(out_limma$res, order_by="p_adj", all=TRUE)
+```
+
+And then visualize both:
+```{r, fig.width=6, fig.height=4}
+CATALYST::plotPbExprs(sce_dual_ab, k = "all", features = "state", color_by = "activated_baseline")
+CATALYST::plotPbExprs(sce_dual_ab, features = "state", facet_by = "antigen", color_by = "activated_baseline")
+CATALYST::plotDiffHeatmap(sce_dual_ab, rowData(out_limma$res), all = T)
+```
+
+
+## Comparison of stimulated and unstimulated platelets of triple patients
+First, make the subselection of dual patients and cluster again.
+```{r}
+allsamples <- unique(colData(sce)$sample_id)
+triple_ab <- grep("triple",allsamples,value=TRUE)
+sce_triple_ab <- filterSCE(sce, sample_id %in% triple_ab) # not using makeSampleSelection triple_ab are the including samples
+```
+
+Running limma on the dataset:
+```{r}
+parameters <- prepDiffExp(sce_triple_ab, contrastVars = c("activated_baseline"), colsDesign = c("activated_baseline"), method = "diffcyt-DS-limma")
+out_limma <- diffcyt::diffcyt(d_input = sce_triple_ab,
+                 design = parameters[["design"]],
+                 contrast = parameters[["contrast"]],
+                 analysis_type = "DS",
+                 method_DS = "diffcyt-DS-limma",
+                 clustering_to_use = "all")
+
+
+top_limma <- diffcyt::topTable(out_limma$res, order_by="p_adj", all=TRUE)
+top_limma
+```
+
+And then visualize both:
+```{r, fig.width=6, fig.height=4}
+CATALYST::plotPbExprs(sce_triple_ab, k = "all", features = "state", color_by = "activated_baseline")
+CATALYST::plotPbExprs(sce_triple_ab, features = "state", facet_by = "antigen", color_by = "activated_baseline")
+CATALYST::plotDiffHeatmap(sce_triple_ab, rowData(out_limma$res), all = T)
+```
+
+
+
+
 
