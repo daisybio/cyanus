@@ -138,7 +138,7 @@ call_diffcyt <- function(){
     }
   } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
     formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
-    contrast <- createCustomContrastMatrix(contrastVars, input$colsFixed, designMatrix = F)
+    contrast <- createCustomContrastMatrix(contrastVars, diffcyt::createDesignMatrix(ei, cols_design = input$colsFixed), designMatrix = T)
     
     markersToTest <- isolate(input$DEFeaturesIn)
     is_marker <- rowData(reactiveVals$sce)$marker_class %in% c("type", "state")

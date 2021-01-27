@@ -169,12 +169,15 @@ prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom,
   if(method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DS-limma")){
     
     parameters[["design"]] <- diffcyt::createDesignMatrix(parameters[["ei"]], cols_design = colsDesign)
-    parameters[["contrast"]] <- createCustomContrastMatrix(contrastVars, parameters[["design"]], designMatrix = T)
+    parameters[["contrast"]] <- createCustomContrastMatrix(sce, contrastVars, parameters[["design"]], designMatrix = T)
     
+  }else if(method == "diffcyt-DS-LMM"){
+    parameters[["formula"]] <- diffcyt::createFormula(parameters[["ei"]], cols_fixed = colsFixed, cols_random = colsRandom)
+    parameters[["contrast"]] <- createCustomContrastMatrix(sce, contrastVars, diffcyt::createDesignMatrix(parameters[["ei"]], cols_design = colsFixed), designMatrix = T)
   }else{
     
     parameters[["formula"]] <- diffcyt::createFormula(parameters[["ei"]], cols_fixed = colsFixed, cols_random = colsRandom)
-    parameters[["contrast"]] <- createCustomContrastMatrix(contrastVars, colsFixed, designMatrix = F)
+    parameters[["contrast"]] <- createCustomContrastMatrix(sce, contrastVars, colsFixed, designMatrix = F)
     
   }
   return(parameters) 
@@ -195,7 +198,7 @@ prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom,
 
 #Then run: CATALYST::plotDiffHeatmap(...) and CATALYST::plotPbExprs(...)
 
-createCustomContrastMatrix <- function(contrastVars, matrix, designMatrix = T){
+createCustomContrastMatrix <- function(sce, contrastVars, matrix, designMatrix = T){
   if(designMatrix){
     #the entries have to correspond to the columns of the design matrix
     cnames <- colnames(matrix)
