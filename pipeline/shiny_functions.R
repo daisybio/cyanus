@@ -200,19 +200,19 @@ createCustomContrastMatrix <- function(contrastVars, matrix, designMatrix = T){
     #the entries have to correspond to the columns of the design matrix
     cnames <- colnames(matrix)
     bool <- getBools(cnames, contrastVars)
-    bool <- as.numeric(bool)
     contrast <- createContrast(bool)
-    return(createContrast(contrast))
+    print(contrast)
+    return(contrast)
   }else{
     #the entries have to correspond to the levels of the fixed effect terms in the model formula
-    lvlList <- lapply(matrix, function(x){levels(colData(reactiveVals$sce)[[x]])})
+    lvlList <- lapply(matrix, function(x){levels(colData(sce)[[x]])})
     names(lvlList) <- matrix
     bool <- getBools(matrix, contrastVars)
-    bool <- as.numeric(bool)
     names(bool) <- matrix
     contrast <- unlist(lapply(names(lvlList), function(x){
-      return( c(rep(bool[x], length(lvlList[[x]]))) ) 
+      return( c( 0, rep(bool[x], length(lvlList[[x]]) -1 )) ) 
     }))
+    print(contrast)
     return(createContrast(unname(contrast)))
   }
 }
@@ -223,6 +223,7 @@ getBools <- function(names, contrastVars){
       grepl(y,x, fixed = T )
     }))
   }))
+  bool <- as.numeric(bool)
   return(bool)
 }
 

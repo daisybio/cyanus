@@ -2,7 +2,7 @@
 title: "Differential Marker Expression Analysis"
 author: "Arend Lis, Bernett Judith, Manz Quirin "
 date: "12.01.2021"
-output: :
+output:
   html_document:
     toc: true
 ---
@@ -93,81 +93,118 @@ results.classified <- DEtype(results = results, threshold = 0.05)
 
 # Set up of contrast matrix, formula and design matrix
 ```{r set_up}
+```
+
+```{r, selection}
+sce <- makePatientSelection(sce, c("RPS 124", "RPS 108", "RPS 96", "RPS 149"))
+```
+
+
+```{r, sampling}
+set.seed(1234)
+
 ei <- metadata(sce)$experiment_info
-contrast <- createContrast(c(0, 1))
-formula <- createFormula(ei, cols_fixed = "condition")
-formula2 <- createFormula(ei, cols_fixed = "condition", cols_random = "patient_id")
-design <- createDesignMatrix(ei, cols_design = c("condition"))
+dual <- unique(ei[ei$dual_triple == "dual",]$patient_id)
+sampled_duals <- as.character(dual[sample(length(dual), 4, replace=FALSE)])
 
-clustering_to_use = "meta12"
+triple <- unique(ei[ei$dual_triple == "triple",]$patient_id)
+sampled_triples <- as.character(triple[sample(length(triple), 4, replace=FALSE)])
+
+sampled_patients <- c(sampled_triples, sampled_duals)
+sampled_patients
+
+sce <- filterSCE(sce, patient_id %in% sampled_patients)
+```
+
+# Clustering
+```{r}
+sce <- cluster(sce)
+
+sce <- mergeClusters(
+      sce,
+      k = "meta20",
+      id = "all",
+      table = data.frame(old_cluster = seq_len(20), new_cluster = "all")
+    )
 
 ```
 
-# Differential States
+# Comparison of Differential Marker Expression Analysis Methods
 
-## Performance of limma
-```{r limma}
-out_limma <- diffcyt(
-  d_input = sce,
-  design = design,
-  contrast = contrast,
-  analysis_type = "DS",
-  method_DS = "diffcyt-DS-limma",
-  clustering_to_use = clustering_to_use
-)
+```{r, markerSpecification, include=FALSE}
+is_marker <- rowData(sce_dual_ab)$marker_class %in% c("type","state")
 
-plotDiffHeatmap(sce,
-                rowData(out_limma$res),
-                fdr = 0.05,
-                sort_by = "padj",
-                col_anno = "condition")
-
-topTable(out_limma$res)
+id_all_markers <- (rowData(sce_dual_ab)$marker_class %in% c("type","state"))[is_marker] # type and state (but not none)
+#id_type_markers <- (rowData(sce_dual_ab)$marker_class == "type")[is_marker] # type markers
+#id_state_markers <- (rowData(sce_dual_ab)$marker_class == "state")[is_marker] # state markers
 ```
 
-## Performance of Linear Mixed Models
-```{r LMM}
-out_LMM <- diffcyt(
-  d_input = sce,
-  formula = formula,
-  contrast = contrast,
-  analysis_type = "DS",
-  method_DS = "diffcyt-DS-LMM",
-  clustering_to_use = clustering_to_use
-)
-
-plotDiffHeatmap(sce,
-                rowData(out_LMM$res),
-                fdr = 0.05,
-                sort_by = "padj",
-                col_anno = "condition")
-
-topTable(out_LMM$res)
+## Dual Activated vs. Dual Baseline
+First, make the subselection of dual patients to compare activated and baseline platelets.
+```{r, dualAB_selection}
+allsamples <- unique(colData(sce)$sample_id)
+dual_ab <- grep("dual",allsamples,value=TRUE)
+sce_dual_ab <- filterSCE(sce, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
 ```
-## Significant markers found by all methods
 
-```{r  DA_venn}
-sign_limma <- data.frame(rowData(out_limma$res))
-sign_LMM <- data.frame(rowData(out_LMM$res))
-sign_limma <- sign_limma[c("cluster_id","marker_id","p_val","p_adj")]
-sign_LMM <- sign_LMM[c("cluster_id","marker_id","p_val","p_adj")]
+Running diffcyt methods on the sce_dual_ab:
+```{r, diffcyt}
+parameters <- prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsDesign = c("activated_baseline"), method = "diffcyt-DS-limma")
 
+#blockID <- metadata(sce_dual_ab)$experiment_info[["patient_id"]]
+
+limma_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
+                 design = parameters[["design"]],
+                 contrast = parameters[["contrast"]],
+                 analysis_type = "DS",
+                 method_DS = "diffcyt-DS-limma",
+                 clustering_to_use = "all",
+                 markers_to_test = id_all_markers
+                 #block_id = blockID
+                 )
+
+
+parameters <-  prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
+browser()
+LMM_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
+                 formula = parameters[["formula"]],
+                 contrast = parameters[["contrast"]],
+                 analysis_type = "DS",
+                 method_DS = "diffcyt-DS-LMM",
+                 clustering_to_use = "all",
+                 markers_to_test = id_all_markers)
+
+```
+
+Show top results of all methods:
+```{r, results_diffcyt}
+as.data.table(diffcyt::topTable(limma_dual_ab$res, all=TRUE))
+
+as.data.table(diffcyt::topTable(LMM_dual_ab$res, all=TRUE))
+```
+
+Significant markers found by all methods:
+
+```{r  dual_ab_venn}
+sign_limma <- data.frame(rowData(limma_dual_ab$res))[c("cluster_id","marker_id","p_val","p_adj")]
+sign_LMM <- data.frame(rowData(LMM_dual_ab$res))[c("cluster_id","marker_id","p_val","p_adj")]
 sign_limma$significant <- sign_limma$p_adj < 0.05
 sign_LMM$significant <- sign_LMM$p_adj < 0.05
 
+limma <- unlist(subset(sign_limma, significant==TRUE, select=c(marker_id), use.names=FALSE))
+LMM <- unlist(subset(sign_LMM, significant==TRUE, select=c(marker_id), use.names=FALSE))
 
-limma <- unlist(subset(sign_limma, significant==TRUE, select=c(marker_id, cluster_id), use.names=FALSE))
-LMM <- unlist(subset(sign_LMM, significant==TRUE, select=c(marker_id, cluster_id), use.names=FALSE))
+library(ggvenn)
   
 venn <- venn.diagram(
   x = list(limma,LMM),
-  filename = "plots/diff_marker_expr_DS.png",
+  filename = "../plots/dual_ab_venn.png",
   category.names = c("limma","LMM"),
   image.type = "png",
   cex = 2.0,
   fontfamily = "sans",
-  col=c("#99CC99", '#CC3333'),
-  fill = c(alpha("#99CC99",0.3), alpha('#CC3333',0.3)),
+  col=c("#99CC99", "#CC3333"),
+  #fill = c(alpha("#99CC99",0.3), alpha("#CC3333",0.3)),
   cat.cex = 1.8,
   cat.fontface = "bold",
   cat.fontfamily = "sans",
@@ -181,112 +218,12 @@ venn <- venn.diagram(
   )
 
 ```
+![Significant Markers found by Differential Expression Methods]("../plots/dual_ab_venn.png")
 
 
-# Differential Abundances
+## Triple Activated vs. Triple Baseline
 
-## Performance of edgeR
-```{r edgeR}
-out_edgeR <- diffcyt(
-  d_input = sce,
-  design = design,
-  contrast = contrast,
-  analysis_type = "DA",
-  method_DA = "diffcyt-DA-edgeR",
-  clustering_to_use = clustering_to_use
-)
+## Dual Activated vs. Triple Activated
 
-plotDiffHeatmap(sce,
-                rowData(out_edgeR$res),
-                fdr = 0.05,
-                sort_by = "padj",
-                col_anno = "condition")
-
-topTable(out_edgeR$res)
-```
-
-## Performance of edgeR
-```{r voom}
-out_voom <- diffcyt(
-  d_input = sce,
-  design = design,
-  contrast = contrast,
-  analysis_type = "DA",
-  method_DA = "diffcyt-DA-voom",
-  clustering_to_use = clustering_to_use
-)
-
-plotDiffHeatmap(sce,
-                rowData(out_voom$res),
-                fdr = 0.05,
-                sort_by = "padj",
-                col_anno = "condition")
-
-topTable(out_voom$res)
-```
-
-
-## Performance of Generalized Linear Mixed Models
-```{r GLMM}
-out_GLMM <- diffcyt(
-  d_input = sce,
-  formula = formula2,  # attention -> other formula as edgeR
-  contrast = contrast,
-  analysis_type = "DA",
-  method_DA = "diffcyt-DA-GLMM",
-  clustering_to_use = clustering_to_use
-)
-
-plotDiffHeatmap(sce,
-                rowData(out_GLMM$res),
-                fdr = 0.05,
-                sort_by = "padj",
-                col_anno = "condition")
-
-topTable(out_GLMM$res)
-````
-## Significant markers found by all methods
-
-```{r  DA_venn}
-sign_edgeR <- data.frame(rowData(out_edgeR$res))
-sign_voom <- data.frame(rowData(out_voom$res))
-sign_GLMM <- data.frame(rowData(out_GLMM$res))
-
-sign_edgeR <- sign_edgeR[c("cluster_id","p_val","p_adj")]
-sign_voom <- sign_voom[c("cluster_id","p_val","p_adj")]
-sign_GLMM <- sign_GLMM[c("cluster_id","p_val","p_adj")]
-
-sign_edgeR$significant <- sign_edgeR$p_adj < 0.05
-sign_voom$significant <- sign_voom$p_adj < 0.05
-sign_GLMM$significant <- sign_GLMM$p_adj < 0.05
-
-
-edgeR <- unlist(subset(sign_edgeR, significant==TRUE, select=c(cluster_id), use.names=FALSE))
-voom <- unlist(subset(sign_voom, significant==TRUE, select=c(cluster_id), use.names=FALSE))
-GLMM <- unlist(subset(sign_GLMM, significant==TRUE, select=c(cluster_id), use.names=FALSE))
-  
-venn <- venn.diagram(
-  x = list(edgeR,GLMM,voom),
-  filename = "plots/diff_marker_expr_DA.png",
-  category.names = c("edgeR","GLMM","Voom"),
-  image.type = "png",
-  cex = 2.0,
-  fontfamily = "sans",
-  col=c("#99CC99", '#CC3333','#3366CC'),
-  fill = c(alpha("#99CC99",0.3), alpha('#CC3333',0.3),alpha('#3366CC',0.3)),
-  cat.cex = 1.8,
-  cat.fontface = "bold",
-  cat.fontfamily = "sans",
-  main = paste("EdgeR vs. GLMM vs. Voom"),
-  main.fontface = "bold",
-  main.fontfamily = "sans",
-  main.cex = 2.0,
-  sub = paste("P-adjusted < 0.05"),
-  sub.cex=1.5 ,
-  sub.fontfamily="sans"
-  )
-
-````
-
-
+## Dual Baseline vs. Triple Basleline
 

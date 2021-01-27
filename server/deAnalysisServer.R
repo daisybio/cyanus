@@ -98,10 +98,12 @@ call_diffcyt <- function(){
     }
     
     markersToTest <- input$DEFeaturesIn
+    is_marker <- rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
     if (input$DEMarkerToTest == "Marker by Class") {
-      markersToTest <- rowData(reactiveVals$sce)[rowData(reactiveVals$sce)$marker_class == markersToTest,]$marker_name
+      markersToTest <- (rowData(reactiveVals$sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
+    }else{
+      markersToTest <- rownames(reactiveVals$sce)[is_marker] %in% markersToTest
     }
-    markersToTest <- rownames(reactiveVals$sce) %in% markersToTest
     
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
     contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
@@ -139,10 +141,12 @@ call_diffcyt <- function(){
     contrast <- createCustomContrastMatrix(contrastVars, input$colsFixed, designMatrix = F)
     
     markersToTest <- isolate(input$DEFeaturesIn)
+    is_marker <- rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
     if (input$DEMarkerToTest == "Marker by Class") {
-      markersToTest <- rowData(reactiveVals$sce)[rowData(reactiveVals$sce)$marker_class == markersToTest,]$marker_name
+      markersToTest <- (rowData(reactiveVals$sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
+    }else{
+      markersToTest <- rownames(reactiveVals$sce)[is_marker] %in% markersToTest
     }
-    markersToTest <- rownames(reactiveVals$sce) %in% markersToTest
     
     if(nrow(contrast) >= nr_samples){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
@@ -208,19 +212,19 @@ createCustomContrastMatrix <- function(contrastVars, matrix, designMatrix = T){
     #the entries have to correspond to the columns of the design matrix
     cnames <- colnames(matrix)
     bool <- getBools(cnames, contrastVars)
-    bool <- as.numeric(bool)
     contrast <- createContrast(bool)
-    return(createContrast(contrast))
+    print(contrast)
+    return(contrast)
   }else{
     #the entries have to correspond to the levels of the fixed effect terms in the model formula
     lvlList <- lapply(matrix, function(x){levels(colData(reactiveVals$sce)[[x]])})
     names(lvlList) <- matrix
     bool <- getBools(matrix, contrastVars)
-    bool <- as.numeric(bool)
     names(bool) <- matrix
     contrast <- unlist(lapply(names(lvlList), function(x){
-      return( c(rep(bool[x], length(lvlList[[x]]))) ) 
+      return( c( 0, rep(bool[x], length(lvlList[[x]]) -1 )) ) 
       }))
+    print(contrast)
     return(createContrast(unname(contrast)))
   }
 }
@@ -231,6 +235,7 @@ getBools <- function(names, contrastVars){
       grepl(y,x, fixed = T )
     }))
   }))
+  bool <- as.numeric(bool)
   return(bool)
 }
 
@@ -510,12 +515,14 @@ output$DEFeatureSelection <- renderUI({
   if (input$DEMarkerToTest == "Marker by Class") {
     choices <-
       levels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+    choices <- choices[choices %in% c("type", "state")]
     if("state" %in% choices){
       selected <- "state"
     }else{
       selected <- choices[1]
     }
   } else if (input$DEMarkerToTest == "Marker by Name") {
+    is_marker <- rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
     choices <- rownames(reactiveVals$sce)
     names(choices) <-
       sprintf("%s (%s)", choices, as.character(marker_classes(reactiveVals$sce)))
@@ -527,6 +534,7 @@ output$DEFeatureSelection <- renderUI({
       selected <- rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == "type"]
       choices <- sortMarkerNames(choices, as.character(marker_classes(reactiveVals$sce)), first = "type")
     }
+    choices <- choices[is_marker]
   } else
     stop("by name or by class?")
   shinyWidgets::pickerInput(
