@@ -103,7 +103,7 @@ for( method in DR_methods ){
   sce <- runDimRed(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
 }
 
-#saveRDS(sce,"../data/platelets/sceFilteredClustered.rds")
+#saveRDS(sce,"../data/platelets/sceSampledClustered.rds")
 
 ```
 
