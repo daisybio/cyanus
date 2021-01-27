@@ -135,9 +135,9 @@
     },
     "DelayedArray": {
       "Package": "DelayedArray",
-      "Version": "0.16.0",
+      "Version": "0.16.1",
       "Source": "Bioconductor",
-      "Hash": "8cc0daa5091ce9b0eab0cce97c013d82"
+      "Hash": "98a62a8040f67b43dad034e58f288d51"
     },
     "DelayedMatrixStats": {
       "Package": "DelayedMatrixStats",
@@ -557,10 +557,10 @@
     },
     "brio": {
       "Package": "brio",
-      "Version": "1.1.0",
+      "Version": "1.1.1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "570a24963009b9cce0869a0463c83580"
+      "Hash": "36758510e65a457efeefa50e1e7f0576"
     },
     "broom": {
       "Package": "broom",
@@ -812,10 +812,10 @@
     },
     "emdist": {
       "Package": "emdist",
-      "Version": "0.3-1",
+      "Version": "0.3-2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "c89db634df83e6e84e722ec3361540e1"
+      "Hash": "f1e5a378781edabc18b7a1eab6663cdf"
     },
     "evaluate": {
       "Package": "evaluate",
@@ -978,6 +978,13 @@
       "Repository": "CRAN",
       "Hash": "9d028e8f37c84dba356ce3c367a1978e"
     },
+    "ggvenn": {
+      "Package": "ggvenn",
+      "Version": "0.1.8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8b82c3283021d96dce06b35f7494e11b"
+    },
     "glue": {
       "Package": "glue",
       "Version": "1.4.2",
@@ -1056,10 +1063,10 @@
     },
     "htmltools": {
       "Package": "htmltools",
-      "Version": "0.5.1",
+      "Version": "0.5.1.1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "4d5452ff42a254e861282931190d052a"
+      "Hash": "af2c2531e55df5cf230c4b5444fc973c"
     },
     "htmlwidgets": {
       "Package": "htmlwidgets",
@@ -1424,10 +1431,10 @@
     },
     "plotrix": {
       "Package": "plotrix",
-      "Version": "3.7-8",
+      "Version": "3.8-1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "319dd991725c17e1d7ccdb4f2d93f9d0"
+      "Hash": "cd2248636c86e6716cd7ae086536cecc"
     },
     "plyr": {
       "Package": "plyr",
@@ -1494,10 +1501,10 @@
     },
     "quantreg": {
       "Package": "quantreg",
-      "Version": "5.82",
+      "Version": "5.83",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "10a889a346253c20ea7c61b190946c0a"
+      "Hash": "baacfbdc051b7da7519055191e505091"
     },
     "rJava": {
       "Package": "rJava",
@@ -1811,10 +1818,10 @@
     },
     "tinytex": {
       "Package": "tinytex",
-      "Version": "0.28",
+      "Version": "0.29",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "ff73961a77fba606fbf944dc3468e5b9"
+      "Hash": "f0b0ba735febac9a8344253ae6fa93f5"
     },
     "tmvnsim": {
       "Package": "tmvnsim",

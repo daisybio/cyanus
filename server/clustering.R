@@ -35,14 +35,6 @@ observeEvent(input$startClustering, {
                   add = TRUE)
   })
   
-  reactiveVals$sce <-
-    mergeClusters(
-      reactiveVals$sce,
-      k = "meta20",
-      id = "all",
-      table = data.frame(old_cluster = seq_len(20), new_cluster = "all")
-    )
-  
   assays <- c("exprs" = "Transformed", "counts" = "Raw")
   
   reactiveVals$clusterRun <- list(

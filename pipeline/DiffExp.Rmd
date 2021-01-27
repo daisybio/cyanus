@@ -2,13 +2,14 @@
 title: "Differential Marker Expression Analysis"
 author: "Arend Lis, Bernett Judith, Manz Quirin "
 date: "12.01.2021"
-output: :
+output:
   html_document:
     toc: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=12, fig.height=8)
 library(CATALYST)
 library(flowCore)
 library(ggplot2)
@@ -20,18 +21,78 @@ library(RColorBrewer)
 library(grid)
 library(futile.logger)
 library(VennDiagram)
-
 set.seed(1234)
 
 source("shiny_functions.R")
 source("../server/clusterFun.R")
 ```
 
-# Data Upload and Selection of Patients
+# Load Data
 
 ```{r data}
 path_to_rds <- "../data/platelets/sce_transformed.rds"
 sce <- readRDS(path_to_rds)
+sce <- filterSCE(sce, patient_id %in% c("RPS 098", "RPS 136", "RPS 099", "RPS 127", "RPS 154", "RPS 139", "RPS 137", "RPS 103"))
+sce <- clusterSCE(sce)
+sce <- mergeClusters(sce, k = "meta20", id = "all", table = data.frame(old_cluster = seq_len(20), new_cluster = "all"))
+```
+
+Let's try out SigEMD:
+
+1. Check activate vs. baseline for dual 
+
+```{r, eval=FALSE}
+library(BiocParallel)
+# Set the parameters and register the back-end to be used
+param <- MulticoreParam(workers = 22)
+register(param)
+
+timed1 <- system.time(emd_result <- SigEMD(sce[, colData(sce)$dual_triple == "dual"], "all", "activated_baseline", nperm=100, parallel=TRUE))
+#     user   system  elapsed 
+# 4346.330 1598.441 2182.108 
+print(timed1)
+
+emd_result <- emd_result$all
+source("../SigEMD/plot_sig.R")
+lapply(emd_result$nonHur_gene, function(marker) plot_emd_density_sig(emd_result, marker))
+```
+
+
+```{r, eval=FALSE}
+# now check if what happens if we skip the logistic regression
+timed <- system.time(emd_result_allHur <- SigEMD(sce[, colData(sce)$dual_triple == "dual"], "all", "activated_baseline", Hur_gene=rownames(sce), nperm=100, parallel=TRUE, verbose = TRUE))
+print(timed)
+emd_result_allHur <- emd_result_allHur$all
+lapply(state_markers(sce), function(marker) plot_emd_density_sig(emd_result, marker))
+```
+
+
+```{r, eval=FALSE}
+# How much was contributed from the zeros?
+print(emd_result$emdall[emd_result$nonHur_gene, ])
+print(emd_result_allHur$emdall[emd_result$nonHur_gene, ])
+```
+
+Let's try out DEsingle:
+
+```{r, eval=FALSE}
+library(zinbwave)
+
+group <- colData(sce)[["dual_triple"]]
+
+# Detecting the DE genes in parallelization with 22 cores
+results <- DEsingle(counts = sce, group = group, parallel = TRUE, BPPARAM = param)
+
+# Dividing the DE genes into 3 categories at threshold of FDR < 0.05
+results.classified <- DEtype(results = results, threshold = 0.05)
+```
+
+
+
+
+
+# Set up of contrast matrix, formula and design matrix
+```{r set_up}
 ```
 
 ```{r, selection}
