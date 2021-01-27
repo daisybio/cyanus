@@ -27,20 +27,136 @@ source("shiny_functions.R")
 source("../server/clusterFun.R")
 ```
 
-# Load Data
+# Upload Data, Preprocessing and Clustering
 
-```{r data}
-path_to_rds <- "../data/platelets/sce_transformed.rds"
-sce <- readRDS(path_to_rds)
-sce <- filterSCE(sce, patient_id %in% c("RPS 098", "RPS 136", "RPS 099", "RPS 127", "RPS 154", "RPS 139", "RPS 137", "RPS 103"))
-sce <- clusterSCE(sce)
-sce <- mergeClusters(sce, k = "meta20", id = "all", table = data.frame(old_cluster = seq_len(20), new_cluster = "all"))
+If you don't want to perform the whole subselection of patients, clustering an visualization methods, you can simply skip those steps and load the data and move on to the Comparison of Differential Marker Expression Analysis Methods.
+```{r}
+#path_to_rds <- "../data/platelets/sceSampledClustered.rds"
+#sce <- readRDS(path_to_rds)
 ```
 
-Let's try out SigEMD:
+Otherwise, upload data here.
+```{r, data}
+path_to_rds <- "../data/platelets/sce_transformed.rds"
+sce <- readRDS(path_to_rds)
+```
 
-1. Check activate vs. baseline for dual 
+Make patient selection based on preprocessing plots and clustering results
+```{r, selection}
+sce <- makePatientSelection(sce, c("RPS 124", "RPS 108", "RPS 96", "RPS 149"))
+```
 
+Sample data to 4 patients receiving dual treatment and 4 patients receiving triple treatment
+```{r, samplingPatients, eval=FALSE}
+ei <- metadata(sce)$experiment_info
+dual <- unique(ei[ei$dual_triple == "dual",]$patient_id)
+triple <- unique(ei[ei$dual_triple == "triple",]$patient_id)
+
+set.seed(1234)
+sampled_duals <- as.character(dual[sample(length(dual), 4, replace=FALSE)])
+set.seed(1234)
+sampled_triples <- as.character(triple[sample(length(triple), 4, replace=FALSE)])
+
+sampled_patients <- c(sampled_triples, sampled_duals)
+sampled_patients
+
+# sampled patients should be "RPS 136" "RPS 099" "RPS 127" "RPS 098" "RPS 154" "RPS 137" "RPS 139" "RPS 103"
+
+sce <- filterSCE(sce, patient_id %in% sampled_patients)
+```
+
+Sample data to 20 000 cells for each sample
+```{r, samplingEvents}
+
+ei <- metadata(sce)$experiment_info
+sample_ids <- ei$sample_id
+coldata <- data.table()
+
+coldata <- colData(sce)
+rownames(coldata) <- seq(1:nrow(coldata))
+
+sampled_indices <- c() 
+for (id in sample_ids){
+  dt <- coldata[coldata$sample_id == id,]
+  indices <- rownames(dt)
+  set.seed(1234)
+  sample <- as.numeric(indices[sample(length(indices), 20000, replace=FALSE)])
+  sampled_indices <- c(sampled_indices, sample)
+}
+
+sampled_indices <- sort(sampled_indices)
+
+sce <- sce[,sampled_indices]
+
+# metadata experiment_info does not update when subselecting
+ei$n_cells <- rep(20000, nrow(ei))
+metadata(sce)$experiment_info <- ei
+```
+
+Cluster the filtered SingleCellExperiment and run dimensionality reduction methods:
+```{r}
+sce <- clusterSCE(sce) 
+
+DR_methods <- c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")
+for( method in DR_methods ){
+  print(method)
+  sce <- runDimRed(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
+}
+
+#saveRDS(sce,"../data/platelets/sceFilteredClustered.rds")
+
+```
+
+
+# Comparison of Differential Marker Expression Analysis Methods
+
+```{r, markerSpecification, include=FALSE}
+is_marker <- rowData(sce)$marker_class %in% c("type","state")
+id_all_markers <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker] # type and state (but not none)
+#id_type_markers <- (rowData(sce_dual_ab)$marker_class == "type")[is_marker] # type markers
+#id_state_markers <- (rowData(sce_dual_ab)$marker_class == "state")[is_marker] # state markers
+```
+
+## Dual Activated vs. Dual Baseline
+
+First, make the subselection of dual patients to compare activated and baseline platelets.
+```{r, dualAB_selection}
+allsamples <- unique(colData(sce)$sample_id)
+dual_ab <- grep("dual",allsamples,value=TRUE)
+sce_dual_ab <- filterSCE(sce, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
+```
+
+Running diffcyt methods:
+```{r, diffcyt}
+parameters <- prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsDesign = c("activated_baseline"), method = "diffcyt-DS-limma")
+
+#blockID <- metadata(sce_dual_ab)$experiment_info[["patient_id"]]
+
+limma_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
+                 design = parameters[["design"]],
+                 contrast = parameters[["contrast"]],
+                 analysis_type = "DS",
+                 method_DS = "diffcyt-DS-limma",
+                 clustering_to_use = "all",
+                 markers_to_test = id_all_markers
+                 #block_id = blockID
+                 )
+
+
+parameters <-  prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
+
+
+LMM_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
+                 formula = parameters[["formula"]],
+                 contrast = parameters[["contrast"]],
+                 analysis_type = "DS",
+                 method_DS = "diffcyt-DS-LMM",
+                 clustering_to_use = "all",
+                 markers_to_test = id_all_markers)
+
+```
+
+Let's try SigEMD:
 ```{r, eval=FALSE}
 library(BiocParallel)
 # Set the parameters and register the back-end to be used
@@ -87,109 +203,6 @@ results <- DEsingle(counts = sce, group = group, parallel = TRUE, BPPARAM = para
 results.classified <- DEtype(results = results, threshold = 0.05)
 ```
 
-
-
-
-
-# Set up of contrast matrix, formula and design matrix
-```{r set_up}
-```
-
-```{r, selection}
-sce <- makePatientSelection(sce, c("RPS 124", "RPS 108", "RPS 96", "RPS 149"))
-```
-
-
-```{r, sampling, eval=FALSE}
-ei <- metadata(sce)$experiment_info
-dual <- unique(ei[ei$dual_triple == "dual",]$patient_id)
-triple <- unique(ei[ei$dual_triple == "triple",]$patient_id)
-
-set.seed(1234)
-sampled_duals <- as.character(dual[sample(length(dual), 4, replace=FALSE)])
-set.seed(1234)
-sampled_triples <- as.character(triple[sample(length(triple), 4, replace=FALSE)])
-
-sampled_patients <- c(sampled_triples, sampled_duals)
-sampled_patients
-
-sce <- filterSCE(sce, patient_id %in% sampled_patients)
-#"RPS 136" "RPS 099" "RPS 127" "RPS 098" "RPS 154" "RPS 137" "RPS 139" "RPS 103"
-
-```
-
-```{r sampleSelection}
-sampled_patients <- c("RPS 098","RPS 136","RPS 099","RPS 127","RPS 154","RPS 139","RPS 137","RPS 103")
-sce <- filterSCE(sce, patient_id %in% sampled_patients)
-```
-
-# Clustering
-```{r}
-sce <- cluster(sce) # clusterSCE
-
-sce <- mergeClusters( # wird in clusterSCE verschoben
-      sce,
-      k = "meta20",
-      id = "all",
-      table = data.frame(old_cluster = seq_len(20), new_cluster = "all")
-    )
-
-```
-
-# Comparison of Differential Marker Expression Analysis Methods
-
-```{r, markerSpecification, include=FALSE}
-is_marker <- rowData(sce)$marker_class %in% c("type","state")
-id_all_markers <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker] # type and state (but not none)
-#id_type_markers <- (rowData(sce_dual_ab)$marker_class == "type")[is_marker] # type markers
-#id_state_markers <- (rowData(sce_dual_ab)$marker_class == "state")[is_marker] # state markers
-```
-
-## Dual Activated vs. Dual Baseline
-First, make the subselection of dual patients to compare activated and baseline platelets.
-```{r, dualAB_selection}
-allsamples <- unique(colData(sce)$sample_id)
-dual_ab <- grep("dual",allsamples,value=TRUE)
-sce_dual_ab <- filterSCE(sce, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
-```
-
-Running diffcyt methods on the sce_dual_ab:
-```{r, diffcyt}
-parameters <- prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsDesign = c("activated_baseline"), method = "diffcyt-DS-limma")
-
-#blockID <- metadata(sce_dual_ab)$experiment_info[["patient_id"]]
-
-limma_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
-                 design = parameters[["design"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-limma",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers
-                 #block_id = blockID
-                 )
-
-
-parameters <-  prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
-
-
-LMM_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
-                 formula = parameters[["formula"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-LMM",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers)
-
-```
-
-Show top results of all methods:
-```{r, results_diffcyt}
-as.data.table(diffcyt::topTable(limma_dual_ab$res, all=TRUE))
-
-as.data.table(diffcyt::topTable(LMM_dual_ab$res, all=TRUE))
-```
-
 Significant markers found by all methods:
 
 ```{r  dual_ab_venn}
@@ -200,6 +213,9 @@ sign_LMM$significant <- sign_LMM$p_adj < 0.05
 
 limma <- unlist(subset(sign_limma, significant==TRUE, select=c(marker_id), use.names=FALSE))
 LMM <- unlist(subset(sign_LMM, significant==TRUE, select=c(marker_id), use.names=FALSE))
+
+
+## include SigEMD and ZINB
 
 library(ggvenn)
   
@@ -225,12 +241,12 @@ venn <- venn.diagram(
   )
 
 ```
-![Significant Markers found by Differential Expression Methods]("../plots/dual_ab_venn.png")
-
 
 ## Triple Activated vs. Triple Baseline
 
 ## Dual Activated vs. Triple Activated
 
 ## Dual Baseline vs. Triple Basleline
+
+
 
