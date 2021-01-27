@@ -241,37 +241,7 @@ venn <- venn.diagram(
   )
 
 ```
-<<<<<<< HEAD
-=======
-![Significant Markers found by Differential Expression Methods]("../plots/dual_ab_venn.png")
 
-```{r}
-sce_small <- readRDS("../data/platelets_small/sce.rds")
-is_marker <- rowData(sce_small)$marker_class %in% c("type","state")
-id_all_markers <- (rowData(sce_small)$marker_class %in% c("type","state"))[is_marker] # type and state (but not none)
-
-allsamples <- unique(colData(sce_small)$sample_id)
-dual_ab <- grep("dual",allsamples,value=TRUE)
-sce_small_dual_ab <- filterSCE(sce_small, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
-
-parameters <-  prepDiffExp(sce = sce_small_dual_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline", "dual_triple"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
->>>>>>> master
-
-LMM_dual_ab <- diffcyt::diffcyt(d_input = sce_small_dual_ab,
-                 formula = parameters[["formula"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-LMM",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers)
-as.data.table(diffcyt::topTable(LMM_dual_ab$res, all=TRUE))
-sign_LMM <- data.frame(rowData(LMM_dual_ab$res))[c("cluster_id","marker_id","p_val","p_adj")]
-sign_LMM$significant <- sign_LMM$p_adj < 0.05
-LMM <- unlist(subset(sign_LMM, significant==TRUE, select=c(marker_id), use.names=FALSE))
-CATALYST::plotDiffHeatmap(x = sce_small_dual_ab,
-                          y = rowData(LMM_dual_ab$res), 
-                          all = T)
-```
 ## Triple Activated vs. Triple Baseline
 
 ## Dual Activated vs. Triple Activated
