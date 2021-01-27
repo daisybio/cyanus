@@ -517,5 +517,12 @@ clusterSCE <-
     metadata(x)$SOM_medianValues <- som$map$medianValues
     metadata(x)$SOM_MST <- som$MST
     metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
+    x <-
+      mergeClusters(
+        x,
+        k = sprintf("meta%s", maxK),
+        id = "all",
+        table = data.frame(old_cluster = seq_len(maxK), new_cluster = "all")
+      )
     return(x)
   }
