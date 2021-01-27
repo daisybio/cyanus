@@ -180,7 +180,7 @@ call_diffcyt <- function(){
     }
     
     formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
-    contrast <- createCustomContrastMatrix(contrastVars, input$colsFixed, designMatrix = F)
+    contrast <- createCustomContrastMatrix(contrastVars, diffcyt::createDesignMatrix(ei, cols_design = input$colsFixed), designMatrix = T)
     if(nrow(contrast) >= nr_samples){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
       out <- NULL
