@@ -39,27 +39,34 @@ sce <- makePatientSelection(sce, c("RPS 124", "RPS 108", "RPS 96", "RPS 149"))
 ```
 
 
-```{r, sampling}
-set.seed(1234)
-
+```{r, sampling, eval=FALSE}
 ei <- metadata(sce)$experiment_info
 dual <- unique(ei[ei$dual_triple == "dual",]$patient_id)
-sampled_duals <- as.character(dual[sample(length(dual), 4, replace=FALSE)])
-
 triple <- unique(ei[ei$dual_triple == "triple",]$patient_id)
+
+set.seed(1234)
+sampled_duals <- as.character(dual[sample(length(dual), 4, replace=FALSE)])
+set.seed(1234)
 sampled_triples <- as.character(triple[sample(length(triple), 4, replace=FALSE)])
 
 sampled_patients <- c(sampled_triples, sampled_duals)
 sampled_patients
 
 sce <- filterSCE(sce, patient_id %in% sampled_patients)
+#"RPS 136" "RPS 099" "RPS 127" "RPS 098" "RPS 154" "RPS 137" "RPS 139" "RPS 103"
+
+```
+
+```{r sampleSelection}
+sampled_patients <- c("RPS 098","RPS 136","RPS 099","RPS 127","RPS 154","RPS 139","RPS 137","RPS 103")
+sce <- filterSCE(sce, patient_id %in% sampled_patients)
 ```
 
 # Clustering
 ```{r}
-sce <- cluster(sce)
+sce <- cluster(sce) # clusterSCE
 
-sce <- mergeClusters(
+sce <- mergeClusters( # wird in clusterSCE verschoben
       sce,
       k = "meta20",
       id = "all",
@@ -71,9 +78,8 @@ sce <- mergeClusters(
 # Comparison of Differential Marker Expression Analysis Methods
 
 ```{r, markerSpecification, include=FALSE}
-is_marker <- rowData(sce_dual_ab)$marker_class %in% c("type","state")
-
-id_all_markers <- (rowData(sce_dual_ab)$marker_class %in% c("type","state"))[is_marker] # type and state (but not none)
+is_marker <- rowData(sce)$marker_class %in% c("type","state")
+id_all_markers <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker] # type and state (but not none)
 #id_type_markers <- (rowData(sce_dual_ab)$marker_class == "type")[is_marker] # type markers
 #id_state_markers <- (rowData(sce_dual_ab)$marker_class == "state")[is_marker] # state markers
 ```
@@ -104,7 +110,8 @@ limma_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
 
 
 parameters <-  prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
-browser()
+
+
 LMM_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
                  formula = parameters[["formula"]],
                  contrast = parameters[["contrast"]],
