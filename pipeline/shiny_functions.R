@@ -113,49 +113,6 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
 
 ############### Clustering ###############
 
-SigEMD <- function(sce, k, condition, Hur_gene=NULL, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
-  library(aod)
-  library(arm)
-  library(fdrtool)
-  library(lars)
-  library(emdist)
-  library(data.table)
-  source("../SigEMD/FunImpute.R")
-  source("../SigEMD/SigEMDHur.R")
-  source("../SigEMD/SigEMDnonHur.R")
-  source("../SigEMD/plot_sig.R")
-  
-  set.seed(1)
-  
-  CATALYST:::.check_sce(sce, TRUE)
-  k <- CATALYST:::.check_k(sce, k)
-  CATALYST:::.check_cd_factor(sce, condition)
-  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
-  
-  
-  cluster_ids <- cluster_ids(sce, k)
-  res <- lapply(levels(cluster_ids), function(cluster_id) {
-    print(sprintf("calculating SigEMD for cluster %s", cluster_id))
-    data <- assay(sce[, cluster_ids == cluster_id], assay)
-    
-    
-    data <- dataclean((abs(data)+data)/2)
-    colnames(data) <- as.character(seq.int(to = ncol(data)))
-    
-    condition_cluster <- colData(sce[, cluster_ids == cluster_id])[[condition]]
-    names(condition_cluster) <- colnames(data)
-    
-    results <- calculate_single(data =  data,condition =  condition_cluster,Hur_gene = Hur_gene, binSize, nperm=nperm, parallel = parallel)
-    
-    results$cluster_id <- cluster_id
-    
-    results
-  })
-  
-  names(res) <- levels(cluster_ids)
-  
-  return(res)
-}
 
 
 ############### Differential Expression ###############
@@ -166,7 +123,7 @@ prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom,
   parameters <- list()
   parameters[["ei"]] <- metadata(sce)$experiment_info
   
-  if(method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DS-limma")){
+  if (method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DS-limma")) {
     
     parameters[["design"]] <- diffcyt::createDesignMatrix(parameters[["ei"]], cols_design = colsDesign)
     parameters[["contrast"]] <- createCustomContrastMatrix(sce, contrastVars, parameters[["design"]], designMatrix = T)
@@ -208,7 +165,7 @@ createCustomContrastMatrix <- function(sce, contrastVars, matrix, designMatrix =
     bool <- getBools(matrix, contrastVars)
     names(bool) <- matrix
     contrast <- unlist(lapply(names(lvlList), function(x){
-      return( c( 0, rep(bool[x], length(lvlList[[x]]) -1 )) ) 
+      return( c( 0, rep(bool[x], length(lvlList[[x]]) - 1 )) ) 
     }))
     print(contrast)
     return(createContrast(unname(contrast)))
@@ -225,4 +182,142 @@ getBools <- function(names, contrastVars){
   return(bool)
 }
 
+SigEMD <- function(sce, k, condition, Hur_gene=NULL, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
+  library(aod)
+  library(arm)
+  library(fdrtool)
+  library(lars)
+  library(emdist)
+  library(data.table)
+  source("../SigEMD/FunImpute.R")
+  source("../SigEMD/SigEMDHur.R")
+  source("../SigEMD/SigEMDnonHur.R")
+  source("../SigEMD/plot_sig.R")
+  
+  set.seed(1)
+  
+  CATALYST:::.check_sce(sce, TRUE)
+  k <- CATALYST:::.check_k(sce, k)
+  CATALYST:::.check_cd_factor(sce, condition)
+  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
+  
+  
+  cluster_ids <- cluster_ids(sce, k)
+  res <- lapply(levels(cluster_ids), function(cluster_id) {
+    print(sprintf("calculating SigEMD for cluster %s", cluster_id))
+    data <- assay(sce[, cluster_ids == cluster_id], assay)
+    
+    
+    data <- dataclean((abs(data)+data)/2)
+    colnames(data) <- as.character(seq.int(to = ncol(data)))
+    
+    condition_cluster <- colData(sce[, cluster_ids == cluster_id])[[condition]]
+    names(condition_cluster) <- colnames(data)
+    
+    results <- calculate_single(data =  data,condition =  condition_cluster,Hur_gene = Hur_gene, binSize, nperm=nperm, parallel = parallel)
+    
+    results$emdall <- as.data.frame(results$emdall)
+    data.table::setnames(results$emdall, old = c("pvalue", "padjust"), new = c("p_val", "p_adj"))
+    results$emdall$cluster_id <- cluster_id
+    results$emdall$marker_id <- rownames(results$emdall)
+    
+    results
+  })
+  
+  names(res) <- levels(cluster_ids)
+  
+  return(res)
+}
 
+DEsingleSCE <- function(sce, condition, k, assay="exprs", parallel=FALSE){
+  library(DEsingle)
+  
+  CATALYST:::.check_sce(sce, TRUE)
+  k <- CATALYST:::.check_k(sce, k)
+  CATALYST:::.check_cd_factor(sce, condition)
+  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
+  
+  sce_desingle <- sce
+  new_counts <- assay(sce_desingle, "exprs")
+  new_counts <- (abs(new_counts) + new_counts)/2
+  assay(sce_desingle, "counts") <- new_counts
+  set.seed(1)
+  
+  
+  cluster_ids <- cluster_ids(sce_desingle, k)
+  res <- lapply(levels(cluster_ids), function(cluster_id) {
+    print(sprintf("calculating DEsingle for cluster %s", cluster_id))
+    
+    group <- colData(sce_desingle[, cluster_ids == cluster_id])[[condition]]
+
+    
+    results <- DEsingle::DEsingle(sce_desingle[, cluster_ids == cluster_id], group, parallel = parallel)
+    results.classified <- DEsingle::DEtype(results = results, threshold = 0.05)
+    
+    data.table::setnames(results.classified, old = c("pvalue", "pvalue.adj.FDR"), new = c("p_val", "p_adj"))
+    results.classified$cluster_id <- cluster_id
+    results.classified$marker_id <- rownames(results.classified)
+    
+    results.classified
+  })
+  
+  return(data.table::rbindlist(res))
+}
+
+runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsingle"), k = "all", parallel = TRUE, ...) {
+  de_methods <- match.arg(de_methods, several.ok = TRUE)
+  
+  # if (is.null(marker)) marker <- rownames(sce)
+  # else marker <- match.arg(marker, rownames(sce), several.ok = TRUE)
+  extra_args <- list(...)
+  
+  is_marker <- rowData(sce)$marker_class %in% c("type","state")
+  id_all_markers <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker]
+  
+  result <- list()
+  if ("limma" %in% de_methods) {
+    message("Using limma")
+    parameters <- prepDiffExp(sce, contrastVars = c(condition), colsDesign = c(condition), method = "diffcyt-DS-limma")
+    
+    #blockID <- metadata(sce_dual_ab)$experiment_info[["patient_id"]]
+    
+    limma_res <- diffcyt::diffcyt(d_input = sce,
+                                      design = parameters[["design"]],
+                                      contrast = parameters[["contrast"]],
+                                      analysis_type = "DS",
+                                      method_DS = "diffcyt-DS-limma",
+                                      clustering_to_use = k,
+                                      markers_to_test = id_all_markers)
+    result$limma <- limma_res
+  }
+  if ("LMM" %in% de_methods) {
+    message("Using LMM")
+    parameters <-  prepDiffExp(sce, contrastVars = c(condition), colsFixed = c(condition), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
+    
+    
+    LMM_res <- diffcyt::diffcyt(d_input = sce,
+                                    formula = parameters[["formula"]],
+                                    contrast = parameters[["contrast"]],
+                                    analysis_type = "DS",
+                                    method_DS = "diffcyt-DS-LMM",
+                                    clustering_to_use = k,
+                                    markers_to_test = id_all_markers)
+    result$LMM <- LMM_res
+  }
+  if ("SigEMD" %in% de_methods) {
+    message("Using SigEMD")
+    nperm <- ifelse(is.null(extra_args$nperm), 100, extra_args$nperm)
+    
+    SigEMD_res <- SigEMD(sce, k, condition, Hur_gene=rownames(sce), nperm=nperm, parallel=parallel)
+    SigEMD_res$overall <- data.table::rbindlist(lapply(SigEMD_res, function(x) x$emdall))
+    
+    result$SigEMD <- SigEMD_res
+  }
+  if ("DEsingle" %in% de_methods) {
+    message("Using DEsingle")
+    DEsingle_res <- DEsingleSCE(sce, condition, k, parallel=parallel)
+    
+    result$DEsingle <- DEsingle_res
+  }
+  result
+}

@@ -323,7 +323,7 @@ And then visualize both:
 CATALYST::plotPbExprs(sce_triple_ab, k = "all", features = "state", color_by = "activated_baseline")
 CATALYST::plotPbExprs(sce_triple_ab, features = "state", facet_by = "antigen", color_by = "activated_baseline")
 CATALYST::plotDiffHeatmap(sce_triple_ab, rowData(out_limma$res), all = T)
-```
-:plotDiffHeatmap(sce, rowData(out$res), all = T)
+
+CATALYST::plotDiffHeatmap(sce, rowData(out$res), all = T)
 ```
 
