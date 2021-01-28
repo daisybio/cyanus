@@ -43,7 +43,7 @@ sce <- readRDS(path_to_rds)
 
 Make patient selection based on preprocessing plots and clustering results
 ```{r, selection}
-sce <- makePatientSelection(sce, c("RPS 124", "RPS 108", "RPS 96", "RPS 149"))
+sce <- makePatientSelection(sce, deselected_patients = c("RPS 124", "RPS 108", "RPS 96", "RPS 149"))
 ```
 
 Sample data to 4 patients receiving dual treatment and 4 patients receiving triple treatment
@@ -120,12 +120,22 @@ id_all_markers <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker] 
 ## Dual Activated vs. Dual Baseline
 
 First, make the subselection of dual patients to compare activated and baseline platelets.
-```{r, dualAB_selection}
-allsamples <- unique(colData(sce)$sample_id)
-dual_ab <- grep("dual",allsamples,value=TRUE)
-sce_dual_ab <- filterSCE(sce, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
+# ```{r, dualAB_selection}
+# allsamples <- unique(colData(sce)$sample_id)
+# dual_ab <- grep("dual",allsamples,value=TRUE)
+# sce_dual_ab <- filterSCE(sce, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
+# ```
+
+```{r}
+res <- runDS(sce = sce[, colData(sce)$dual_triple == "dual"],
+      condition = "activated_baseline",
+      de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
+      k = "meta2",
+      nperm = 10,
+      parallel = TRUE)
 ```
 
+# Ab hier is schon alles im runDS
 Running diffcyt methods:
 ```{r, diffcyt}
 parameters <- prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsDesign = c("activated_baseline"), method = "diffcyt-DS-limma")
@@ -142,6 +152,7 @@ limma_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
                  #block_id = blockID
                  )
 
+plotDiffHeatmap(sce_dual_ab, rowData(limma_dual_ab$res), all = T)
 
 parameters <-  prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
 
@@ -154,6 +165,8 @@ LMM_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
                  clustering_to_use = "all",
                  markers_to_test = id_all_markers)
 
+plotDiffHeatmap(sce_dual_ab, rowData(LMM_dual_ab$res), all = T)
+
 ```
 
 Let's try SigEMD:
@@ -163,7 +176,7 @@ library(BiocParallel)
 param <- MulticoreParam(workers = 22)
 register(param)
 
-timed1 <- system.time(emd_result <- SigEMD(sce[, colData(sce)$dual_triple == "dual"], "all", "activated_baseline", nperm=100, parallel=TRUE))
+timed1 <- system.time(emd_result <- SigEMD(sce_dual_ab, "all", "activated_baseline", nperm=100, parallel=TRUE))
 #     user   system  elapsed 
 # 4346.330 1598.441 2182.108 
 print(timed1)
@@ -176,10 +189,10 @@ lapply(emd_result$nonHur_gene, function(marker) plot_emd_density_sig(emd_result,
 
 ```{r, eval=FALSE}
 # now check if what happens if we skip the logistic regression
-timed <- system.time(emd_result_allHur <- SigEMD(sce[, colData(sce)$dual_triple == "dual"], "all", "activated_baseline", Hur_gene=rownames(sce), nperm=100, parallel=TRUE, verbose = TRUE))
+timed <- system.time(emd_result_allHur <- SigEMD(sce_dual_ab, "all", "activated_baseline", Hur_gene=rownames(sce_dual_ab), nperm=100, parallel=TRUE))
 print(timed)
 emd_result_allHur <- emd_result_allHur$all
-lapply(state_markers(sce), function(marker) plot_emd_density_sig(emd_result, marker))
+lapply(state_markers(sce_dual_ab), function(marker) plot_emd_density_sig(emd_result, marker))
 ```
 
 
@@ -192,15 +205,24 @@ print(emd_result_allHur$emdall[emd_result$nonHur_gene, ])
 Let's try out DEsingle:
 
 ```{r, eval=FALSE}
-library(zinbwave)
+library(DEsingle)
 
-group <- colData(sce)[["dual_triple"]]
+sce_desingle <- sce_dual_ab
+new_counts <- assay(sce_desingle, "exprs")
+new_counts <- (abs(new_counts)+new_counts)/2
+assay(sce_desingle, "counts") <- new_counts
 
-# Detecting the DE genes in parallelization with 22 cores
-results <- DEsingle(counts = sce, group = group, parallel = TRUE, BPPARAM = param)
+group <- colData(sce_dual_ab)[["activated_baseline"]]
 
-# Dividing the DE genes into 3 categories at threshold of FDR < 0.05
+results <- DEsingle::DEsingle(sce_desingle, group, parallel = TRUE)
+
 results.classified <- DEtype(results = results, threshold = 0.05)
+results.classified
+
+results_permuted <- DEsingle::DEsingle(sce_desingle, sample(group), parallel = TRUE)
+
+results_permuted.classified <- DEtype(results = results_permuted, threshold = 0.05)
+results_permuted.classified
 ```
 
 Significant markers found by all methods:
