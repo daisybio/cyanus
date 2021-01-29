@@ -28,11 +28,10 @@ source("../server/clusterFun.R")
 ```
 
 # Upload Data, Preprocessing and Clustering
-
-If you don't want to perform the whole subselection of patients, clustering an visualization methods, you can simply skip those steps and load the data and move on to the Comparison of Differential Marker Expression Analysis Methods.
+If you don't want to perform the reduction of the data (selection of patients, sampling of cells), clustering, and the visualization methods, you can simply skip those steps and load the data here. You can then directly pass to the comparison of the differential marker expression analysis methods.
 ```{r}
-#path_to_rds <- "../data/platelets/sceSampledClustered.rds"
-#sce <- readRDS(path_to_rds)
+path_to_rds <- "../data/platelets/sceSampledCellsClustered.rds"
+sce <- readRDS(path_to_rds)
 ```
 
 Otherwise, upload data here.
@@ -111,77 +110,27 @@ for( method in DR_methods ){
 
 # Comparison of Differential Marker Expression Analysis Methods
 
-```{r, markerSpecification, include=FALSE}
-is_marker <- rowData(sce)$marker_class %in% c("type","state")
-id_all_markers <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker] # type and state (but not none)
-#id_type_markers <- (rowData(sce_dual_ab)$marker_class == "type")[is_marker] # type markers
-#id_state_markers <- (rowData(sce_dual_ab)$marker_class == "state")[is_marker] # state markers
-```
-
 ## Dual Activated vs. Dual Baseline
-
-First, make the subselection of dual patients to compare activated and baseline platelets.
-# ```{r, dualAB_selection}
-# allsamples <- unique(colData(sce)$sample_id)
-# dual_ab <- grep("dual",allsamples,value=TRUE)
-# sce_dual_ab <- filterSCE(sce, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
-# ```
-
+Let's try all possible methods on the dual samples:
 ```{r}
 res <- runDS(sce = sce[, colData(sce)$dual_triple == "dual"],
       condition = "activated_baseline",
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
       k = "meta2",
+      features = "all",
       nperm = 10,
       parallel = TRUE)
-```
 
-# Ab hier is schon alles im runDS
-Running diffcyt methods:
-```{r, diffcyt}
-parameters <- prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsDesign = c("activated_baseline"), method = "diffcyt-DS-limma")
-
-#blockID <- metadata(sce_dual_ab)$experiment_info[["patient_id"]]
-
-limma_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
-                 design = parameters[["design"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-limma",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers
-                 #block_id = blockID
-                 )
-
-plotDiffHeatmap(sce_dual_ab, rowData(limma_dual_ab$res), all = T)
-
-parameters <-  prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
-
-
-LMM_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
-                 formula = parameters[["formula"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-LMM",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers)
-
-data.table::as.data.table(diffcyt::topTable(limma_dual_ab$res, all=TRUE))
-data.table::as.data.table(diffcyt::topTable(LMM_dual_ab$res, all=TRUE))
-
-CATALYST::plotDiffHeatmap(x = sce_dual_ab,
-                          y = rowData(limma_dual_ab$res), 
-                          all = T)
-CATALYST::plotDiffHeatmap(x = sce_dual_ab,
-                          y = rowData(LMM_dual_ab$res), 
-                          all = T)
+for (method in res){
+  print(method)
+}
 ```
 
 Let's try SigEMD:
 ```{r, eval=FALSE}
 library(BiocParallel)
 # Set the parameters and register the back-end to be used
-param <- MulticoreParam(workers = 22)
+param <- MulticoreParam(workers = 4)
 register(param)
 
 timed1 <- system.time(emd_result <- SigEMD(sce_dual_ab, "all", "activated_baseline", nperm=100, parallel=TRUE))
@@ -211,7 +160,6 @@ print(emd_result_allHur$emdall[emd_result$nonHur_gene, ])
 ```
 
 Let's try out DEsingle:
-
 ```{r, eval=FALSE}
 library(DEsingle)
 
@@ -234,41 +182,8 @@ results_permuted.classified
 ```
 
 Significant markers found by all methods:
-
-```{r  dual_ab_venn}
-sign_limma <- data.frame(rowData(limma_dual_ab$res))[c("cluster_id","marker_id","p_val","p_adj")]
-sign_LMM <- data.frame(rowData(LMM_dual_ab$res))[c("cluster_id","marker_id","p_val","p_adj")]
-sign_limma$significant <- sign_limma$p_adj < 0.05
-sign_LMM$significant <- sign_LMM$p_adj < 0.05
-
-limma <- unlist(subset(sign_limma, significant==TRUE, select=c(marker_id), use.names=FALSE))
-LMM <- unlist(subset(sign_LMM, significant==TRUE, select=c(marker_id), use.names=FALSE))
-
-
-## include SigEMD and ZINB
-
-library(ggvenn)
-  
-venn <- venn.diagram(
-  x = list(limma,LMM),
-  filename = "../plots/dual_ab_venn.png",
-  category.names = c("limma","LMM"),
-  image.type = "png",
-  cex = 2.0,
-  fontfamily = "sans",
-  col=c("#99CC99", "#CC3333"),
-  #fill = c(alpha("#99CC99",0.3), alpha("#CC3333",0.3)),
-  cat.cex = 1.8,
-  cat.fontface = "bold",
-  cat.fontfamily = "sans",
-  main = paste("Limma vs. LMM"),
-  main.fontface = "bold",
-  main.fontfamily = "sans",
-  main.cex = 2.0,
-  sub = paste("P-adjusted < 0.05"),
-  sub.cex=1.5 ,
-  sub.fontfamily="sans"
-  )
+```{r}
+venn <- createVennDiagram(res)
 
 ```
 
@@ -297,137 +212,10 @@ CATALYST::plotDiffHeatmap(x = sce_small_dual_ab,
 ```
 
 ## Triple Activated vs. Triple Baseline
-First, make the subselection of triple patients to compare activated and baseline platelets.
-```{r, dualAB_selection}
-allsamples <- unique(colData(sce)$sample_id)
-triple_ab <- grep("triple",allsamples,value=TRUE)
-sce_triple_ab <- filterSCE(sce, sample_id %in% triple_ab)
-```
-
-Running diffcyt methods:
-```{r, diffcyt}
-parameters <- prepDiffExp(sce_triple_ab, contrastVars = c("activated_baseline"), colsDesign = c("activated_baseline"), method = "diffcyt-DS-limma")
-
-#blockID <- metadata(sce_triple_ab)$experiment_info[["patient_id"]]
-
-limma_triple_ab <- diffcyt::diffcyt(d_input = sce_triple_ab,
-                 design = parameters[["design"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-limma",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers
-                 #block_id = blockID
-                 )
-
-
-parameters <-  prepDiffExp(sce_triple_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
-
-
-LMM_triple_ab <- diffcyt::diffcyt(d_input = sce_triple_ab,
-                 formula = parameters[["formula"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-LMM",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers)
-
-data.table::as.data.table(diffcyt::topTable(limma_triple_ab$res, all=TRUE))
-data.table::as.data.table(diffcyt::topTable(LMM_triple_ab$res, all=TRUE))
-
-CATALYST::plotDiffHeatmap(x = sce_triple_ab,
-                          y = rowData(limma_triple_ab$res), 
-                          all = T)
-CATALYST::plotDiffHeatmap(x = sce_triple_ab,
-                          y = rowData(LMM_triple_ab$res), 
-                          all = T)
-```
 
 ## Dual Activated vs. Triple Activated
-First, make the subselection of activated platelets of dual and triple patients
-```{r, dualAB_selection}
-allsamples <- unique(colData(sce)$sample_id)
-a_dual_triple <- grep("A",allsamples,value=TRUE)
-sce_a_dual_triple <- filterSCE(sce, sample_id %in% a_dual_triple)
-```
-
-Running diffcyt methods:
-```{r, diffcyt}
-parameters <- prepDiffExp(sce_a_dual_triple, contrastVars = c("dual_triple"), colsDesign = c("dual_triple"), method = "diffcyt-DS-limma")
-
-limma_a_dual_triple <- diffcyt::diffcyt(d_input = sce_a_dual_triple,
-                 design = parameters[["design"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-limma",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers
-                 #block_id = blockID
-                 )
-
-
-parameters <-  prepDiffExp(sce_a_dual_triple, contrastVars = c("dual_triple"), colsFixed = c("dual_triple"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
-
-LMM_a_dual_triple <- diffcyt::diffcyt(d_input = sce_a_dual_triple,
-                 formula = parameters[["formula"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-LMM",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers)
-
-data.table::as.data.table(diffcyt::topTable(limma_a_dual_triple$res, all=TRUE))
-data.table::as.data.table(diffcyt::topTable(LMM_a_dual_triple$res, all=TRUE))
-
-CATALYST::plotDiffHeatmap(x = sce_a_dual_triple,
-                          y = rowData(limma_a_dual_triple$res), 
-                          all = T)
-CATALYST::plotDiffHeatmap(x = sce_a_dual_triple,
-                          y = rowData(LMM_a_dual_triple$res), 
-                          all = T)
-```
 
 ## Dual Baseline vs. Triple Basleline
-First, make the subselection of activated platelets of dual and triple patients
-```{r, dualAB_selection}
-allsamples <- unique(colData(sce)$sample_id)
-b_dual_triple <- grep("B",allsamples,value=TRUE)
-sce_b_dual_triple <- filterSCE(sce, sample_id %in% b_dual_triple)
-```
 
-Running diffcyt methods:
-```{r, diffcyt}
-parameters <- prepDiffExp(sce_b_dual_triple, contrastVars = c("dual_triple"), colsDesign = c("dual_triple"), method = "diffcyt-DS-limma")
-
-limma_b_dual_triple <- diffcyt::diffcyt(d_input = sce_b_dual_triple,
-                 design = parameters[["design"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-limma",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers
-                 )
-
-
-parameters <-  prepDiffExp(sce_b_dual_triple, contrastVars = c("dual_triple"), colsFixed = c("dual_triple"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
-
-LMM_b_dual_triple <- diffcyt::diffcyt(d_input = sce_b_dual_triple,
-                 formula = parameters[["formula"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-LMM",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers)
-
-data.table::as.data.table(diffcyt::topTable(limma_b_dual_triple$res, all=TRUE))
-data.table::as.data.table(diffcyt::topTable(LMM_b_dual_triple$res, all=TRUE))
-
-CATALYST::plotDiffHeatmap(x = sce_b_dual_triple,
-                          y = rowData(limma_b_dual_triple$res), 
-                          all = T)
-CATALYST::plotDiffHeatmap(x = sce_b_dual_triple,
-                          y = rowData(LMM_b_dual_triple$res), 
-                          all = T)
-```
 
 

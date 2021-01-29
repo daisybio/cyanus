@@ -243,7 +243,6 @@ DEsingleSCE <- function(sce, condition, k, assay="exprs", parallel=FALSE){
   assay(sce_desingle, "counts") <- new_counts
   set.seed(1)
   
-  
   cluster_ids <- cluster_ids(sce_desingle, k)
   res <- lapply(levels(cluster_ids), function(cluster_id) {
     print(sprintf("calculating DEsingle for cluster %s", cluster_id))
@@ -264,15 +263,23 @@ DEsingleSCE <- function(sce, condition, k, assay="exprs", parallel=FALSE){
   return(data.table::rbindlist(res))
 }
 
-runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsingle"), k = "all", parallel = TRUE, ...) {
+runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsingle"), k = "all", parallel = TRUE, features = c("all", "type","state"), ...) {
   de_methods <- match.arg(de_methods, several.ok = TRUE)
+  features <- match.arg(features, several.ok = FALSE)
   
   # if (is.null(marker)) marker <- rownames(sce)
   # else marker <- match.arg(marker, rownames(sce), several.ok = TRUE)
   extra_args <- list(...)
   
+  # vector for diffcyt methods to test on specific markers
   is_marker <- rowData(sce)$marker_class %in% c("type","state")
-  id_all_markers <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker]
+  if (features == "all"){
+    markers_to_test <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker]
+  } else if (features == "state"){
+    markers_to_test <- (rowData(sce)$marker_class == "state")[is_marker]
+  } else {
+    markers_to_test <- (rowData(sce)$marker_class == "type")[is_marker]
+  }
   
   result <- list()
   if ("limma" %in% de_methods) {
@@ -287,7 +294,7 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
                                       analysis_type = "DS",
                                       method_DS = "diffcyt-DS-limma",
                                       clustering_to_use = k,
-                                      markers_to_test = id_all_markers)
+                                      markers_to_test = markers_to_test)
     result$limma <- limma_res
   }
   if ("LMM" %in% de_methods) {
@@ -301,7 +308,7 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
                                     analysis_type = "DS",
                                     method_DS = "diffcyt-DS-LMM",
                                     clustering_to_use = k,
-                                    markers_to_test = id_all_markers)
+                                    markers_to_test = markers_to_test)
     result$LMM <- LMM_res
   }
   if ("SigEMD" %in% de_methods) {
@@ -320,4 +327,42 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
     result$DEsingle <- DEsingle_res
   }
   result
+}
+
+# create venn diagram of all methods that were performed in runDS
+createVennDiagram <- function(res) {
+  input_venn <- list()
+  
+  # take of each method the data table containing the pvalues
+  for (ds_method in names(res)) {
+    if (ds_method == "DEsingle") {
+      output <- res[[ds_method]]
+      result <- data.frame(res)[c("marker_id", "p_val", "p_adj")]
+    }
+    if (ds_method == "SigEMD") {
+      output <- res[[ds_method]]$emdall
+      result <- data.frame(output)[c("marker_id", "p_val", "p_adj")]
+    }
+    if (ds_method %in% c("LMM", "limma")) {
+      result <-
+        data.frame(rowData(res[[ds_method]]$res))[c("marker_id", "p_val", "p_adj")]
+    }
+    result$significant <- result$p_adj < 0.05
+    significants <-
+      unlist(subset(
+        significants,
+        significant == TRUE,
+        select = c(marker_id),
+        use.names = FALSE
+      ))
+    input_venn[[ds_method]] <- significants
+  }
+  
+  library(VennDiagram)
+  venn <- venn.diagram(x = input_venn,
+                       filename = NULL,
+                       category.names = names(res))
+  grid.draw(venn)
+  
+  # calculate.overlap(x)
 }
