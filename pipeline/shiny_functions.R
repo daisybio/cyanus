@@ -271,16 +271,6 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
   # else marker <- match.arg(marker, rownames(sce), several.ok = TRUE)
   extra_args <- list(...)
   
-  # vector for diffcyt methods to test on specific markers
-  is_marker <- rowData(sce)$marker_class %in% c("type","state")
-  if (features == "all"){
-    markers_to_test <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker]
-  } else if (features == "state"){
-    markers_to_test <- (rowData(sce)$marker_class == "state")[is_marker]
-  } else {
-    markers_to_test <- (rowData(sce)$marker_class == "type")[is_marker]
-  }
-  
   result <- list()
   if ("limma" %in% de_methods) {
     message("Using limma")
@@ -288,6 +278,7 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
     
     #blockID <- metadata(sce_dual_ab)$experiment_info[["patient_id"]]
     
+    markers_to_test <- getMarkersToTest(sce,"limma",features)
     limma_res <- diffcyt::diffcyt(d_input = sce,
                                       design = parameters[["design"]],
                                       contrast = parameters[["contrast"]],
@@ -301,7 +292,7 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
     message("Using LMM")
     parameters <-  prepDiffExp(sce, contrastVars = c(condition), colsFixed = c(condition), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
     
-    
+    markers_to_test <- getMarkersToTest(sce,"LMM",features)
     LMM_res <- diffcyt::diffcyt(d_input = sce,
                                     formula = parameters[["formula"]],
                                     contrast = parameters[["contrast"]],
@@ -315,6 +306,11 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
     message("Using SigEMD")
     nperm <- ifelse(is.null(extra_args$nperm), 100, extra_args$nperm)
     
+    markers_to_test <- getMarkersToTest(sce,"SigEMD",features)
+    
+    # make subselection
+    sce <- sce[rownames(sce) %in% markers_to_test]
+    
     SigEMD_res <- SigEMD(sce, k, condition, Hur_gene=rownames(sce), nperm=nperm, parallel=parallel)
     SigEMD_res$overall <- data.table::rbindlist(lapply(SigEMD_res, function(x) x$emdall))
     
@@ -322,6 +318,12 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
   }
   if ("DEsingle" %in% de_methods) {
     message("Using DEsingle")
+    
+    markers_to_test <- getMarkersToTest(sce,"DEsingle",features)
+    
+    # make subselection
+    sce <- sce[rownames(sce) %in% markers_to_test]
+    
     DEsingle_res <- DEsingleSCE(sce, condition, k, parallel=parallel)
     
     result$DEsingle <- DEsingle_res
@@ -363,6 +365,30 @@ createVennDiagram <- function(res) {
                        filename = NULL,
                        category.names = names(res))
   grid.draw(venn)
-  
   # calculate.overlap(x)
+}
+
+
+# get appropriate vector for each method containing the markers that want to be tested
+getMarkersToTest <- function(sce, ds_method, features){
+  if (ds_method %in% c("limma", "LMM")){
+    # vector for diffcyt methods to test on specific markers
+    is_marker <- rowData(sce)$marker_class %in% c("type","state")
+    if (features == "all"){
+      markers_to_test <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker]
+    } else if (features == "state"){
+      markers_to_test <- (rowData(sce)$marker_class == "state")[is_marker]
+    } else if (features == "type") {
+      markers_to_test <- (rowData(sce)$marker_class == "type")[is_marker]
+    }
+  } else if (ds_method %in% c("SigEMD", "DEsingle")){
+    if (features == "all"){
+      markers_to_test <- rowData(sce)[rowData(sce)$marker_class %in% c("type","state"),]$marker_name
+    } else if (features == "state"){
+      markers_to_test <- rowData(sce)[rowData(sce)$marker_class=="state",]$marker_name
+    } else if (features == "type"){
+      markers_to_test <- rowData(sce)[rowData(sce)$marker_class=="type",]$marker_name
+    }
+  }
+  return (markers_to_test)
 }

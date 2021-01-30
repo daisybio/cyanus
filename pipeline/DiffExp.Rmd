@@ -10,17 +10,16 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.width=12, fig.height=8)
+library(data.table)
 library(CATALYST)
 library(flowCore)
 library(ggplot2)
 library(SingleCellExperiment)
-library(data.table)
 library(readxl)
 library(diffcyt)
 library(RColorBrewer)
 library(grid)
 library(futile.logger)
-library(VennDiagram)
 set.seed(1234)
 
 source("shiny_functions.R")
@@ -30,7 +29,7 @@ source("../server/clusterFun.R")
 # Upload Data, Preprocessing and Clustering
 If you don't want to perform the reduction of the data (selection of patients, sampling of cells), clustering, and the visualization methods, you can simply skip those steps and load the data here. You can then directly pass to the comparison of the differential marker expression analysis methods.
 ```{r}
-path_to_rds <- "../data/platelets/sceSampledCellsClustered.rds"
+path_to_rds <- "/nfs/home/students/l.arend/data/platelets/sceSampledCellsClustered.rds"
 sce <- readRDS(path_to_rds)
 ```
 
@@ -113,24 +112,59 @@ for( method in DR_methods ){
 ## Dual Activated vs. Dual Baseline
 Let's try all possible methods on the dual samples:
 ```{r}
-res <- runDS(sce = sce[, colData(sce)$dual_triple == "dual"],
+# subsett SingleCellExperiment for dual patients
+tmp <- filterSCE(sce, dual_triple == "dual")
+
+res <- runDS(sce = tmp,
       condition = "activated_baseline",
-      de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
-      k = "meta2",
+      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
+      k = "all",
       features = "all",
-      nperm = 10,
+      nperm = 100,
+      parallel = TRUE)
+```
+
+Significant markers found by all methods:
+```{r}
+createVennDiagram(res)
+```
+
+Let's try to permute the labels (activated and baseline) and check the results.
+```{r}
+tmp <- filterSCE(sce, dual_triple == "dual")
+
+ei <- metadata(tmp)$experiment_info
+
+# sample A and B 
+set.seed(1234)
+condition <- as.character(ei$activated_baseline[sample(nrow(ei), nrow(ei), replace=FALSE)])
+
+# edit activated_baseline condition in experiment_info
+ei$activated_baseline <- condition
+metadata(tmp)$experiment_info <- ei
+
+# edit activated_baseline in colData (not corrected in sample name)
+coldata_condition <- rep(condition, each=10000)
+colData(tmp)$activated_baseline <- as.factor(coldata_condition)
+
+res_sampled <- runDS(sce = tmp,
+      condition = "activated_baseline",
+      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
       parallel = TRUE)
 
-for (method in res){
-  print(method)
-}
+createVennDiagram(res_sampled)
+
 ```
+
 
 Let's try SigEMD:
 ```{r, eval=FALSE}
 library(BiocParallel)
 # Set the parameters and register the back-end to be used
-param <- MulticoreParam(workers = 4)
+param <- MulticoreParam(workers = 22)
 register(param)
 
 timed1 <- system.time(emd_result <- SigEMD(sce_dual_ab, "all", "activated_baseline", nperm=100, parallel=TRUE))
@@ -140,7 +174,7 @@ print(timed1)
 
 emd_result <- emd_result$all
 source("../SigEMD/plot_sig.R")
-lapply(emd_result$nonHur_gene, function(marker) plot_emd_density_sig(emd_result, marker))
+lapply(res_sampled$SigEMD$all$nonHur_gene, function(marker) plot_emd_density_sig(res_sampled$SigEMD$all, "PAR1"))
 ```
 
 
@@ -181,12 +215,6 @@ results_permuted.classified <- DEtype(results = results_permuted, threshold = 0.
 results_permuted.classified
 ```
 
-Significant markers found by all methods:
-```{r}
-venn <- createVennDiagram(res)
-
-```
-
 ```{r}
 sce_small <- readRDS("../data/platelets_small/sce.rds")
 is_marker <- rowData(sce_small)$marker_class %in% c("type","state")
@@ -212,10 +240,62 @@ CATALYST::plotDiffHeatmap(x = sce_small_dual_ab,
 ```
 
 ## Triple Activated vs. Triple Baseline
+Let's try all possible methods on the triple samples:
+```{r}
+tmp <- filterSCE(sce, dual_triple == "triple")
+
+res1 <- runDS(sce = tmp,
+      condition = "activated_baseline",
+      de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+
+```
+
+Significant markers found by all methods:
+```{r}
+createVennDiagram(res1)
+```
 
 ## Dual Activated vs. Triple Activated
+Let's try all possible methods on the A samples:
+```{r}
+tmp <- filterSCE(sce, activated_baseline == "A")
+
+res2 <- runDS(sce = tmp,
+      condition = "dual_triple",
+      de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+
+```
+Significant markers found by all methods:
+```{r}
+createVennDiagram(res2)
+```
+
 
 ## Dual Baseline vs. Triple Basleline
+Let's try all possible methods on the B samples:
+```{r}
+tmp <- filterSCE(sce, activated_baseline == "B")
 
+res3 <- runDS(sce = tmp,
+      condition = "dual_triple",
+      de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+
+```
+Significant markers found by all methods:
+```{r}
+createVennDiagram(res3)
+```
 
 
