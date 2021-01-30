@@ -300,7 +300,7 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
                                     analysis_type = "DS",
                                     method_DS = "diffcyt-DS-LMM",
                                     clustering_to_use = k,
-    )
+                                    markers_to_test = markers_to_test)
     
     result$LMM <- LMM_res
   }
