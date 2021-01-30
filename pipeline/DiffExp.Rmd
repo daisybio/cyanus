@@ -34,13 +34,13 @@ sce <- readRDS(path_to_rds)
 ```
 
 Otherwise, upload data here.
-```{r, data}
+```{r, data, eval=FALSE}
 path_to_rds <- "../data/platelets/sce_transformed.rds"
 sce <- readRDS(path_to_rds)
 ```
 
 Make patient selection based on preprocessing plots and clustering results
-```{r, selection}
+```{r, selection, eval=FALSE}
 sce <- makePatientSelection(sce, deselected_patients = c("RPS 124", "RPS 108", "RPS 96", "RPS 149"))
 ```
 
@@ -64,7 +64,7 @@ sce <- filterSCE(sce, patient_id %in% sampled_patients)
 ```
 
 Sample data to n cells for each sample
-```{r, samplingEvents}
+```{r, samplingEvents, eval=FALSE}
 n <- 10000
 
 ei <- metadata(sce)$experiment_info
@@ -93,7 +93,7 @@ metadata(sce)$experiment_info <- ei
 ```
 
 Cluster the filtered SingleCellExperiment and run dimensionality reduction methods:
-```{r}
+```{r, eval=FALSE}
 sce <- clusterSCE(sce) 
 
 DR_methods <- c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")
@@ -128,6 +128,37 @@ Significant markers found by all methods:
 ```{r}
 createVennDiagram(res)
 ```
+
+Show heatmaps of the different methods:
+```{r}
+plotDiffHeatmap(tmp, rowData(res$limma$res), all=TRUE, k="all")
+
+plotDiffHeatmap(tmp, rowData(res$LMM$res), all=TRUE, k="all")
+
+plotDiffHeatmap(tmp, res$SigEMD$overall, all=TRUE, k="all")
+
+plotDiffHeatmap(tmp, res$DEsingle, all=TRUE, k="all")
+
+```
+
+Let's add the none markers as state markers to check their influence.
+```{r}
+rowData(tmp)$marker_class <- rowData(tmp)$marker_class[rowData(tmp)$marker_class == "none"] <- "state"
+
+res_none <- runDS(sce = tmp,
+      condition = "activated_baseline",
+      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+```
+
+Significant markers found by all methods:
+```{r}
+createVennDiagram(res_none)
+```
+
 
 Let's try to permute the labels (activated and baseline) and check the results.
 ```{r}
