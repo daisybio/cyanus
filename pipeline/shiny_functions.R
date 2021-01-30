@@ -4,6 +4,7 @@ library(uwot)
 library(ggplot2)
 library(dimRed)
 library(RANN)
+library(ggvenn)
 
 ############### Preprocessing ###############
 
@@ -19,7 +20,8 @@ makeSampleSelection <- function(sce=sce, deselected_samples){
   
   return (sce)
 }
-makePatientSelection <- function(sce,deselected_patients){
+
+makePatientSelection <- function(sce, deselected_patients){
   # All patients
   all_patients <- as.character(unique(colData(sce)$patient_id))
   
@@ -32,10 +34,7 @@ makePatientSelection <- function(sce,deselected_patients){
   return (sce)
 }
 
-
-
 ############### Visualization ###############
-
 
 #run the dimensionality reduction; function either calls CATALYST::runDR or runIsomap
 runDimRed <- function(sce, dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap"), 
@@ -286,7 +285,9 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
                                       method_DS = "diffcyt-DS-limma",
                                       clustering_to_use = k,
                                       markers_to_test = markers_to_test)
+  
     result$limma <- limma_res
+
   }
   if ("LMM" %in% de_methods) {
     message("Using LMM")
@@ -299,7 +300,8 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
                                     analysis_type = "DS",
                                     method_DS = "diffcyt-DS-LMM",
                                     clustering_to_use = k,
-                                    markers_to_test = markers_to_test)
+    )
+    
     result$LMM <- LMM_res
   }
   if ("SigEMD" %in% de_methods) {
@@ -326,6 +328,7 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
     
     DEsingle_res <- DEsingleSCE(sce, condition, k, parallel=parallel)
     
+    
     result$DEsingle <- DEsingle_res
   }
   result
@@ -339,10 +342,10 @@ createVennDiagram <- function(res) {
   for (ds_method in names(res)) {
     if (ds_method == "DEsingle") {
       output <- res[[ds_method]]
-      result <- data.frame(res)[c("marker_id", "p_val", "p_adj")]
+      result <- data.frame(output)[c("marker_id", "p_val", "p_adj")]
     }
     if (ds_method == "SigEMD") {
-      output <- res[[ds_method]]$emdall
+      output <- res[[ds_method]]$overall
       result <- data.frame(output)[c("marker_id", "p_val", "p_adj")]
     }
     if (ds_method %in% c("LMM", "limma")) {
@@ -352,22 +355,17 @@ createVennDiagram <- function(res) {
     result$significant <- result$p_adj < 0.05
     significants <-
       unlist(subset(
-        significants,
+        result,
         significant == TRUE,
         select = c(marker_id),
-        use.names = FALSE
+        use.ames = FALSE
       ))
     input_venn[[ds_method]] <- significants
   }
   
-  library(VennDiagram)
-  venn <- venn.diagram(x = input_venn,
-                       filename = NULL,
-                       category.names = names(res))
-  grid.draw(venn)
-  # calculate.overlap(x)
+  venn <- ggvenn::ggvenn(input_venn, show_elements = TRUE, label_sep ="\n", fill_alpha = 0.3, set_name_size = 8, text_size = 4)
+  return(venn)
 }
-
 
 # get appropriate vector for each method containing the markers that want to be tested
 getMarkersToTest <- function(sce, ds_method, features){
@@ -392,3 +390,5 @@ getMarkersToTest <- function(sce, ds_method, features){
   }
   return (markers_to_test)
 }
+
+
