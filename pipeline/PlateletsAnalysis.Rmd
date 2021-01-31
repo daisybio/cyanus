@@ -22,6 +22,7 @@ library(grid)
 library(futile.logger)
 library(VennDiagram)
 library(stringr)
+library(destiny)
 set.seed(1234)
 
 source("shiny_functions.R")
