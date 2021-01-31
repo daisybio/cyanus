@@ -10,11 +10,11 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.width=12, fig.height=8)
+library(data.table)
 library(CATALYST)
 library(flowCore)
 library(ggplot2)
 library(SingleCellExperiment)
-library(data.table)
 library(readxl)
 library(diffcyt)
 library(RColorBrewer)
@@ -81,7 +81,7 @@ Otherwise, you can load the "sce_transformed.rds" file which already contains th
 path_to_rds <- "/nfs/home/students/l.arend/data/platelets/sce_transformed.rds"
 sce <- readRDS(path_to_rds)
 
-#or load already clustered SingleCellExperiment
+#or load already clustered and filtered SingleCellExperiment
 #path_to_rds <- "../data/platelets/sceFilteredClustered.rds"
 #sce <- readRDS(path_to_rds)
 ```
@@ -175,9 +175,11 @@ The clustering show no significant increase after meta9. Let's have a look at th
 ```{r}
 CATALYST::plotAbundances(sce, "meta9", group_by = "activated_baseline")
 
-CATALYST::plotAbundances(sce, "meta9", by = "cluster_id", group_by = "patient_id", shape_by = "activated_baseline")
+CATALYST::plotAbundances(sce, "meta9", by = "cluster_id", shape_by = "patient_id", group_by = "activated_baseline")
+```
 
-invisible(plotStarsCustom(sce, backgroundValues = cluster_codes(sce)[["meta9"]]))  #figure smaller machen # meta7 cluster machen
+```{r, fig.width=6, fig.height=4}
+invisible(plotStarsCustom(sce, backgroundValues = cluster_codes(sce)[["meta9"]]))
 ```
 
 ```{r}
@@ -206,18 +208,16 @@ Other run options are:
 <li> scale: TRUE or FALSE. We recommend using TRUE </li>
 <li> k: Isomap-specific parameter. Specifies the number of neighbours for the graph constructed by isomap </li>
 
-Let's run all methods so that we can compare them later:
 
+First, we are performing a dimensionality reduction on the states markers for 300 cells and visualize the results.
 ```{r}
 DR_methods <- c("UMAP","PCA")
 
 for( method in DR_methods ){
   print(method)
-  sce <- runDimRed(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
+  sce <- runDimRed(sce, method, cells_chosen = 300, feature_chosen = "state", assay_chosen = "exprs", scale = T, k = 3)
 }
 ```
-
-You can now simply visualize the dimensionality reduction by using the CATALYST function plotDR. For now, let's color by activated_baseline and facet by dual_triple. Later, we can also color by cluster.
 
 
 ```{r}
@@ -227,11 +227,36 @@ for( method in DR_methods ){
 }
 ```
 
-We can also colour by marker expression. Before, we saw that CD36, CD47 and PAR1 were the top three markers: 
+Secondly, we are going to run the dimensionality reductions on the type markers and visualize the clusters.
+```{r}
+DR_methods <- c("UMAP","PCA")
+
+for( method in DR_methods ){
+  print(method)
+  sce <- runDimRed(sce, method, cells_chosen = 300, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
+}
+```
+
 
 ```{r}
 for( method in DR_methods ){
-  g <- CATALYST::plotDR(sce, dr = method, color_by = c("CD36", "CD47"), facet_by = "activated_baseline", assay = "exprs", scale = T)
+  g <- CATALYST::plotDR(sce, dr = method, color_by = "meta6")
+  print(g)
+}
+```
+Finally, we are going to run the dimensionality reductions on all markers and show there is a difference between dual and triple.
+```{r}
+DR_methods <- c("UMAP","PCA")
+
+for( method in DR_methods ){
+  print(method)
+  sce <- runDimRed(sce, method, cells_chosen = 300, feature_chosen = NULL, assay_chosen = "exprs", scale = T, k = 3)
+}
+```
+
+```{r}
+for( method in DR_methods ){
+  g <- CATALYST::plotDR(sce, dr = method, color_by = "dual_triple", facet_by="activated_baseline")
   print(g)
 }
 ```
@@ -240,17 +265,25 @@ for( method in DR_methods ){
 After clustering and visualization, we can move to the differential expression analysis.
 
 # Differential Expression Analysis
+
 Before performing the differential marker expression analysis, the median marker expressions are plotted.
 ```{r,fig.with=12, fig.height=8}
-CATALYST::plotPbExprs(sce, k = "meta7", features = NULL , color_by = "activated_baseline", 
+CATALYST::plotPbExprs(sce, k = "all", features = NULL , color_by = "activated_baseline", 
+              facet_by = "antigen", shape_by = "dual_triple")
+
+CATALYST::plotPbExprs(sce, k = "meta6", features = NULL , color_by = "activated_baseline", 
               facet_by = "cluster_id", shape_by = "dual_triple")
+
 ```
 
-This plot shows the median marker expression of state and type markers colored by activated and baseline conditions. The state marker CD62P shows the biggest difference in activated and baseline platelets. The activated platelets show a higher median expression than the baseline samples. The same applies for marker CD63. This state marker is also more expressed in activated platelets than in baseline platelets. 
+The plot show the median marker expression of state and type markers colored by activated and baseline conditions. The state marker CD62P shows the biggest difference in activated and baseline platelets. The same applies for marker CD63. This state marker is also more expressed in activated platelets than in baseline platelets. 
 
 Now we are going to check the median marker expressions for the condition dual therapy and triple therapy.
 ```{r,fig.with=12, fig.height=8}
-CATALYST::plotPbExprs(sce, k = "meta2", features = NULL, color_by = "dual_triple", 
+CATALYST::plotPbExprs(sce, k = "all", features = NULL, color_by = "dual_triple", 
+              facet_by = "antigen", shape_by = "activated_baseline")
+
+CATALYST::plotPbExprs(sce, k = "meta6", features = NULL, color_by = "dual_triple", 
               facet_by = "cluster_id", shape_by = "activated_baseline")
 ```
 This plots shows no significant difference in median marker expression for dual and triple therapies.
