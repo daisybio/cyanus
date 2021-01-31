@@ -23,7 +23,6 @@ library(futile.logger)
 set.seed(1234)
 
 source("shiny_functions.R")
-source("../server/clusterFun.R")
 ```
 
 # Upload Data, Preprocessing and Clustering
@@ -174,61 +173,15 @@ Something is fishy with SigEMD and DEsingle.
 
 Let's permute labels per sample opposed to per event (what SigEMD does internally):
 
-First, Let's have a look at the actual SigEMD results again:
-
 ```{r}
-res_dual_real <- res_dual$SigEMD$all$emdall[, .(real_emd = emd, marker_id)]
-setkey(res_dual_real, marker_id)
-res_dual_real
+res_perm_samples <- SigEMD(sce_dual, "all", "activated_baseline", Hur_gene = rownames(sce_dual), nperm = 100, parallel = TRUE, permute_samples = TRUE)
+res_perm_samples$overall <- data.table::rbindlist(lapply(res_perm_samples, function(x) x$emdall))
+res_dual$SigEMD <- res_perm_samples
+
+createVennDiagram(res_dual)
 ```
 
 
-```{r}
-sce_dual_sampled <- sce_dual
-
-nperm <- 100
-used_permutations <- list()
-used_permutations[[nperm + 1]] <- metadata(sce_dual_sampled)$experiment_info$activated_baseline
-all_results <- list()
-
-for (i in 1:nperm){
-ei <- metadata(sce_dual_sampled)$experiment_info
-
-# sample A and B
-#set.seed(i)
-repeat {
-  condition <- sample(ei$activated_baseline)
-  if (Position(function(x) identical(x, condition), used_permutations, nomatch = 0) == 0) {
-    used_permutations[[i]] <- condition
-    break
-  }
-}
-
-# edit activated_baseline condition in experiment_info
-ei$activated_baseline <- condition
-metadata(sce_dual_sampled)$experiment_info <- ei
-
-# edit activated_baseline in colData (not corrected in sample name)
-coldata_condition <- rep(condition, times=ei$n_cells)
-colData(sce_dual_sampled)$activated_baseline <- as.factor(coldata_condition)
-
-all_results[[i]] <- SigEMD(sce = sce_dual_sampled,
-      k = "all",
-      condition = "activated_baseline",
-      Hur_gene=rownames(sce_dual_sampled),
-      nperm = 1,
-      parallel = TRUE)
-
-}
-all_perms <- rbindlist(lapply(all_results, function(x) x$all$emd), idcol = "permutation")
-all_perms[, p_val := NULL]
-all_perms[, p_adj := NULL]
-setkey(all_perms, marker_id)
-
-res_agg <- all_perms[res_dual_real][, .(p_val = (sum(emd <= real_emd) + 1)/(nperm + 1)), by = marker_id]
-res_agg[, p_adj := p.adjust(p_val, "BH")]
-res_agg[order(p_adj)]
-```
 
 
 
