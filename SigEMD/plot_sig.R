@@ -14,7 +14,7 @@ plot_emd_density_sig <- function(emdobj, gene_name) {
   classes <- unique(outcomes)
   
   emd_score <- emdobj$emdall[gene_name, "emd"]
-  q_value<- emdobj$emdall[gene_name, "padjust"]
+  q_value<- emdobj$emdall[gene_name, "p_adj"]
   # to appease CRAN
   group <- NULL
   exp <- NULL

@@ -20,7 +20,6 @@ library(diffcyt)
 library(RColorBrewer)
 library(grid)
 library(futile.logger)
-library(VennDiagram)
 set.seed(1234)
 
 source("shiny_functions.R")
@@ -28,21 +27,20 @@ source("../server/clusterFun.R")
 ```
 
 # Upload Data, Preprocessing and Clustering
-
-If you don't want to perform the whole subselection of patients, clustering an visualization methods, you can simply skip those steps and load the data and move on to the Comparison of Differential Marker Expression Analysis Methods.
+If you don't want to perform the reduction of the data (selection of patients, sampling of cells), clustering, and the visualization methods, you can simply skip those steps and load the data here. You can then directly pass to the comparison of the differential marker expression analysis methods.
 ```{r}
-#path_to_rds <- "../data/platelets/sceSampledClustered.rds"
-#sce <- readRDS(path_to_rds)
+path_to_rds <- "/nfs/home/students/l.arend/data/platelets/sceSampledCellsClustered.rds"
+sce <- readRDS(path_to_rds)
 ```
 
 Otherwise, upload data here.
-```{r, data}
+```{r, data, eval=FALSE}
 path_to_rds <- "../data/platelets/sce_transformed.rds"
 sce <- readRDS(path_to_rds)
 ```
 
 Make patient selection based on preprocessing plots and clustering results
-```{r, selection}
+```{r, selection, eval=FALSE}
 sce <- makePatientSelection(sce, deselected_patients = c("RPS 124", "RPS 108", "RPS 96", "RPS 149"))
 ```
 
@@ -65,8 +63,9 @@ sampled_patients
 sce <- filterSCE(sce, patient_id %in% sampled_patients)
 ```
 
-Sample data to 20 000 cells for each sample
-```{r, samplingEvents}
+Sample data to n cells for each sample
+```{r, samplingEvents, eval=FALSE}
+n <- 10000
 
 ei <- metadata(sce)$experiment_info
 sample_ids <- ei$sample_id
@@ -80,7 +79,7 @@ for (id in sample_ids){
   dt <- coldata[coldata$sample_id == id,]
   indices <- rownames(dt)
   set.seed(1234)
-  sample <- as.numeric(indices[sample(length(indices), 20000, replace=FALSE)])
+  sample <- as.numeric(indices[sample(length(indices), n, replace=FALSE)])
   sampled_indices <- c(sampled_indices, sample)
 }
 
@@ -89,12 +88,12 @@ sampled_indices <- sort(sampled_indices)
 sce <- sce[,sampled_indices]
 
 # metadata experiment_info does not update when subselecting
-ei$n_cells <- rep(20000, nrow(ei))
+ei$n_cells <- rep(n, nrow(ei))
 metadata(sce)$experiment_info <- ei
 ```
 
 Cluster the filtered SingleCellExperiment and run dimensionality reduction methods:
-```{r}
+```{r, eval=FALSE}
 sce <- clusterSCE(sce) 
 
 DR_methods <- c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")
@@ -103,71 +102,94 @@ for( method in DR_methods ){
   sce <- runDimRed(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
 }
 
-#saveRDS(sce,"../data/platelets/sceFilteredClustered.rds")
+#saveRDS(sce,"../data/platelets/sceSampledCells.rds")
 
 ```
 
 
 # Comparison of Differential Marker Expression Analysis Methods
 
-```{r, markerSpecification, include=FALSE}
-is_marker <- rowData(sce)$marker_class %in% c("type","state")
-id_all_markers <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker] # type and state (but not none)
-#id_type_markers <- (rowData(sce_dual_ab)$marker_class == "type")[is_marker] # type markers
-#id_state_markers <- (rowData(sce_dual_ab)$marker_class == "state")[is_marker] # state markers
-```
-
 ## Dual Activated vs. Dual Baseline
-
-First, make the subselection of dual patients to compare activated and baseline platelets.
-# ```{r, dualAB_selection}
-# allsamples <- unique(colData(sce)$sample_id)
-# dual_ab <- grep("dual",allsamples,value=TRUE)
-# sce_dual_ab <- filterSCE(sce, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
-# ```
-
+Let's try all possible methods on the dual samples:
 ```{r}
-res <- runDS(sce = sce[, colData(sce)$dual_triple == "dual"],
+# subsett SingleCellExperiment for dual patients
+tmp <- filterSCE(sce, dual_triple == "dual")
+
+res <- runDS(sce = tmp,
       condition = "activated_baseline",
-      de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
-      k = "meta2",
-      nperm = 10,
+      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
       parallel = TRUE)
 ```
 
-# Ab hier is schon alles im runDS
-Running diffcyt methods:
-```{r, diffcyt}
-parameters <- prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsDesign = c("activated_baseline"), method = "diffcyt-DS-limma")
+Significant markers found by all methods:
+```{r}
+createVennDiagram(res)
+```
 
-#blockID <- metadata(sce_dual_ab)$experiment_info[["patient_id"]]
+Show heatmaps of the different methods:
+```{r}
+plotDiffHeatmap(tmp, rowData(res$limma$res), all=TRUE, k="all")
 
-limma_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
-                 design = parameters[["design"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-limma",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers
-                 #block_id = blockID
-                 )
+plotDiffHeatmap(tmp, rowData(res$LMM$res), all=TRUE, k="all")
 
-plotDiffHeatmap(sce_dual_ab, rowData(limma_dual_ab$res), all = T)
+plotDiffHeatmap(tmp, res$SigEMD$overall, all=TRUE, k="all")
 
-parameters <-  prepDiffExp(sce_dual_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
-
-
-LMM_dual_ab <- diffcyt::diffcyt(d_input = sce_dual_ab,
-                 formula = parameters[["formula"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-LMM",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers)
-
-plotDiffHeatmap(sce_dual_ab, rowData(LMM_dual_ab$res), all = T)
+plotDiffHeatmap(tmp, res$DEsingle, all=TRUE, k="all")
 
 ```
+
+Let's add the none markers as state markers to check their influence.
+```{r}
+rowData(tmp)$marker_class <- rowData(tmp)$marker_class[rowData(tmp)$marker_class == "none"] <- "state"
+
+res_none <- runDS(sce = tmp,
+      condition = "activated_baseline",
+      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+```
+
+Significant markers found by all methods:
+```{r}
+createVennDiagram(res_none)
+```
+
+
+Let's try to permute the labels (activated and baseline) and check the results.
+```{r}
+tmp <- filterSCE(sce, dual_triple == "dual")
+
+ei <- metadata(tmp)$experiment_info
+
+# sample A and B 
+set.seed(1234)
+condition <- as.character(ei$activated_baseline[sample(nrow(ei), nrow(ei), replace=FALSE)])
+
+# edit activated_baseline condition in experiment_info
+ei$activated_baseline <- condition
+metadata(tmp)$experiment_info <- ei
+
+# edit activated_baseline in colData (not corrected in sample name)
+coldata_condition <- rep(condition, each=10000)
+colData(tmp)$activated_baseline <- as.factor(coldata_condition)
+
+res_sampled <- runDS(sce = tmp,
+      condition = "activated_baseline",
+      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+
+createVennDiagram(res_sampled)
+
+```
+
 
 Let's try SigEMD:
 ```{r, eval=FALSE}
@@ -183,7 +205,7 @@ print(timed1)
 
 emd_result <- emd_result$all
 source("../SigEMD/plot_sig.R")
-lapply(emd_result$nonHur_gene, function(marker) plot_emd_density_sig(emd_result, marker))
+lapply(res_sampled$SigEMD$all$nonHur_gene, function(marker) plot_emd_density_sig(res_sampled$SigEMD$all, "PAR1"))
 ```
 
 
@@ -203,7 +225,6 @@ print(emd_result_allHur$emdall[emd_result$nonHur_gene, ])
 ```
 
 Let's try out DEsingle:
-
 ```{r, eval=FALSE}
 library(DEsingle)
 
@@ -223,45 +244,6 @@ results_permuted <- DEsingle::DEsingle(sce_desingle, sample(group), parallel = T
 
 results_permuted.classified <- DEtype(results = results_permuted, threshold = 0.05)
 results_permuted.classified
-```
-
-Significant markers found by all methods:
-
-```{r  dual_ab_venn}
-sign_limma <- data.frame(rowData(limma_dual_ab$res))[c("cluster_id","marker_id","p_val","p_adj")]
-sign_LMM <- data.frame(rowData(LMM_dual_ab$res))[c("cluster_id","marker_id","p_val","p_adj")]
-sign_limma$significant <- sign_limma$p_adj < 0.05
-sign_LMM$significant <- sign_LMM$p_adj < 0.05
-
-limma <- unlist(subset(sign_limma, significant==TRUE, select=c(marker_id), use.names=FALSE))
-LMM <- unlist(subset(sign_LMM, significant==TRUE, select=c(marker_id), use.names=FALSE))
-
-
-## include SigEMD and ZINB
-
-library(ggvenn)
-  
-venn <- venn.diagram(
-  x = list(limma,LMM),
-  filename = "../plots/dual_ab_venn.png",
-  category.names = c("limma","LMM"),
-  image.type = "png",
-  cex = 2.0,
-  fontfamily = "sans",
-  col=c("#99CC99", "#CC3333"),
-  #fill = c(alpha("#99CC99",0.3), alpha("#CC3333",0.3)),
-  cat.cex = 1.8,
-  cat.fontface = "bold",
-  cat.fontfamily = "sans",
-  main = paste("Limma vs. LMM"),
-  main.fontface = "bold",
-  main.fontfamily = "sans",
-  main.cex = 2.0,
-  sub = paste("P-adjusted < 0.05"),
-  sub.cex=1.5 ,
-  sub.fontfamily="sans"
-  )
-
 ```
 
 ```{r}
@@ -289,10 +271,62 @@ CATALYST::plotDiffHeatmap(x = sce_small_dual_ab,
 ```
 
 ## Triple Activated vs. Triple Baseline
+Let's try all possible methods on the triple samples:
+```{r}
+tmp <- filterSCE(sce, dual_triple == "triple")
+
+res1 <- runDS(sce = tmp,
+      condition = "activated_baseline",
+      de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+
+```
+
+Significant markers found by all methods:
+```{r}
+createVennDiagram(res1)
+```
 
 ## Dual Activated vs. Triple Activated
+Let's try all possible methods on the A samples:
+```{r}
+tmp <- filterSCE(sce, activated_baseline == "A")
+
+res2 <- runDS(sce = tmp,
+      condition = "dual_triple",
+      de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+
+```
+Significant markers found by all methods:
+```{r}
+createVennDiagram(res2)
+```
+
 
 ## Dual Baseline vs. Triple Basleline
+Let's try all possible methods on the B samples:
+```{r}
+tmp <- filterSCE(sce, activated_baseline == "B")
 
+res3 <- runDS(sce = tmp,
+      condition = "dual_triple",
+      de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+
+```
+Significant markers found by all methods:
+```{r}
+createVennDiagram(res3)
+```
 
 

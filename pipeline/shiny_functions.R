@@ -4,6 +4,7 @@ library(uwot)
 library(ggplot2)
 library(dimRed)
 library(RANN)
+library(ggvenn)
 
 ############### Preprocessing ###############
 
@@ -19,7 +20,8 @@ makeSampleSelection <- function(sce=sce, deselected_samples){
   
   return (sce)
 }
-makePatientSelection <- function(sce,deselected_patients){
+
+makePatientSelection <- function(sce, deselected_patients){
   # All patients
   all_patients <- as.character(unique(colData(sce)$patient_id))
   
@@ -32,10 +34,7 @@ makePatientSelection <- function(sce,deselected_patients){
   return (sce)
 }
 
-
-
 ############### Visualization ###############
-
 
 #run the dimensionality reduction; function either calls CATALYST::runDR or runIsomap
 runDimRed <- function(sce, dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap"), 
@@ -230,4 +229,167 @@ getBools <- function(names, contrastVars){
   return(bool)
 }
 
+
+DEsingleSCE <- function(sce, condition, k, assay="exprs", parallel=FALSE){
+  library(DEsingle)
+  
+  CATALYST:::.check_sce(sce, TRUE)
+  k <- CATALYST:::.check_k(sce, k)
+  CATALYST:::.check_cd_factor(sce, condition)
+  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
+  
+  sce_desingle <- sce
+  new_counts <- assay(sce_desingle, "exprs")
+  new_counts <- (abs(new_counts) + new_counts)/2
+  assay(sce_desingle, "counts") <- new_counts
+  set.seed(1)
+  
+  cluster_ids <- cluster_ids(sce_desingle, k)
+  res <- lapply(levels(cluster_ids), function(cluster_id) {
+    print(sprintf("calculating DEsingle for cluster %s", cluster_id))
+    
+    group <- colData(sce_desingle[, cluster_ids == cluster_id])[[condition]]
+
+    
+    results <- DEsingle::DEsingle(sce_desingle[, cluster_ids == cluster_id], group, parallel = parallel)
+    results.classified <- DEsingle::DEtype(results = results, threshold = 0.05)
+    
+    data.table::setnames(results.classified, old = c("pvalue", "pvalue.adj.FDR"), new = c("p_val", "p_adj"))
+    results.classified$cluster_id <- cluster_id
+    results.classified$marker_id <- rownames(results.classified)
+    
+    results.classified
+  })
+  
+  return(data.table::rbindlist(res))
+}
+
+runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsingle"), k = "all", parallel = TRUE, features = c("all", "type","state"), ...) {
+  de_methods <- match.arg(de_methods, several.ok = TRUE)
+  features <- match.arg(features, several.ok = FALSE)
+  
+  # if (is.null(marker)) marker <- rownames(sce)
+  # else marker <- match.arg(marker, rownames(sce), several.ok = TRUE)
+  extra_args <- list(...)
+  
+  result <- list()
+  if ("limma" %in% de_methods) {
+    message("Using limma")
+    parameters <- prepDiffExp(sce, contrastVars = c(condition), colsDesign = c(condition), method = "diffcyt-DS-limma")
+    
+    #blockID <- metadata(sce_dual_ab)$experiment_info[["patient_id"]]
+    
+    markers_to_test <- getMarkersToTest(sce,"limma",features)
+    limma_res <- diffcyt::diffcyt(d_input = sce,
+                                      design = parameters[["design"]],
+                                      contrast = parameters[["contrast"]],
+                                      analysis_type = "DS",
+                                      method_DS = "diffcyt-DS-limma",
+                                      clustering_to_use = k,
+                                      markers_to_test = markers_to_test)
+  
+    result$limma <- limma_res
+
+  }
+  if ("LMM" %in% de_methods) {
+    message("Using LMM")
+    parameters <-  prepDiffExp(sce, contrastVars = c(condition), colsFixed = c(condition), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
+    
+    markers_to_test <- getMarkersToTest(sce,"LMM",features)
+    LMM_res <- diffcyt::diffcyt(d_input = sce,
+                                    formula = parameters[["formula"]],
+                                    contrast = parameters[["contrast"]],
+                                    analysis_type = "DS",
+                                    method_DS = "diffcyt-DS-LMM",
+                                    clustering_to_use = k,
+                                    markers_to_test = markers_to_test)
+    
+    result$LMM <- LMM_res
+  }
+  if ("SigEMD" %in% de_methods) {
+    message("Using SigEMD")
+    nperm <- ifelse(is.null(extra_args$nperm), 100, extra_args$nperm)
+    
+    markers_to_test <- getMarkersToTest(sce,"SigEMD",features)
+    
+    # make subselection
+    sce <- sce[rownames(sce) %in% markers_to_test]
+    
+    SigEMD_res <- SigEMD(sce, k, condition, Hur_gene=rownames(sce), nperm=nperm, parallel=parallel)
+    SigEMD_res$overall <- data.table::rbindlist(lapply(SigEMD_res, function(x) x$emdall))
+    
+    result$SigEMD <- SigEMD_res
+  }
+  if ("DEsingle" %in% de_methods) {
+    message("Using DEsingle")
+    
+    markers_to_test <- getMarkersToTest(sce,"DEsingle",features)
+    
+    # make subselection
+    sce <- sce[rownames(sce) %in% markers_to_test]
+    
+    DEsingle_res <- DEsingleSCE(sce, condition, k, parallel=parallel)
+    
+    
+    result$DEsingle <- DEsingle_res
+  }
+  result
+}
+
+# create venn diagram of all methods that were performed in runDS
+createVennDiagram <- function(res) {
+  input_venn <- list()
+  
+  # take of each method the data table containing the pvalues
+  for (ds_method in names(res)) {
+    if (ds_method == "DEsingle") {
+      output <- res[[ds_method]]
+      result <- data.frame(output)[c("marker_id", "p_val", "p_adj")]
+    }
+    if (ds_method == "SigEMD") {
+      output <- res[[ds_method]]$overall
+      result <- data.frame(output)[c("marker_id", "p_val", "p_adj")]
+    }
+    if (ds_method %in% c("LMM", "limma")) {
+      result <-
+        data.frame(rowData(res[[ds_method]]$res))[c("marker_id", "p_val", "p_adj")]
+    }
+    result$significant <- result$p_adj < 0.05
+    significants <-
+      unlist(subset(
+        result,
+        significant == TRUE,
+        select = c(marker_id),
+        use.ames = FALSE
+      ))
+    input_venn[[ds_method]] <- significants
+  }
+  
+  venn <- ggvenn::ggvenn(input_venn, show_elements = TRUE, label_sep ="\n", fill_alpha = 0.3, set_name_size = 8, text_size = 4)
+  return(venn)
+}
+
+# get appropriate vector for each method containing the markers that want to be tested
+getMarkersToTest <- function(sce, ds_method, features){
+  if (ds_method %in% c("limma", "LMM")){
+    # vector for diffcyt methods to test on specific markers
+    is_marker <- rowData(sce)$marker_class %in% c("type","state")
+    if (features == "all"){
+      markers_to_test <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker]
+    } else if (features == "state"){
+      markers_to_test <- (rowData(sce)$marker_class == "state")[is_marker]
+    } else if (features == "type") {
+      markers_to_test <- (rowData(sce)$marker_class == "type")[is_marker]
+    }
+  } else if (ds_method %in% c("SigEMD", "DEsingle")){
+    if (features == "all"){
+      markers_to_test <- rowData(sce)[rowData(sce)$marker_class %in% c("type","state"),]$marker_name
+    } else if (features == "state"){
+      markers_to_test <- rowData(sce)[rowData(sce)$marker_class=="state",]$marker_name
+    } else if (features == "type"){
+      markers_to_test <- rowData(sce)[rowData(sce)$marker_class=="type",]$marker_name
+    }
+  }
+  return (markers_to_test)
+}
 
