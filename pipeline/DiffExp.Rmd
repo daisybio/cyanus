@@ -10,11 +10,11 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(fig.width=12, fig.height=8)
+library(data.table)
 library(CATALYST)
 library(flowCore)
 library(ggplot2)
 library(SingleCellExperiment)
-library(data.table)
 library(readxl)
 library(diffcyt)
 library(RColorBrewer)
