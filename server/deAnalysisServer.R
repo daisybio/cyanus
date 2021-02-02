@@ -1005,6 +1005,15 @@ output$deExprsCluster <- renderUI({
   }else{
     selected_marker <- markers[1]
   }
+  choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
+  choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
+  
+  choices <- as.vector(sapply(choices, function(x){
+    lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
+    return(lvls)
+  }))
+  names(choices) <- paste("only", choices)
+
   fluidRow(column(1,
                   div(dropdownButton(
                     tags$h3("Plot Options"),
@@ -1038,6 +1047,12 @@ output$deExprsCluster <- renderUI({
                       c(names(colData(reactiveVals$sce))),
                       multiple = F
                     ),
+                    selectizeInput(
+                      "deBoxSubselect",
+                      "Subselection",
+                      choices = c("No", choices), 
+                      multiple = F
+                    ),
                     circle = TRUE,
                     status = "info",
                     icon = icon("gear"),
@@ -1065,7 +1080,12 @@ output$clusterDEPlot <- renderPlot({
     k <- input$deBoxK
     facet_by <- input$deBoxFacet
   }
-  reactiveVals$pbExprsPlot <- plotPbExprs(reactiveVals$sce, 
+  sce <- isolate(reactiveVals$sce)
+  if(input$deBoxSubselect != "No"){
+    category <- isolate(reactiveVals$subselectionMap[[input$deBoxSubselect]])
+    sce <- filterSCE(sce, get(category) == input$deBoxSubselect)
+  }
+  reactiveVals$pbExprsPlot <- plotPbExprs(sce, 
               k = k, 
               features = input$deBoxFeatures, 
               color_by = input$deBoxColor, 
