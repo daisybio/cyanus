@@ -5,10 +5,23 @@ methods_height <- "40em"
 
 # checks which methods is selected and executes the diffcyt function accordingly
 call_diffcyt <- function(){
-  ei <- metadata(reactiveVals$sce)$experiment_info
-  
+  req(input$deSubselection)
   contrastVars <- isolate(input$contrastVars)
-  nr_samples <- length(levels(colData(reactiveVals$sce)$sample_id))
+  
+  subselection <- isolate(input$deSubselection)
+  sce <- isolate(reactiveVals$sce)
+  if(subselection != "No"){
+    category <- reactiveVals$subselectionMap[[subselection]]
+    if(category %in% contrastVars){
+      showNotification("You want to analyse a condition you subsetted. That is not meaningful. Try again.", type = "error")
+      return(NULL)
+    }
+    print(sprintf("only using %s from the condition %s", subselection, category))
+    sce <- filterSCE(sce, get(category) == subselection)
+  }
+  
+  ei <- metadata(sce)$experiment_info
+  nr_samples <- length(levels(colData(sce)$sample_id))
 
 
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR")){
@@ -31,11 +44,12 @@ call_diffcyt <- function(){
         conditions = toString(contrastVars),
         clustering = toString(isolate(input$deCluster)),
         trend_method = toString(isolate(input$edgeR_trendMethod)),
-        normalize = toString(isolate(input$normalizeDE))
+        normalize = toString(isolate(input$normalizeDE)), 
+        filter = subselection
       )
       
       out <- diffcyt::diffcyt(
-        d_input = reactiveVals$sce,
+        d_input = sce,
         design = design,
         contrast = contrast,
         analysis_type = reactiveVals$methodType,
@@ -52,7 +66,7 @@ call_diffcyt <- function(){
       normalize <- FALSE
     }
     if(input$blockID_voom != ""){
-      blockID <- metadata(reactiveVals$sce)$experiment_info[[input$blockID_voom]]
+      blockID <- metadata(sce)$experiment_info[[input$blockID_voom]]
     }else{
       blockID <- NULL
     }
@@ -72,10 +86,11 @@ call_diffcyt <- function(){
         conditions = toString(contrastVars),
         clustering = toString(isolate(input$deCluster)),
         block_id = toString(isolate(input$blockID_voom)),
-        normalize = toString(isolate(input$normalizeDE))
+        normalize = toString(isolate(input$normalizeDE)),
+        filter = subselection
       )
         out <- diffcyt::diffcyt(
-          d_input = reactiveVals$sce,
+          d_input = sce,
           design = design,
           contrast = contrast,
           analysis_type = reactiveVals$methodType,
@@ -87,7 +102,7 @@ call_diffcyt <- function(){
     }
   }else if (input$chosenDAMethod %in% c("diffcyt-DS-limma")){
     if(input$blockID_limma != ""){
-      blockID <- metadata(reactiveVals$sce)$experiment_info[[input$blockID_limma]]
+      blockID <- metadata(sce)$experiment_info[[input$blockID_limma]]
     }else{
       blockID <- NULL
     }
@@ -98,11 +113,11 @@ call_diffcyt <- function(){
     }
     
     markersToTest <- input$DEFeaturesIn
-    is_marker <- rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
+    is_marker <- rowData(sce)$marker_class %in% c("type", "state")
     if (input$DEMarkerToTest == "Marker by Class") {
-      markersToTest <- (rowData(reactiveVals$sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
+      markersToTest <- (rowData(sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
     }else{
-      markersToTest <- rownames(reactiveVals$sce)[is_marker] %in% markersToTest
+      markersToTest <- rownames(sce)[is_marker] %in% markersToTest
     }
     
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
@@ -122,10 +137,11 @@ call_diffcyt <- function(){
         clustering = toString(isolate(input$deCluster)),
         features = toString(isolate(input$DEFeaturesIn)),
         block_id = toString(isolate(input$blockID_limma)),
-        trend_method = toString(isolate(input$trend_limma))
+        trend_method = toString(isolate(input$trend_limma)),
+        filter = subselection
       )
       out <- diffcyt::diffcyt(
-        d_input = reactiveVals$sce,
+        d_input = sce,
         design = design,
         contrast = contrast,
         analysis_type = reactiveVals$methodType,
@@ -141,11 +157,11 @@ call_diffcyt <- function(){
     contrast <- createCustomContrastMatrix(contrastVars, diffcyt::createDesignMatrix(ei, cols_design = input$colsFixed), designMatrix = T)
     
     markersToTest <- isolate(input$DEFeaturesIn)
-    is_marker <- rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
+    is_marker <- rowData(sce)$marker_class %in% c("type", "state")
     if (input$DEMarkerToTest == "Marker by Class") {
-      markersToTest <- (rowData(reactiveVals$sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
+      markersToTest <- (rowData(sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
     }else{
-      markersToTest <- rownames(reactiveVals$sce)[is_marker] %in% markersToTest
+      markersToTest <- rownames(sce)[is_marker] %in% markersToTest
     }
     
     if(nrow(contrast) >= nr_samples){
@@ -159,11 +175,12 @@ call_diffcyt <- function(){
         random_effects = toString(isolate(input$colsRandom)),
         conditions = toString(contrastVars),
         clustering = toString(isolate(input$deCluster)),
-        features = toString(isolate(input$DEFeaturesIn))
+        features = toString(isolate(input$DEFeaturesIn)),
+        filter = subselection
       )
       
     out <- diffcyt::diffcyt(
-      d_input = reactiveVals$sce,
+      d_input = sce,
       formula = formula,
       contrast = contrast,
       analysis_type = reactiveVals$methodType,
@@ -192,10 +209,11 @@ call_diffcyt <- function(){
         random_effects = toString(isolate(input$colsRandom)),
         conditions = toString(contrastVars),
         clustering = toString(isolate(input$deCluster)),
-        normalize = toString(isolate(input$normalizeDE))
+        normalize = toString(isolate(input$normalizeDE)),
+        filter = subselection
       )
     out <- diffcyt::diffcyt(
-      d_input = reactiveVals$sce,
+      d_input = sce,
       formula = formula,
       contrast = contrast,
       analysis_type = reactiveVals$methodType,
@@ -415,6 +433,38 @@ output$contrastSelection <- renderUI({
       id = "deContrastQ",
       title = "Contrast Matrix Design",
       content = "Here, you specify the comparison of interest, i.e. the combination of model parameters to test whether they are equal to zero."
+    )
+  )
+})
+
+output$deSubselection <- renderUI({
+  choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
+  choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
+
+  map <- as.vector(sapply(choices, function(x){
+    lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
+    return(rep(x, length(lvls)))
+  }))
+
+  choices <- as.vector(sapply(choices, function(x){
+    lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
+    return(lvls)
+  }))
+  names(map) <- choices
+  names(choices) <- paste("only", choices)
+  reactiveVals$subselectionMap <- map
+  div(
+    radioButtons(
+      inputId = "deSubselection",
+      label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectQ"),
+      choices = c("No", choices), 
+      inline = T
+    ),
+    bsPopover(
+      id = "subSelectQ",
+      title = "Run differential expression on a subset of your data",
+      content = "Sometimes it might make sense to compare differential expression just in a subset of your data, e.g. you have two different treatment groups and want to investigate the effect of an activation agent separately. You can do the subselection right at the beginning (Preprocessing) or here.",
+      placement = "top"
     )
   )
 })
@@ -793,12 +843,19 @@ observeEvent(input$visExpButton,{
   output$heatmapDEPlot <- renderPlot({
     methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
     methodsDS <- c("diffcyt-DS-limma","diffcyt-DS-LMM")
+    subselection <- isolate(reactiveVals$methodsInfo[[visMethod]]$filter)
+    sce <- isolate(reactiveVals$sce)
+    
+    if(subselection != "No"){
+      category <- isolate(reactiveVals$subselectionMap[[subselection]])
+      sce <- filterSCE(sce, get(category) == subselection)
+    }
     
     if(visMethod %in% methodsDA){
-      sub <- filterSCE(reactiveVals$sce, cluster_id %in% heatmapSelection, k=deCluster)
+      sub <- filterSCE(sce, cluster_id %in% heatmapSelection, k=deCluster)
       x <- sub
     } else {
-      x <- reactiveVals$sce[rownames(reactiveVals$sce) %in% heatmapSelection, ]
+      x <- sce[rownames(sce) %in% heatmapSelection, ]
     }
     
     out <- runs[[visMethod]]
