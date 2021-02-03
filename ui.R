@@ -11,7 +11,7 @@ library(DT)
 
 sapply(list.files("ui", full.names = TRUE), source, environment())
 
-header <- dashboardHeader(title = "CyTOF Pipeline")
+header <- dashboardHeader(title = "CyTOF Pipeline", uiOutput("dashboard"))
 
 sidebar <- dashboardSidebar(uiOutput("sidebar"))
 
