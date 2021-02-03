@@ -458,6 +458,9 @@ clusterSCE <-
             verbose = TRUE,
             seed = 1)
   {
+    if (!is.null(seed)) {
+      set.seed(seed)
+    }
     stopifnot(is(x, "SingleCellExperiment"))
     stopifnot(
       is.logical(verbose),

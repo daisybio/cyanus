@@ -383,8 +383,7 @@ output$formulaSelection <- renderUI({
     bsPopover(
       id = "deFormulaFix",
       title = "Fixed effect terms for the model formula",
-      content = "Depending on the experimental design, this may include group IDs (e.g. groups for differential testing) or block IDs (e.g. patient IDs in a paired design)."
-    ),
+      content = "Fixed effects are variables that we expect will have an effect on the dependent/response variable: they’re what you call explanatory variables in a standard linear regression."),
     pickerInput(
       "colsRandom",
       choices = cols,
@@ -405,8 +404,7 @@ output$formulaSelection <- renderUI({
     bsPopover(
       id = "deFormulaRandom",
       title = "Random intercept terms for the model formula",
-      content = "Depending on the experimental design, this may include group IDs (e.g. groups for differential testing) or block IDs (e.g. patient IDs in a paired design)."
-    ),
+      content = "Random effects are usually grouping factors for which we are trying to control. Note that the golden rule is that you generally want your random effect to have at least five levels. For example if you are analysing a condition (A vs. B) on samples (patient1_A, patient1_B) belonging to the same patient (patient1), you can include patient_id as random effect."),
   )
 })
 

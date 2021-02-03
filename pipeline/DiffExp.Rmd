@@ -134,6 +134,7 @@ sce_dual <- filterSCE(sce, dual_triple == "dual")
 
 res_dual <- runDS(sce = sce_dual,
       condition = "activated_baseline",
+      random_effect = "patient_id",
       de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
       k = "all",
       features = "all",
@@ -167,6 +168,7 @@ colData(sce_dual_sampled)$activated_baseline <- as.factor(coldata_condition)
 
 res_dual_sampled <- runDS(sce = sce_dual_sampled,
       condition = "activated_baseline",
+      random_effect = "patient_id",
       de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
       k = "all",
       features = "all",
@@ -264,6 +266,7 @@ sce_triple <- filterSCE(sce, dual_triple == "triple")
 
 res_triple <- runDS(sce = sce_triple,
       condition = "activated_baseline",
+      random_effect = "patient_id",
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
       k = "all",
       features = "all",
@@ -313,5 +316,3 @@ res_b <- runDS(sce = sce_b,
 createVennDiagram(res_b)
 ```
 ```
-
-
