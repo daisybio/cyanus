@@ -30,7 +30,7 @@ source("../server/clusterFun.R")
 
 Data from human platelets of patients with chronic coronary syndrome undergoing different therapy: dual antiplatelet therapy versus triple antiplatelet therapy, before and after platelet activation with 10µm TRAP. There are files of 7 patients with triple therapy and 12 patients with dual therapy (each in two condtions).
 
-# Data Upload and Data Preprocessing
+# Data Upload
 Fcs files, as well as metadata and a panel file are given for this dataset and uploaded in this section. You just have to specify the path to your files. The Single Cell Experiment is then created using the prepData function of CATALYST. The function prepData can directly transform the marker intesities using arcsinh (inverse hyerpoblic sine) to make the distributions more symmetrix and to map them to a comparable range of expression. Recommended values for the cofactor parameter are 5 for mass cytometry (CyTOF) or 150 for fluorescence flow cytometry
 
 ```{r,eval=FALSE}
@@ -76,7 +76,6 @@ sce <-
 ```
 
 Otherwise, you can load the "sce_transformed.rds" file which already contains the transformed SingleCellExperiment.
-
 ```{r}
 path_to_rds <- "/nfs/home/students/l.arend/data/platelets/sce_transformed.rds"
 sce <- readRDS(path_to_rds)
@@ -86,6 +85,7 @@ sce <- readRDS(path_to_rds)
 #sce <- readRDS(path_to_rds)
 ```
 
+# Quality Control
 
 The shiny app also includes some simple visualization plots to verify whether the data represents what we expect, for example, whether samples that are replicates of one condition are more similar and are distinct from samples from another condition. Depending on the situation, one can then consider removing problematic markers or samples from further analysis.
 
@@ -95,7 +95,7 @@ CATALYST::plotCounts(
     group_by = "patient_id", # possible inputs: names(colData(sce))
     color_by = "dual_triple", # possible inputs: names(colData(sce))
     prop = FALSE # TRUE for stacked relative abundances, FALSE for total cell counts
-  )
+  ) 
 
 CATALYST::pbMDS(
       sce,
@@ -103,7 +103,7 @@ CATALYST::pbMDS(
       color_by = "dual_triple",
       features = "type", # possible inputs: unique(rowData(sce)$marker_class) or NULL (to use all features)
       assay = "exprs", # possible inputs: assayNames(sce)
-    )
+    ) 
 
 CATALYST::plotNRS(
       sce,
@@ -112,24 +112,11 @@ CATALYST::plotNRS(
       assay = "exprs"
     )
 
-CATALYST::plotExprs(
-      sce,
-      color_by = "activated_baseline",
-      features = "type",
-      assay = "exprs"
-    )
-
+# put it in activated vs baseline section
 CATALYST::plotExprs(
       sce,
       color_by = "activated_baseline",
       features = "state",
-      assay = "exprs"
-    )
-
-CATALYST::plotExprs(
-      sce,
-      color_by = "dual_triple",
-      features = NULL,
       assay = "exprs"
     )
 
@@ -158,7 +145,7 @@ Let's have a look at the clusters:
 ```{r}
 CATALYST::plotAbundances(sce, "meta6", group_by = "activated_baseline")
 
-CATALYST::plotAbundances(sce, "meta6", by = "cluster_id", group_by = "activated_baseline")
+#CATALYST::plotAbundances(sce, "meta6", by = "cluster_id", group_by = "activated_baseline")
 ```
 
 ```{r}
@@ -175,21 +162,21 @@ sce <- clusterSCE(sce)
 plotly::ggplotly(delta_area(sce))
 ```
 
-The clustering show no significant increase after meta9. Let's have a look at the clusters:
+The clustering show no significant increase after meta6. Let's have a look at the clusters:
 ```{r}
-CATALYST::plotAbundances(sce, "meta6", group_by = "activated_baseline")
+CATALYST::plotAbundances(sce, "meta6", group_by = "activated_baseline") +  theme(text = element_text(size=18)) 
 
-CATALYST::plotAbundances(sce, "meta6", by = "cluster_id", shape_by = "patient_id", group_by = "activated_baseline")
+#CATALYST::plotAbundances(sce, "meta6", by = "cluster_id", shape_by = "patient_id", group_by = "activated_baseline")
 ```
 
-```{r, fig.width=6, fig.height=4}
-invisible(plotStarsCustom(sce, backgroundValues = cluster_codes(sce)[["meta6"]]))
+```{r, fig.width=6, fig.height=4, eval=FALSE}
+#invisible(plotStarsCustom(sce, backgroundValues = cluster_codes(sce)[["meta6"]]))
 ```
 
 ```{r}
 CATALYST::plotClusterExprs(sce, "meta6")
 
-CATALYST::plotFreqHeatmap(sce, "meta6")
+#CATALYST::plotFreqHeatmap(sce, "meta6")
 ```
 
 Now, we can visualize the different clusters, but first we have to run the methods.
@@ -213,23 +200,7 @@ Other run options are:
 <li> k: Isomap-specific parameter. Specifies the number of neighbours for the graph constructed by isomap </li>
 
 
-First, we are performing a dimensionality reduction on the states markers for 300 cells and visualize the results.
-```{r}
-DR_methods <- c("UMAP","PCA")
-
-for( method in DR_methods ){
-  print(method)
-  sce <- runDimRed(sce, method, cells_chosen = 3000, feature_chosen = "state", assay_chosen = "exprs", scale = T, k = 3)
-}
-
-for( method in DR_methods ){
-  g <- CATALYST::plotDR(sce, dr = method, color_by = "activated_baseline", facet_by = "dual_triple")
-  print(g)
-}
-```
-
-Secondly, we are going to run the dimensionality reductions on the type markers and visualize the clusters.
-```{r}
+```{r, eval=FALSE}
 DR_methods <- c("UMAP","PCA")
 
 for( method in DR_methods ){
@@ -243,6 +214,7 @@ for( method in DR_methods ){
   print(g)
 }
 ```
+
 
 Let's check if we cluster by type, color by the expression of state markers, facetted by the conditions activated and baseline.
 ```{r}
@@ -261,12 +233,12 @@ for( method in DR_methods ){
 ```
 
 Finally, we are going to run the dimensionality reductions on all markers and show there is a difference between dual and triple.
-```{r}
+```{r, eval=FALSE}
 DR_methods <- c("UMAP","PCA")
 
 for( method in DR_methods ){
   print(method)
-  sce <- runDimRed(sce, method, cells_chosen = 1000, feature_chosen = NULL, assay_chosen = "exprs", scale = T, k = 3)
+  sce <- runDimRed(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
 }
 
 for( method in DR_methods ){
@@ -287,14 +259,18 @@ First, we have to filter the data to only dual patients.
 ```{r}
 sce_d <- filterSCE(sce, dual_triple == "dual")
 
-# ja oder nein?
+# set none markers to state in order to be able to include them in the analysis (for LMM and limma)
 rowData(sce_d)$marker_class <- rowData(sce_d)$marker_class[rowData(sce_d)$marker_class == "none"] <- "state"
 
+# change ordering of sample_ids for heatmap
+#samples <- metadata(sce_d)$experiment_info$sample_id
+#activated <- grep("A", samples, value=TRUE)
+#baseline <- grep("B", samples, value=TRUE)
+#colData(sce_d)$sample_id <- factor(colData(sce_d)$sample_id, level=c(activated, baseline), labels=c(activated,baseline))
 ```
 
 Before performing the differential marker expression analysis, the median marker expressions are plotted.
 ```{r,fig.with=12, fig.height=8}
-
 CATALYST::plotPbExprs(sce_d, k = "all", features = NULL , color_by = "activated_baseline", 
               facet_by = "antigen")
 
@@ -308,7 +284,7 @@ Finally, the differential analysis can be performed using the method limma.
 # subsett SingleCellExperiment for dual patients
 res_d <- runDS(sce = sce_d,
       condition = "activated_baseline",
-      de_methods = c("limma"),
+      de_methods = c("LMM"),
       k = "all",
       features = "all",
       markers_to_test = "all"
@@ -316,15 +292,8 @@ res_d <- runDS(sce = sce_d,
 ```
 
 Now, we can visualize that: 
-```{r,fig.with=12, fig.height=8}
-# change ordering of sample_ids for heatmap
-samples <- metadata(sce_d)$experiment_info$sample_id
-activated <- grep("A", samples, value=TRUE)
-baseline <- grep("B", samples, value=TRUE)
-colData(sce_d)$sample_id <- factor(colData(sce_d)$sample_id, level=c(activated, baseline), labels=c(activated,baseline))
-
-# levels für meta data auch ändern
-CATALYST::plotDiffHeatmap(sce_d, rowData(res_d$limma$res), all=T, col_anno = "activated_baseline", normalize = FALSE)
+```{r,fig.width=12, fig.height=8}
+CATALYST::plotDiffHeatmap(sce_d, rowData(res_d$LMM$res), all=T, col_anno = c("activated_baseline", "patient_id"), normalize = TRUE)
 ```
 
 ## Triple Activated vs. Triple Baseline
