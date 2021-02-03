@@ -1,17 +1,17 @@
 server <- function(input, output, session) {
   
-  downloadPlotFunction <- function(name, ggplotObject, width = 7, height = 7){
-    return(
-      downloadHandler(
-        filename = function(){
-          paste0(name, ".pdf")
-        },
-        content = function(file){
-          ggsave(file, plot = ggplotObject, width=width, height=height)
-        }
-      )
-    )
-  }
+  #downloadPlotFunction <- function(name, ggplotObject, width = 7, height = 7){
+  #  return(
+  #    downloadHandler(
+  #      filename = function(){
+  #        paste0(name, ".pdf")
+  #      },
+  #      content = function(file){
+  #        ggsave(file, plot = ggplotObject, width=width, height=height)
+  #      }
+  #    )
+  #  )
+  #}
   
   sortMarkerNames <- function(choices, classes, first = "type"){
     classes[classes == first] <- paste0("a", first)

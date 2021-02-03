@@ -1101,7 +1101,14 @@ output$pbExprsPlotDownload <- renderUI({
 })
 
 # function for downloading MDS plot
-output$downloadPlotPbExprs <- downloadPlotFunction("Pb_Exprs_plot", reactiveVals$pbExprsPlot, height = 10, width = 12)
+output$downloadPlotPbExprs <- downloadHandler(
+  filename = function(){
+    paste0("Pb_Exprs_plot", ".pdf")
+  },
+  content = function(file){
+    ggsave(file, plot =reactiveVals$pbExprsPlot, width=10, height=12)
+  }
+)
 
 
 

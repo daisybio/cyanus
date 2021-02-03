@@ -477,16 +477,23 @@ output$downloadPlotStar <- downloadHandler(
   }
 )
 
-output$downloadPlotAbundance <-
-  downloadPlotFunction("Population_Abundances", reactiveVals$abundanceCluster, width = 12, height = 6)
+output$downloadPlotAbundance <- downloadHandler(
+  filename = function(){
+    paste0("Population_Abundances", ".pdf")
+  },
+  content = function(file){
+    ggsave(file, plot = reactiveVals$abundanceCluster, width=12, height=6)
+  }
+)
 
-output$downloadPlotDensity <-
-  downloadPlotFunction(
-    "Cluster_Expression",
-    reactiveVals$exprsCluster,
-    width = 16,
-    height = 12
-  )
+output$downloadPlotDensity <- downloadHandler(
+  filename = function(){
+    paste0("Cluster_Expression", ".pdf")
+  },
+  content = function(file){
+    ggsave(file, plot = reactiveVals$exprsCluster, width=16, height=12)
+  }
+)
 
 output$downloadPlotFrequency <- downloadHandler(
   filename = "Cluster_Heatmap.pdf",
