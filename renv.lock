@@ -5,6 +5,10 @@
       {
         "Name": "CRAN",
         "URL": "https://cloud.r-project.org"
+      },
+      {
+        "Name": "RFORGE",
+        "URL": "https://rforge.net"
       }
     ]
   },
@@ -245,10 +249,10 @@
     },
     "Matrix": {
       "Package": "Matrix",
-      "Version": "1.3-2",
+      "Version": "1.2-18",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "ff280503079ad8623d3c4b1519b24ea2"
+      "Hash": "08588806cba69f04797dab50627428ed"
     },
     "MatrixGenerics": {
       "Package": "MatrixGenerics",
@@ -591,10 +595,10 @@
     },
     "boot": {
       "Package": "boot",
-      "Version": "1.3-26",
+      "Version": "1.3-25",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "b25485f57dee55a6190e008f66654907"
+      "Hash": "bd51734a754b6c2baf28b2d1ebc11e91"
     },
     "brio": {
       "Package": "brio",
@@ -668,10 +672,10 @@
     },
     "class": {
       "Package": "class",
-      "Version": "7.3-18",
+      "Version": "7.3-17",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "15ef288688a6919417ade6251deea2b3"
+      "Hash": "9267f5dab59a4ef44229858a142bded1"
     },
     "cli": {
       "Package": "cli",
@@ -888,14 +892,9 @@
     "emdist": {
       "Package": "emdist",
       "Version": "0.3-2",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "emdist",
-      "RemoteUsername": "s-u",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "cc68101a6606aa7f17ce43ad0cea13071c7ba7f0",
-      "Hash": "4d71b475a89457b1fb6307dd46d06bc6"
+      "Source": "Repository",
+      "Repository": "RFORGE",
+      "Hash": "f1e5a378781edabc18b7a1eab6663cdf"
     },
     "evaluate": {
       "Package": "evaluate",
@@ -991,10 +990,10 @@
     },
     "foreign": {
       "Package": "foreign",
-      "Version": "0.8-81",
+      "Version": "0.8-80",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "74628ea7a3be5ee8a7b5bb0a8e84882e"
+      "Hash": "ae1b1e15cc6ccb2bc61c0ac33e86d35f"
     },
     "formatR": {
       "Package": "formatR",
@@ -1503,10 +1502,10 @@
     },
     "nnet": {
       "Package": "nnet",
-      "Version": "7.3-15",
+      "Version": "7.3-14",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "b67ac021b3fb3a4b69d0d3c2bc049e9f"
+      "Hash": "0d87e50e11394a7151a28873637d799a"
     },
     "nnls": {
       "Package": "nnls",

@@ -257,7 +257,7 @@ SigEMD <- function(sce, k, condition, Hur_gene=NULL, binSize=NULL, nperm=100, as
       all_perms[, padjust := NULL]
       setkey(all_perms, marker_id)
       
-      res_agg <- all_perms[res_real][, .(p_val = (sum(emd >= real_emd) + 1)/(nperm + 1)), by = c("marker_id", "real_emd")]
+      res_agg <- all_perms[res_real][, .(p_val = (sum(emd >= real_emd) + 1)/(nperm + 1)), by = c("marker_id", "real_emd", "cluster_id")]
       setnames(res_agg, "real_emd", "emd")
       res_agg[, p_adj := p.adjust(p_val, "BH")]
       results$emdall <- res_agg

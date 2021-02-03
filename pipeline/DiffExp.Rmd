@@ -93,6 +93,7 @@ metadata(sce)$experiment_info <- ei
 
 Cluster the filtered SingleCellExperiment and run dimensionality reduction methods:
 ```{r, eval=FALSE}
+
 sce <- clusterSCE(sce) 
 
 DR_methods <- c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")
@@ -117,6 +118,14 @@ param <- MulticoreParam(workers = 22)
 register(param)
 ```
 
+### set none markers to state to check them too
+
+```{r}
+none_markers <- rownames(sce)[marker_classes(sce) == "none"]
+
+rowData(sce)$marker_class[marker_classes(sce) == "none"] <- "state"
+```
+
 ## Dual Activated vs. Dual Baseline
 Let's try all possible methods on the dual samples:
 ```{r}
@@ -136,7 +145,6 @@ res_dual <- runDS(sce = sce_dual,
 
 createVennDiagram(res_dual)
 ```
-
 
 Let's try to permute the labels (activated and baseline) and check the results.
 
@@ -182,36 +190,46 @@ createVennDiagram(res_dual)
 ```
 
 
+Show heatmaps of the different methods:
+```{r}
+plotDiffHeatmap(sce_dual, rowData(res_dual$limma$res), all=TRUE, k="all")
 
+plotDiffHeatmap(sce_dual, rowData(res_dual$LMM$res), all=TRUE, k="all")
+
+plotDiffHeatmap(sce_dual, res_dual$SigEMD$overall, all=TRUE, k="all")
+
+plotDiffHeatmap(sce_dual, res_dual$DEsingle, all=TRUE, k="all")
+
+```
 
 
 Let's check the difference between running SigEMD with or without logistic regression:
 
-```{r, eval=FALSE}
-timed1 <- system.time(emd_result <- SigEMD(sce_dual_ab, "all", "activated_baseline", nperm=100, parallel=TRUE))
+```{r, eval = FALSE}
+timed1 <- system.time(emd_result <- SigEMD(sce_dual, "all", "activated_baseline", nperm=100, parallel=TRUE, permute_samples = TRUE))
 #     user   system  elapsed 
 # 4346.330 1598.441 2182.108 
 print(timed1)
 
 emd_result <- emd_result$all
 source("../SigEMD/plot_sig.R")
-lapply(res_sampled$SigEMD$all$nonHur_gene, function(marker) plot_emd_density_sig(res_sampled$SigEMD$all, marker))
+lapply(state_markers(sce_dual), function(marker) plot_emd_density_sig(emd_result_allHur, marker))
 ```
 
 
-```{r, eval=FALSE}
+```{r, eval = FALSE}
 # now check if what happens if we skip the logistic regression
-timed <- system.time(emd_result_allHur <- SigEMD(sce_dual_ab, "all", "activated_baseline", Hur_gene=rownames(sce_dual_ab), nperm=100, parallel=TRUE))
+timed <- system.time(emd_result_allHur <- SigEMD(sce_dual, "all", "activated_baseline", Hur_gene=rownames(sce_dual), nperm=100, parallel=TRUE, permute_samples = TRUE))
 print(timed)
 emd_result_allHur <- emd_result_allHur$all
-lapply(state_markers(sce_dual_ab), function(marker) plot_emd_density_sig(emd_result, marker))
+lapply(emd_result$nonHur_gene, function(marker) plot_emd_density_sig(emd_result, marker))
 ```
 
 
-```{r, eval=FALSE}
-# How much did the zeros contributed?
-print(emd_result$emdall[emd_result$nonHur_gene, ])
-print(emd_result_allHur$emdall[emd_result$nonHur_gene, ])
+```{r, eval = FALSE}
+# How much did the zeros contribute?
+print(emd_result$emdall[marker_id %in% emd_result$nonHur_gene, ])
+print(emd_result_allHur$emdall[marker_id %in% emd_result$nonHur_gene, ])
 ```
 
 <!-- Interesting about DEsingle: permuting per event gives less DE markers. -->
@@ -249,7 +267,8 @@ res_triple <- runDS(sce = sce_triple,
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
       k = "all",
       features = "all",
-      nperm = 100,
+      nperm = 200,
+      permute_samples = TRUE,
       parallel = TRUE)
 
 # significant markers found by all methods:
@@ -267,7 +286,8 @@ res_a <- runDS(sce = sce_a,
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
       k = "all",
       features = "all",
-      nperm = 100,
+      nperm = 200,
+      permute_samples = TRUE,
       parallel = TRUE)
 
 # Significant markers found by all methods:
@@ -285,7 +305,8 @@ res_b <- runDS(sce = sce_b,
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
       k = "all",
       features = "all",
-      nperm = 100,
+      nperm = 200,
+      permute_samples = TRUE,
       parallel = TRUE)
 
 # Significant markers found by all methods:
