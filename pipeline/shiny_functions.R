@@ -116,7 +116,7 @@ source("../server/clusterFun.R")
 
 ############### Differential Expression ###############
 
-prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom,
+prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom=NULL,
                         method = c( "diffcyt-DA-edgeR", "diffcyt-DA-voom","diffcyt-DA-GLMM", "diffcyt-DS-limma", "diffcyt-DS-LMM") ){
   match.arg(method)
   parameters <- list()
@@ -367,12 +367,10 @@ DEsingleSCE <- function(sce, condition, k, assay="exprs", parallel=FALSE){
   return(data.table::rbindlist(res))
 }
 
-runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsingle"), k = "all", parallel = TRUE, features = c("all", "type","state"), ...) {
+runDS <- function(sce, condition, random_effect = NULL, de_methods = c("limma", "LMM", "SigEMD", "DEsingle"), k = "all", parallel = TRUE, features = c("all", "type","state"), ...) {
   de_methods <- match.arg(de_methods, several.ok = TRUE)
   features <- match.arg(features, several.ok = FALSE)
   
-  # if (is.null(marker)) marker <- rownames(sce)
-  # else marker <- match.arg(marker, rownames(sce), several.ok = TRUE)
   extra_args <- list(...)
   
   result <- list()
@@ -396,7 +394,7 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
   }
   if ("LMM" %in% de_methods) {
     message("Using LMM")
-    parameters <-  prepDiffExp(sce, contrastVars = c(condition), colsFixed = c(condition), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
+    parameters <-  prepDiffExp(sce, contrastVars = c(condition), colsFixed = c(condition), colsRandom=c(random_effect), method = "diffcyt-DS-LMM")
     
     markers_to_test <- getMarkersToTest(sce,"LMM",features)
     LMM_res <- diffcyt::diffcyt(d_input = sce,
