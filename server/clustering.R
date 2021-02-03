@@ -425,7 +425,7 @@ output$clusterDensitiyDownload <- renderUI({
 
 output$clusterHeatmapDownload <- renderUI({
   req(reactiveVals$heatmapCluster)
-  
+  library(ComplexHeatmap)
   downloadButton("downloadPlotFrequency", "Download Plot")
 })
 
@@ -478,7 +478,7 @@ output$downloadPlotStar <- downloadHandler(
 )
 
 output$downloadPlotAbundance <-
-  downloadPlotFunction("Population_Abundances", reactiveVals$abundanceCluster)
+  downloadPlotFunction("Population_Abundances", reactiveVals$abundanceCluster, width = 12, height = 6)
 
 output$downloadPlotDensity <-
   downloadPlotFunction(

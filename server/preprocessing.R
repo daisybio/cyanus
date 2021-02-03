@@ -248,7 +248,7 @@ plotPreprocessing <- function(sce) {
   })
   
   # function for downloading count plot
-  output$downloadPlotCounts <- downloadPlotFunction("Counts_Plot", reactiveVals$countsPlot)
+  output$downloadPlotCounts <- downloadPlotFunction("Counts_Plot", reactiveVals$countsPlot, width = 12, height = 6)
   
   ## MDS 
   
@@ -316,7 +316,7 @@ plotPreprocessing <- function(sce) {
   })
   
   # function for downloading MDS plot
-  output$downloadPlotMDS <- downloadPlotFunction("MDS_Plot", reactiveVals$mdsPlot)
+  output$downloadPlotMDS <- downloadPlotFunction("MDS_Plot", reactiveVals$mdsPlot, width = 16, height = 11)
   
   ## NRS
   
@@ -379,7 +379,7 @@ plotPreprocessing <- function(sce) {
   })
   
   # function for downloading NRS plot
-  output$downloadPlotNRS <- downloadPlotFunction("NRS_Plot", reactiveVals$nrsPlot)
+  output$downloadPlotNRS <- downloadPlotFunction("NRS_Plot", reactiveVals$nrsPlot, width = 12, height = 6)
   
   ## Exprs
 
@@ -442,7 +442,7 @@ plotPreprocessing <- function(sce) {
   })
   
   # function for downloading exprs plot
-  output$downloadPlotExprs <- downloadPlotFunction("Expr_Plot", reactiveVals$exprsPlot)
+  output$downloadPlotExprs <- downloadPlotFunction("Expr_Plot", reactiveVals$exprsPlot, width = 14, height = 9)
   
 
   ## Exprs Heatmap
@@ -505,6 +505,7 @@ plotPreprocessing <- function(sce) {
   # ui for download button
   output$exprsHeatmapPlotDownload <- renderUI({
     req(reactiveVals$exprsPlotHeatmap)
+    library(ComplexHeatmap)
     downloadButton("downloadPlotExprsHeatmap", "Download Plot")
   })
   

@@ -1101,7 +1101,7 @@ output$pbExprsPlotDownload <- renderUI({
 })
 
 # function for downloading MDS plot
-output$downloadPlotPbExprs <- downloadPlotFunction("Pb_Exprs_plot", reactiveVals$pbExprsPlot)
+output$downloadPlotPbExprs <- downloadPlotFunction("Pb_Exprs_plot", reactiveVals$pbExprsPlot, height = 10, width = 12)
 
 
 

@@ -1,7 +1,7 @@
 shinyjs::hide("visPlotBox")
 
 output$downloadPlot <-
-  downloadPlotFunction(reactiveVals$lastMethod, reactiveVals$lastPlot)
+  downloadPlotFunction(isolate(reactiveVals$lastMethod), isolate(reactiveVals$lastPlot), width = 14, height = 11)
 
 observeEvent(input$visTabs, {
   if (input$visTabs == "expressionTab") {
