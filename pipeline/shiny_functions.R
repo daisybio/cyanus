@@ -112,7 +112,6 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
 
 ############### Clustering ###############
 
-
 source("../server/clusterFun.R")
 
 ############### Differential Expression ###############
@@ -123,14 +122,19 @@ prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom,
   parameters <- list()
   parameters[["ei"]] <- metadata(sce)$experiment_info
   
-  if (method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DS-limma")) {
+  if(method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DS-limma")){
     
     parameters[["design"]] <- diffcyt::createDesignMatrix(parameters[["ei"]], cols_design = colsDesign)
     parameters[["contrast"]] <- createCustomContrastMatrix(sce, contrastVars, parameters[["design"]], designMatrix = T)
     
-  }else{
+  }else if(method == "diffcyt-DS-LMM"){
     parameters[["formula"]] <- diffcyt::createFormula(parameters[["ei"]], cols_fixed = colsFixed, cols_random = colsRandom)
     parameters[["contrast"]] <- createCustomContrastMatrix(sce, contrastVars, diffcyt::createDesignMatrix(parameters[["ei"]], cols_design = colsFixed), designMatrix = T)
+  }else{
+    
+    parameters[["formula"]] <- diffcyt::createFormula(parameters[["ei"]], cols_fixed = colsFixed, cols_random = colsRandom)
+    parameters[["contrast"]] <- createCustomContrastMatrix(sce, contrastVars, colsFixed, designMatrix = F)
+    
   }
   return(parameters) 
 }
@@ -165,7 +169,7 @@ createCustomContrastMatrix <- function(sce, contrastVars, matrix, designMatrix =
     bool <- getBools(matrix, contrastVars)
     names(bool) <- matrix
     contrast <- unlist(lapply(names(lvlList), function(x){
-      return( c( 0, rep(bool[x], length(lvlList[[x]]) - 1 )) ) 
+      return( c( 0, rep(bool[x], length(lvlList[[x]]) -1 )) ) 
     }))
     print(contrast)
     return(createContrast(unname(contrast)))
@@ -492,5 +496,4 @@ getMarkersToTest <- function(sce, ds_method, features){
   }
   return (markers_to_test)
 }
-
 
