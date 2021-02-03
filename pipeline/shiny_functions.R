@@ -112,50 +112,7 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
 
 ############### Clustering ###############
 
-SigEMD <- function(sce, k, condition, Hur_gene=NULL, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
-  library(aod)
-  library(arm)
-  library(fdrtool)
-  library(lars)
-  library(emdist)
-  library(data.table)
-  source("../SigEMD/FunImpute.R")
-  source("../SigEMD/SigEMDHur.R")
-  source("../SigEMD/SigEMDnonHur.R")
-  source("../SigEMD/plot_sig.R")
-  
-  set.seed(1)
-  
-  CATALYST:::.check_sce(sce, TRUE)
-  k <- CATALYST:::.check_k(sce, k)
-  CATALYST:::.check_cd_factor(sce, condition)
-  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
-  
-  
-  cluster_ids <- cluster_ids(sce, k)
-  res <- lapply(levels(cluster_ids), function(cluster_id) {
-    print(sprintf("calculating SigEMD for cluster %s", cluster_id))
-    data <- assay(sce[, cluster_ids == cluster_id], assay)
-    
-    
-    data <- dataclean((abs(data)+data)/2)
-    colnames(data) <- as.character(seq.int(to = ncol(data)))
-    
-    condition_cluster <- colData(sce[, cluster_ids == cluster_id])[[condition]]
-    names(condition_cluster) <- colnames(data)
-    
-    results <- calculate_single(data =  data,condition =  condition_cluster,Hur_gene = Hur_gene, binSize, nperm=nperm, parallel = parallel)
-    
-    results$cluster_id <- cluster_id
-    
-    results
-  })
-  
-  names(res) <- levels(cluster_ids)
-  
-  return(res)
-}
-
+source("../server/clusterFun.R")
 
 ############### Differential Expression ###############
 
@@ -228,6 +185,152 @@ getBools <- function(names, contrastVars){
   bool <- as.numeric(bool)
   return(bool)
 }
+
+SigEMD <- function(sce, k, condition, Hur_gene=NULL, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE, permute_samples=FALSE) {
+  library(aod)
+  library(arm)
+  library(fdrtool)
+  library(lars)
+  library(emdist)
+  library(data.table)
+  source("../SigEMD/FunImpute.R")
+  source("../SigEMD/SigEMDHur.R")
+  source("../SigEMD/SigEMDnonHur.R")
+  source("../SigEMD/plot_sig.R")
+  
+  set.seed(1)
+  
+  CATALYST:::.check_sce(sce, TRUE)
+  k <- CATALYST:::.check_k(sce, k)
+  CATALYST:::.check_cd_factor(sce, condition)
+  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
+  
+  
+  cluster_ids <- cluster_ids(sce, k)
+  res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
+    print(sprintf("calculating SigEMD for cluster %s", curr_cluster_id))
+    
+    sce_cluster <- filterSCE(sce, cluster_id == curr_cluster_id, k = k)
+    data <- assay(sce_cluster, assay)
+    
+    
+    data <- dataclean((abs(data)+data)/2)
+    colnames(data) <- as.character(seq.int(to = ncol(data)))
+    
+    condition_cluster <- colData(sce_cluster)[[condition]]
+    names(condition_cluster) <- colnames(data)
+    results <- calculate_single(data =  data,condition =  condition_cluster,Hur_gene = Hur_gene, binSize, nperm=ifelse(permute_samples, 1, nperm), parallel = parallel)
+    
+    results$emdall <- as.data.frame(results$emdall)
+    data.table::setnames(results$emdall, old = c("pvalue", "padjust"), new = c("p_val", "p_adj"))
+    results$emdall$cluster_id <- curr_cluster_id
+    results$emdall$marker_id <- rownames(results$emdall)
+    
+    if (permute_samples) {
+      # gather real result
+      res_real <- as.data.table(results$emdall)[, .(real_emd = emd, marker_id, cluster_id)]
+      setkey(res_real, marker_id)
+      
+      # permute samplewise
+      used_permutations <- list()
+      used_permutations[[nperm + 1]] <- metadata(sce_cluster)$experiment_info[[condition]]
+      all_results <- list()
+      ei <- metadata(sce_cluster)$experiment_info
+      
+      for (i in 1:nperm){
+        message(sprintf("Permutation number: %d", i))
+        
+        # sample condition
+        set.seed(i)
+        repeat {
+          condition_permutation <- sample(ei[[condition]])
+          if (Position(function(x) identical(x, condition_permutation), used_permutations, nomatch = 0) == 0) {
+            used_permutations[[i]] <- condition_permutation
+            break
+          }
+        }
+        
+        condition_permutation_cells <- rep(condition_permutation, times=ei$n_cells)
+        names(condition_permutation_cells) <- colnames(data)
+        
+        all_results[[i]] <- as.data.frame(calculate_single(data =  data,condition =  condition_permutation_cells,Hur_gene = Hur_gene, binSize, nperm=1, parallel = parallel)$emdall)
+        
+      }
+      all_perms <- rbindlist(lapply(all_results, as.data.table, keep.rownames = "marker_id"), idcol = "permutation")
+      all_perms[, pvalue := NULL]
+      all_perms[, padjust := NULL]
+      setkey(all_perms, marker_id)
+      
+      res_agg <- all_perms[res_real][, .(p_val = (sum(emd >= real_emd) + 1)/(nperm + 1)), by = c("marker_id", "real_emd", "cluster_id")]
+      setnames(res_agg, "real_emd", "emd")
+      res_agg[, p_adj := p.adjust(p_val, "BH")]
+      results$emdall <- res_agg
+      
+    }
+      
+    
+    
+    results
+  })
+  
+  names(res) <- levels(cluster_ids)
+  
+  return(res)
+}
+
+
+# SigEMD_perm_per_sample <- function(sce) {
+#   
+#   res_real <- SigEMD()
+#   res_real <- res_real$all$emdall[, .(real_emd = emd, marker_id)]
+#   setkey(res_real, marker_id)
+#   res_real
+#   
+#   sce_dual_sampled <- sce_dual
+#   
+#   nperm <- 100
+#   used_permutations <- list()
+#   used_permutations[[nperm + 1]] <- metadata(sce_dual_sampled)$experiment_info$activated_baseline
+#   all_results <- list()
+#   
+#   for (i in 1:nperm){
+#     ei <- metadata(sce_dual_sampled)$experiment_info
+#     
+#     # sample A and B
+#     set.seed(i)
+#     repeat {
+#       condition <- sample(ei$activated_baseline)
+#       if (Position(function(x) identical(x, condition), used_permutations, nomatch = 0) == 0) {
+#         used_permutations[[i]] <- condition
+#         break
+#       }
+#     }
+#     
+#     # edit activated_baseline condition in experiment_info
+#     ei$activated_baseline <- condition
+#     metadata(sce_dual_sampled)$experiment_info <- ei
+#     
+#     # edit activated_baseline in colData (not corrected in sample name)
+#     coldata_condition <- rep(condition, times=ei$n_cells)
+#     colData(sce_dual_sampled)$activated_baseline <- as.factor(coldata_condition)
+#     
+#     all_results[[i]] <- SigEMD(sce = sce_dual_sampled,
+#                                k = "all",
+#                                condition = "activated_baseline",
+#                                Hur_gene=rownames(sce_dual_sampled),
+#                                nperm = 1,
+#                                parallel = TRUE)
+#     
+#   }
+#   all_perms <- rbindlist(lapply(all_results, function(x) x$all$emd), idcol = "permutation")
+#   all_perms[, p_val := NULL]
+#   all_perms[, p_adj := NULL]
+#   setkey(all_perms, marker_id)
+#   
+#   res_agg <- all_perms[res_dual_real][, .(p_val = (sum(emd >= real_emd) + 1)/(nperm + 1)), by = marker_id]
+#   res_agg[, p_adj := p.adjust(p_val, "BH")]
+#   res_agg[order(p_adj)]
+# }
 
 
 DEsingleSCE <- function(sce, condition, k, assay="exprs", parallel=FALSE){
@@ -309,13 +412,14 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
   if ("SigEMD" %in% de_methods) {
     message("Using SigEMD")
     nperm <- ifelse(is.null(extra_args$nperm), 100, extra_args$nperm)
+    permute_samples <- ifelse(is.null(extra_args$permute_samples), FALSE, extra_args$permute_samples)
     
     markers_to_test <- getMarkersToTest(sce,"SigEMD",features)
     
     # make subselection
-    sce <- sce[rownames(sce) %in% markers_to_test]
+    sce_SigEMD <- filterSCE(sce, marker_name %in% markers_to_test)
     
-    SigEMD_res <- SigEMD(sce, k, condition, Hur_gene=rownames(sce), nperm=nperm, parallel=parallel)
+    SigEMD_res <- SigEMD(sce_SigEMD, k, condition, Hur_gene=rownames(sce_SigEMD), nperm=nperm, parallel=parallel, permute_samples=permute_samples)
     SigEMD_res$overall <- data.table::rbindlist(lapply(SigEMD_res, function(x) x$emdall))
     
     result$SigEMD <- SigEMD_res
@@ -326,9 +430,9 @@ runDS <- function(sce, condition, de_methods = c("limma", "LMM", "SigEMD", "DEsi
     markers_to_test <- getMarkersToTest(sce,"DEsingle",features)
     
     # make subselection
-    sce <- sce[rownames(sce) %in% markers_to_test]
+    sce_DEsingle <- filterSCE(sce, marker_name %in% markers_to_test)
     
-    DEsingle_res <- DEsingleSCE(sce, condition, k, parallel=parallel)
+    DEsingle_res <- DEsingleSCE(sce_DEsingle, condition, k, parallel=parallel)
     
     
     result$DEsingle <- DEsingle_res

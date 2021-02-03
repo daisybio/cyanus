@@ -288,7 +288,7 @@ calculate_emd_gene <- function(vec, outcomes, sample_names, binSize) {
 
 # computes pairwise EMD
 .emd_gene_pairwise <- function(vec, idxA, idxB, binSize) {
-  if (is.null(binSize)) binSize <- 3 * 2 * IQR(vec[vec!=0]) / length(vec[vec!=0])^(1/3)
+  if (is.null(binSize)) binSize <- 2 * IQR(vec[vec!=0]) / length(vec[vec!=0])^(1/3)
   dataA <- vec[idxA]
   dataB <- vec[idxB]
   

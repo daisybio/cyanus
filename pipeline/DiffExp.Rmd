@@ -23,13 +23,12 @@ library(futile.logger)
 set.seed(1234)
 
 source("shiny_functions.R")
-source("../server/clusterFun.R")
 ```
 
 # Upload Data, Preprocessing and Clustering
 If you don't want to perform the reduction of the data (selection of patients, sampling of cells), clustering, and the visualization methods, you can simply skip those steps and load the data here. You can then directly pass to the comparison of the differential marker expression analysis methods.
 ```{r}
-path_to_rds <- "/nfs/home/students/l.arend/data/platelets/sceSampledCellsClustered.rds"
+path_to_rds <- "../data/platelets/sceSampledCellsClustered.rds"
 sce <- readRDS(path_to_rds)
 ```
 
@@ -94,6 +93,7 @@ metadata(sce)$experiment_info <- ei
 
 Cluster the filtered SingleCellExperiment and run dimensionality reduction methods:
 ```{r, eval=FALSE}
+
 sce <- clusterSCE(sce) 
 
 DR_methods <- c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")
@@ -109,224 +109,209 @@ for( method in DR_methods ){
 
 # Comparison of Differential Marker Expression Analysis Methods
 
-## Dual Activated vs. Dual Baseline
-Let's try all possible methods on the dual samples:
+### Register Parallel Backend
+
 ```{r}
-# subsett SingleCellExperiment for dual patients
-tmp <- filterSCE(sce, dual_triple == "dual")
-
-res <- runDS(sce = tmp,
-      condition = "activated_baseline",
-      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
-      k = "all",
-      features = "all",
-      nperm = 100,
-      parallel = TRUE)
-```
-
-Significant markers found by all methods:
-```{r}
-createVennDiagram(res)
-```
-
-Show heatmaps of the different methods:
-```{r}
-plotDiffHeatmap(tmp, rowData(res$limma$res), all=TRUE, k="all")
-
-plotDiffHeatmap(tmp, rowData(res$LMM$res), all=TRUE, k="all")
-
-plotDiffHeatmap(tmp, res$SigEMD$overall, all=TRUE, k="all")
-
-plotDiffHeatmap(tmp, res$DEsingle, all=TRUE, k="all")
-
-```
-
-Let's add the none markers as state markers to check their influence.
-```{r}
-rowData(tmp)$marker_class <- rowData(tmp)$marker_class[rowData(tmp)$marker_class == "none"] <- "state"
-
-res_none <- runDS(sce = tmp,
-      condition = "activated_baseline",
-      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
-      k = "all",
-      features = "all",
-      nperm = 100,
-      parallel = TRUE)
-```
-
-Significant markers found by all methods:
-```{r}
-createVennDiagram(res_none)
-```
-
-
-Let's try to permute the labels (activated and baseline) and check the results.
-```{r}
-tmp <- filterSCE(sce, dual_triple == "dual")
-
-ei <- metadata(tmp)$experiment_info
-
-# sample A and B 
-set.seed(1234)
-condition <- as.character(ei$activated_baseline[sample(nrow(ei), nrow(ei), replace=FALSE)])
-
-# edit activated_baseline condition in experiment_info
-ei$activated_baseline <- condition
-metadata(tmp)$experiment_info <- ei
-
-# edit activated_baseline in colData (not corrected in sample name)
-coldata_condition <- rep(condition, each=10000)
-colData(tmp)$activated_baseline <- as.factor(coldata_condition)
-
-res_sampled <- runDS(sce = tmp,
-      condition = "activated_baseline",
-      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
-      k = "all",
-      features = "all",
-      nperm = 100,
-      parallel = TRUE)
-
-createVennDiagram(res_sampled)
-
-```
-
-
-Let's try SigEMD:
-```{r, eval=FALSE}
 library(BiocParallel)
 # Set the parameters and register the back-end to be used
 param <- MulticoreParam(workers = 22)
 register(param)
+```
 
-timed1 <- system.time(emd_result <- SigEMD(sce_dual_ab, "all", "activated_baseline", nperm=100, parallel=TRUE))
+### set none markers to state to check them too
+
+```{r}
+none_markers <- rownames(sce)[marker_classes(sce) == "none"]
+
+rowData(sce)$marker_class[marker_classes(sce) == "none"] <- "state"
+```
+
+## Dual Activated vs. Dual Baseline
+Let's try all possible methods on the dual samples:
+```{r}
+# subsett SingleCellExperiment for dual patients
+sce_dual <- filterSCE(sce, dual_triple == "dual")
+
+res_dual <- runDS(sce = sce_dual,
+      condition = "activated_baseline",
+      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+
+
+# significant markers found by all methods:
+
+createVennDiagram(res_dual)
+```
+
+Let's try to permute the labels (activated and baseline) and check the results.
+
+```{r}
+sce_dual_sampled <- sce_dual
+
+ei <- metadata(sce_dual_sampled)$experiment_info
+
+# sample A and B 
+set.seed(1234)
+condition <- sample(ei$activated_baseline)
+
+# edit activated_baseline condition in experiment_info
+ei$activated_baseline <- condition
+metadata(sce_dual_sampled)$experiment_info <- ei
+
+# edit activated_baseline in colData (not corrected in sample name)
+coldata_condition <- rep(condition, times=ei$n_cells)
+colData(sce_dual_sampled)$activated_baseline <- as.factor(coldata_condition)
+
+res_dual_sampled <- runDS(sce = sce_dual_sampled,
+      condition = "activated_baseline",
+      de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
+      k = "all",
+      features = "all",
+      nperm = 100,
+      parallel = TRUE)
+
+createVennDiagram(res_dual_sampled)
+
+```
+
+Something is fishy with SigEMD and DEsingle. 
+
+Let's permute labels per sample opposed to per event (what SigEMD does internally):
+
+```{r}
+res_perm_samples <- SigEMD(sce_dual, "all", "activated_baseline", Hur_gene = rownames(sce_dual), nperm = 100, parallel = TRUE, permute_samples = TRUE)
+res_perm_samples$overall <- data.table::rbindlist(lapply(res_perm_samples, function(x) x$emdall))
+res_dual$SigEMD <- res_perm_samples
+
+createVennDiagram(res_dual)
+```
+
+
+Show heatmaps of the different methods:
+```{r}
+plotDiffHeatmap(sce_dual, rowData(res_dual$limma$res), all=TRUE, k="all")
+
+plotDiffHeatmap(sce_dual, rowData(res_dual$LMM$res), all=TRUE, k="all")
+
+plotDiffHeatmap(sce_dual, res_dual$SigEMD$overall, all=TRUE, k="all")
+
+plotDiffHeatmap(sce_dual, res_dual$DEsingle, all=TRUE, k="all")
+
+```
+
+
+Let's check the difference between running SigEMD with or without logistic regression:
+
+```{r, eval = FALSE}
+timed1 <- system.time(emd_result <- SigEMD(sce_dual, "all", "activated_baseline", nperm=100, parallel=TRUE, permute_samples = TRUE))
 #     user   system  elapsed 
 # 4346.330 1598.441 2182.108 
 print(timed1)
 
 emd_result <- emd_result$all
 source("../SigEMD/plot_sig.R")
-lapply(res_sampled$SigEMD$all$nonHur_gene, function(marker) plot_emd_density_sig(res_sampled$SigEMD$all, "PAR1"))
+lapply(state_markers(sce_dual), function(marker) plot_emd_density_sig(emd_result_allHur, marker))
 ```
 
 
-```{r, eval=FALSE}
+```{r, eval = FALSE}
 # now check if what happens if we skip the logistic regression
-timed <- system.time(emd_result_allHur <- SigEMD(sce_dual_ab, "all", "activated_baseline", Hur_gene=rownames(sce_dual_ab), nperm=100, parallel=TRUE))
+timed <- system.time(emd_result_allHur <- SigEMD(sce_dual, "all", "activated_baseline", Hur_gene=rownames(sce_dual), nperm=100, parallel=TRUE, permute_samples = TRUE))
 print(timed)
 emd_result_allHur <- emd_result_allHur$all
-lapply(state_markers(sce_dual_ab), function(marker) plot_emd_density_sig(emd_result, marker))
+lapply(emd_result$nonHur_gene, function(marker) plot_emd_density_sig(emd_result, marker))
 ```
 
 
-```{r, eval=FALSE}
-# How much was contributed from the zeros?
-print(emd_result$emdall[emd_result$nonHur_gene, ])
-print(emd_result_allHur$emdall[emd_result$nonHur_gene, ])
+```{r, eval = FALSE}
+# How much did the zeros contribute?
+print(emd_result$emdall[marker_id %in% emd_result$nonHur_gene, ])
+print(emd_result_allHur$emdall[marker_id %in% emd_result$nonHur_gene, ])
 ```
 
-Let's try out DEsingle:
-```{r, eval=FALSE}
-library(DEsingle)
+<!-- Interesting about DEsingle: permuting per event gives less DE markers. -->
 
-sce_desingle <- sce_dual_ab
-new_counts <- assay(sce_desingle, "exprs")
-new_counts <- (abs(new_counts)+new_counts)/2
-assay(sce_desingle, "counts") <- new_counts
+<!-- ```{r, eval=FALSE} -->
+<!-- library(DEsingle) -->
 
-group <- colData(sce_dual_ab)[["activated_baseline"]]
+<!-- sce_desingle <- sce_dual_ab -->
+<!-- new_counts <- assay(sce_desingle, "exprs") -->
+<!-- new_counts <- (abs(new_counts)+new_counts)/2 -->
+<!-- assay(sce_desingle, "counts") <- new_counts -->
 
-results <- DEsingle::DEsingle(sce_desingle, group, parallel = TRUE)
+<!-- group <- colData(sce_dual_ab)[["activated_baseline"]] -->
 
-results.classified <- DEtype(results = results, threshold = 0.05)
-results.classified
+<!-- results <- DEsingle::DEsingle(sce_desingle, group, parallel = TRUE) -->
 
-results_permuted <- DEsingle::DEsingle(sce_desingle, sample(group), parallel = TRUE)
+<!-- results.classified <- DEtype(results = results, threshold = 0.05) -->
+<!-- results.classified -->
 
-results_permuted.classified <- DEtype(results = results_permuted, threshold = 0.05)
-results_permuted.classified
-```
+<!-- set.seed(1234) -->
+<!-- results_permuted <- DEsingle::DEsingle(sce_desingle, sample(group), parallel = TRUE) -->
 
-```{r}
-sce_small <- readRDS("../data/platelets_small/sce.rds")
-is_marker <- rowData(sce_small)$marker_class %in% c("type","state")
-id_all_markers <- (rowData(sce_small)$marker_class %in% c("type","state"))[is_marker] # type and state (but not none)
-allsamples <- unique(colData(sce_small)$sample_id)
-dual_ab <- grep("dual",allsamples,value=TRUE)
-sce_small_dual_ab <- filterSCE(sce_small, sample_id %in% dual_ab) # not using makeSampleSelection dual_ab are the including samples
-parameters <-  prepDiffExp(sce = sce_small_dual_ab, contrastVars = c("activated_baseline"), colsFixed = c("activated_baseline"), colsRandom=c("patient_id"), method = "diffcyt-DS-LMM")
-LMM_dual_ab <- diffcyt::diffcyt(d_input = sce_small_dual_ab,
-                 formula = parameters[["formula"]],
-                 contrast = parameters[["contrast"]],
-                 analysis_type = "DS",
-                 method_DS = "diffcyt-DS-LMM",
-                 clustering_to_use = "all",
-                 markers_to_test = id_all_markers)
-data.table::as.data.table(diffcyt::topTable(LMM_dual_ab$res, all=TRUE))
-sign_LMM <- data.frame(rowData(LMM_dual_ab$res))[c("cluster_id","marker_id","p_val","p_adj")]
-sign_LMM$significant <- sign_LMM$p_adj < 0.05
-LMM <- unlist(subset(sign_LMM, significant==TRUE, select=c(marker_id), use.names=FALSE))
-CATALYST::plotDiffHeatmap(x = sce_small_dual_ab,
-                          y = rowData(LMM_dual_ab$res), 
-                          all = T)
-```
+<!-- results_permuted.classified <- DEtype(results = results_permuted, threshold = 0.05) -->
+<!-- results_permuted.classified -->
+<!-- ``` -->
+
 
 ## Triple Activated vs. Triple Baseline
 Let's try all possible methods on the triple samples:
 ```{r}
-tmp <- filterSCE(sce, dual_triple == "triple")
+sce_triple <- filterSCE(sce, dual_triple == "triple")
 
-res1 <- runDS(sce = tmp,
+res_triple <- runDS(sce = sce_triple,
       condition = "activated_baseline",
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
       k = "all",
       features = "all",
-      nperm = 100,
+      nperm = 200,
+      permute_samples = TRUE,
       parallel = TRUE)
 
+# significant markers found by all methods:
+createVennDiagram(res_triple)
 ```
 
-Significant markers found by all methods:
-```{r}
-createVennDiagram(res1)
-```
 
 ## Dual Activated vs. Triple Activated
 Let's try all possible methods on the A samples:
 ```{r}
-tmp <- filterSCE(sce, activated_baseline == "A")
+sce_a <- filterSCE(sce, activated_baseline == "A")
 
-res2 <- runDS(sce = tmp,
+res_a <- runDS(sce = sce_a,
       condition = "dual_triple",
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
       k = "all",
       features = "all",
-      nperm = 100,
+      nperm = 200,
+      permute_samples = TRUE,
       parallel = TRUE)
 
-```
-Significant markers found by all methods:
-```{r}
-createVennDiagram(res2)
+# Significant markers found by all methods:
+createVennDiagram(res_a)
 ```
 
 
 ## Dual Baseline vs. Triple Basleline
 Let's try all possible methods on the B samples:
 ```{r}
-tmp <- filterSCE(sce, activated_baseline == "B")
+sce_b <- filterSCE(sce, activated_baseline == "B")
 
-res3 <- runDS(sce = tmp,
+res_b <- runDS(sce = sce_b,
       condition = "dual_triple",
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
       k = "all",
       features = "all",
-      nperm = 100,
+      nperm = 200,
+      permute_samples = TRUE,
       parallel = TRUE)
 
+# Significant markers found by all methods:
+createVennDiagram(res_b)
 ```
-Significant markers found by all methods:
-```{r}
-createVennDiagram(res3)
 ```
 
 
