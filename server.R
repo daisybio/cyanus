@@ -19,6 +19,19 @@ server <- function(input, output, session) {
     return(ret)
   }
   
+  output$dashboard <- renderUI({
+    req(reactiveVals$sce)
+    downloadButton("dashboardButton", "Download current SCE object")
+  })
+  
+  output$dashboardButton <- downloadHandler(
+      filename = function(){
+        paste("sce.rds")
+        },
+      content = function(file){
+        saveRDS(object = reactiveVals$sce, file = file)
+      }
+    )
   
   # make reactiveValues and server-wide variables
   tab_ids <- c("welcome", "start", "preprocessing", "visualization", "clustering", "de")
