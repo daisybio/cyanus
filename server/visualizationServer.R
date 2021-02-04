@@ -1,7 +1,13 @@
 shinyjs::hide("visPlotBox")
 
-output$downloadPlot <-
-  downloadPlotFunction(reactiveVals$lastMethod, reactiveVals$lastPlot)
+output$downloadPlot <- downloadHandler(
+  filename = function(){
+    paste0(reactiveVals$lastMethod, ".pdf")
+  },
+  content = function(file){
+    ggsave(file, plot = reactiveVals$lastPlot, width=14, height=11)
+  }
+)
 
 observeEvent(input$visTabs, {
   if (input$visTabs == "expressionTab") {

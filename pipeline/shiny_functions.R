@@ -494,4 +494,3 @@ getMarkersToTest <- function(sce, ds_method, features){
   }
   return (markers_to_test)
 }
-
