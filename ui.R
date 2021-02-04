@@ -23,7 +23,8 @@ body <-
               preprocessingBody(),
              visbody(),
              clusteringBody, 
-             deBody()),
+             deBody(), 
+             vennBody()),
     bsButton("continue", "Start Analysis", icon("arrow-right"), style = "success", block = TRUE)
   )
 

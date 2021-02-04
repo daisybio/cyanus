@@ -996,6 +996,12 @@ output$deBoxPlots <- renderUI({
 #)
 
 output$deExprsCluster <- renderUI({
+  #if we only have counts -> copy counts to exprs
+  if(length(assays(reactiveVals$sce)) == 1){
+    showNotification("You have not normalized your data. We will assume that you have given us expression data as input.", type = "warning", duration = 10)
+    assays(reactiveVals$sce)$exprs <- assays(reactiveVals$sce)$counts
+  }
+  
   factors <- names(colData(reactiveVals$sce))[!names(colData(reactiveVals$sce)) %in% c("patient_id", "sample_id")]
   markers <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
   if("state" %in% markers){
@@ -1099,7 +1105,14 @@ output$pbExprsPlotDownload <- renderUI({
 })
 
 # function for downloading MDS plot
-output$downloadPlotPbExprs <- downloadPlotFunction("Pb_Exprs_plot", reactiveVals$pbExprsPlot)
+output$downloadPlotPbExprs <- downloadHandler(
+  filename = function(){
+    paste0("Pb_Exprs_plot", ".pdf")
+  },
+  content = function(file){
+    ggsave(file, plot =reactiveVals$pbExprsPlot, width=10, height=12)
+  }
+)
 
 
 

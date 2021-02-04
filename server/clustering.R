@@ -386,8 +386,8 @@ output$clusteringOutput <- renderUI({
             ,
             style = "text-align: center;vertical-align: middle;"
           ),
-          # div(uiOutput("clusterStarDownload"),
-          #     style = "position: relative; z-index: 99; float: right;"),
+          div(uiOutput("clusterStarDownload"),
+              style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
             plotOutput("clusterStarPlot",
                        height = "800px")
@@ -425,7 +425,7 @@ output$clusterDensitiyDownload <- renderUI({
 
 output$clusterHeatmapDownload <- renderUI({
   req(reactiveVals$heatmapCluster)
-  
+  library(ComplexHeatmap)
   downloadButton("downloadPlotFrequency", "Download Plot")
 })
 
@@ -472,21 +472,28 @@ output$downloadPlotStar <- downloadHandler(
   filename = "Star_Charts.pdf",
   content = function(file) {
     pdf(file, width = 12, height = 8)
-    reactiveVals$starCluster
+    print(reactiveVals$starCluster)
     dev.off()
   }
 )
 
-output$downloadPlotAbundance <-
-  downloadPlotFunction("Population_Abundances", reactiveVals$abundanceCluster)
+output$downloadPlotAbundance <- downloadHandler(
+  filename = function(){
+    paste0("Population_Abundances", ".pdf")
+  },
+  content = function(file){
+    ggsave(file, plot = reactiveVals$abundanceCluster, width=12, height=6)
+  }
+)
 
-output$downloadPlotDensity <-
-  downloadPlotFunction(
-    "Cluster_Expression",
-    reactiveVals$exprsCluster,
-    width = 16,
-    height = 12
-  )
+output$downloadPlotDensity <- downloadHandler(
+  filename = function(){
+    paste0("Cluster_Expression", ".pdf")
+  },
+  content = function(file){
+    ggsave(file, plot = reactiveVals$exprsCluster, width=16, height=12)
+  }
+)
 
 output$downloadPlotFrequency <- downloadHandler(
   filename = "Cluster_Heatmap.pdf",

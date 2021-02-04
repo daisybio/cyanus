@@ -40,6 +40,49 @@ mystar <- function(coords, v = NULL, params) {
   
 }
 
+plotStarLegendCustom <- function (labels, colors = grDevices::rainbow(length(labels)), 
+                                  main = "") 
+{
+  graphics::plot(1, type = "n", xlab = "", ylab = "", xlim = c(-3, 
+                                                               3), ylim = c(-3, 3), asp = 1, bty = "n", xaxt = "n", 
+                 yaxt = "n", main = main)
+  graphics::stars(matrix(c(1:(2 * length(labels))), nrow = 2), 
+                  col.segments = colors, locations = c(0, 0), draw.segments = TRUE, 
+                  add = TRUE, inches = FALSE)
+  n <- length(labels)
+  angle <- 2 * pi/n
+  angles <- seq(angle/2, 2 * pi, by = angle)
+  left <- (angles > (pi/2) & angles < (3 * pi/2))
+  x <- c(2, -2)[left + 1]
+  y_tmp <- c(seq(-2, 2, by = 4/(sum(!left) + 1))[-c(1, sum(!left) + 
+                                                      2)], seq(2, -2, by = -4/(sum(left) + 1))[-c(1, sum(left) + 
+                                                                                                    2)])
+  y <- FlowSOM:::shiftFunction(y_tmp, max((cummax(y_tmp) < 0) * seq_along(y_tmp)))
+  for (i in seq_along(labels)) {
+    graphics::text(x = x[i], y = y[i], labels = labels[i], 
+                   adj = c(as.numeric(left)[i], 0.5), cex = 1.5)
+    graphics::lines(x = c(x[i] + c(-0.2, 0.2)[left[i] + 
+                                                1], c(1.5, -1.5)[left[i] + 1], cos(angles[i])), 
+                    y = c(y[i], y[i], sin(angles[i])), col = colors[i], 
+                    lwd = 2)
+  }
+}
+
+PlotBackgroundLegendCustom <- function (backgroundValues, background, main = "Background") 
+{
+  graphics::plot.new()
+  if (is.numeric(backgroundValues)) {
+    legendContinuous(background$col, as.numeric(gsub(".*,", 
+                                                     "", gsub("].*", "", levels(background$values)))))
+  }
+  else {
+    graphics::legend("center", legend = levels(background$values), 
+                     fill = background$col, cex = 1.5, ncol = ceiling(length(levels(background$values))/10), 
+                     bty = "n", title = main)
+  }
+}
+
+
 plotStarsCustom <-
   function (sce,
             markers = CATALYST:::.get_features(sce, "type"),
@@ -155,9 +198,9 @@ plotStarsCustom <-
     graphics::par(mar = c(1, 1, 1, 1))
     if (legend) {
       if (!is.null(backgroundValues)) {
-        graphics::layout(matrix(c(1, 3, 2, 3), 2, 2, byrow = TRUE),
-                         widths = c(1, 2),
-                         heights = c(1))
+      graphics::layout(matrix(c(1, 3, 2, 3), 2, 2, byrow = TRUE),
+                       widths = c(1, 2),
+                       heights = c(1))
       }
       else {
         graphics::layout(matrix(c(1, 2), 1, 2, byrow = TRUE),
@@ -165,7 +208,7 @@ plotStarsCustom <-
                          heights = c(1))
       }
       if (is.null(query)) {
-        FlowSOM:::plotStarLegend(markers, colorPalette(ncol(data)))#, "Marker")
+        plotStarLegendCustom(markers, colorPalette(ncol(data)), "\nMarker")
       }
       else {
         plotStarQuery(fsom$prettyColnames[markers],
@@ -174,7 +217,7 @@ plotStarsCustom <-
                       colorPalette(ncol(data)))
       }
       if (!is.null(backgroundValues)) {
-        FlowSOM:::PlotBackgroundLegend(backgroundValues, background, "Cluster")
+        PlotBackgroundLegendCustom(backgroundValues, background, "Cluster")
       }
     }
     igraph::plot.igraph(
@@ -193,9 +236,11 @@ plotStarsCustom <-
       mark.expand = backgroundSize,
       main = main
     )
+    tree_plot <- recordPlot()
     graphics::par(oldpar)
     graphics::layout(1)
     return(recordPlot())
+    # return(list(star_legend = star_legend_plot, background_legend = background_legend_plot, tree = tree_plot))
   }
 
 
