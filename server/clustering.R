@@ -386,8 +386,8 @@ output$clusteringOutput <- renderUI({
             ,
             style = "text-align: center;vertical-align: middle;"
           ),
-          # div(uiOutput("clusterStarDownload"),
-          #     style = "position: relative; z-index: 99; float: right;"),
+          div(uiOutput("clusterStarDownload"),
+              style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
             plotOutput("clusterStarPlot",
                        height = "800px")
@@ -472,7 +472,7 @@ output$downloadPlotStar <- downloadHandler(
   filename = "Star_Charts.pdf",
   content = function(file) {
     pdf(file, width = 12, height = 8)
-    reactiveVals$starCluster
+    print(reactiveVals$starCluster)
     dev.off()
   }
 )
