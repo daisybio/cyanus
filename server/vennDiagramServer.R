@@ -572,10 +572,29 @@ observeEvent(input$diffExpButtonVenn, {
   }
   
   output$vennDiagrams <- renderPlot({
-    createVennDiagram(reactiveVals$resultVenn, ds_bool)
+    venn <- createVennDiagram(reactiveVals$resultVenn, ds_bool)
+    reactiveVals$lastVenn <- venn
+    venn
   })
   shinyjs::enable("diffExpButtonVenn")
 })
+
+output$downloadVenn <- renderUI({
+  req(reactiveVals$lastVenn)
+  div(
+    downloadButton("downloadVennButton", "Download Plot"),
+    style = "float:right;"
+  )
+})
+
+output$downloadVennButton <- downloadHandler(
+  filename = function(){
+    paste0("VennDiagram", ".pdf")
+  },
+  content = function(file){
+    ggsave(file, plot = reactiveVals$lastVenn, width=12, height=12)
+  }
+)
 
 createVennDiagram <- function(res, DS = T) {
   input_venn <- list()
@@ -586,20 +605,33 @@ createVennDiagram <- function(res, DS = T) {
   }
   # take of each method the data table containing the pvalues
   for (ds_method in names(res)) {
-    result <-
-        data.frame(rowData(res[[ds_method]]$res))[c(feature, "p_val", "p_adj")]
+    if(feature == "cluster_id"){
+      result <-
+          data.frame(rowData(res[[ds_method]]$res))[c(feature, "p_val", "p_adj")]
+      featureNew <- "cluster_id"
+    }else{
+      result <-
+        data.frame(rowData(res[[ds_method]]$res))[c("cluster_id", feature, "p_val", "p_adj")]
+      if(result$cluster_id[1] != "all"){
+        result$marker_id_joined <- paste0(result$marker_id, "(", result$cluster_id, ")")
+        featureNew <- "marker_id_joined"
+      }else{
+        featureNew <- "marker_id"
+      }
+      
+    }
     result$significant <- result$p_adj < 0.05
     significants <-
       unlist(subset(
         result,
         significant == TRUE,
-        select = c(get(feature)),
+        select = c(get(featureNew)),
         use.names = FALSE
       ))
     input_venn[[ds_method]] <- significants
   }
   
-  venn <- ggvenn::ggvenn(input_venn, show_elements = TRUE, label_sep ="\n", fill_alpha = 0.3, set_name_size = 8, text_size = 4)
+  venn <- ggvenn::ggvenn(input_venn, show_elements = TRUE, label_sep ="\n", fill_alpha = 0.3, set_name_size = 6, text_size = 4)
   return(venn)
 }
 

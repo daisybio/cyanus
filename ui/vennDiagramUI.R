@@ -68,6 +68,9 @@ vennBody <- function(){
     ),
     fluidRow(
       shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px"))
+    ),
+    fluidRow(
+      uiOutput("downloadVenn")
     )
   )
   return(vennBody)
