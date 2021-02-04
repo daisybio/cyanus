@@ -398,7 +398,7 @@ output$formulaSelection <- renderUI({
         size = 4,
         `selected-text-format` = "count > 3",
         "dropup-auto" = FALSE
-      ),
+      ),            
       multiple = TRUE
     ),
     bsPopover(

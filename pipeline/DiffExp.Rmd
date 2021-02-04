@@ -40,7 +40,7 @@ sce <- readRDS(path_to_rds)
 
 Make patient selection based on preprocessing plots and clustering results
 ```{r, selection, eval=FALSE}
-sce <- makePatientSelection(sce, deselected_patients = c("RPS 124", "RPS 108", "RPS 96", "RPS 149"))
+sce <- makePatientSelection(sce, deselected_patients = c("RPS 124", "RPS 108", "RPS 096", "RPS 149", "RPS 099"))
 ```
 
 Sample data to 4 patients receiving dual treatment and 4 patients receiving triple treatment
@@ -56,8 +56,6 @@ sampled_triples <- as.character(triple[sample(length(triple), 4, replace=FALSE)]
 
 sampled_patients <- c(sampled_triples, sampled_duals)
 sampled_patients
-
-# sampled patients should be "RPS 136" "RPS 099" "RPS 127" "RPS 098" "RPS 154" "RPS 137" "RPS 139" "RPS 103"
 
 sce <- filterSCE(sce, patient_id %in% sampled_patients)
 ```

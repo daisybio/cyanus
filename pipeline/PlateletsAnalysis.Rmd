@@ -96,10 +96,10 @@ CATALYST::plotCounts(
 CATALYST::pbMDS(
       sce,
       label_by = "patient_id", 
-      color_by = "dual_triple",
-      features = "type", # possible inputs: unique(rowData(sce)$marker_class) or NULL (to use all features)
+      color_by = "activated_baseline",
+      features = NULL, # possible inputs: unique(rowData(sce)$marker_class) or NULL (to use all features)
       assay = "exprs", # possible inputs: assayNames(sce)
-    ) 
+    ) + theme(text = element_text(size=18))
 
 CATALYST::plotNRS(
       sce,
@@ -113,7 +113,7 @@ CATALYST::plotExprs(
       color_by = "activated_baseline",
       features = "state",
       assay = "exprs"
-    )
+    )  + theme(text = element_text(size=18))
 
 CATALYST::plotExprHeatmap(
       sce,
@@ -144,7 +144,7 @@ CATALYST::plotAbundances(sce, "meta6", group_by = "activated_baseline") +  theme
 
 As we can see above, some patients have odd clusters. Further investigation might be necessary to uncover the reasons for that. For now we will exclude the patients RPS108, RPS096, RPS149 and RPS124 from the analysis. Hence, we will repeat the clustering step:
 ```{r}
-sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 108", "RPS 096", "RPS 149", "RPS 124"))
+sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 108", "RPS 096", "RPS 149", "RPS 124", "RPS 099"))
 sce <- clusterSCE(sce)
 
 plotly::ggplotly(delta_area(sce))
@@ -152,7 +152,7 @@ plotly::ggplotly(delta_area(sce))
 
 Let's have a look at the clusters in meta6:
 ```{r}
-CATALYST::plotAbundances(sce, "meta8", group_by = "activated_baseline") +  theme(text = element_text(size=18), axis.text.x = element_text(size=12)) 
+CATALYST::plotAbundances(sce, "meta6", group_by = "activated_baseline") +  theme(text = element_text(size=18), axis.text.x = element_text(size=12)) 
 
 #CATALYST::plotAbundances(sce, "meta6", by = "cluster_id", shape_by = "patient_id", group_by = "activated_baseline")
 ```
@@ -162,7 +162,7 @@ CATALYST::plotAbundances(sce, "meta8", group_by = "activated_baseline") +  theme
 ```
 
 ```{r}
-CATALYST::plotClusterExprs(sce, "meta6")
+CATALYST::plotClusterExprs(sce, "meta6") +  theme(text = element_text(size=18)) 
 #CATALYST::plotFreqHeatmap(sce, "meta6")
 ```
 
@@ -216,6 +216,21 @@ for( method in DR_methods ){
   print(g)
 }
 ```
+
+```{r, eval=FALSE}
+DR_methods <- c("UMAP","PCA")
+
+for( method in DR_methods ){
+  print(method)
+  sce <- runDimRed(sce, method, cells_chosen = 1000, feature_chosen = "state", assay_chosen = "exprs", scale = T, k = 3)
+}
+
+for( method in DR_methods ){
+  g <- CATALYST::plotDR(sce, dr = method, color_by = "activated_baseline", facet_by="dual_triple") +  theme(text = element_text(size=18))
+  print(g)
+}
+```
+
 
 Finally, we are going to run the dimensionality reductions on type markers and show there is a difference between dual and triple.
 ```{r, eval=FALSE}
@@ -271,7 +286,8 @@ res_d <- runDS(sce = sce_d,
       de_methods = c("LMM"),
       k = "all",
       features = "all",
-      markers_to_test = "all"
+      markers_to_test = "all",
+      random_effect = "patient_id"
       )
 ```
 
@@ -305,6 +321,7 @@ res_t <- runDS(sce = sce_t,
       de_methods = c("LMM"),
       k = "all",
       features = "all",
+      random_effect = "patient_id"
       )
 
 ```
@@ -327,7 +344,7 @@ rowData(sce_a)$marker_class <- rowData(sce_a)$marker_class[rowData(sce_a)$marker
 CATALYST::plotPbExprs(sce_a, k = "all", features = NULL , color_by = "dual_triple",  ncol=8, facet_by = "antigen") +  theme(text = element_text(size=16))
 
 #CATALYST::plotPbExprs(sce_a, k = "meta6", features = NULL , color_by = "dual_triple", 
-              facet_by = "cluster_id")
+#              facet_by = "cluster_id")
 
 ```
 
@@ -336,7 +353,7 @@ res_a <- runDS(sce = sce_a,
       condition = "dual_triple",
       de_methods = c("LMM"),
       k = "all",
-      features = "all",
+      features = "all"
       )
 
 ```
