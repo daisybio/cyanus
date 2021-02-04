@@ -26,6 +26,11 @@ tabs <- list(
     "DE analysis",
     tabName = tab_ids[6],
     icon = icon("chart-bar")
+  ), 
+  menuItem(
+    "DE method comparison",
+    tabName = tab_ids[7],
+    icon = icon("object-group")
   )
 )
 
@@ -51,6 +56,10 @@ observeEvent(input$continue, {
 output$sidebar <- renderUI({
   curr_menu <- sidebarMenu(id = "tabs",
                            tabs[1:reactiveVals$current_tab])
+  if(reactiveVals$current_tab == 6){
+    curr_menu <- sidebarMenu(id = "tabs",
+                             tabs[1:7])
+  }
   updateTabItems(session, "tabs", tab_ids[reactiveVals$current_tab])
   shinyjs::runjs("window.scrollTo(0, 0)")
   return(curr_menu)

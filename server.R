@@ -34,7 +34,7 @@ server <- function(input, output, session) {
     )
   
   # make reactiveValues and server-wide variables
-  tab_ids <- c("welcome", "start", "preprocessing", "visualization", "clustering", "de")
+  tab_ids <- c("welcome", "start", "preprocessing", "visualization", "clustering", "de", "venn")
   reactiveVals <- reactiveValues()
   reactiveVals$current_tab <- 1
   
