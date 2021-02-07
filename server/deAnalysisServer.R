@@ -336,7 +336,7 @@ output$designMatrixSelection <- renderUI({
     pickerInput(
       "colsDesign",
       choices = colsDesign,
-      selected = colsDesign[2],
+      selected = colsDesign[1],
       label = span(
         "Which columns to include in the design matrix?",
         icon("question-circle"),
@@ -366,7 +366,7 @@ output$formulaSelection <- renderUI({
     pickerInput(
       "colsFixed",
       choices = cols,
-      selected = cols[2],
+      selected = cols[1],
       label = span(
         "Which fixed effect terms to include in the model formula",
         icon("question-circle"),
@@ -387,7 +387,7 @@ output$formulaSelection <- renderUI({
     pickerInput(
       "colsRandom",
       choices = cols,
-      selected = cols[1],
+      selected = cols[2],
       label = span(
         "Which random intercept terms to include in the model formula",
         icon("question-circle"),
