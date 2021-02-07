@@ -17,7 +17,7 @@ output$DAVenn <- renderUI({
     pickerInput(
       "colsDesignDA",
       choices = colsDesign,
-      selected = colsDesign[2],
+      selected = colsDesign[1],
       label = span(
         "EdgeR, Voom: Which columns to include in the design matrix?",
         icon("question-circle"),
@@ -39,7 +39,7 @@ output$DAVenn <- renderUI({
     pickerInput(
       "colsFixedDA",
       choices = colsDesign,
-      selected = colsDesign[2],
+      selected = colsDesign[1],
       label = span(
         "GLMM: Which fixed effect terms to include in the model formula?",
         icon("question-circle"),
@@ -61,7 +61,7 @@ output$DAVenn <- renderUI({
     pickerInput(
       "colsRandomDA",
       choices = colsDesign,
-      selected = colsDesign[1],
+      selected = colsDesign[2],
       label = span(
         "GLMM: Which random intercept terms to include in the model formula",
         icon("question-circle"),
@@ -90,7 +90,7 @@ output$DSVenn <- renderUI({
     pickerInput(
       "colsDesignDS",
       choices = colsDesign,
-      selected = colsDesign[2],
+      selected = colsDesign[1],
       label = span(
         "Limma: Which columns to include in the design matrix?",
         icon("question-circle"),
@@ -112,7 +112,7 @@ output$DSVenn <- renderUI({
     pickerInput(
       "colsFixedDS",
       choices = colsDesign,
-      selected = colsDesign[2],
+      selected = colsDesign[1],
       label = span(
         "LMM: Which fixed effect terms to include in the model formula?",
         icon("question-circle"),
@@ -134,7 +134,7 @@ output$DSVenn <- renderUI({
     pickerInput(
       "colsRandomDS",
       choices = colsDesign,
-      selected = colsDesign[1],
+      selected = colsDesign[2],
       label = span(
         "LMM: Which random intercept terms to include in the model formula",
         icon("question-circle"),
