@@ -252,7 +252,7 @@ output$delta_area <- renderUI({
     title = "1. Delta Area",
     width = 12,
     collapsible = TRUE,
-    collapsed = TRUE
+    collapsed = FALSE
   )
 })
 
