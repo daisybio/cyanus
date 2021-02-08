@@ -1,7 +1,7 @@
 startBody <- function() {
   box_height <- "12em"
   exampleDataVector <- c("PBMC" = "data/pbmc",
-                         "MouseData" = "data/mousedata",
+                        # "MouseData" = "data/mousedata",
                          "Platelets" = "data/platelets",
                          "Platelets Small" = "data/platelets_small")
   
