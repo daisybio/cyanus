@@ -114,6 +114,7 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
 
 #source("../server/clusterFun.R")
 
+
 ############### Differential Expression ###############
 
 prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom=NULL,
