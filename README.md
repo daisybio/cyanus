@@ -20,13 +20,14 @@ Drive](https://drive.google.com/drive/folders/19hM51eoLLEJDQ_Oz4xqMu2t9bAY9Qcyf?
 Then run
 
 ``` bash
-mkdir myData
-mv -r path/to/pbmcData myData
-docker run --rm -p 3838:3838 -v /absolute/path/to/myData:/srv/cytof_pipeline/data cytof_pipeline
+mkdir data
+mv -r path/to/pbmcData data
+docker run --rm -p 3838:3838 -v /absolute/path/to/data:/srv/cytof_pipeline/data quirinmanz/cytof_pipeline
 ```
 
 in order to connect the data folder with the downloaded data to the
-repository.
+repository and run the app. Make sure that all parent directories of
+data have at least read access for group (chmod 711).
 
 If you go to localhost:3838, you can see our Shiny app.
 
@@ -152,7 +153,8 @@ CATALYST::plotCounts(
 that sample 99 does not cluster with the other activated samples in the
 MDS plot. We can also see in the expression plot, that the expressions
 for 99 baseline and 99 activated are nearly the same. We therefore
-exclude the patient from our analysis.
+exclude the patient from our
+analysis.
 
 ``` r
 sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 099"))
@@ -175,7 +177,8 @@ delta_area(sce)
 ```
 
 ![](README_files/figure-gfm/clustering%20QC-1.png)<!-- --> Let’s have a
-look at meta 7:
+look at meta
+7:
 
 ``` r
 CATALYST::plotAbundances(sce, "meta7", group_by = "activated_baseline") +  theme(text = element_text(size=18), axis.text.x = element_text(size=12)) 
@@ -183,7 +186,8 @@ CATALYST::plotAbundances(sce, "meta7", group_by = "activated_baseline") +  theme
 
 ![](README_files/figure-gfm/plot%20abundances%20QC-1.png)<!-- --> As we
 can see, clusters 5,6, and 7 were mainly made because of sample 96.
-Therefore, we also exclude this sample:
+Therefore, we also exclude this
+sample:
 
 ``` r
 sce <- makePatientSelection(sce = sce, deselected_patients = c("RPS 096"))
@@ -208,7 +212,8 @@ delta_area(sce)
 
 ![](README_files/figure-gfm/clustering-1.png)<!-- --> We do not seem to
 win much by looking at more than 7 clusters. Let’s take a look at meta7
-again. We can also make a star plot to compare the marker abundances:
+again. We can also make a star plot to compare the marker
+abundances:
 
 ``` r
 CATALYST::plotAbundances(sce, "meta7", group_by = "activated_baseline") +  theme(text = element_text(size=18), axis.text.x = element_text(size=12)) 
@@ -288,7 +293,8 @@ sce_d <- filterSCE(sce, dual_triple == "dual")
 ```
 
 Before performing the differential marker expression analysis, we plot
-the median marker expressions.
+the median marker
+expressions.
 
 ``` r
 CATALYST::plotPbExprs(sce_d, k = "all", features = NULL , color_by = "activated_baseline",  ncol=8, facet_by = "antigen") +  theme(text = element_text(size=16))
@@ -318,11 +324,11 @@ res_d <- runDS(sce = sce_d,
 
     ## Using LMM
 
-    ## Warning in any(lapply(contrastVars, function(y) {: wandle Argument des Typs
-    ## 'list' nach boolesch
+    ## Warning in any(lapply(contrastVars, function(y) {: coercing argument of type
+    ## 'list' to logical
     
-    ## Warning in any(lapply(contrastVars, function(y) {: wandle Argument des Typs
-    ## 'list' nach boolesch
+    ## Warning in any(lapply(contrastVars, function(y) {: coercing argument of type
+    ## 'list' to logical
 
     ##      [,1]
     ## [1,]    0
@@ -349,7 +355,8 @@ res_d <- runDS(sce = sce_d,
     ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
     ## Model failed to converge with max|grad| = 0.00284889 (tol = 0.002, component 1)
 
-Now, we can visualize that with a heatmap:
+Now, we can visualize that with a
+heatmap:
 
 ``` r
 CATALYST::plotDiffHeatmap(sce_d, rowData(res_d$LMM$res), all=T, col_anno = c("activated_baseline", "patient_id"), normalize = TRUE)
@@ -363,7 +370,8 @@ differentially expressed as well.
 ## Triple Activated vs. Triple Baseline
 
 We now subset our SCE object such that only the triple anticoagulation
-therapy patients are included:
+therapy patients are
+included:
 
 ``` r
 sce_t <- filterSCE(sce, dual_triple == "triple")
@@ -390,11 +398,11 @@ res_t <- runDS(sce = sce_t,
 
     ## Using LMM
 
-    ## Warning in any(lapply(contrastVars, function(y) {: wandle Argument des Typs
-    ## 'list' nach boolesch
+    ## Warning in any(lapply(contrastVars, function(y) {: coercing argument of type
+    ## 'list' to logical
     
-    ## Warning in any(lapply(contrastVars, function(y) {: wandle Argument des Typs
-    ## 'list' nach boolesch
+    ## Warning in any(lapply(contrastVars, function(y) {: coercing argument of type
+    ## 'list' to logical
 
     ##      [,1]
     ## [1,]    0
@@ -434,11 +442,11 @@ res_triple <- runDS(sce = sce_t,
 
     ## Using limma
 
-    ## Warning in any(lapply(contrastVars, function(y) {: wandle Argument des Typs
-    ## 'list' nach boolesch
+    ## Warning in any(lapply(contrastVars, function(y) {: coercing argument of type
+    ## 'list' to logical
     
-    ## Warning in any(lapply(contrastVars, function(y) {: wandle Argument des Typs
-    ## 'list' nach boolesch
+    ## Warning in any(lapply(contrastVars, function(y) {: coercing argument of type
+    ## 'list' to logical
 
     ##      [,1]
     ## [1,]    0
@@ -454,11 +462,11 @@ res_triple <- runDS(sce = sce_t,
 
     ## Using LMM
 
-    ## Warning in any(lapply(contrastVars, function(y) {: wandle Argument des Typs
-    ## 'list' nach boolesch
+    ## Warning in any(lapply(contrastVars, function(y) {: coercing argument of type
+    ## 'list' to logical
     
-    ## Warning in any(lapply(contrastVars, function(y) {: wandle Argument des Typs
-    ## 'list' nach boolesch
+    ## Warning in any(lapply(contrastVars, function(y) {: coercing argument of type
+    ## 'list' to logical
 
     ##      [,1]
     ## [1,]    0
