@@ -19,12 +19,12 @@ If you want to use the [PBMC example data](https://www.nature.com/articles/nbt.2
 Then run
 
 ```{bash include pbmc, eval = FALSE}
-mkdir myData
-mv -r path/to/pbmcData myData
-docker run --rm -p 3838:3838 -v /absolute/path/to/myData:/srv/cytof_pipeline/data cytof_pipeline
+mkdir data
+mv -r path/to/pbmcData data
+docker run --rm -p 3838:3838 -v /absolute/path/to/data:/srv/cytof_pipeline/data quirinmanz/cytof_pipeline
 ```
 
-in order to connect the data folder with the downloaded data to the repository.
+in order to connect the data folder with the downloaded data to the repository and run the app. Make sure that all parent directories of data have at least read access for group (chmod 711).
 
 If you go to localhost:3838, you can see our Shiny app. 
 
