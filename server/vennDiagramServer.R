@@ -294,7 +294,7 @@ output$DEFeatureSelectionVenn <- renderUI({
     stop("by name or by class?")
   shinyWidgets::pickerInput(
     inputId = "DEFeaturesInVenn",
-    label = "Features to use for clustering",
+    label = "Features to use for differential expression analysis",
     choices = choices,
     selected = selected,
     multiple = TRUE,
