@@ -5,7 +5,8 @@ CyTOF Pipeline
 
 # Part 1: Shiny App
 
-The docker image for our shiny app is publicly available at \[…\].
+The docker image for our shiny app is publicly available at [Docker
+Hub](https://hub.docker.com/repository/docker/quirinmanz/cytof_pipeline).
 First, make sure docker is installed on your machine. Then run
 
 ``` bash
@@ -46,7 +47,7 @@ antiplatelet therapy, before and after platelet activation with 10µm
 TRAP. There are files of 7 patients with triple therapy and 12 patients
 with dual therapy (each in two conditions). For information about how to
 create a SCE object, please refer to the [CATALYST
-Vignette](https://www.bioconductor.org/packages/release/bioc/html/CATALYST.html)
+Vignette](https://www.bioconductor.org/packages/release/bioc/html/CATALYST.html).
 
 # Read in SCE object
 
@@ -170,15 +171,11 @@ sce <- clusterSCE(sce)
     ## o running ConsensusClusterPlus metaclustering...
 
 ``` r
-plotly::ggplotly(delta_area(sce))
+delta_area(sce)
 ```
 
-    ## PhantomJS not found. You can install it with webshot::install_phantomjs(). If it is installed, please make sure the phantomjs executable can be found via the PATH variable.
-
-<div id="htmlwidget-90a947d9940ac62f7bf7" style="width:1152px;height:768px;" class="plotly html-widget"></div>
-<script type="application/json" data-for="htmlwidget-90a947d9940ac62f7bf7">{"x":{"data":[{"x":[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],"y":[0.0419737373737374,3.51860230062088,0.882406825516867,0.259758043525005,0.204193467246397,0.151220476552825,0.0995259742153302,0.0558096360689553,0.0424768831864781,0.0335441275688873,0.0311343213215314,0.0301565608859054,0.0276764375944985,0.0185520480103652,0.0149198442782025,0.0111998457410056,0.012183605366507,0.0113282362624669,0.0102943263669588],"text":["k:  2<br />y: 0.04197374","k:  3<br />y: 3.51860230","k:  4<br />y: 0.88240683","k:  5<br />y: 0.25975804","k:  6<br />y: 0.20419347","k:  7<br />y: 0.15122048","k:  8<br />y: 0.09952597","k:  9<br />y: 0.05580964","k: 10<br />y: 0.04247688","k: 11<br />y: 0.03354413","k: 12<br />y: 0.03113432","k: 13<br />y: 0.03015656","k: 14<br />y: 0.02767644","k: 15<br />y: 0.01855205","k: 16<br />y: 0.01491984","k: 17<br />y: 0.01119985","k: 18<br />y: 0.01218361","k: 19<br />y: 0.01132824","k: 20<br />y: 0.01029433"],"type":"scatter","mode":"lines+markers","line":{"width":1.88976377952756,"color":"rgba(70,130,180,1)","dash":"dash"},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","marker":{"autocolorscale":false,"color":"rgba(0,0,128,1)","opacity":1,"size":9.4488188976378,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,0,128,1)"}},"frame":null}],"layout":{"margin":{"t":26.958904109589,"r":7.30593607305936,"b":40.9132420091324,"l":43.1050228310502},"plot_bgcolor":"rgba(255,255,255,1)","paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[1.5,20.5],"tickmode":"array","ticktext":["2","4","6","8","10","12","14","16","18","20"],"tickvals":[2,4,6,8,10,12,14,16,18,20],"categoryorder":"array","categoryarray":["2","4","6","8","10","12","14","16","18","20"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895},"tickangle":-0,"showline":true,"linecolor":"rgba(0,0,0,1)","linewidth":0.66417600664176,"showgrid":true,"gridcolor":"rgba(190,190,190,1)","gridwidth":0.265670402656704,"zeroline":false,"anchor":"y","title":{"text":"k","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187}},"scaleanchor":"y","scaleratio":0.25,"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-0.125,4.125],"tickmode":"array","ticktext":["0.0","0.5","1.0","1.5","2.0","2.5","3.0","3.5","4.0"],"tickvals":[0,0.5,1,1.5,2,2.5,3,3.5,4],"categoryorder":"array","categoryarray":["0.0","0.5","1.0","1.5","2.0","2.5","3.0","3.5","4.0"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895},"tickangle":-0,"showline":true,"linecolor":"rgba(0,0,0,1)","linewidth":0.66417600664176,"showgrid":true,"gridcolor":"rgba(190,190,190,1)","gridwidth":0.265670402656704,"zeroline":false,"anchor":"x","title":{"text":"Relative change<br />in area under CDF curve","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187}},"scaleanchor":"x","scaleratio":4,"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":false,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.88976377952756,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","showSendToCloud":false},"source":"A","attrs":{"1f8fa966873":{"x":{},"y":{},"type":"scatter"},"1f8f18a35b73":{"x":{},"y":{}}},"cur_data":"1f8fa966873","visdat":{"1f8fa966873":["function (y) ","x"],"1f8f18a35b73":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
-
-Let’s have a look at meta 7:
+![](README_files/figure-gfm/clustering%20QC-1.png)<!-- --> Let’s have a
+look at meta 7:
 
 ``` r
 CATALYST::plotAbundances(sce, "meta7", group_by = "activated_baseline") +  theme(text = element_text(size=18), axis.text.x = element_text(size=12)) 
@@ -206,15 +203,12 @@ sce <- clusterSCE(sce)
     ## o running ConsensusClusterPlus metaclustering...
 
 ``` r
-plotly::ggplotly(delta_area(sce))
+delta_area(sce)
 ```
 
-<div id="htmlwidget-58621f2315e47bb9171c" style="width:1152px;height:768px;" class="plotly html-widget"></div>
-<script type="application/json" data-for="htmlwidget-58621f2315e47bb9171c">{"x":{"data":[{"x":[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],"y":[0.0783191919191919,3.38062319438712,0.262182914478178,0.29577707903748,0.112091591510504,0.0891906153990593,0.0809478092611141,0.0621932340316714,0.0409225169626007,0.0333151786002951,0.021398572786676,0.0159642401021712,0.0149642476940168,0.0129315171167219,0.00950432240249782,0.00759802004536457,0.00707941049269778,0.00718160135835995,0.00640882673208872],"text":["k:  2<br />y: 0.078319192","k:  3<br />y: 3.380623194","k:  4<br />y: 0.262182914","k:  5<br />y: 0.295777079","k:  6<br />y: 0.112091592","k:  7<br />y: 0.089190615","k:  8<br />y: 0.080947809","k:  9<br />y: 0.062193234","k: 10<br />y: 0.040922517","k: 11<br />y: 0.033315179","k: 12<br />y: 0.021398573","k: 13<br />y: 0.015964240","k: 14<br />y: 0.014964248","k: 15<br />y: 0.012931517","k: 16<br />y: 0.009504322","k: 17<br />y: 0.007598020","k: 18<br />y: 0.007079410","k: 19<br />y: 0.007181601","k: 20<br />y: 0.006408827"],"type":"scatter","mode":"lines+markers","line":{"width":1.88976377952756,"color":"rgba(70,130,180,1)","dash":"dash"},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","marker":{"autocolorscale":false,"color":"rgba(0,0,128,1)","opacity":1,"size":9.4488188976378,"symbol":"circle","line":{"width":1.88976377952756,"color":"rgba(0,0,128,1)"}},"frame":null}],"layout":{"margin":{"t":26.958904109589,"r":7.30593607305936,"b":40.9132420091324,"l":43.1050228310502},"plot_bgcolor":"rgba(255,255,255,1)","paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[1.5,20.5],"tickmode":"array","ticktext":["2","4","6","8","10","12","14","16","18","20"],"tickvals":[2,4,6,8,10,12,14,16,18,20],"categoryorder":"array","categoryarray":["2","4","6","8","10","12","14","16","18","20"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895},"tickangle":-0,"showline":true,"linecolor":"rgba(0,0,0,1)","linewidth":0.66417600664176,"showgrid":true,"gridcolor":"rgba(190,190,190,1)","gridwidth":0.265670402656704,"zeroline":false,"anchor":"y","title":{"text":"k","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187}},"scaleanchor":"y","scaleratio":0.25,"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-0.125,3.625],"tickmode":"array","ticktext":["0.0","0.5","1.0","1.5","2.0","2.5","3.0","3.5"],"tickvals":[0,0.5,1,1.5,2,2.5,3,3.5],"categoryorder":"array","categoryarray":["0.0","0.5","1.0","1.5","2.0","2.5","3.0","3.5"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.65296803652968,"tickwidth":0.66417600664176,"showticklabels":true,"tickfont":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895},"tickangle":-0,"showline":true,"linecolor":"rgba(0,0,0,1)","linewidth":0.66417600664176,"showgrid":true,"gridcolor":"rgba(190,190,190,1)","gridwidth":0.265670402656704,"zeroline":false,"anchor":"x","title":{"text":"Relative change<br />in area under CDF curve","font":{"color":"rgba(0,0,0,1)","family":"","size":14.6118721461187}},"scaleanchor":"x","scaleratio":4,"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":false,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.88976377952756,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.689497716895}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","showSendToCloud":false},"source":"A","attrs":{"1f8f30e49eb9":{"x":{},"y":{},"type":"scatter"},"1f8f71709cc2":{"x":{},"y":{}}},"cur_data":"1f8f30e49eb9","visdat":{"1f8f30e49eb9":["function (y) ","x"],"1f8f71709cc2":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
-
-We do not seem to win much by looking at more than 7 clusters. Let’s
-take a look at meta7 again. We can also make a star plot to compare the
-marker abundances:
+![](README_files/figure-gfm/clustering-1.png)<!-- --> We do not seem to
+win much by looking at more than 7 clusters. Let’s take a look at meta7
+again. We can also make a star plot to compare the marker abundances:
 
 ``` r
 CATALYST::plotAbundances(sce, "meta7", group_by = "activated_baseline") +  theme(text = element_text(size=18), axis.text.x = element_text(size=12)) 
