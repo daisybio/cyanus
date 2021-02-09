@@ -112,7 +112,6 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
 
 ############### Clustering ###############
 
-source("../server/clusterFun.R")
 
 ############### Differential Expression ###############
 
