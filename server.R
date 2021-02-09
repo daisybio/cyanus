@@ -1,5 +1,4 @@
 server <- function(input, output, session) {
-  
   #downloadPlotFunction <- function(name, ggplotObject, width = 7, height = 7){
   #  return(
   #    downloadHandler(
@@ -40,5 +39,7 @@ server <- function(input, output, session) {
   
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())
+  
+  shinyBS::updateButton(session, "continue", " Start Analysis", icon("arrow-right"), style = "success", disabled = FALSE)
 }
 

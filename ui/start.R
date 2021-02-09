@@ -4,6 +4,8 @@ startBody <- function() {
                         # "MouseData" = "data/mousedata",
                          "Platelets" = "data/platelets",
                          "Platelets Small" = "data/platelets_small")
+  availableExampleData <- exampleDataVector %in% list.files("data", full.names = T)
+  exampleDataVector <- exampleDataVector[availableExampleData]
   
   dataUploadBox <- shinydashboard::box(
     fileInput(

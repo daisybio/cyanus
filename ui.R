@@ -25,7 +25,7 @@ body <-
              clusteringBody, 
              deBody(), 
              vennBody()),
-    bsButton("continue", "Start Analysis", icon("arrow-right"), style = "success", block = TRUE)
+    bsButton("continue", "Loading App...", icon("spinner"), style = "warning", block = TRUE, disabled = TRUE)
   )
 
 
