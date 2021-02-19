@@ -30,7 +30,7 @@ makePatientSelection <- function(sce, deselected_patients){
   
   # Filter Single Cell Experiment
   sce <- filterSCE(sce, patient_id %in% patients)
-
+  
   return (sce)
 }
 
@@ -268,7 +268,7 @@ SigEMD <- function(sce, k, condition, Hur_gene=NULL, binSize=NULL, nperm=100, as
       results$emdall <- res_agg
       
     }
-      
+    
     
     
     results
@@ -279,6 +279,100 @@ SigEMD <- function(sce, k, condition, Hur_gene=NULL, binSize=NULL, nperm=100, as
   return(res)
 }
 
+library(Rcpp)
+Rcpp::cppFunction('double emdC(NumericVector a, NumericVector b) {
+  int n = a.size();
+  NumericVector dist = NumericVector(n);
+  double emd = 0;
+  for(int i = 0; i < (n - 1); ++i) {
+    dist[i + 1] = a[i] - b[i] + dist[i];
+  }
+  dist = abs(dist);
+  for (auto& d : dist)
+    emd += d;
+  return emd;
+}')
+
+myEMD <-  function(A, B, binSize = NULL) {
+  stopifnot(is.numeric(A) & is.numeric(B))#  & (length(A) == length(B))) they do not have to be the same length, but will it have a great effect for large numbers?
+  if (is.null(binSize)) binSize <- 2 * IQR(c(A[A!=0], B[B!=0])) / length(c(A[A!=0], B[B!=0]))^(1/3)
+  
+  bins <- seq(floor(min(c(A, B))),
+              ceiling(max(c(A, B))),
+              by=binSize )
+  if (max(bins) < max(A,B)) bins <- c(bins, bins[length(bins)] + binSize)
+  
+  histA <- hist(A, breaks=bins, plot=FALSE)
+  histB <- hist(B, breaks=bins, plot=FALSE)
+  
+  densA <- histA$density
+  densA <- densA/sum(densA)
+  densB <- histB$density
+  densB <- densB/sum(densB)
+  
+  emdC(densA, densB)
+}
+
+rowwiseEMD <- function(mat, condition, binSize = NULL) {
+  stopifnot(is.matrix(mat) & is.numeric(mat) & (nlevels(as.factor(condition)) == 2) & (ncol(mat)==length(condition)))
+  
+  condition <- as.factor(condition)
+  
+  result <- apply(mat, 1, function(marker) {
+    grouped <- split(marker, condition)
+    myEMD(grouped[[1]], grouped[[2]])
+  })
+  data.table::as.data.table(result, keep.rownames="marker")
+}
+
+sceEMD <- function(sce, k, condition, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
+  library(data.table)
+  
+  bppar <- BiocParallel::bpparam()
+  
+  if (parallel == FALSE)
+    bppar <- BiocParallel::SerialParam(progressbar = TRUE)
+  
+  set.seed(1)
+  
+  CATALYST:::.check_sce(sce, TRUE)
+  k <- CATALYST:::.check_k(sce, k)
+  CATALYST:::.check_cd_factor(sce, condition)
+  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
+  
+  
+  cluster_ids <- cluster_ids(sce, k)
+  res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
+    print(sprintf("calculating sceEMD for cluster %s", curr_cluster_id))
+    
+    sce_cluster <- filterSCE(sce, cluster_id == curr_cluster_id, k = k)
+    data <- assay(sce_cluster, assay)
+    
+    condition_cluster <- colData(sce_cluster)[[condition]]
+    emd_real <- rowwiseEMD(mat = data, condition = condition_cluster, binSize = binSize)
+    emd_real$cluster_id <- curr_cluster_id
+    setnames(emd_real, "result", "real_emd")
+    setkey(emd_real, marker)
+    
+    ei <- metadata(sce_cluster)$experiment_info
+    perms <- RcppAlgos::permuteSample(ei[[condition]], n = nperm, seed = seed)
+    
+    perm_res <- BiocParallel::bplapply(as.data.frame(t(unclass(perms))), function(perm, ei, data, binSize) {
+      condition_permutation_cells <- rep(perm, times=ei$n_cells)
+      rowwiseEMD(mat = data, condition = condition_permutation_cells, binSize = binSize)
+    }, ei, data, binSize, BPPARAM = bppar)
+    
+    all_perms <- rbindlist(perm_res, idcol = "permutation")
+    setkey(all_perms, marker)
+    
+    res_agg <- all_perms[emd_real][, .(p_val = (sum(result >= real_emd) + 1)/(nperm + 1)), by = c("marker", "real_emd", "cluster_id")]
+    setnames(res_agg, "real_emd", "emd")
+    res_agg[, p_adj := p.adjust(p_val, "BH")]
+    res_agg
+  })
+  
+  return(data.table::rbindlist(res))
+}
 
 # SigEMD_perm_per_sample <- function(sce) {
 #   
@@ -353,7 +447,7 @@ DEsingleSCE <- function(sce, condition, k, assay="exprs", parallel=FALSE){
     print(sprintf("calculating DEsingle for cluster %s", cluster_id))
     
     group <- colData(sce_desingle[, cluster_ids == cluster_id])[[condition]]
-
+    
     
     results <- DEsingle::DEsingle(sce_desingle[, cluster_ids == cluster_id], group, parallel = parallel)
     results.classified <- DEsingle::DEtype(results = results, threshold = 0.05)
@@ -383,15 +477,15 @@ runDS <- function(sce, condition, random_effect = NULL, de_methods = c("limma", 
     
     markers_to_test <- getMarkersToTest(sce,"limma",features)
     limma_res <- diffcyt::diffcyt(d_input = sce,
-                                      design = parameters[["design"]],
-                                      contrast = parameters[["contrast"]],
-                                      analysis_type = "DS",
-                                      method_DS = "diffcyt-DS-limma",
-                                      clustering_to_use = k,
-                                      markers_to_test = markers_to_test)
-  
+                                  design = parameters[["design"]],
+                                  contrast = parameters[["contrast"]],
+                                  analysis_type = "DS",
+                                  method_DS = "diffcyt-DS-limma",
+                                  clustering_to_use = k,
+                                  markers_to_test = markers_to_test)
+    
     result$limma <- limma_res
-
+    
   }
   if ("LMM" %in% de_methods) {
     message("Using LMM")
@@ -399,12 +493,12 @@ runDS <- function(sce, condition, random_effect = NULL, de_methods = c("limma", 
     
     markers_to_test <- getMarkersToTest(sce,"LMM",features)
     LMM_res <- diffcyt::diffcyt(d_input = sce,
-                                    formula = parameters[["formula"]],
-                                    contrast = parameters[["contrast"]],
-                                    analysis_type = "DS",
-                                    method_DS = "diffcyt-DS-LMM",
-                                    clustering_to_use = k,
-                                    markers_to_test = markers_to_test)
+                                formula = parameters[["formula"]],
+                                contrast = parameters[["contrast"]],
+                                analysis_type = "DS",
+                                method_DS = "diffcyt-DS-LMM",
+                                clustering_to_use = k,
+                                markers_to_test = markers_to_test)
     
     result$LMM <- LMM_res
   }
@@ -535,15 +629,15 @@ getMarkersToTest <- function(sce, ds_method, features){
 }
 
 plotExprHeatmap <- function (x, features = NULL, by = c("sample_id", "cluster_id", 
-                                     "both"), k = "meta20", m = NULL, assay = "exprs", fun = c("median", 
-                                                                                               "mean", "sum"), scale = c("first", "last", "never"), q = 0.01, 
-          row_anno = TRUE, col_anno = TRUE, row_clust = TRUE, col_clust = TRUE, 
-          row_dend = TRUE, col_dend = TRUE, bars = FALSE, perc = FALSE, 
-          bin_anno = FALSE, hm_pal = rev(brewer.pal(11, "RdYlBu")), 
-          k_pal = CATALYST:::.cluster_cols, m_pal = k_pal, distance = c("euclidean", 
-                                                                        "maximum", "manhattan", "canberra", "binary", "minkowski"), 
-          linkage = c("average", "ward.D", "single", "complete", "mcquitty", 
-                      "median", "centroid", "ward.D2")) 
+                                                        "both"), k = "meta20", m = NULL, assay = "exprs", fun = c("median", 
+                                                                                                                  "mean", "sum"), scale = c("first", "last", "never"), q = 0.01, 
+                             row_anno = TRUE, col_anno = TRUE, row_clust = TRUE, col_clust = TRUE, 
+                             row_dend = TRUE, col_dend = TRUE, bars = FALSE, perc = FALSE, 
+                             bin_anno = FALSE, hm_pal = rev(brewer.pal(11, "RdYlBu")), 
+                             k_pal = CATALYST:::.cluster_cols, m_pal = k_pal, distance = c("euclidean", 
+                                                                                           "maximum", "manhattan", "canberra", "binary", "minkowski"), 
+                             linkage = c("average", "ward.D", "single", "complete", "mcquitty", 
+                                         "median", "centroid", "ward.D2")) 
 {
   args <- as.list(environment())
   CATALYST:::.check_args_plotExprHeatmap(args)
@@ -591,7 +685,7 @@ plotExprHeatmap <- function (x, features = NULL, by = c("sample_id", "cluster_id
   }
   else lgd_aes <- list()
   lgd_aes$title_gp <- grid::gpar(fontsize = 10, fontface = "bold", 
-                           lineheight = 0.8)
+                                 lineheight = 0.8)
   if (!isFALSE(row_anno)) {
     left_anno <- switch(by[1], sample_id = .anno_factors(x, 
                                                          levels(x$sample_id), row_anno, "row"), .anno_clusters(x, 
@@ -626,26 +720,26 @@ plotExprHeatmap <- function (x, features = NULL, by = c("sample_id", "cluster_id
   }
   else col_title <- ""
   ComplexHeatmap::Heatmap(matrix = z, name = hm_title, col = circlize::colorRamp2(seq(min(z), 
-                                                            max(z), l = n <- 100), grDevices::colorRampPalette(hm_pal)(n)), 
-          column_title = col_title, column_title_side = ifelse(length(by) == 
-                                                                 2, "top", "bottom"), cell_fun = cell_fun, cluster_rows = row_clust, 
-          cluster_columns = col_clust, show_row_dend = row_dend, 
-          show_column_dend = col_dend, clustering_distance_rows = distance, 
-          clustering_method_rows = linkage, clustering_distance_columns = distance, 
-          clustering_method_columns = linkage, show_row_names = (is.null(left_anno) || 
-                                                                   isTRUE(by == "sample_id")) && !perc, row_names_side = ifelse(by[1] == 
-                                                                                                                                  "cluster_id" || isFALSE(row_anno) && !row_dend || 
-                                                                                                                                  isFALSE(row_clust), "left", "right"), top_annotation = top_anno, 
-          left_annotation = left_anno, right_annotation = right_anno, 
-          rect_gp = gpar(col = "white"), heatmap_legend_param = lgd_aes)
+                                                                                      max(z), l = n <- 100), grDevices::colorRampPalette(hm_pal)(n)), 
+                          column_title = col_title, column_title_side = ifelse(length(by) == 
+                                                                                 2, "top", "bottom"), cell_fun = cell_fun, cluster_rows = row_clust, 
+                          cluster_columns = col_clust, show_row_dend = row_dend, 
+                          show_column_dend = col_dend, clustering_distance_rows = distance, 
+                          clustering_method_rows = linkage, clustering_distance_columns = distance, 
+                          clustering_method_columns = linkage, show_row_names = (is.null(left_anno) || 
+                                                                                   isTRUE(by == "sample_id")) && !perc, row_names_side = ifelse(by[1] == 
+                                                                                                                                                  "cluster_id" || isFALSE(row_anno) && !row_dend || 
+                                                                                                                                                  isFALSE(row_clust), "left", "right"), top_annotation = top_anno, 
+                          left_annotation = left_anno, right_annotation = right_anno, 
+                          rect_gp = gpar(col = "white"), heatmap_legend_param = lgd_aes)
 }
 
 plotDiffHeatmap <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc = 1, all = FALSE, 
-          sort_by = c("padj", "lfc", "none"), y_cols = list(padj = "p_adj", 
-                                                            lfc = "logFC", target = "marker_id"), assay = "exprs", 
-          fun = c("median", "mean", "sum"), normalize = TRUE, col_anno = TRUE, 
-          row_anno = TRUE, hm_pal = NULL, fdr_pal = c("lightgrey", 
-                                                      "lightgreen"), lfc_pal = c("blue3", "white", "red3")) 
+                             sort_by = c("padj", "lfc", "none"), y_cols = list(padj = "p_adj", 
+                                                                               lfc = "logFC", target = "marker_id"), assay = "exprs", 
+                             fun = c("median", "mean", "sum"), normalize = TRUE, col_anno = TRUE, 
+                             row_anno = TRUE, hm_pal = NULL, fdr_pal = c("lightgrey", 
+                                                                         "lightgreen"), lfc_pal = c("blue3", "white", "red3")) 
 {
   fun <- match.arg(fun)
   sort_by <- match.arg(sort_by)

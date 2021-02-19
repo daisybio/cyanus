@@ -2,7 +2,7 @@ FROM rocker/shiny:4.0.0
 LABEL authors="Lisi Arend, Judith Bernett, Quirin Manz"
 
 #install system packages
-RUN apt-get update && apt-get install -y libxml2-dev libssl-dev libcurl4-openssl-dev default-jdk \
+RUN apt-get update && apt-get install -y libxml2-dev libssl-dev libcurl4-openssl-dev default-jdk libgmp3-dev\
    r-cran-rjava \
    && apt-get clean \
    && rm -rf /var/lib/apt/lists/
