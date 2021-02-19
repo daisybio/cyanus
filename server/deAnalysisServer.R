@@ -1,10 +1,11 @@
+source("server/sceEMD.R")
 library(diffcyt)
 
 plotbox_height <- "48em"
 methods_height <- "40em"
 
 # checks which methods is selected and executes the diffcyt function accordingly
-call_diffcyt <- function(){
+call_DE <- function(){
   req(input$deSubselection)
   contrastVars <- isolate(input$contrastVars)
   
@@ -19,9 +20,9 @@ call_diffcyt <- function(){
     print(sprintf("only using %s from the condition %s", subselection, category))
     sce <- filterSCE(sce, get(category) == subselection)
   }
-  
-  ei <- metadata(sce)$experiment_info
-  nr_samples <- length(levels(colData(sce)$sample_id))
+  toggle_inputs()
+  ei <- ei(sce)
+  nr_samples <- nlevels(sample_ids(sce))
 
 
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR")){
@@ -222,7 +223,57 @@ call_diffcyt <- function(){
       normalize = normalize
     )
     }
+  } else if (input$chosenDAMethod == "sceEMD") {
+    markersToTest <- isolate(input$DEFeaturesIn)
+    if (isolate(input$DEMarkerToTest) == "Marker by Class") {
+      sce <- filterSCE(sce, marker_classes(sce) %in% markersToTest)
+    }else{
+      sce <- filterSCE(sce, rownames(sce) %in% markersToTest)
+    }
+    
+    binSize <- isolate(input$emdBinwidth)
+    reactiveVals$methodsInfo[["sceEMD"]] <- data.frame(
+      analysis_type = "Differential States", 
+      method = "EMD",
+      condition = toString(input$emdCond),
+      binSize = binSize,
+      nperm = isolate(input$emdNperm),
+      clustering = toString(isolate(input$deCluster)),
+      features = toString(markersToTest),
+      filter = subselection
+    )
+    
+    if (binSize == 0) binSize <- NULL
+    
+    showNotification(
+      ui =
+        HTML(
+          "<div id='emdProgress'><b>EMD Progress:</b><div>"
+        ),
+      duration = NULL,
+      id = "emdProgressNote"
+    )
+    
+    withCallingHandlers({
+      out <-
+        sceEMD(
+          sce = sce,
+          k = isolate(input$deCluster),
+          condition = isolate(input$emdCond),
+          binSize = binSize,
+          nperm = isolate(input$emdNperm)
+        )
+    },
+    message = function(m) {
+      shinyjs::html(id = "emdProgress",
+                    html = sprintf("<br>%s", HTML(m$message)),
+                    add = TRUE)
+    })
+    
   }
+  toggle_inputs(enable_inputs = TRUE)
+  removeNotification("emdProgressNote")
+  return(out)
 }
 
 createCustomContrastMatrix <- function(contrastVars, matrix, designMatrix = T){
@@ -262,7 +313,7 @@ getBools <- function(names, contrastVars){
 # displays available methods and selection of DA or DS
 output$deMethodSelection <- renderUI({
    methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
-   methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM")
+   methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD")
    if(input$da_ds == "Differential Abundance"){
      choices <- methodsDA
      reactiveVals$methodType <- "DA"
@@ -320,7 +371,7 @@ output$normalizeSelection <- renderUI({
 
 # checks whether designMatrix or formula box must be visualized
 output$modelSelection <- renderUI({
-  req(input$chosenDAMethod)
+  req(input$chosenDAMethod, input$chosenDAMethod != "sceEMD")
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DS-limma","diffcyt-DA-voom")){
     uiOutput("designMatrixSelection")
   } else {
@@ -409,7 +460,7 @@ output$formulaSelection <- renderUI({
 })
 
 output$contrastSelection <- renderUI({
-  req(input$chosenDAMethod)
+  req(input$chosenDAMethod, input$chosenDAMethod != "sceEMD")
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR", "diffcyt-DS-limma", "diffcyt-DA-voom")) {
     choices <- input$colsDesign
   } else {
@@ -431,6 +482,77 @@ output$contrastSelection <- renderUI({
       id = "deContrastQ",
       title = "Contrast Matrix Design",
       content = "Here, you specify the comparison of interest, i.e. the combination of model parameters to test whether they are equal to zero."
+    )
+  )
+})
+
+output$emdInput <- renderUI({
+  req(input$chosenDAMethod == "sceEMD")
+  sceEI <- ei(reactiveVals$sce)
+  condChoices <- which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2))
+  if (length(condChoices) == 0){
+    showNotification("No condition with exactly two levels found. EMD is not applicable, please select another method.", duration = NULL, type = "error")
+    return(NULL)
+    }
+  condChoices <- names(condChoices)
+  list(div(
+    selectizeInput(
+      "emdCond",
+      choices = condChoices,
+      label = span(
+        "What condition do you want to analyse?",
+        icon("question-circle"),
+        id = "emdCondQ"
+      )
+    ),
+  bsPopover(
+    id = "emdCondQ",
+    title = "Condition for EMD analysis",
+    content = HTML("Here, you specify the comparison of interest, i.e. the group on which to split the expression distributions.<br><b>Currently only conditions with two levels are supported.</b>")
+  )
+  ),
+  uiOutput("emdNpermInput"),
+  div(
+    numericInput(
+      "emdBinwidth",
+      label = span(
+        "Bin width for comparing histograms",
+        icon("question-circle"),
+        id = "emdBinwidthQ"
+      ),
+      value = 0,
+      min = 0,
+      max = 1,
+      step = .1
+    ),
+    bsPopover(
+      id = "emdBinwidthQ",
+      title = "Bin width for comparing histograms",
+      content = HTML("You can set a custom binwidth but we recommend to leave this at zero.<br><b>Set this to 0 to compute the binwidth for each marker based on the Freedman-Diaconis rule.</b>")
+    )
+  ))
+})
+
+output$emdNpermInput <- renderUI({
+  req(input$emdCond)
+  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$emdCond]]))
+  div(
+    numericInput(
+      "emdNperm",
+      label = span(
+        "Number of permutations for p-value estimation",
+        icon("question-circle"),
+        id = "emdNpermQ"
+      ),
+      value = min(100, maxPerm),
+      min = 0,
+      max = maxPerm,
+      step = 10
+    ),
+    bsPopover(
+      id = "emdNpermQ",
+      title = "Number of permutations for p-value estimation",
+      content = HTML("Note that meaningful results require many permutations. For a unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br><b>This value must not exceed the factorial of the number of samples.</b>")
     )
   )
 })
@@ -544,7 +666,7 @@ output$extraFeatures <- renderUI({
 # if diffcyt should be exectued on selected markers (markers_to_test)
 output$markerToTestSelection <- renderUI({
   req(input$chosenDAMethod)
-  if (input$chosenDAMethod %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
+  if (input$chosenDAMethod %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM", "sceEMD")) {
     div(
       selectInput(
         "DEMarkerToTest",
@@ -647,11 +769,14 @@ output$visClusterSelection <- renderUI({
 # heatmap can be visualized for selected features (DS)
 output$visMarkerSelection <- renderUI({
   out <- reactiveVals$DAruns[[input$deVisMethod]]
+  
+  if (input$deVisMethod != "sceEMD")
+    out <- rowData(out$res)
   div(
     pickerInput(
       "DEMarkerSelection",
-      choices = as.character(unique(rowData(out$res)$marker_id)),
-      selected = as.character(unique(rowData(out$res)$marker_id)),
+      choices = as.character(unique(out$marker_id)),
+      selected = as.character(unique(out$marker_id)),
       label = "Visualize results for subset of markers:",
       options = list(
         `actions-box` = TRUE,
@@ -676,6 +801,8 @@ output$visSelection <- renderUI({
 
 output$topNSelection <- renderUI({
   out <- reactiveVals$DAruns[[input$deVisMethod]]
+  if (input$deVisMethod != "sceEMD")
+    out <- rowData(out$res)
   methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
   if(input$deVisMethod %in% methodsDA){
     label <- "Number of top clusters to display:"
@@ -687,9 +814,9 @@ output$topNSelection <- renderUI({
     numericInput(
       "topN",
       label = label,
-      value = min(20,nrow(rowData(out$res))),
+      value = min(20,nrow(out)),
       min = 1,
-      max = nrow(rowData(out$res)),
+      max = nrow(out),
       step = 1
     ), 
   )
@@ -792,7 +919,7 @@ observeEvent(input$diffExpButton,{
   
 
   # call diffcyt function
-  out <- call_diffcyt()
+  out <- call_DE()
   if(!is.null(out)){
     # add method to DAruns
     reactiveVals$DAruns[[DAmethod]] <- out
@@ -840,7 +967,7 @@ observeEvent(input$visExpButton,{
   # Render Heatmap Plot
   output$heatmapDEPlot <- renderPlot({
     methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
-    methodsDS <- c("diffcyt-DS-limma","diffcyt-DS-LMM")
+    methodsDS <- c("diffcyt-DS-limma","diffcyt-DS-LMM", "sceEMD")
     subselection <- isolate(reactiveVals$methodsInfo[[visMethod]]$filter)
     sce <- isolate(reactiveVals$sce)
     
@@ -857,10 +984,12 @@ observeEvent(input$visExpButton,{
     }
     
     out <- runs[[visMethod]]
+    if (visMethod != "sceEMD")
+      out <- rowData(out$res)
     
     reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(
       x=x,
-      y=rowData(out$res), 
+      y=out, 
       fdr=as.numeric(fdrThreshold), 
       lfc=as.numeric(lfcThreshold), 
       sort_by = heatmapSortBy, 
@@ -889,7 +1018,7 @@ observeEvent(input$visExpButton,{
   
   ## Info button
   output$infoDE <- renderUI({
-    table <- isolate(reactiveVals$methodsInfo[[visMethod]])
+    table <- reactiveVals$methodsInfo[[visMethod]]
     value <- renderTable(
       checkNullTable(table),
       caption.placement = "top"
@@ -920,7 +1049,9 @@ observeEvent(input$visExpButton,{
   
   output$topTable <- renderDataTable({
     out <- reactiveVals$DAruns[[visMethod]] 
-    reactiveVals$topTable <- data.frame(diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE))
+    if (visMethod != "sceEMD")
+      out <- diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE)
+    reactiveVals$topTable <- data.frame(out)
     DT::datatable(reactiveVals$topTable,
                   rownames = FALSE,
                   options = list(pageLength=10, searching=FALSE))

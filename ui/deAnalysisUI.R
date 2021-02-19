@@ -26,6 +26,7 @@ deBody <- function(){
       uiOutput("deMethodSelection"),
       uiOutput("modelSelection"),
       uiOutput("contrastSelection"),
+      uiOutput("emdInput"),
       uiOutput("deSubselection"),
       width = 6
     ),
