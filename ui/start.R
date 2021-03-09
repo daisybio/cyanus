@@ -3,7 +3,8 @@ startBody <- function() {
   exampleDataVector <- c("PBMC" = "data/pbmc",
                         # "MouseData" = "data/mousedata",
                          "Platelets" = "data/platelets",
-                         "Platelets Small" = "data/platelets_small")
+                         "Platelets Small" = "data/platelets_small",
+                        "Time Data Melissa" = "data/timeData")
   availableExampleData <- exampleDataVector %in% list.files("data", full.names = T)
   exampleDataVector <- exampleDataVector[availableExampleData]
   
