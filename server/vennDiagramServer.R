@@ -169,7 +169,7 @@ output$DAContrastVenn <- renderUI({
   req(input$colsFixedDA)
   choices <- intersect(input$colsDesignDA, input$colsFixedDA)
   div(
-    pickerInput(
+    selectInput(
       "contrastVarsDA",
       choices = choices,
       selected = choices[1],
@@ -178,7 +178,7 @@ output$DAContrastVenn <- renderUI({
         icon("question-circle"),
         id = "deContrastVennQ"
       ),
-      multiple = TRUE
+      multiple = F
     ),
     bsPopover(
       id = "deContrastVennQ",
@@ -216,7 +216,7 @@ output$deSubselectionVenn <- renderUI({
   choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
   
-  choices <- as.vector(sapply(choices, function(x){
+  choices <- unlist(sapply(choices, function(x){
     lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
     return(lvls)
   }))

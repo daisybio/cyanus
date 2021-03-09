@@ -416,16 +416,16 @@ output$contrastSelection <- renderUI({
     choices <- input$colsFixed
   }
   div(
-    pickerInput(
+    selectInput(
       "contrastVars",
       choices = choices,
       selected = choices[1],
       label = span(
-        "What condition(s) do you want to analyse?",
+        "What condition do you want to analyse?",
         icon("question-circle"),
         id = "deContrastQ"
       ),
-      multiple = TRUE
+      multiple = F
     ),
     bsPopover(
       id = "deContrastQ",
@@ -452,10 +452,10 @@ output$deSubselection <- renderUI({
   names(choices) <- paste("only", choices)
   reactiveVals$subselectionMap <- map
   div(
-    radioButtons(
+    checkboxGroupInput(
       inputId = "deSubselection",
       label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectQ"),
-      choices = c("No", choices), 
+      choices = c(choices), 
       inline = T
     ),
     bsPopover(
