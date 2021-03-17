@@ -561,12 +561,12 @@ output$deSubselection <- renderUI({
   choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
 
-  map <- as.vector(sapply(choices, function(x){
+  map <- unlist(sapply(choices, function(x){
     lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
     return(rep(x, length(lvls)))
   }))
 
-  choices <- as.vector(sapply(choices, function(x){
+  choices <- unlist(sapply(choices, function(x){
     lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
     return(lvls)
   }))
@@ -1143,7 +1143,7 @@ output$deExprsCluster <- renderUI({
   choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
   
-  choices <- as.vector(sapply(choices, function(x){
+  choices <- unlist(sapply(choices, function(x){
     lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
     return(lvls)
   }))
