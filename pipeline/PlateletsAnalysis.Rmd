@@ -143,6 +143,15 @@ sce <- clusterSCE(sce)
 delta_area(sce)
 ```
 
+```{r}
+exprs_plot <- plotExprs(sce, features = c("CD107a", "CD154"), color_by = "activated_baseline") +  theme(text = element_text(size=22), legend.position = "none")
+median_exprs_plot <- CATALYST::plotPbExprs(sce, k = "all", features = c("CD107a", "CD154") , color_by = "activated_baseline",  ncol=8, facet_by = "antigen") + scale_color_discrete(name = "Condition", labels = c("Activated", "Baseline")) + theme(text = element_text(size=22))
+library(ggpubr)
+ggarrange(exprs_plot, median_exprs_plot, widths=c(1.5, 2), nrow = 1, labels = c("A", "B"))
+
+
+```
+
 Let's have a look at the clusters of meta7:
 ```{r}
 CATALYST::plotAbundances(sce, "meta7", group_by = "activated_baseline") +  theme(text = element_text(size=18), axis.text.x = element_text(size=12)) 
