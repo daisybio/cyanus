@@ -67,7 +67,19 @@ deBody <- function(){
     fluidRow(
       shinydashboard::box(
         div(
-          "Here, you can compute differential marker expression between your conditions. "
+          "Here, you can compute differential marker expression between your conditions. The boxplots can help to get a rough 
+          overview of the different markers in order to see which markers might be differentially expressed between conditions. 
+          There are various options for editing the boxplots (e.g. facet by antigen or cluster ID, color by condition, sample ID, ...)"
+        ),
+        div(
+          "There are two different analysis types: Differential abundance compares the proportions of cell types across experimental 
+          conditions per cluster and aims to highlight populations that are present at different ratios. The methods for this are"
+        ),
+        div(
+          HTML("<body><a target=\"_blank\" rel=\"noopener noreferrer\" href = https://bioconductor.org/packages/release/bioc/html/edgeR.html>edgeR</a>, <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://rdrr.io/bioc/diffcyt/man/testDA_voom.html>voom</a> and the generalized linear mixed model (GLMM). <br>
+          The second option is differential states (differential analysis on the median marker expression of the markers per condition, 
+          overall or cluster-wise). This analysis can be performed using <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://www.bioconductor.org/packages/release/bioc/html/limma.html>limma</a> 
+               or a linear mixed effect model. </body>")
         ),
         title = h2("Differential Marker Expression Analysis"),
         width = 12

@@ -902,6 +902,8 @@ observeEvent(input$visExpButton,{
     }
     
     out <- runs[[visMethod]]
+    rowData(out$res)$p_val[is.na(rowData(out$res)$p_val)] <- 1
+    rowData(out$res)$p_adj[is.na(rowData(out$res)$p_adj)] <- 1
     
     reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(
       x=x,
@@ -964,7 +966,9 @@ observeEvent(input$visExpButton,{
   })
   
   output$topTable <- renderDataTable({
-    out <- reactiveVals$DAruns[[visMethod]] 
+    out <- reactiveVals$DAruns[[visMethod]]
+    rowData(out$res)$p_val[is.na(rowData(out$res)$p_val)] <- 1
+    rowData(out$res)$p_adj[is.na(rowData(out$res)$p_adj)] <- 1
     reactiveVals$topTable <- data.frame(diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE))
     DT::datatable(reactiveVals$topTable,
                   rownames = FALSE,
