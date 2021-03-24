@@ -169,16 +169,16 @@ output$DAContrastVenn <- renderUI({
   req(input$colsFixedDA)
   choices <- intersect(input$colsDesignDA, input$colsFixedDA)
   div(
-    pickerInput(
+    selectInput(
       "contrastVarsDA",
       choices = choices,
       selected = choices[1],
       label = span(
-        "What condition(s) do you want to analyse?",
+        "What condition do you want to analyse?",
         icon("question-circle"),
         id = "deContrastVennQ"
       ),
-      multiple = TRUE
+      multiple = F
     ),
     bsPopover(
       id = "deContrastVennQ",
@@ -216,16 +216,16 @@ output$deSubselectionVenn <- renderUI({
   choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
   
-  choices <- as.vector(sapply(choices, function(x){
+  choices <- unlist(sapply(choices, function(x){
     lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
     return(lvls)
   }))
   names(choices) <- paste("only", choices)
   div(
-    radioButtons(
+    checkboxGroupInput(
       inputId = "deSubselectionVenn",
       label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectVennQ"),
-      choices = c("No", choices), 
+      choices = choices, 
       inline = T
     ),
     bsPopover(
@@ -400,32 +400,85 @@ output$normalizeSelectionVenn <- renderUI({
 observeEvent(input$diffExpButtonVenn, {
   shinyjs::disable("diffExpButtonVenn")
   req(input$da_dsVenn)
-  reactiveVals$resultVenn <- list()
-  ds_bool <- T
+  resultVenn <- runMethods()
+  if(!is.null(resultVenn)){
+    output$vennDiagrams <- renderPlot({
+      ds_bool <- isolate(reactiveVals$ds_bool)
+      venn <- createVennDiagram(resultVenn, ds_bool)
+      reactiveVals$lastVenn <- venn
+      venn
+    })
+  }
+  shinyjs::enable("diffExpButtonVenn")
+})
+
+output$downloadVenn <- renderUI({
+  req(reactiveVals$lastVenn)
+  div(
+    downloadButton("downloadVennButton", "Download Plot"),
+    style = "float:right;"
+  )
+})
+
+output$downloadVennButton <- downloadHandler(
+  filename = function(){
+    paste0("VennDiagram", ".pdf")
+  },
+  content = function(file){
+    ggsave(file, plot = reactiveVals$lastVenn, width=12, height=12)
+  }
+)
+
+runMethods <- function(){
+  resultVenn <- list()
+  reactiveVals$ds_bool <- T
   if(input$da_dsVenn == "Differential Abundance"){
     contrast <- isolate(input$contrastVarsDA)
   }else{
     contrast <- isolate(input$contrastVarsDS)
   }
   clusters <- isolate(input$deClusterVenn)
-  subselection <- isolate(input$deSubselectionVenn)
+  
+  if(is.null(input$deSubselectionVenn)){
+    subselection <- "No"
+  }else{
+    subselection <- isolate(input$deSubselectionVenn)
+  }
   
   sce <- isolate(reactiveVals$sce)
   if(subselection != "No"){
-    category <- reactiveVals$subselectionMap[[subselection]]
-    if(category %in% contrast){
-      showNotification("You want to analyse a condition you subsetted. That is not meaningful. Try again.", type = "error")
-      return(NULL)
+    catCount <- sapply(colnames(metadata(sce)$experiment_info)[!colnames(metadata(sce)$experiment_info) %in% c("n_cells", "sample_id")], function(x){
+      return(0)
+    })
+    names(catCount) <- colnames(metadata(sce)$experiment_info)[!colnames(metadata(sce)$experiment_info) %in% c("n_cells", "sample_id")]
+    exclude <- list()
+    for(s in subselection){
+      category <- reactiveVals$subselectionMap[[s]]
+      catCount[[category]] <- catCount[[category]] + 1 
+      if(!is.null(exclude[[category]])){
+        exclude[[category]] <- c(exclude[[category]], s)
+      }else{
+        exclude[[category]] <- s
+      }
     }
-    print(sprintf("only using %s from the condition %s", subselection, category))
-    sce <- filterSCE(sce, get(category) == subselection)
+    for(x in names(catCount)){
+      if(x %in% contrast & catCount[[x]] == 1){
+        showNotification("You want to analyse a condition you subsetted. That is not meaningful. Try again.", type = "error")
+        return(NULL)
+      }
+    }
+    for(cat in names(exclude)){
+      sub <- exclude[[cat]]
+      print(sprintf("only using %s from the condition %s", sub, cat))
+      sce <- filterSCE(sce, get(cat) %in% sub)
+    }
   }
   
   ei <- metadata(sce)$experiment_info
   nr_samples <- length(levels(colData(sce)$sample_id))
   
   if(input$da_dsVenn == "Differential Abundance"){
-    ds_bool <- F
+    reactiveVals$ds_bool <- F
     colsDesignDA <- isolate(input$colsDesignDA)
     
     design <- createDesignMatrix(ei, cols_design = colsDesignDA)
@@ -489,10 +542,11 @@ observeEvent(input$diffExpButtonVenn, {
           normalize = normalize,
           trend_method = edgeRTrend,
           block_id = blockIDVoom
-      )
+        )
       }
-      reactiveVals$resultVenn[[method]] <- out
+      resultVenn[[method]] <- out
     }
+    return(resultVenn)
     
   }else{
     colsDesignDS <- isolate(input$colsDesignDS)
@@ -539,7 +593,6 @@ observeEvent(input$diffExpButtonVenn, {
     }else{
       limmaTrend <- FALSE
     }
-    
     for(method in c("diffcyt-DS-limma", "diffcyt-DS-LMM")){
       print(method)
       showNotification(sprintf("Calculating %s", method))
@@ -566,35 +619,11 @@ observeEvent(input$diffExpButtonVenn, {
           markers_to_test = markersToTest,
         )
       }
-      reactiveVals$resultVenn[[method]] <- out
+      resultVenn[[method]] <- out
     }
-    
+    return(resultVenn)
   }
-  
-  output$vennDiagrams <- renderPlot({
-    venn <- createVennDiagram(reactiveVals$resultVenn, ds_bool)
-    reactiveVals$lastVenn <- venn
-    venn
-  })
-  shinyjs::enable("diffExpButtonVenn")
-})
-
-output$downloadVenn <- renderUI({
-  req(reactiveVals$lastVenn)
-  div(
-    downloadButton("downloadVennButton", "Download Plot"),
-    style = "float:right;"
-  )
-})
-
-output$downloadVennButton <- downloadHandler(
-  filename = function(){
-    paste0("VennDiagram", ".pdf")
-  },
-  content = function(file){
-    ggsave(file, plot = reactiveVals$lastVenn, width=12, height=12)
-  }
-)
+}
 
 createVennDiagram <- function(res, DS = T) {
   input_venn <- list()
