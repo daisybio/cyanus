@@ -98,6 +98,7 @@ observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
   toggle_menu(enable_menu = TRUE)
   reactiveVals$continue <- TRUE
+  runjs("document.getElementById('nextTab').scrollIntoView();")
   })
 
 output$panelDT <- renderDT(
