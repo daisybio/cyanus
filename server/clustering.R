@@ -64,13 +64,17 @@ observeEvent(input$startClustering, {
   )
 })
 
-observeEvent(input$featuresIn, {
-  if (input$useFeaturesIn == "Marker by Class")
-    reactiveVals$clusterFeatureNames <-
-      rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) %in% input$featuresIn]
-  else
-    reactiveVals$clusterFeatureNames <- input$featuresIn
-}, ignoreNULL = FALSE, ignoreInit = TRUE)
+observeEvent(input$featuresIn,
+             {
+               if (input$useFeaturesIn == "Marker by Class")
+                 reactiveVals$clusterFeatureNames <-
+                   rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) %in% input$featuresIn]
+               else
+                 reactiveVals$clusterFeatureNames <-
+                   input$featuresIn
+             },
+             ignoreNULL = FALSE,
+             ignoreInit = TRUE)
 
 observe({
   if (length(reactiveVals$clusterFeatureNames) == 0)
@@ -114,6 +118,18 @@ observeEvent(input$mergeClusteringButton, {
   # )
 })
 
+observeEvent(input$clusterCode, {
+  if (nlevels(cluster_ids(reactiveVals$sce, input$clusterCode)) == 1) {
+    hideTab("clusterVisTabBox", "Cluster Frequencies", session = getDefaultReactiveDomain())
+    hideTab("clusterVisTabBox", "Marker Densities", session = getDefaultReactiveDomain())
+  } else {
+    showTab("clusterVisTabBox", "Cluster Frequencies", select = FALSE, session = getDefaultReactiveDomain())
+    showTab("clusterVisTabBox", "Marker Densities", select = FALSE, session = getDefaultReactiveDomain())
+  }
+}
+)
+
+
 ### Renderer ----
 
 output$featuresOut <- renderUI({
@@ -128,7 +144,8 @@ output$featuresOut <- renderUI({
       sprintf("%s (%s)", choices, as.character(marker_classes(reactiveVals$sce)))
     selected <-
       rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == "type"]
-    choices <- sortMarkerNames(choices, as.character(marker_classes(reactiveVals$sce)), first = "type")
+    choices <-
+      sortMarkerNames(choices, as.character(marker_classes(reactiveVals$sce)), first = "type")
   } else
     stop("by name or by class?")
   shinyWidgets::pickerInput(
@@ -300,9 +317,9 @@ output$clusteringOutput <- renderUI({
   abundanceChoices <- names(colData(reactiveVals$sce))
   names(abundanceChoices) <- names(abundanceChoices)
   
-  densityChoices <- c("Transformed" = "exprs", "Raw" = "counts")
-  densityChoices <-
-    densityChoices[densityChoices %in% assayNames(reactiveVals$sce)]
+  densityAssayChoices <- c("Transformed" = "exprs", "Raw" = "counts")
+  densityAssayChoices <-
+    densityAssayChoices[densityAssayChoices %in% assayNames(reactiveVals$sce)]
   
   shinydashboard::box(
     fluidRow(
@@ -351,19 +368,24 @@ output$clusteringOutput <- renderUI({
           div(uiOutput("clusterHeatmapDownload"),
               style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
-            plotOutput("clusterHeatmapPlot",
-                       height = "800px")
+            plotOutput("clusterHeatmapPlot", height = "800px")
           ))
         ),
         tabPanel(
           "Marker Densities",
-          
           div(
             dropdownButton(
               tags$h3("Plot Options"),
               selectizeInput("assayTypeVisIn",
                              "Expression Type",
-                             choices = densityChoices),
+                             choices = densityAssayChoices),
+              selectInput(
+                "densityUseFeatureChoicesIn",
+                label = "Features",
+                choices = 
+                  c("all", levels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)),
+                selected = "type"
+              ),
               circle = TRUE,
               status = "info",
               icon = icon("gear"),
@@ -381,16 +403,44 @@ output$clusteringOutput <- renderUI({
           ))
         ),
         tabPanel(
-          "Star Charts",
+          "Star Chart (Overall)",
           div(
-            "Tree, where each node is represented by a star chart indicating median marker values."
-            ,
+            "Tree, where each node (cluster) is represented by a star chart indicating median marker values.",
             style = "text-align: center;vertical-align: middle;"
           ),
           div(uiOutput("clusterStarDownload"),
               style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
             plotOutput("clusterStarPlot",
+                       height = "800px")
+          ))
+        ),
+        tabPanel(
+          "Star Chart (Markerwise)",
+          div(
+            dropdownButton(
+              tags$h3("Plot Options"),
+              selectInput(
+                "plotStarMarkerFeatureIn",
+                label = "Marker",
+                choices = rownames(reactiveVals$sce)
+              ),
+              circle = TRUE,
+              status = "info",
+              icon = icon("gear"),
+              width = "400px",
+              tooltip = tooltipOptions(title = "Click to see plot options")
+            ),
+            style = "position: relative; z-index: 99; float: left;"
+          ),
+          div(
+            "Tree, where each node (cluster) is coloured depending on its median value for the given marker.",
+            style = "text-align: center;vertical-align: middle;"
+          ),
+          div(uiOutput("clusterStarMarkerDownload"),
+              style = "position: relative; z-index: 99; float: right;"),
+          fluidRow(withSpinner(
+            plotOutput("clusterStarMarkerPlot",
                        height = "800px")
           ))
         ),
@@ -404,6 +454,12 @@ output$clusteringOutput <- renderUI({
     collapsible = TRUE,
     collapsed = TRUE
   )
+})
+
+output$clusterStarMarkerDownload <- renderUI({
+  req(reactiveVals$starMarkerCluster)
+  
+  downloadButton("downloadPlotMarkerStar", "Download Plot")
 })
 
 output$clusterStarDownload <- renderUI({
@@ -436,6 +492,12 @@ output$clusterStarPlot <- renderPlot({
   reactiveVals$starCluster
 })
 
+output$clusterStarMarkerPlot <- renderPlot({
+  reactiveVals$starMarkerCluster <-
+    plotMarkerCustom(reactiveVals$sce, input$plotStarMarkerFeatureIn, backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]])
+  reactiveVals$starMarkerCluster
+})
+
 output$clusterAbundancePlot <- renderPlot({
   shape_by <- input$abundanceShape
   if (is.null(shape_by) | shape_by == "")
@@ -452,6 +514,7 @@ output$clusterAbundancePlot <- renderPlot({
 })
 
 output$clusterHeatmapPlot <- renderPlot({
+  req(nlevels(cluster_ids(reactiveVals$sce, input$clusterCode)) > 1)
   reactiveVals$heatmapCluster <-
     plotFreqHeatmapCustom(reactiveVals$sce,
                           input$clusterCode)
@@ -459,18 +522,22 @@ output$clusterHeatmapPlot <- renderPlot({
 })
 
 output$clusterExprsPlot <- renderPlot({
+  req(nlevels(cluster_ids(reactiveVals$sce, input$clusterCode)) > 1)
+  features_tmp <- input$densityUseFeatureChoicesIn
+  if (features_tmp == "all")
+    features_tmp <- NULL
   reactiveVals$exprsCluster <-
     plotClusterExprsCustom(
       reactiveVals$sce,
       k = input$clusterCode,
-      features = reactiveVals$clusterRun$features,
+      features = features_tmp,
       input$assayTypeVisIn
     )
   reactiveVals$exprsCluster
 })
 
 output$downloadPlotStar <- downloadHandler(
-  filename = "Star_Charts.pdf",
+  filename = "Star_Charts_overall.pdf",
   content = function(file) {
     pdf(file, width = 12, height = 8)
     print(reactiveVals$starCluster)
@@ -478,21 +545,40 @@ output$downloadPlotStar <- downloadHandler(
   }
 )
 
+output$downloadPlotMarkerStar <- downloadHandler(
+  filename = sprintf("Star_Charts_%s.pdf", input$plotStarMarkerFeatureIn),
+  content = function(file) {
+    pdf(file, width = 12, height = 8)
+    print(reactiveVals$starMarkerCluster)
+    dev.off()
+  }
+)
+
 output$downloadPlotAbundance <- downloadHandler(
-  filename = function(){
+  filename = function() {
     paste0("Population_Abundances", ".pdf")
   },
-  content = function(file){
-    ggsave(file, plot = reactiveVals$abundanceCluster, width=12, height=6)
+  content = function(file) {
+    ggsave(
+      file,
+      plot = reactiveVals$abundanceCluster,
+      width = 12,
+      height = 6
+    )
   }
 )
 
 output$downloadPlotDensity <- downloadHandler(
-  filename = function(){
+  filename = function() {
     paste0("Cluster_Expression", ".pdf")
   },
-  content = function(file){
-    ggsave(file, plot = reactiveVals$exprsCluster, width=16, height=12)
+  content = function(file) {
+    ggsave(
+      file,
+      plot = reactiveVals$exprsCluster,
+      width = 16,
+      height = 12
+    )
   }
 )
 
