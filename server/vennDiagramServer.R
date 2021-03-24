@@ -34,7 +34,7 @@ output$DAVenn <- renderUI({
     bsPopover(
       id = "deDesignMatrixVenn",
       title = "Design matrix for model fitting",
-      content = "edgeR and voom work with a design matrix: The selected columns will be included in the design matrix specifcying the models to be fitted. For example, this may include group IDs (e.g. groups for differential testing) or block IDs (e.g. patient IDs in a paired design)."
+      content = "edgeR and voom work with a design matrix: The selected columns will be included in the design matrix specifying the models to be fitted. A design matrix includes all variables that are relevant/interesting for your analysis because the linear model will be built using these variables. That means that you MUST include the condition you want to analyze here."
     ),
     pickerInput(
       "colsFixedDA",
@@ -56,7 +56,7 @@ output$DAVenn <- renderUI({
     bsPopover(
       id = "deFormulaFixVenn",
       title = "Fixed effect terms for the model formula",
-      content = "GLMM works with fixed and random effects: Depending on the experimental design, this may include group IDs (e.g. groups for differential testing) or block IDs (e.g. patient IDs in a paired design)."
+      content = "GLMM works with fixed and random effects: Fixed effects are variables that we expect will have an effect on the dependent/response variable: they’re what you call explanatory variables in a standard linear regression. You MUST include the condition variable here."
     ),
     pickerInput(
       "colsRandomDA",
@@ -107,7 +107,7 @@ output$DSVenn <- renderUI({
     bsPopover(
       id = "deDesignMatrixVennDS",
       title = "Design matrix for model fitting",
-      content = "limma works with a design matrix: The selected columns will be included in the design matrix specifcying the models to be fitted. For example, this may include group IDs (e.g. groups for differential testing) or block IDs (e.g. patient IDs in a paired design)."
+      content = "limma works with a design matrix: The selected columns will be included in the design matrix specifying the models to be fitted. A design matrix includes all variables that are relevant/interesting for your analysis because the linear model will be built using these variables. That means that you MUST include the condition you want to analyze here."
     ),
     pickerInput(
       "colsFixedDS",
@@ -129,7 +129,7 @@ output$DSVenn <- renderUI({
     bsPopover(
       id = "deFormulaFixVennDS",
       title = "Fixed effect terms for the model formula",
-      content = "LMM works with fixed and random effects: Depending on the experimental design, this may include group IDs (e.g. groups for differential testing) or block IDs (e.g. patient IDs in a paired design)."
+      content = "LMM works with fixed and random effects: Fixed effects are variables that we expect will have an effect on the dependent/response variable: they’re what you call explanatory variables in a standard linear regression. You MUST include the condition variable here."
     ),
     pickerInput(
       "colsRandomDS",
@@ -183,7 +183,7 @@ output$DAContrastVenn <- renderUI({
     bsPopover(
       id = "deContrastVennQ",
       title = "Contrast Matrix Design",
-      content = "Here, you specify the comparison of interest, i.e. the combination of model parameters to test whether they are equal to zero."
+      content = "Here, you specify the comparison of interest. The p-values will be calculated on the basis of this variable, i.e. it will be tested whether the coefficient of this parameter in the model is equal to zero."
     )
   )
 })
@@ -198,7 +198,7 @@ output$DSContrastVenn <- renderUI({
       choices = choices,
       selected = choices[1],
       label = span(
-        "What condition(s) do you want to analyse?",
+        "What condition do you want to analyse?",
         icon("question-circle"),
         id = "deContrastVennDSQ"
       ),
@@ -207,7 +207,7 @@ output$DSContrastVenn <- renderUI({
     bsPopover(
       id = "deContrastVennDSQ",
       title = "Contrast Matrix Design",
-      content = "Here, you specify the comparison of interest, i.e. the combination of model parameters to test whether they are equal to zero."
+      content = "Here, you specify the comparison of interest. The p-values will be calculated on the basis of this variable, i.e. it will be tested whether the coefficient of this parameter in the model is equal to zero."
     )
   )
 })
@@ -321,7 +321,7 @@ output$extraFeaturesVenn <- renderUI({
       bsPopover(
         id = "trendMethodVennQ",
         title = "Method for estimating dispersion trend",
-        content = "EdgeR specific parameter for estimating the dispersion trend. See more in their estimateDisp function documentation.",
+        content = "EdgeR specific parameter for estimating the dispersion trend. See more in their estimateDisp function documentation. By default, we use the option none to calculate dispersions, since the dispersion-mean relationship typically does not resemble RNA-sequencing data.",
         placement = "top"
       ),
       selectizeInput(

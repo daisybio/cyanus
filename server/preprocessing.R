@@ -187,6 +187,13 @@ observeEvent(input$filterSelectionButton,{
   shinyjs::enable("nextTab")
 })
 
+observeEvent(reactiveVals$sce, {
+  if ("exprs" %in% names(assays(reactiveVals$sce)))
+    shinyjs::hide("noTransformationWarning")
+  else 
+    shinyjs::show("noTransformationWarning")
+})
+
 # method for plotting all kinds of preprocessing plots
 plotPreprocessing <- function(sce) {
   groupColorLabelBy <- names(colData(sce))

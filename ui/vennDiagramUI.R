@@ -19,7 +19,7 @@ vennBody <- function(){
         id = "da_dsVennQ",
         title = "Analysis type",
         content = HTML(
-          "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential abundance:</b> Differential analysis of cell population abundance. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. Methods: edgeR, voom, GLMM. <br> <b>Differential States:</b> Differential analysis of the median expression of the state markers in each cell population (i.e. cluster). Methods: limma, LMM."
+          "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential abundance:</b> Differential analysis of cell population abundance regarding the clusters. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential States:</b> Differential analysis of the marker expression in each cell population (i.e. cluster or overall)."
         )
       ),
       uiOutput("modelSelectionVenn"),

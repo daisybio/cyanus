@@ -447,7 +447,7 @@ output$designMatrixSelection <- renderUI({
     bsPopover(
       id = "deDesignMatrix",
       title = "Design matrix for model fitting",
-      content = "The selected columns will be included in the design matrix specifcying the models to be fitted. For example, this may include group IDs (e.g. groups for differential testing) or block IDs (e.g. patient IDs in a paired design)."
+      content = "The selected columns will be included in the design matrix specifying the models to be fitted. A design matrix includes all variables that are relevant/interesting for your analysis because the linear model will be built using these variables. That means that you MUST include the condition you want to analyze here."
     )
   )
 })
@@ -477,7 +477,7 @@ output$formulaSelection <- renderUI({
     bsPopover(
       id = "deFormulaFix",
       title = "Fixed effect terms for the model formula",
-      content = "Fixed effects are variables that we expect will have an effect on the dependent/response variable: they’re what you call explanatory variables in a standard linear regression."),
+      content = "Fixed effects are variables that we expect will have an effect on the dependent/response variable: they’re what you call explanatory variables in a standard linear regression. You MUST include the condition variable here. "),
     pickerInput(
       "colsRandom",
       choices = cols,
@@ -524,7 +524,7 @@ output$contrastSelection <- renderUI({
     bsPopover(
       id = "deContrastQ",
       title = "Contrast Matrix Design",
-      content = "Here, you specify the comparison of interest, i.e. the combination of model parameters to test whether they are equal to zero."
+      content = "Here, you specify the comparison of interest. The p-values will be calculated on the basis of this variable, i.e. it will be tested whether the coefficient of this parameter in the model is equal to zero. "
     )
   )
 })
@@ -645,7 +645,7 @@ output$extraFeatures <- renderUI({
       bsPopover(
         id = "trendMethodQ",
         title = "Method for estimating dispersion trend",
-        content = "EdgeR specific parameter for estimating the dispersion trend. See more in their estimateDisp function documentation.",
+        content = "EdgeR specific parameter for estimating the dispersion trend. See more in their estimateDisp function documentation. By default, we use the option none to calculate dispersions, since the dispersion-mean relationship typically does not resemble RNA-sequencing data.",
         placement = "top"
       )
     )

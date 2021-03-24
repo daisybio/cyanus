@@ -79,6 +79,7 @@ observeEvent(input$previousTab, {
   shinyjs::enable("nextTab")
   reactiveVals$current_tab <- reactiveVals$current_tab - 1
   updateTabItems(session, "tabs", tab_ids[reactiveVals$current_tab]) # here we update in case the new current tab is not a new max tab
+  shinyjs::runjs("window.scrollTo(0, 0)")
 })
 
 observeEvent(input$nextTab, {
@@ -88,6 +89,7 @@ observeEvent(input$nextTab, {
     reactiveVals$max_tab <- reactiveVals$current_tab
   else
     updateTabItems(session, "tabs", tab_ids[reactiveVals$current_tab]) # here we update in case the new current tab is not a new max tab
+  shinyjs::runjs("window.scrollTo(0, 0)")
 })
 
 # grow menu depending on current tab
@@ -101,7 +103,7 @@ output$sidebar <- renderUI({
   # here we update in case the new current tab is also a new max tab
   updateTabItems(session, "tabs", tab_ids[reactiveVals$max_tab])
   if (reactiveVals$max_tab > 1) reactiveVals$continue <- FALSE
-  #shinyjs::runjs("window.scrollTo(0, 0)")
+  shinyjs::runjs("window.scrollTo(0, 0)")
   return(curr_menu)
 })
 

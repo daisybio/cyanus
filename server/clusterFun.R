@@ -68,7 +68,7 @@ plotStarLegendCustom <- function (labels, colors = grDevices::rainbow(length(lab
   }
 }
 
-PlotBackgroundLegendCustom <- function (backgroundValues, background, main = "Background") 
+PlotBackgroundLegendCustom <- function (backgroundValues, background, main = "Background", max_rows = 10)
 {
   graphics::plot.new()
   if (is.numeric(backgroundValues)) {
@@ -77,7 +77,7 @@ PlotBackgroundLegendCustom <- function (backgroundValues, background, main = "Ba
   }
   else {
     graphics::legend("center", legend = levels(background$values), 
-                     fill = background$col, cex = 1.5, ncol = ceiling(length(levels(background$values))/10), 
+                     fill = background$col, cex = 1.5, ncol = ceiling(length(levels(background$values))/max_rows), 
                      bty = "n", title = main)
   }
 }
@@ -243,10 +243,61 @@ plotStarsCustom <-
     # return(list(star_legend = star_legend_plot, background_legend = background_legend_plot, tree = tree_plot))
   }
 
+plotMarkerCustom <- function (sce, marker, view = "MST", main = NULL, colorPalette = grDevices::colorRampPalette(c("#00007F", 
+                                                                                                                           "blue", "#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", 
+                                                                                                                           "red", "#7F0000")), backgroundValues = NULL, backgroundColor = function(n) {
+                                                                                                                             grDevices::rainbow(n, alpha = 0.3)
+                                                                                                                           }, backgroundBreaks = NULL, backgroundLim = NULL) 
+{
+  switch(view, MST = {
+    layout <- metadata(sce)$SOM_MST$l
+    lty <- 1
+  }, grid = {
+    layout <- as.matrix(fsom$map$grid)
+    lty <- 0
+  }, tSNE = {
+    layout <- fsom$MST$l2
+    lty <- 0
+  }, stop("The view should be MST, grid or tSNE. tSNE will only work\n                   if you specified this when building the MST."))
+  if (!is.null(backgroundValues)) {
+    background <- FlowSOM:::computeBackgroundColor(backgroundValues, 
+                                         backgroundColor, backgroundLim, backgroundBreaks)
+  }
+  else {
+    background <- NULL
+  }
+  oldpar <- graphics::par(no.readonly = TRUE)
+  if (is.null(main)) 
+    main <- marker
+  if (is.null(marker)) {
+    igraph::plot.igraph(metadata(sce)$SOM_MST$graph, layout = layout, 
+                        vertex.size = metadata(sce)$SOM_MST$size, vertex.label = NA, 
+                        edge.lty = lty)
+  }
+  else {
+    igraph::V(metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[as.numeric(cut(metadata(sce)$SOM_medianValues[, 
+                                                                                           marker], breaks = 100))]
+    igraph::plot.igraph(metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = metadata(sce)$SOM_MST$size, 
+                        vertex.label = NA, main = main, edge.lty = lty, 
+                        mark.groups = background$groups, mark.col = background$col[background$values], 
+                        mark.border = background$col[background$values])
+    graphics::par(fig = c(0, 0.2, 0, 1), mar = c(0, 0, 0, 
+                                                 0), new = TRUE)
+    FlowSOM:::legendContinuous(colorPalette(100), metadata(sce)$SOM_medianValues[, 
+                                                              marker])
+    if (!is.null(backgroundValues)) {
+      graphics::par(fig = c(0.8, 1, 0, 1), mar = c(0, 0, 0, 
+                                                   0), new = TRUE)
+      PlotBackgroundLegendCustom(backgroundValues, background, "Cluster", max_rows = 20)
+    }
+  }
+  graphics::par(oldpar)
+  return(recordPlot())
+}
 
 plotAbundancesCustom <-
   function (x,
-            k = "meta20",
+            k,
             by = c("sample_id", "cluster_id"),
             group_by = "condition",
             shape_by = NULL,
@@ -376,7 +427,7 @@ plotAbundancesCustom <-
 
 plotClusterExprsCustom <-
   function (x,
-            k = "meta20",
+            k,
             features = "type",
             assay = "exprs")
   {
@@ -389,7 +440,7 @@ plotClusterExprsCustom <-
     d <- dist(ms, method = "euclidean")
     o <- hclust(d, method = "average")$order
     cd <- colData(x)
-    es <- assay(x[features,], "exprs")
+    es <- assay(x[features,], assay)
     df <-
       data.table::as.data.table(data.frame(t(es), cd, check.names = FALSE))
     df <-
@@ -430,7 +481,7 @@ plotClusterExprsCustom <-
   }
 
 plotFreqHeatmapCustom <- function (x,
-                                   k = "meta20",
+                                   k,
                                    m = NULL,
                                    normalize = TRUE,
                                    row_anno = TRUE,
