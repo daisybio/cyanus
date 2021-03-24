@@ -26,6 +26,19 @@ sidebar <- dashboardSidebar(useShinyjs(),
 
 body <-
   dashboardBody(
+    div(
+      id = "loading",
+      "This app is currently loading. Please be patient. This may take a minute."
+    ),
+    tabItems(
+      welcomeBody,
+      startBody(),
+      preprocessingBody(),
+      visbody(),
+      clusteringBody,
+      deBody(),
+      vennBody()
+    ),
     fluidRow(column(
       6,
       bsButton(
@@ -47,20 +60,7 @@ body <-
         block = TRUE,
         disabled = TRUE
       )
-    )),
-    div(
-      id = "loading",
-      "This app is currently loading. Please be patient. This may take a minute."
-    ),
-    tabItems(
-      welcomeBody,
-      startBody(),
-      preprocessingBody(),
-      visbody(),
-      clusteringBody,
-      deBody(),
-      vennBody()
-    )
+    ))
   )
 
 
