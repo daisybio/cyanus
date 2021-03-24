@@ -46,8 +46,8 @@ metadata <- data.table(
   "file_name" = names,
   "sample_id" = samples,
   "patient_id" = patients,
-  "activated_baseline" = a_b,
-  "dual_triple" = dual_triple
+  "platelets" = a_b,
+  "therapy" = dual_triple
 )
 m <- match("condition", names(metadata))
 
@@ -84,7 +84,7 @@ sce <-
     md_cols = list(
       file = "file_name",
       id = "sample_id",
-      factors = c("activated_baseline", "dual_triple","patient_id")
+      factors = c("platelets", "therapy","patient_id")
     )
   )
 saveRDS(sce, file = "sce_transformed.rds")
