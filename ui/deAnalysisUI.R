@@ -72,14 +72,14 @@ deBody <- function(){
           There are various options for editing the boxplots (e.g. facet by antigen or cluster ID, color by condition, sample ID, ...)"
         ),
         div(
-          "There are two different analysis types: Differential abundance compares the proportions of cell types across experimental 
-          conditions per cluster and aims to highlight populations that are present at different ratios. The methods for this are"
-        ),
-        div(
-          HTML("<body><a target=\"_blank\" rel=\"noopener noreferrer\" href = https://bioconductor.org/packages/release/bioc/html/edgeR.html>edgeR</a>, <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://rdrr.io/bioc/diffcyt/man/testDA_voom.html>voom</a> and the generalized linear mixed model (GLMM). <br>
+          HTML("<body>There are two different analysis types: Differential abundance compares the proportions of cell types across experimental 
+          conditions per cluster and aims to highlight populations that are present at different ratios. The methods for this are 
+          <ul><li><a target=\"_blank\" rel=\"noopener noreferrer\" href = https://bioconductor.org/packages/release/bioc/html/edgeR.html>edgeR</a>: The edgeR package is used to fit models and calculate moderated tests at the cluster level. The statistical methods were originally designed for the analysis of gene expression data such as RNA-seq counts. Here, the methods are applied to cell counts.</li>
+          <li><a target=\"_blank\" rel=\"noopener noreferrer\" href = https://rdrr.io/bioc/diffcyt/man/testDA_voom.html>voom</a>: Calculates tests for differential abundance of clusters, using functions from the limma package and voom method.  Since count data are often heteroscedastic, the voom method is used to transform raw cluster cell counts and estimate observation-level weights to stabilize the mean-variance relationship. </li>
+          <li>a generalized linear mixed model (GLMM): </li></ul>
           The second option is differential states (differential analysis on the median marker expression of the markers per condition, 
           overall or cluster-wise). This analysis can be performed using <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://www.bioconductor.org/packages/release/bioc/html/limma.html>limma</a> 
-               or a linear mixed effect model. </body>")
+          or a linear mixed effect model. </body>")
         ),
         title = h2("Differential Marker Expression Analysis"),
         width = 12
