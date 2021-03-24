@@ -1,4 +1,11 @@
 server <- function(input, output, session) {
+  # make reactiveValues and server-wide variables
+  reactiveVals <- reactiveValues()
+  
+  # read all server files
+  sapply(list.files("server", full.names = TRUE), source, environment())
+  
+  # additional functions
   #downloadPlotFunction <- function(name, ggplotObject, width = 7, height = 7){
   #  return(
   #    downloadHandler(
@@ -24,22 +31,16 @@ server <- function(input, output, session) {
   })
   
   output$dashboardButton <- downloadHandler(
-      filename = function(){
-        paste("sce.rds")
-        },
-      content = function(file){
-        saveRDS(object = reactiveVals$sce, file = file)
-      }
-    )
+    filename = function(){
+      paste("sce.rds")
+    },
+    content = function(file){
+      saveRDS(object = reactiveVals$sce, file = file)
+    }
+  )
   
-  # make reactiveValues and server-wide variables
-  tab_ids <- c("welcome", "start", "preprocessing", "visualization", "clustering", "de", "venn")
-  reactiveVals <- reactiveValues()
-  reactiveVals$current_tab <- 1
-  
-  # read all server files
-  sapply(list.files("server", full.names = TRUE), source, environment())
-  
-  shinyBS::updateButton(session, "continue", " Start Analysis", icon("arrow-right"), style = "success", disabled = FALSE)
+  shinyBS::updateButton(session, inputId = "previousTab", icon = icon("arrow-left"), style = "success")
+  shinyBS::updateButton(session, inputId = "nextTab", icon = icon("arrow-right"), style = "success", disabled = FALSE)
+  shinyjs::hide("loading")
 }
 

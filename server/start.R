@@ -69,10 +69,8 @@ observeEvent(input$loadData, {
   } else
     stop("Which tab is selected?")
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
-  updateButton(session, "continue", label = " Preprocessing")
-  shinyjs::show("continue")
-  runjs("document.getElementById('continue').scrollIntoView();")
-})
+  reactiveVals$continue <- TRUE
+  })
 
 
 

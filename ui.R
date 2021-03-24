@@ -11,21 +11,25 @@ library(DT)
 
 sapply(list.files("ui", full.names = TRUE), source, environment())
 
-header <- dashboardHeader(title = "CyTOF Pipeline", uiOutput("dashboard"))
+header <-
+  dashboardHeader(title = "CyTOF Pipeline", uiOutput("dashboard"))
 
-sidebar <- dashboardSidebar(uiOutput("sidebar"))
+sidebar <- dashboardSidebar(useShinyjs(), uiOutput("sidebar"))
 
 body <-
   dashboardBody(
-    useShinyjs(),
-    tabItems(welcomeBody,
-             startBody(),
-              preprocessingBody(),
-             visbody(),
-             clusteringBody, 
-             deBody(), 
-             vennBody()),
-    bsButton("continue", "Loading App...", icon("spinner"), style = "warning", block = TRUE, disabled = TRUE)
+    fluidRow(column(6, bsButton(inputId = "previousTab", label = "Previous", icon = icon("spinner"), style = "warning", block = TRUE, disabled = TRUE)),
+             column(6, bsButton(inputId = "nextTab", label = "Next", icon = icon("spinner"), style = "warning", block = TRUE, disabled = TRUE))),
+    div(id = "loading", "This app is currently loading. Please be patient. This may take a minute."),
+    tabItems(
+      welcomeBody,
+      startBody(),
+      preprocessingBody(),
+      visbody(),
+      clusteringBody,
+      deBody(),
+      vennBody()
+    )
   )
 
 

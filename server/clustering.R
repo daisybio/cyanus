@@ -50,8 +50,9 @@ observeEvent(input$startClustering, {
                "startClustering",
                label = " Start Clustering",
                disabled = FALSE)
-  updateButton(session, "continue", label = " Differential Expression Analysis")
-  shinyjs::show("continue")
+  # updateButton(session, "continue", label = " Differential Expression Analysis")
+  # shinyjs::show("continue")
+  reactiveVals$continue <- TRUE
   removeNotification("clusteringProgressNote")
   showNotification(
     HTML(
