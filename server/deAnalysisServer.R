@@ -639,7 +639,7 @@ output$extraFeatures <- renderUI({
       selectizeInput(
         inputId = "edgeR_trendMethod",
         label = span("Trend Method", icon("question-circle"), id = "trendMethodQ"),
-        choices = c("locfit", "none", "movingave", "loess", "locfit.mixed"),
+        choices = c("none", "locfit", "movingave", "loess", "locfit.mixed"),
         multiple = F
       ),
       bsPopover(
@@ -1038,8 +1038,8 @@ observeEvent(input$visExpButton,{
     out <- runs[[visMethod]]
     if (visMethod != "sceEMD")
       out <- rowData(out$res)
-    out$p_val[is.na(out$p_val)] <- 1
-    out$p_adj[is.na(out$p_adj)] <- 1
+    #out$p_val[is.na(out$p_val)] <- 1
+    #out$p_adj[is.na(out$p_adj)] <- 1
     
     reactiveVals$diffHeatmapPlot <- plotDiffHeatmapCustom(
       x=x,
@@ -1102,16 +1102,16 @@ observeEvent(input$visExpButton,{
   })
   
   output$topTable <- renderDataTable({
-    
     out <- reactiveVals$DEruns[[visMethod]] 
     if (visMethod != "sceEMD")
       out <- diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE)
-    out$p_val[is.na(out$p_val)] <- 1
-    out$p_adj[is.na(out$p_adj)] <- 1
+    #out$p_val[is.na(out$p_val)] <- 1
+    #out$p_adj[is.na(out$p_adj)] <- 1
     reactiveVals$topTable <- data.frame(out)
-    DT::datatable(reactiveVals$topTable,
-                  rownames = FALSE,
-                  options = list(pageLength=10, searching=FALSE))
+    DT::datatable(reactiveVals$topTable, rownames = FALSE, 
+                  options = list(pageLength = 10, searching = FALSE, 
+                                 columnDefs = list(list( targets = c(1,2), 
+                                                         render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}")))))
   })
   
   output$downloadTopTable <- downloadHandler(
@@ -1307,7 +1307,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
                                                                                      lfc = "logFC", target = "marker_id"), assay = "exprs", 
                                    fun = c("median", "mean", "sum"), normalize = TRUE, col_anno = TRUE, 
                                    row_anno = TRUE, hm_pal = NULL, fdr_pal = c("lightgrey", 
-                                                                               "lightgreen"), lfc_pal = c("blue3", "white", "red3")) 
+                                                                               "lightgreen", "deeppink1"), lfc_pal = c("blue3", "white", "red3")) 
 {
   fun <- match.arg(fun)
   sort_by <- match.arg(sort_by)
@@ -1316,7 +1316,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
   miss <- !names(defs) %in% names(args$y_cols)
   if (any(miss)) 
     y_cols <- args$y_cols <- c(args$y_cols, defs[miss])[names(defs)]
-  CATALYST:::.check_args_plotDiffHeatmap(args)
+  check_args_plotDiffHeatmapCustom(args)
   stopifnot(y_cols[[sort_by]] %in% names(y))
   y_cols <- y_cols[y_cols %in% names(y)]
   if (is.null(k)) {
@@ -1346,7 +1346,8 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
   }
   y <- dplyr::rename(y, target = y_cols$target, padj = y_cols$padj, 
                      lfc = y_cols$lfc)
-  i <- i & !is.na(y$padj) & y$cluster_id %in% levels(x$cluster_id)
+  #i <- i & !is.na(y$padj) & y$cluster_id %in% levels(x$cluster_id)
+  i <- i & y$cluster_id %in% levels(x$cluster_id)
   if (!all) {
     i <- i & y$padj < fdr
     if (!is.null(y$lfc)) 
@@ -1374,7 +1375,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
                                                       "RdBu")))
   if (row_anno) {
     s <- factor(ifelse(top$padj < fdr, "yes", "no"), levels = c("no", 
-                                                                "yes"))
+                                                                "yes", "NA"))
     if (!is.null(top$lfc)) {
       lfc_lims <- range(top$lfc, na.rm = TRUE)
       if (all(lfc_lims > 0)) {
@@ -1395,7 +1396,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
     }
     names(fdr_pal) <- levels(s)
     anno_cols$significant <- fdr_pal
-    right_anno <- ComplexHeatmap::rowAnnotation(logFC = lfc_anno, significant = s, 
+    right_anno <- ComplexHeatmap::rowAnnotation(logFC = lfc_anno, significant = s, na_col = "deeppink1",
                                 foo = ComplexHeatmap::row_anno_text(scales::scientific(top$padj, 2), gp = gpar(fontsize = 8)), 
                                 col = anno_cols, gp = gpar(col = "white"), show_annotation_name = FALSE, 
                                 simple_anno_size = unit(4, "mm"))
@@ -1408,7 +1409,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
     y <- as.matrix(unclass(fq))
     if (normalize) y <- CATALYST:::.z_normalize(asin(sqrt(y)))
     ComplexHeatmap::Heatmap(matrix = y, name = paste0("normalized\n"[normalize], 
-                                      "frequency"), col = hm_pal, na_col = "lightgrey", 
+                                      "frequency"), col = hm_pal, na_col = "grey", 
             rect_gp = gpar(col = "white"), cluster_rows = FALSE, 
             cluster_columns = FALSE, row_names_side = "left", 
             top_annotation = top_anno, right_annotation = right_anno)
@@ -1428,4 +1429,24 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
                             right_annotation = right_anno, heatmap_legend_param = list(title_gp = gpar(fontsize = 10, 
                                                                                                        fontface = "bold", lineheight = 0.8)))
   })
+}
+
+
+check_args_plotDiffHeatmapCustom <- function(u){
+  CATALYST:::.check_sce(u$x, TRUE)
+  CATALYST:::.check_pal(u$hm_pal)
+  #CATALYST:::.check_pal(u$fdr_pal, n = 3)
+  CATALYST:::.check_pal(u$lfc_pal)
+  CATALYST:::.check_assay(u$x, u$assay)
+  stopifnot(is.data.frame(u$y) || is(u$y, "DFrame"), length(u$fdr_pal) == 
+              3, length(u$lfc_pal) == 3, is.numeric(u$top_n), length(u$top_n) == 
+              1, u$top_n > 1, is.numeric(u$fdr), length(u$fdr) == 
+              1, u$fdr > 0, is.numeric(u$lfc), length(u$lfc) == 1, 
+            u$lfc < Inf, is.logical(u$all), length(u$all) == 1, 
+            is.list(u$y_cols), is.character(unlist(u$y_cols)), length(u$y_cols) == 
+              3, names(u$y_cols) == c("padj", "lfc", "target"), 
+            u$y_cols[["padj"]] %in% names(u$y), is.numeric(u$y[[u$y_cols[["padj"]]]]), 
+            is.logical(u$normalize), length(u$normalize) == 1, is.logical(u$row_anno), 
+            length(u$row_anno) == 1, is.logical(u$col_anno) && length(u$col_anno) == 
+              1 || .check_cd_factor(u$x, u$col_anno, NULL))
 }
