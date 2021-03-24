@@ -5,22 +5,45 @@ plotbox_height <- "48em"
 methods_height <- "40em"
 
 # checks which methods is selected and executes the diffcyt function accordingly
+
 call_DE <- function(){
-  req(input$deSubselection)
   contrastVars <- isolate(input$contrastVars)
-  
-  subselection <- isolate(input$deSubselection)
+  if(is.null(input$deSubselection)){
+    subselection <- "No"
+  }else{
+    subselection <- isolate(input$deSubselection)
+  }
   sce <- isolate(reactiveVals$sce)
   if(subselection != "No"){
-    category <- reactiveVals$subselectionMap[[subselection]]
-    if(category %in% contrastVars){
-      showNotification("You want to analyse a condition you subsetted. That is not meaningful. Try again.", type = "error")
-      return(NULL)
+    catCount <- sapply(colnames(metadata(sce)$experiment_info)[!colnames(metadata(sce)$experiment_info) %in% c("n_cells", "sample_id")], function(x){
+      return(0)
+    })
+    names(catCount) <- colnames(metadata(sce)$experiment_info)[!colnames(metadata(sce)$experiment_info) %in% c("n_cells", "sample_id")]
+    exclude <- list()
+    for(s in subselection){
+      category <- reactiveVals$subselectionMap[[s]]
+      catCount[[category]] <- catCount[[category]] + 1 
+      if(!is.null(exclude[[category]])){
+        exclude[[category]] <- c(exclude[[category]], s)
+      }else{
+        exclude[[category]] <- s
+      }
     }
-    print(sprintf("only using %s from the condition %s", subselection, category))
-    sce <- filterSCE(sce, get(category) == subselection)
+    for(x in names(catCount)){
+      if(x %in% contrastVars & catCount[[x]] == 1){
+        showNotification("You want to analyse a condition you subsetted. That is not meaningful. Try again.", type = "error")
+        return(NULL)
+      }
+    }
+    reactiveVals$exclusionList <- exclude
+    for(cat in names(exclude)){
+      sub <- exclude[[cat]]
+      print(sprintf("only using %s from the condition %s", sub, cat))
+      sce <- filterSCE(sce, get(cat) %in% sub)
+    }
   }
-  toggle_inputs()
+
+  # toggle_inputs()
   ei <- ei(sce)
   nr_samples <- nlevels(sample_ids(sce))
 
@@ -31,7 +54,13 @@ call_DE <- function(){
     }else{
       normalize <- FALSE
     }
-
+    for(designCols in input$colsDesign){
+      if(length(levels(ei[[designCols]])) < 2){
+        msg <- paste("Your design column", designCols, "has less than 2 levels left. Please do not include this in the design matrix.")
+        showNotification(msg, type = "error")
+        return(NULL)
+      }
+    }
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
     contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
     if(ncol(design) >= nr_samples){
@@ -46,7 +75,7 @@ call_DE <- function(){
         clustering = toString(isolate(input$deCluster)),
         trend_method = toString(isolate(input$edgeR_trendMethod)),
         normalize = toString(isolate(input$normalizeDE)), 
-        filter = subselection
+        filter = toString(subselection)
       )
       
       out <- diffcyt::diffcyt(
@@ -71,6 +100,13 @@ call_DE <- function(){
     }else{
       blockID <- NULL
     }
+    for(designCols in input$colsDesign){
+      if(length(levels(ei[[designCols]])) < 2){
+        msg <- paste("Your design column", designCols, "has less than 2 levels left. Please do not include this in the design matrix.")
+        showNotification(msg, type = "error")
+        return(NULL)
+      }
+    }
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
     contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
     if(ncol(design) >= nr_samples){
@@ -88,7 +124,7 @@ call_DE <- function(){
         clustering = toString(isolate(input$deCluster)),
         block_id = toString(isolate(input$blockID_voom)),
         normalize = toString(isolate(input$normalizeDE)),
-        filter = subselection
+        filter = toString(subselection)
       )
         out <- diffcyt::diffcyt(
           d_input = sce,
@@ -120,11 +156,17 @@ call_DE <- function(){
     }else{
       markersToTest <- rownames(sce)[is_marker] %in% markersToTest
     }
-    
+    for(designCols in input$colsDesign){
+      if(length(levels(ei[[designCols]])) < 2){
+        msg <- paste("Your design column", designCols, "has less than 2 levels left. Please do not include this in the design matrix.")
+        showNotification(msg, type = "error")
+        return(NULL)
+      }
+    }
     design <- createDesignMatrix(ei, cols_design = input$colsDesign)
     contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
     if(ncol(design) >= nr_samples){
-      showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
+      showNotification("You selected more conditions than there are samples left which is not meaningful. Try again.", type = "error")
       out <- NULL
     }else if(input$blockID_limma %in% input$colsDesign){
       showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
@@ -139,7 +181,7 @@ call_DE <- function(){
         features = toString(isolate(input$DEFeaturesIn)),
         block_id = toString(isolate(input$blockID_limma)),
         trend_method = toString(isolate(input$trend_limma)),
-        filter = subselection
+        filter = toString(subselection)
       )
       out <- diffcyt::diffcyt(
         d_input = sce,
@@ -177,7 +219,7 @@ call_DE <- function(){
         conditions = toString(contrastVars),
         clustering = toString(isolate(input$deCluster)),
         features = toString(isolate(input$DEFeaturesIn)),
-        filter = subselection
+        filter = toString(subselection)
       )
       
     out <- diffcyt::diffcyt(
@@ -211,7 +253,7 @@ call_DE <- function(){
         conditions = toString(contrastVars),
         clustering = toString(isolate(input$deCluster)),
         normalize = toString(isolate(input$normalizeDE)),
-        filter = subselection
+        filter = toString(subselection)
       )
     out <- diffcyt::diffcyt(
       d_input = sce,
@@ -271,7 +313,7 @@ call_DE <- function(){
     })
     
   }
-  toggle_inputs(enable_inputs = TRUE)
+  # toggle_inputs(enable_inputs = TRUE)
   removeNotification("emdProgressNote")
   return(out)
 }
@@ -312,6 +354,7 @@ getBools <- function(names, contrastVars){
 
 # displays available methods and selection of DA or DS
 output$deMethodSelection <- renderUI({
+  reactiveVals$continue <- TRUE
    methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
    methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD")
    if(input$da_ds == "Differential Abundance"){
@@ -467,16 +510,16 @@ output$contrastSelection <- renderUI({
     choices <- input$colsFixed
   }
   div(
-    pickerInput(
+    selectInput(
       "contrastVars",
       choices = choices,
       selected = choices[1],
       label = span(
-        "What condition(s) do you want to analyse?",
+        "What condition do you want to analyse?",
         icon("question-circle"),
         id = "deContrastQ"
       ),
-      multiple = TRUE
+      multiple = F
     ),
     bsPopover(
       id = "deContrastQ",
@@ -552,7 +595,7 @@ output$emdNpermInput <- renderUI({
     bsPopover(
       id = "emdNpermQ",
       title = "Number of permutations for p-value estimation",
-      content = HTML("Note that meaningful results require many permutations. For a unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br><b>This value must not exceed the factorial of the number of samples.</b>")
+      content = HTML("Note that meaningful results require many permutations. For an unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br><b>This value must not exceed the factorial of the number of samples.</b>")
     )
   )
 })
@@ -574,10 +617,10 @@ output$deSubselection <- renderUI({
   names(choices) <- paste("only", choices)
   reactiveVals$subselectionMap <- map
   div(
-    radioButtons(
+    checkboxGroupInput(
       inputId = "deSubselection",
       label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectQ"),
-      choices = c("No", choices), 
+      choices = c(choices), 
       inline = T
     ),
     bsPopover(
@@ -748,12 +791,15 @@ output$DEVisualization <- renderUI({
 
 # heatmap can be visualized for subset of clusters (DA)
 output$visClusterSelection <- renderUI({
-  out <- reactiveVals$DAruns[[input$deVisMethod]]
+  out <- reactiveVals$DEruns[[input$deVisMethod]]
+
+  if (input$deVisMethod != "sceEMD")
+    out <- rowData(out$res)
   div(
     pickerInput(
       "DEClusterSelection",
-      choices = unique(rowData(out$res)$cluster_id),
-      selected = unique(rowData(out$res)$cluster_id),
+      choices = unique(out$cluster_id),
+      selected = unique(out$cluster_id),
       label = "Visualize results for subset of clusters:",
       options = list(
         `actions-box` = TRUE,
@@ -768,7 +814,7 @@ output$visClusterSelection <- renderUI({
 
 # heatmap can be visualized for selected features (DS)
 output$visMarkerSelection <- renderUI({
-  out <- reactiveVals$DAruns[[input$deVisMethod]]
+  out <- reactiveVals$DEruns[[input$deVisMethod]]
   
   if (input$deVisMethod != "sceEMD")
     out <- rowData(out$res)
@@ -800,7 +846,7 @@ output$visSelection <- renderUI({
 })
 
 output$topNSelection <- renderUI({
-  out <- reactiveVals$DAruns[[input$deVisMethod]]
+  out <- reactiveVals$DEruns[[input$deVisMethod]]
   if (input$deVisMethod != "sceEMD")
     out <- rowData(out$res)
   methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
@@ -824,7 +870,7 @@ output$topNSelection <- renderUI({
 
 # choose method and parameter box
 output$visDiffExp <- renderUI({
-  runs <- names(reactiveVals$DAruns)
+  runs <- names(reactiveVals$DEruns)
   div(
     selectizeInput(
       inputId = "deVisMethod",
@@ -905,8 +951,8 @@ observeEvent(input$diffExpButton,{
                disabled = TRUE)
   
   # check if a methods was already performed else create the list
-  if (is.null(reactiveVals$DAruns)){
-    reactiveVals$DAruns <- list()
+  if (is.null(reactiveVals$DEruns)){
+    reactiveVals$DEruns <- list()
     output$heatmapDEPlot <- renderPlot({
       ggplotObject <- ggplot() + theme_void()
       return(ggplotObject)
@@ -922,7 +968,7 @@ observeEvent(input$diffExpButton,{
   out <- call_DE()
   if(!is.null(out)){
     # add method to DAruns
-    reactiveVals$DAruns[[DAmethod]] <- out
+    reactiveVals$DEruns[[DAmethod]] <- out
   
     # other method can be performed
     updateButton(session,
@@ -948,7 +994,7 @@ observeEvent(input$visExpButton,{
   heatmapSortBy <- isolate(input$heatmapSortBy)
   heatmapNormalize <- isolate(input$heatmapNormalize)
   deCluster <- isolate(input$deCluster)
-  runs <- isolate(reactiveVals$DAruns)
+  runs <- isolate(reactiveVals$DEruns)
   topN <- isolate(input$topN)
 
   methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
@@ -972,8 +1018,14 @@ observeEvent(input$visExpButton,{
     sce <- isolate(reactiveVals$sce)
     
     if(subselection != "No"){
-      category <- isolate(reactiveVals$subselectionMap[[subselection]])
-      sce <- filterSCE(sce, get(category) == subselection)
+      exclude <- isolate(reactiveVals$exclusionList)
+      for(cat in names(exclude)){
+        sub <- exclude[[cat]]
+        print(sprintf("only using %s from the condition %s", sub, cat))
+        sce <- filterSCE(sce, get(cat) %in% sub)
+      }
+      #category <- isolate(reactiveVals$subselectionMap[[subselection]])
+      #sce <- filterSCE(sce, get(category) == subselection)
     }
     
     if(visMethod %in% methodsDA){
@@ -986,6 +1038,8 @@ observeEvent(input$visExpButton,{
     out <- runs[[visMethod]]
     if (visMethod != "sceEMD")
       out <- rowData(out$res)
+    out$p_val[is.na(out$p_val)] <- 1
+    out$p_adj[is.na(out$p_adj)] <- 1
     
     reactiveVals$diffHeatmapPlot <- plotDiffHeatmapCustom(
       x=x,
@@ -1048,9 +1102,12 @@ observeEvent(input$visExpButton,{
   })
   
   output$topTable <- renderDataTable({
-    out <- reactiveVals$DAruns[[visMethod]] 
+    
+    out <- reactiveVals$DEruns[[visMethod]] 
     if (visMethod != "sceEMD")
       out <- diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE)
+    out$p_val[is.na(out$p_val)] <- 1
+    out$p_adj[is.na(out$p_adj)] <- 1
     reactiveVals$topTable <- data.frame(out)
     DT::datatable(reactiveVals$topTable,
                   rownames = FALSE,
@@ -1338,8 +1395,8 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
     }
     names(fdr_pal) <- levels(s)
     anno_cols$significant <- fdr_pal
-    right_anno <- rowAnnotation(logFC = lfc_anno, significant = s, 
-                                foo = row_anno_text(scales::scientific(top$padj, 2), gp = gpar(fontsize = 8)), 
+    right_anno <- ComplexHeatmap::rowAnnotation(logFC = lfc_anno, significant = s, 
+                                foo = ComplexHeatmap::row_anno_text(scales::scientific(top$padj, 2), gp = gpar(fontsize = 8)), 
                                 col = anno_cols, gp = gpar(col = "white"), show_annotation_name = FALSE, 
                                 simple_anno_size = unit(4, "mm"))
   }
@@ -1350,7 +1407,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
     fq <- fq[top$cluster_id, ]
     y <- as.matrix(unclass(fq))
     if (normalize) y <- CATALYST:::.z_normalize(asin(sqrt(y)))
-    Heatmap(matrix = y, name = paste0("normalized\n"[normalize], 
+    ComplexHeatmap::Heatmap(matrix = y, name = paste0("normalized\n"[normalize], 
                                       "frequency"), col = hm_pal, na_col = "lightgrey", 
             rect_gp = gpar(col = "white"), cluster_rows = FALSE, 
             cluster_columns = FALSE, row_names_side = "left", 

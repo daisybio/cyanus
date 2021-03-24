@@ -7,7 +7,7 @@ observeEvent(input$startClustering, {
                "startClustering",
                label = " Clustering...",
                disabled = TRUE)
-  toggle_inputs()
+  # toggle_inputs()
   
   showNotification(
     ui =
@@ -45,7 +45,7 @@ observeEvent(input$startClustering, {
     maxK = input$k
   )
   
-  toggle_inputs(enable_inputs = TRUE)
+  # toggle_inputs(enable_inputs = TRUE)
   updateButton(session,
                "startClustering",
                label = " Start Clustering",

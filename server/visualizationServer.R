@@ -307,6 +307,7 @@ observeEvent(input$radioButtonsColor, {
 })
 
 output$useFeaturesInVis <- renderUI({
+  reactiveVals$continue <- TRUE
   selectInput(
     "useFeaturesInVis",
     label = "Features to choose from",
@@ -588,11 +589,6 @@ output$facet_by <- renderUI({
     ),
     multiple = FALSE
   )
-})
-
-output$visUI <- renderUI({
-  updateActionButton(session, "continue", label = "Clustering")
-  shinyjs::show("continue")
 })
 
 runCatalystDR <-
