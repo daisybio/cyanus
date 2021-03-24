@@ -1,10 +1,12 @@
+source("server/sceEMD.R")
 library(diffcyt)
 
 plotbox_height <- "48em"
 methods_height <- "40em"
 
 # checks which methods is selected and executes the diffcyt function accordingly
-call_diffcyt <- function(){
+
+call_DE <- function(){
   contrastVars <- isolate(input$contrastVars)
   if(is.null(input$deSubselection)){
     subselection <- "No"
@@ -40,8 +42,10 @@ call_diffcyt <- function(){
       sce <- filterSCE(sce, get(cat) %in% sub)
     }
   }
-  ei <- metadata(sce)$experiment_info
-  nr_samples <- length(levels(colData(sce)$sample_id))
+
+  # toggle_inputs()
+  ei <- ei(sce)
+  nr_samples <- nlevels(sample_ids(sce))
 
 
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR")){
@@ -261,7 +265,57 @@ call_diffcyt <- function(){
       normalize = normalize
     )
     }
+  } else if (input$chosenDAMethod == "sceEMD") {
+    markersToTest <- isolate(input$DEFeaturesIn)
+    if (isolate(input$DEMarkerToTest) == "Marker by Class") {
+      sce <- filterSCE(sce, marker_classes(sce) %in% markersToTest)
+    }else{
+      sce <- filterSCE(sce, rownames(sce) %in% markersToTest)
+    }
+    
+    binSize <- isolate(input$emdBinwidth)
+    reactiveVals$methodsInfo[["sceEMD"]] <- data.frame(
+      analysis_type = "Differential States", 
+      method = "EMD",
+      condition = toString(input$emdCond),
+      binSize = binSize,
+      nperm = isolate(input$emdNperm),
+      clustering = toString(isolate(input$deCluster)),
+      features = toString(markersToTest),
+      filter = subselection
+    )
+    
+    if (binSize == 0) binSize <- NULL
+    
+    showNotification(
+      ui =
+        HTML(
+          "<div id='emdProgress'><b>EMD Progress:</b><div>"
+        ),
+      duration = NULL,
+      id = "emdProgressNote"
+    )
+    
+    withCallingHandlers({
+      out <-
+        sceEMD(
+          sce = sce,
+          k = isolate(input$deCluster),
+          condition = isolate(input$emdCond),
+          binSize = binSize,
+          nperm = isolate(input$emdNperm)
+        )
+    },
+    message = function(m) {
+      shinyjs::html(id = "emdProgress",
+                    html = sprintf("<br>%s", HTML(m$message)),
+                    add = TRUE)
+    })
+    
   }
+  # toggle_inputs(enable_inputs = TRUE)
+  removeNotification("emdProgressNote")
+  return(out)
 }
 
 createCustomContrastMatrix <- function(contrastVars, matrix, designMatrix = T){
@@ -300,8 +354,9 @@ getBools <- function(names, contrastVars){
 
 # displays available methods and selection of DA or DS
 output$deMethodSelection <- renderUI({
+  reactiveVals$continue <- TRUE
    methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
-   methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM")
+   methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD")
    if(input$da_ds == "Differential Abundance"){
      choices <- methodsDA
      reactiveVals$methodType <- "DA"
@@ -359,7 +414,7 @@ output$normalizeSelection <- renderUI({
 
 # checks whether designMatrix or formula box must be visualized
 output$modelSelection <- renderUI({
-  req(input$chosenDAMethod)
+  req(input$chosenDAMethod, input$chosenDAMethod != "sceEMD")
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DS-limma","diffcyt-DA-voom")){
     uiOutput("designMatrixSelection")
   } else {
@@ -448,7 +503,7 @@ output$formulaSelection <- renderUI({
 })
 
 output$contrastSelection <- renderUI({
-  req(input$chosenDAMethod)
+  req(input$chosenDAMethod, input$chosenDAMethod != "sceEMD")
   if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR", "diffcyt-DS-limma", "diffcyt-DA-voom")) {
     choices <- input$colsDesign
   } else {
@@ -470,6 +525,77 @@ output$contrastSelection <- renderUI({
       id = "deContrastQ",
       title = "Contrast Matrix Design",
       content = "Here, you specify the comparison of interest, i.e. the combination of model parameters to test whether they are equal to zero."
+    )
+  )
+})
+
+output$emdInput <- renderUI({
+  req(input$chosenDAMethod == "sceEMD")
+  sceEI <- ei(reactiveVals$sce)
+  condChoices <- which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2))
+  if (length(condChoices) == 0){
+    showNotification("No condition with exactly two levels found. EMD is not applicable, please select another method.", duration = NULL, type = "error")
+    return(NULL)
+    }
+  condChoices <- names(condChoices)
+  list(div(
+    selectizeInput(
+      "emdCond",
+      choices = condChoices,
+      label = span(
+        "What condition do you want to analyse?",
+        icon("question-circle"),
+        id = "emdCondQ"
+      )
+    ),
+  bsPopover(
+    id = "emdCondQ",
+    title = "Condition for EMD analysis",
+    content = HTML("Here, you specify the comparison of interest, i.e. the group on which to split the expression distributions.<br><b>Currently only conditions with two levels are supported.</b>")
+  )
+  ),
+  uiOutput("emdNpermInput"),
+  div(
+    numericInput(
+      "emdBinwidth",
+      label = span(
+        "Bin width for comparing histograms",
+        icon("question-circle"),
+        id = "emdBinwidthQ"
+      ),
+      value = 0,
+      min = 0,
+      max = 1,
+      step = .1
+    ),
+    bsPopover(
+      id = "emdBinwidthQ",
+      title = "Bin width for comparing histograms",
+      content = HTML("You can set a custom binwidth but we recommend to leave this at zero.<br><b>Set this to 0 to compute the binwidth for each marker based on the Freedman-Diaconis rule.</b>")
+    )
+  ))
+})
+
+output$emdNpermInput <- renderUI({
+  req(input$emdCond)
+  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$emdCond]]))
+  div(
+    numericInput(
+      "emdNperm",
+      label = span(
+        "Number of permutations for p-value estimation",
+        icon("question-circle"),
+        id = "emdNpermQ"
+      ),
+      value = min(100, maxPerm),
+      min = 0,
+      max = maxPerm,
+      step = 10
+    ),
+    bsPopover(
+      id = "emdNpermQ",
+      title = "Number of permutations for p-value estimation",
+      content = HTML("Note that meaningful results require many permutations. For an unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br><b>This value must not exceed the factorial of the number of samples.</b>")
     )
   )
 })
@@ -583,7 +709,7 @@ output$extraFeatures <- renderUI({
 # if diffcyt should be exectued on selected markers (markers_to_test)
 output$markerToTestSelection <- renderUI({
   req(input$chosenDAMethod)
-  if (input$chosenDAMethod %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
+  if (input$chosenDAMethod %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM", "sceEMD")) {
     div(
       selectInput(
         "DEMarkerToTest",
@@ -665,12 +791,15 @@ output$DEVisualization <- renderUI({
 
 # heatmap can be visualized for subset of clusters (DA)
 output$visClusterSelection <- renderUI({
-  out <- reactiveVals$DAruns[[input$deVisMethod]]
+  out <- reactiveVals$DEruns[[input$deVisMethod]]
+
+  if (input$deVisMethod != "sceEMD")
+    out <- rowData(out$res)
   div(
     pickerInput(
       "DEClusterSelection",
-      choices = unique(rowData(out$res)$cluster_id),
-      selected = unique(rowData(out$res)$cluster_id),
+      choices = unique(out$cluster_id),
+      selected = unique(out$cluster_id),
       label = "Visualize results for subset of clusters:",
       options = list(
         `actions-box` = TRUE,
@@ -685,12 +814,15 @@ output$visClusterSelection <- renderUI({
 
 # heatmap can be visualized for selected features (DS)
 output$visMarkerSelection <- renderUI({
-  out <- reactiveVals$DAruns[[input$deVisMethod]]
+  out <- reactiveVals$DEruns[[input$deVisMethod]]
+  
+  if (input$deVisMethod != "sceEMD")
+    out <- rowData(out$res)
   div(
     pickerInput(
       "DEMarkerSelection",
-      choices = as.character(unique(rowData(out$res)$marker_id)),
-      selected = as.character(unique(rowData(out$res)$marker_id)),
+      choices = as.character(unique(out$marker_id)),
+      selected = as.character(unique(out$marker_id)),
       label = "Visualize results for subset of markers:",
       options = list(
         `actions-box` = TRUE,
@@ -714,7 +846,9 @@ output$visSelection <- renderUI({
 })
 
 output$topNSelection <- renderUI({
-  out <- reactiveVals$DAruns[[input$deVisMethod]]
+  out <- reactiveVals$DEruns[[input$deVisMethod]]
+  if (input$deVisMethod != "sceEMD")
+    out <- rowData(out$res)
   methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
   if(input$deVisMethod %in% methodsDA){
     label <- "Number of top clusters to display:"
@@ -726,9 +860,9 @@ output$topNSelection <- renderUI({
     numericInput(
       "topN",
       label = label,
-      value = min(20,nrow(rowData(out$res))),
+      value = min(20,nrow(out)),
       min = 1,
-      max = nrow(rowData(out$res)),
+      max = nrow(out),
       step = 1
     ), 
   )
@@ -736,7 +870,7 @@ output$topNSelection <- renderUI({
 
 # choose method and parameter box
 output$visDiffExp <- renderUI({
-  runs <- names(reactiveVals$DAruns)
+  runs <- names(reactiveVals$DEruns)
   div(
     selectizeInput(
       inputId = "deVisMethod",
@@ -817,8 +951,8 @@ observeEvent(input$diffExpButton,{
                disabled = TRUE)
   
   # check if a methods was already performed else create the list
-  if (is.null(reactiveVals$DAruns)){
-    reactiveVals$DAruns <- list()
+  if (is.null(reactiveVals$DEruns)){
+    reactiveVals$DEruns <- list()
     output$heatmapDEPlot <- renderPlot({
       ggplotObject <- ggplot() + theme_void()
       return(ggplotObject)
@@ -831,10 +965,10 @@ observeEvent(input$diffExpButton,{
   
 
   # call diffcyt function
-  out <- call_diffcyt()
+  out <- call_DE()
   if(!is.null(out)){
     # add method to DAruns
-    reactiveVals$DAruns[[DAmethod]] <- out
+    reactiveVals$DEruns[[DAmethod]] <- out
   
     # other method can be performed
     updateButton(session,
@@ -860,7 +994,7 @@ observeEvent(input$visExpButton,{
   heatmapSortBy <- isolate(input$heatmapSortBy)
   heatmapNormalize <- isolate(input$heatmapNormalize)
   deCluster <- isolate(input$deCluster)
-  runs <- isolate(reactiveVals$DAruns)
+  runs <- isolate(reactiveVals$DEruns)
   topN <- isolate(input$topN)
 
   methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
@@ -879,7 +1013,7 @@ observeEvent(input$visExpButton,{
   # Render Heatmap Plot
   output$heatmapDEPlot <- renderPlot({
     methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
-    methodsDS <- c("diffcyt-DS-limma","diffcyt-DS-LMM")
+    methodsDS <- c("diffcyt-DS-limma","diffcyt-DS-LMM", "sceEMD")
     subselection <- isolate(reactiveVals$methodsInfo[[visMethod]]$filter)
     sce <- isolate(reactiveVals$sce)
     
@@ -902,12 +1036,14 @@ observeEvent(input$visExpButton,{
     }
     
     out <- runs[[visMethod]]
-    rowData(out$res)$p_val[is.na(rowData(out$res)$p_val)] <- 1
-    rowData(out$res)$p_adj[is.na(rowData(out$res)$p_adj)] <- 1
+    if (visMethod != "sceEMD")
+      out <- rowData(out$res)
+    out$p_val[is.na(out$p_val)] <- 1
+    out$p_adj[is.na(out$p_adj)] <- 1
     
-    reactiveVals$diffHeatmapPlot <- plotDiffHeatmap(
+    reactiveVals$diffHeatmapPlot <- plotDiffHeatmapCustom(
       x=x,
-      y=rowData(out$res), 
+      y=out, 
       fdr=as.numeric(fdrThreshold), 
       lfc=as.numeric(lfcThreshold), 
       sort_by = heatmapSortBy, 
@@ -936,7 +1072,7 @@ observeEvent(input$visExpButton,{
   
   ## Info button
   output$infoDE <- renderUI({
-    table <- isolate(reactiveVals$methodsInfo[[visMethod]])
+    table <- reactiveVals$methodsInfo[[visMethod]]
     value <- renderTable(
       checkNullTable(table),
       caption.placement = "top"
@@ -966,10 +1102,13 @@ observeEvent(input$visExpButton,{
   })
   
   output$topTable <- renderDataTable({
-    out <- reactiveVals$DAruns[[visMethod]]
-    rowData(out$res)$p_val[is.na(rowData(out$res)$p_val)] <- 1
-    rowData(out$res)$p_adj[is.na(rowData(out$res)$p_adj)] <- 1
-    reactiveVals$topTable <- data.frame(diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE))
+    
+    out <- reactiveVals$DEruns[[visMethod]] 
+    if (visMethod != "sceEMD")
+      out <- diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE)
+    out$p_val[is.na(out$p_val)] <- 1
+    out$p_adj[is.na(out$p_adj)] <- 1
+    reactiveVals$topTable <- data.frame(out)
     DT::datatable(reactiveVals$topTable,
                   rownames = FALSE,
                   options = list(pageLength=10, searching=FALSE))
@@ -1163,10 +1302,130 @@ output$downloadPlotPbExprs <- downloadHandler(
   }
 )
 
-
-
-
-
-
-
-
+plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc = 1, all = FALSE, 
+                                   sort_by = c("padj", "lfc", "none"), y_cols = list(padj = "p_adj", 
+                                                                                     lfc = "logFC", target = "marker_id"), assay = "exprs", 
+                                   fun = c("median", "mean", "sum"), normalize = TRUE, col_anno = TRUE, 
+                                   row_anno = TRUE, hm_pal = NULL, fdr_pal = c("lightgrey", 
+                                                                               "lightgreen"), lfc_pal = c("blue3", "white", "red3")) 
+{
+  fun <- match.arg(fun)
+  sort_by <- match.arg(sort_by)
+  args <- as.list(environment())
+  defs <- as.list(formals("plotDiffHeatmap")$y_cols[-1])
+  miss <- !names(defs) %in% names(args$y_cols)
+  if (any(miss)) 
+    y_cols <- args$y_cols <- c(args$y_cols, defs[miss])[names(defs)]
+  CATALYST:::.check_args_plotDiffHeatmap(args)
+  stopifnot(y_cols[[sort_by]] %in% names(y))
+  y_cols <- y_cols[y_cols %in% names(y)]
+  if (is.null(k)) {
+    kids <- levels(y$cluster_id)
+    same <- vapply(cluster_codes(x), function(u) identical(levels(u), 
+                                                           kids), logical(1))
+    if (!any(same)) 
+      stop("Couldn't match any clustering", " in input data 'x' with results in 'y'.")
+    k <- names(cluster_codes(x))[same][1]
+  }
+  else {
+    k <- CATALYST:::.check_k(x, k)
+  }
+  x$cluster_id <- cluster_ids(x, k)
+  y <- data.frame(y, check.names = FALSE)
+  y <- mutate_if(y, is.factor, as.character)
+  if (any(rownames(x) %in% unlist(y))) {
+    features <- intersect(rownames(x), y[[y_cols$target]])
+    if (length(features) == 0) 
+      stop("Couldn't match features between", " results 'y' and input data 'x'.")
+    i <- y[[y_cols$target]] %in% rownames(x)
+    type <- "ds"
+  }
+  else {
+    i <- TRUE
+    type <- "da"
+  }
+  y <- dplyr::rename(y, target = y_cols$target, padj = y_cols$padj, 
+                     lfc = y_cols$lfc)
+  i <- i & !is.na(y$padj) & y$cluster_id %in% levels(x$cluster_id)
+  if (!all) {
+    i <- i & y$padj < fdr
+    if (!is.null(y$lfc)) 
+      i <- i & abs(y$lfc) > lfc
+  }
+  y <- y[i, , drop = FALSE]
+  if (nrow(y) == 0) 
+    stop("No results remaining;", " perhaps 'x' or 'y' has been filtered,", 
+         " or features couldn't be matched.")
+  if (sort_by != "none") {
+    o <- order(abs(y[[sort_by]]), decreasing = (sort_by == 
+                                                  "lfc"))
+    y <- y[o, , drop = FALSE]
+  }
+  if (top_n > nrow(y)) 
+    top_n <- nrow(y)
+  top <- y[seq_len(top_n), ]
+  if (!isFALSE(col_anno)) {
+    top_anno <- .anno_factors(x, levels(x$sample_id), col_anno, 
+                              "column")
+  }
+  else top_anno <- NULL
+  if (is.null(hm_pal)) 
+    hm_pal <- rev(RColorBrewer::brewer.pal(11, ifelse(type == "ds", "RdYlBu", 
+                                                      "RdBu")))
+  if (row_anno) {
+    s <- factor(ifelse(top$padj < fdr, "yes", "no"), levels = c("no", 
+                                                                "yes"))
+    if (!is.null(top$lfc)) {
+      lfc_lims <- range(top$lfc, na.rm = TRUE)
+      if (all(lfc_lims > 0)) {
+        lfc_brks <- c(0, lfc_lims[2])
+        lfc_pal <- lfc_pal[-1]
+      }
+      else if (all(lfc_lims < 0)) {
+        lfc_brks <- c(lfc_lims[1], 0)
+        lfc_pal <- lfc_pal[-3]
+      }
+      else lfc_brks <- c(lfc_lims[1], 0, lfc_lims[2])
+      lfc_anno <- top$lfc
+      anno_cols <- list(logFC = circlize::colorRamp2(lfc_brks, lfc_pal))
+    }
+    else {
+      lfc_anno <- NULL
+      anno_cols <- list()
+    }
+    names(fdr_pal) <- levels(s)
+    anno_cols$significant <- fdr_pal
+    right_anno <- ComplexHeatmap::rowAnnotation(logFC = lfc_anno, significant = s, 
+                                foo = ComplexHeatmap::row_anno_text(scales::scientific(top$padj, 2), gp = gpar(fontsize = 8)), 
+                                col = anno_cols, gp = gpar(col = "white"), show_annotation_name = FALSE, 
+                                simple_anno_size = unit(4, "mm"))
+  }
+  else right_anno <- NULL
+  switch(type, da = {
+    ns <- table(x$cluster_id, x$sample_id)
+    fq <- prop.table(ns, 2)
+    fq <- fq[top$cluster_id, ]
+    y <- as.matrix(unclass(fq))
+    if (normalize) y <- CATALYST:::.z_normalize(asin(sqrt(y)))
+    ComplexHeatmap::Heatmap(matrix = y, name = paste0("normalized\n"[normalize], 
+                                      "frequency"), col = hm_pal, na_col = "lightgrey", 
+            rect_gp = gpar(col = "white"), cluster_rows = FALSE, 
+            cluster_columns = FALSE, row_names_side = "left", 
+            top_annotation = top_anno, right_annotation = right_anno)
+  }, ds = {
+    y <- assay(x, assay)
+    cs <- CATALYST:::.split_cells(x, c("cluster_id", "sample_id"))
+    z <- t(mapply(function(k, g) vapply(cs[[k]], function(cs) {
+      if (length(cs) == 0) return(NA)
+      get(fun)(y[g, cs, drop = FALSE])
+    }, numeric(1)), k = top$cluster_id, g = top$target))
+    rownames(z) <- sprintf("%s(%s)", top$target, top$cluster_id)
+    if (normalize) z <- CATALYST:::.z_normalize(z)
+    ComplexHeatmap::Heatmap(matrix = z, name = paste0("z-normalized\n"[normalize], 
+                                                      "expression"), col = hm_pal, cluster_rows = FALSE, 
+                            cluster_columns = FALSE, top_annotation = top_anno, 
+                            row_names_side = "left", rect_gp = gpar(col = "white"), 
+                            right_annotation = right_anno, heatmap_legend_param = list(title_gp = gpar(fontsize = 10, 
+                                                                                                       fontface = "bold", lineheight = 0.8)))
+  })
+}

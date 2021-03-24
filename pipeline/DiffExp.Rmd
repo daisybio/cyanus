@@ -206,8 +206,6 @@ Let's check the difference between running SigEMD with or without logistic regre
 
 ```{r}
 timed1 <- system.time(emd_result <- SigEMD(sce_dual, "all", "activated_baseline", nperm=1, parallel=TRUE, permute_samples = TRUE))
-#     user   system  elapsed 
-# 4346.330 1598.441 2182.108 
 print(timed1)
 
 emd_result <- emd_result$all
@@ -227,7 +225,7 @@ lapply(emd_result$nonHur_gene, function(marker) plot_emd_density_sig(emd_result,
 
 ```{r}
 # How much did the zeros contribute?
-print(emd_result$emdall[marker_id %in% emd_result$nonHur_gene, .(marker_id, emd)][emd_result_allHur$emdall[marker_id %in% emd_result$nonHur_gene, .(marker_id, emd_with_zeros = emd)], on = "marker_id"][order(-emd)])
+xtable(emd_result$emdall[marker_id %in% emd_result$nonHur_gene, .(marker_id, emd)][emd_result_allHur$emdall[marker_id %in% emd_result$nonHur_gene, .(marker_id, emd_with_zeros = emd)], on = "marker_id"][order(-emd)])
 #print(emd_result_allHur$emdall[marker_id %in% emd_result$nonHur_gene, .(emd_no_zeros = emd)])
 ```
 
