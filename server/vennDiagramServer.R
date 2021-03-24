@@ -315,7 +315,7 @@ output$extraFeaturesVenn <- renderUI({
       selectizeInput(
         inputId = "edgeR_trendMethodVenn",
         label = span("EdgeR Trend Method", icon("question-circle"), id = "trendMethodVennQ"),
-        choices = c("locfit", "none", "movingave", "loess", "locfit.mixed"),
+        choices = c( "none", "locfit", "movingave", "loess", "locfit.mixed"),
         multiple = F
       ),
       bsPopover(

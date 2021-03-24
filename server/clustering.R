@@ -7,7 +7,7 @@ observeEvent(input$startClustering, {
                "startClustering",
                label = " Clustering...",
                disabled = TRUE)
-  toggle_inputs()
+  # toggle_inputs()
   
   showNotification(
     ui =
@@ -45,13 +45,14 @@ observeEvent(input$startClustering, {
     maxK = input$k
   )
   
-  toggle_inputs(enable_inputs = TRUE)
+  # toggle_inputs(enable_inputs = TRUE)
   updateButton(session,
                "startClustering",
                label = " Start Clustering",
                disabled = FALSE)
-  updateButton(session, "continue", label = " Differential Expression Analysis")
-  shinyjs::show("continue")
+  # updateButton(session, "continue", label = " Differential Expression Analysis")
+  # shinyjs::show("continue")
+  reactiveVals$continue <- TRUE
   removeNotification("clusteringProgressNote")
   showNotification(
     HTML(

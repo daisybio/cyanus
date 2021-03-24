@@ -296,9 +296,9 @@ calculate_emd_gene <- function(vec, outcomes, sample_names, binSize) {
   dataB <- as.numeric(dataB)
   
   # tryCatch({
-    bins <- seq(floor(min(vec)),
-              ceiling(max(vec)),
-              by=binSize )
+      bins <- seq(floor(min(c(dataA, dataB))),
+                  ceiling(max(c(dataA, dataB))),
+                  by=binSize )
     if (max(bins) < max(vec)) bins <- c(bins, bins[length(bins)] + binSize)
     # },
            # error=function(e) {

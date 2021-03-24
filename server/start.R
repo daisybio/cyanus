@@ -57,6 +57,7 @@ observeEvent(input$exampleData, {
 
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
+  toggle_menu()
   library(CATALYST)
   if (input$chooseDataTab == "dataUpload") {
     dn <- dirname(input$fcsFiles$datapath)[1]
@@ -82,10 +83,9 @@ observeEvent(input$loadData, {
   }else
     stop("Which tab is selected?")
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
-  updateButton(session, "continue", label = " Preprocessing")
-  shinyjs::show("continue")
-  runjs("document.getElementById('continue').scrollIntoView();")
-})
+  toggle_menu(enable_menu = TRUE)
+  reactiveVals$continue <- TRUE
+  })
 
 output$panelDT <- renderDT(
   checkNullTable(reactiveVals$data$upload$panel),

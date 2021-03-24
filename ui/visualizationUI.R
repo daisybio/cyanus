@@ -73,8 +73,7 @@ visbody <- function(){
     ),
     fluidRow(
       plotBox
-    ), 
-    uiOutput("visUI")
+    )
   )
   return(visbody)
 }
