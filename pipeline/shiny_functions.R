@@ -66,7 +66,7 @@ runDimRed <- function(sce, dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "Diffusio
 #CATALYST::plotDR(sce, dr = dr_chosen, color_by = color_chosen, facet_by = facet_chosen, assay = assay_chosen, scale = scale)
 
 #adapted from CATALYST::runDR
-runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scale = TRUE, k = 5) 
+runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scale = TRUE, k = 5, dimensions = 2) 
 {
   stopifnot(is(x, "SingleCellExperiment"))
   #sample cells from each sample if cells is specified, if not take the whole SCE
@@ -97,7 +97,7 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
   if(scale){
     selectedCounts <- scale(selectedCounts, center = TRUE, scale = TRUE)
   }
-  res_isomap <- embed(t(selectedCounts), "Isomap", knn = k)
+  res_isomap <- embed(t(selectedCounts), "Isomap", knn = k, ndim = dimensions)
   
   if (is.null(cells)){
     reducedDim(x, "Isomap") <- res_isomapb@data@data

@@ -24,6 +24,7 @@ visbody <- function(){
             content = "Should the counts / the expression data be scaled between 0 and 1 using lower (1%) and upper (99%) expression quantiles?"
           ),
           uiOutput("facet_by"),
+          uiOutput("plotDimensions"),
           div(
             bsButton(
               "startDimRed",

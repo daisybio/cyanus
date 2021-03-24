@@ -56,6 +56,7 @@ observeEvent(input$runDRButton, {
   disable("runDRButton")
   disable("visBox")
   disable("visPlotBox")
+  reactiveVals$stopVis <- F
   if (reactiveVals$useClassesRun) {
     if (all(
       unique(
@@ -86,7 +87,8 @@ observeEvent(input$runDRButton, {
       features = toString(reactiveVals$featuresDR),
       counts = input$assayRunSelected,
       cells = input$nrCellsRun,
-      scale = input$scaleRun
+      scale = input$scaleRun,
+      dimensions = input$nrDimensions
     )
     runCatalystDR(
       "UMAP",
@@ -94,31 +96,41 @@ observeEvent(input$runDRButton, {
       reactiveVals$featuresDR,
       input$assayRunSelected,
       input$scaleRun,
-      NULL
+      NULL,
+      input$nrDimensions
     )
   } else if (input$selectedRunMethod == "T-SNE") {
-    reactiveVals$tsneDF <- data.frame(
-      method = "TSNE",
-      features = toString(reactiveVals$featuresDR),
-      counts = input$assayRunSelected,
-      cells = input$nrCellsRun,
-      scale = input$scaleRun
-    )
-    runCatalystDR(
-      "TSNE",
-      input$nrCellsRun,
-      reactiveVals$featuresDR,
-      input$assayRunSelected,
-      input$scaleRun,
-      NULL
-    )
+    if(input$nrDimensions > 3){
+      showNotification("For t-SNE, not more than 3 dimensions are possible. ", type = "error")
+      reactiveVals$stopVis <- T
+    }
+    if(!reactiveVals$stopVis){
+      reactiveVals$tsneDF <- data.frame(
+        method = "TSNE",
+        features = toString(reactiveVals$featuresDR),
+        counts = input$assayRunSelected,
+        cells = input$nrCellsRun,
+        scale = input$scaleRun,
+        dimensions = input$nrDimensions
+      )
+      runCatalystDR(
+        "TSNE",
+        input$nrCellsRun,
+        reactiveVals$featuresDR,
+        input$assayRunSelected,
+        input$scaleRun,
+        NULL,
+        input$nrDimensions
+      )
+    }
   } else if (input$selectedRunMethod == "PCA") {
     reactiveVals$pcaDF <- data.frame(
       method = "PCA",
       features = toString(reactiveVals$featuresDR),
       counts = input$assayRunSelected,
       cells = input$nrCellsRun,
-      scale = input$scaleRun
+      scale = input$scaleRun,
+      dimensions = input$nrDimensions
     )
     runCatalystDR(
       "PCA",
@@ -126,7 +138,8 @@ observeEvent(input$runDRButton, {
       reactiveVals$featuresDR,
       input$assayRunSelected,
       input$scaleRun,
-      NULL
+      NULL,
+      input$nrDimensions
     )
   } else if (input$selectedRunMethod == "MDS") {
     reactiveVals$mdsDF <- data.frame(
@@ -134,7 +147,8 @@ observeEvent(input$runDRButton, {
       features = toString(reactiveVals$featuresDR),
       counts = input$assayRunSelected,
       cells = input$nrCellsRun,
-      scale = input$scaleRun
+      scale = input$scaleRun,
+      dimensions = input$nrDimensions
     )
     runCatalystDR(
       "MDS",
@@ -142,7 +156,8 @@ observeEvent(input$runDRButton, {
       reactiveVals$featuresDR,
       input$assayRunSelected,
       input$scaleRun,
-      NULL
+      NULL,
+      input$nrDimensions
     )
   } else if (input$selectedRunMethod == "DiffusionMap") {
     reactiveVals$diffMapDF <- data.frame(
@@ -150,7 +165,8 @@ observeEvent(input$runDRButton, {
       features = toString(reactiveVals$featuresDR),
       counts = input$assayRunSelected,
       cells = input$nrCellsRun,
-      scale = input$scaleRun
+      scale = input$scaleRun,
+      dimensions = input$nrDimensions
     )
     runCatalystDR(
       "DiffusionMap",
@@ -158,7 +174,8 @@ observeEvent(input$runDRButton, {
       reactiveVals$featuresDR,
       input$assayRunSelected,
       input$scaleRun,
-      NULL
+      NULL,
+      input$nrDimensions
     )
   } else if (input$selectedRunMethod == "Isomap") {
     reactiveVals$isomapDF <- data.frame(
@@ -167,7 +184,8 @@ observeEvent(input$runDRButton, {
       counts = input$assayRunSelected,
       cells = input$nrCellsRun,
       scale = input$scaleRun,
-      k = input$valueGraph
+      k = input$valueGraph,
+      dimensions = input$nrDimensions
     )
     runCatalystDR(
       "Isomap",
@@ -175,19 +193,22 @@ observeEvent(input$runDRButton, {
       reactiveVals$featuresDR,
       input$assayRunSelected,
       input$scaleRun,
-      input$valueGraph
+      input$valueGraph,
+      input$nrDimensions
     )
   }
   enable("visBox")
   enable("visPlotBox")
   enable("continue")
   enable("runDRButton")
-  shinyjs::show("visPlotBox")
-  if (length(reactiveVals$availableDRs) == 1) {
-    output$visPlot <- renderPlot({
-      ggplotObject <- ggplot() + theme_void()
-      return(ggplotObject)
-    })
+  if(!reactiveVals$stopVis){
+    shinyjs::show("visPlotBox")
+    if (length(reactiveVals$availableDRs) == 1) {
+      output$visPlot <- renderPlot({
+        ggplotObject <- ggplot() + theme_void()
+        return(ggplotObject)
+      })
+    }
   }
 })
 
@@ -231,8 +252,10 @@ observeEvent(input$startDimRed, {
     assay <- isolate(input$assayVisSelected)
     scale <- isolate(input$scaleVis)
     sceObj <- isolate(reactiveVals$sce)
+    dim1 <- as.numeric(isolate(input$dimension1))
+    dim2 <- as.numeric(isolate(input$dimension2))
     ggplotObject <-
-      plotData(sceObj, method, color, facet, assay, scale)
+      plotData(sceObj, method, color, facet, assay, scale, c(dim1, dim2))
     reactiveVals$lastPlot <- ggplotObject
     return(ggplotObject)
   })
@@ -286,12 +309,12 @@ observeEvent(input$startDimRed, {
   })
 })
 
-plotData <- function(sceObj, method, color, facet, assay, scale) {
+plotData <- function(sceObj, method, color, facet, assay, scale, dims = c(1,2)) {
   disable("startDimRed")
   disable("continue")
   disable("runDRButton")
   
-  g <- makeDR(sceObj, method, color, facet, assay, scale)
+  g <- makeDR(sceObj, method, color, facet, assay, scale, dims)
   enable("startDimRed")
   enable("continue")
   enable("runDRButton")
@@ -361,6 +384,27 @@ output$markersVis <- renderUI({
   )
 })
 
+output$dimensionsVis <- renderUI({
+  div(
+    numericInput(
+    "nrDimensions",
+    label = span("How many dimensions should be returned?",
+      icon("question-circle"),
+      id = "dimensionsQ"
+    ),
+    value = 2,
+    min = 2,
+    max = 10,
+    step = 1
+    ),
+    bsPopover(
+    id = "dimensionsQ",
+    title = "Number of dimensions",
+    content = "Dimensionality reduction methods reduce the high dimensional input space (e.g. 8 million cells x 20 markers) to a low dimensional representation. The first component that is returned contains the most information, the second one the second most information and so on. Sometimes it might be useful not just to plot component 1 vs. 2 but also component 2 vs. 3 because one component might e.g. represent batch effects. For t-SNE, max. 3 dimensions are possible."
+    )
+  )
+})
+
 
 
 output$runDRparBox <- renderUI({
@@ -376,7 +420,8 @@ output$runDRparBox <- renderUI({
     column(
       width = 6,
       uiOutput("useFeaturesInVis"),
-      uiOutput("markersVis")
+      uiOutput("markersVis"),
+      uiOutput("dimensionsVis")
     ),
     column(
       width = 6,
@@ -591,13 +636,36 @@ output$facet_by <- renderUI({
   )
 })
 
+output$plotDimensions <- renderUI({
+  req(input$selectedVisMethod)
+  nrDimensionsPossible <- ncol(reducedDim(reactiveVals$sce, input$selectedVisMethod))
+  options <- seq(nrDimensionsPossible)
+  div(
+    selectInput(
+      "dimension1",
+      "Dimension 1",
+      choices = options,
+      selected = options[1],
+      multiple = F
+    ),
+    selectInput(
+      "dimension2",
+      "Dimension 2",
+      choices = options,
+      selected = options[2],
+      multiple = F
+    )
+  )
+})
+
 runCatalystDR <-
   function(dr_chosen,
            cells_chosen,
            feature_chosen,
            assay_chosen,
            scale,
-           k) {
+           k,
+           dimensions) {
     if (scale == "yes") {
       scale <- T
     } else{
@@ -610,7 +678,8 @@ runCatalystDR <-
         features = feature_chosen,
         assay = assay_chosen,
         scale = scale,
-        k = k
+        k = k,
+        dimensions = dimensions
       )
       
     } else{
@@ -620,7 +689,8 @@ runCatalystDR <-
         cells = cells_chosen,
         features = feature_chosen,
         assay = assay_chosen,
-        scale = scale
+        scale = scale,
+        ncomponents = dimensions
       )
     }
     reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
@@ -632,7 +702,8 @@ makeDR <-
            color_chosen,
            facet_chosen,
            assay_chosen,
-           scale) {
+           scale,
+           dims = c(1,2)) {
     if (color_chosen == "") {
       color_chosen <- NULL
     }
@@ -651,7 +722,8 @@ makeDR <-
         color_by = color_chosen,
         facet_by = facet_chosen,
         assay = assay_chosen,
-        scale = scale
+        scale = scale,
+        dims = dims
       )
     return(g)
   }

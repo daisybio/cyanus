@@ -1,7 +1,7 @@
 library(dimRed)
 library(RANN)
 
-runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scale = TRUE, k = 5) 
+runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scale = TRUE, k = 5, dimensions = 2) 
 {
   stopifnot(is(x, "SingleCellExperiment"))
   #sample cells from each sample if cells is specified, if not take the whole SCE
@@ -32,15 +32,13 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
   if(scale){
     selectedCounts <- scale(selectedCounts, center = TRUE, scale = TRUE)
   }
-  #old package
-  #res_isomap <- do.isomap(t(selectedCounts), preprocess = preprocess, type = type)
-  res_isomap <- embed(t(selectedCounts), "Isomap", knn = k)
+  res_isomap <- embed(t(selectedCounts), "Isomap", knn = k, ndim = dimensions)
   
   if (is.null(cells)){
     reducedDim(x, "Isomap") <- res_isomapb@data@data
     return(x)
   }
-
+  
   m <- matrix(NA, nrow = ncol(x), ncol = ncol(res_isomap@data@data))
   m[cs, ] <- res_isomap@data@data
   reducedDim(x, "Isomap") <- m
