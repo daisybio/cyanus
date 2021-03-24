@@ -46,19 +46,6 @@ tabs <- list(
   )
 )
 
-toggle_inputs <- function(enable_inputs = FALSE,
-                          input_list = input)
-{
-  # Toggle elements
-  for (x in c(names(input_list), session$downloads$keys()))
-    #also disables all downloadButtons automatically
-    if (enable_inputs) {
-      shinyjs::enable(x) # TODO: make reactive value with all ids that should not be enabled
-    } else {
-      shinyjs::disable(x)
-    }
-}
-
 observeEvent({
   reactiveVals$current_tab
   reactiveVals$continue
@@ -78,10 +65,14 @@ observeEvent({
   if (!reactiveVals$continue &&
       reactiveVals$current_tab == reactiveVals$max_tab)
     shinyjs::disable("nextTab")
-  else if (reactiveVals$continue) {
+  else if (reactiveVals$continue || reactiveVals$current_tab != reactiveVals$max_tab) {
     shinyjs::enable("nextTab")
     shinyjs::runjs("window.scrollTo(0, 0)")
   }
+})
+
+observeEvent(input$tabs, {
+  reactiveVals$current_tab <- match(input$tabs, tab_ids)
 })
 
 observeEvent(input$previousTab, {
@@ -113,3 +104,12 @@ output$sidebar <- renderUI({
   #shinyjs::runjs("window.scrollTo(0, 0)")
   return(curr_menu)
 })
+
+toggle_menu <- function(enable_menu = FALSE){
+  for (x in tab_ids[1:reactiveVals$max_tab]) {
+    if (enable_menu) 
+      removeCssClass(selector = sprintf("a[data-value='%s']", x), class = "inactiveLink")
+    else 
+      addCssClass(selector = sprintf("a[data-value='%s']", x), class = "inactiveLink")
+  }
+}
