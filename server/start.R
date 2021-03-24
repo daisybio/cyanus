@@ -16,33 +16,50 @@ observeEvent(input$fcsFiles, {
 
 observeEvent(input$metaFile, {
   if(endsWith(input$metaFile$datapath, ".csv")){
-    reactiveVals$data$upload$md <- read.table(input$metaFile$datapath, header = T, sep = ",")
+    reactiveVals$data$upload$md <- data.table::fread(input$metaFile$datapath)
+    data.table::setDF(reactiveVals$data$upload$md)
   }else if(endsWith(input$metaFile$datapath, ".xls") | 
            endsWith(input$metaFile$datapath, ".xlsx")){
     library(xlsx)
-    showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
+    showNotification("There are often problems with reading Excel files. If you can, please upload a .csv file", type = "warning")
     reactiveVals$data$upload$md <- read.xlsx2(input$metaFile$datapath, 1)
   }
 })
 
 observeEvent(input$panelFile, {
   if(endsWith(input$panelFile$datapath, ".csv")){
-    reactiveVals$data$upload$panel <-
-      read.table(input$panelFile$datapath, header = T, sep = ",")
+    tmp_panel <-
+      data.table::fread(input$panelFile$datapath)
+    data.table::setDF(tmp_panel)
   }else if(endsWith(input$panelFile$datapath, ".xls") | 
             endsWith(input$panelFile$datapath, ".xlsx")){
     library(xlsx)
     showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
-    reactiveVals$data$upload$panel <- read.xlsx2(input$panelFile$datapath, 1)
+    tmp_panel <- read.xlsx2(input$panelFile$datapath, 1)
   }
+  if(any(!names(tmp_panel) %in% c("fcs_colname", "antigen", "marker_class")))
+    showNotification(HTML("Error while reading the panel file:<br>A CSV or Excel file with headers describing the panel:<br>for each channel:<br>fcs_colname: its column name in the input data<br>antigen: targeted protein marker<br>marker_class: (optionally) class (type, state, or none)<br>i.e.:<br>fcs_colname,antigen[,marker_class]<br><b>Example: Check out the PBMC Example Data</b>"), duration = NULL, type = "error")
+  else
+    reactiveVals$data$upload$panel <- tmp_panel
 })
+
+observeEvent(input$sceFile, {
+  library(CATALYST)
+  tmp <- readRDS(file.path(input$sceFile$datapath))
+  if (class(tmp) == "SingleCellExperiment"){
+    reactiveVals$data$sce$rowdata <- rowData(tmp)
+    reactiveVals$data$sce$coldata <- metadata(tmp)$experiment_info
+  } else {
+    showNotification("You have to upload a SingleCellExperiment object!", type="error")
+    reset("sceFile")
+  }
+}, ignoreInit = TRUE)
 
 observeEvent(input$exampleData, {
   reactiveVals$data$example$fcs <- readRDS(file.path(input$exampleData, "fcs.rds"))
   reactiveVals$data$example$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
   reactiveVals$data$example$md <- readRDS(file.path(input$exampleData, "md.rds"))
 }, ignoreInit = TRUE)
-
 
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
@@ -56,25 +73,32 @@ observeEvent(input$loadData, {
                                                      %in% c("sample_id", "file_name")]
     md_cols <- list(file = "file_name", id = "sample_id", factors = conditions)
     
-    reactiveVals$sce <- CATALYST::prepData(
+    tryCatch({reactiveVals$sce <- CATALYST::prepData(
       dn,
       panel = reactiveVals$data$upload$panel,
       md = reactiveVals$data$upload$md,
       transform = FALSE,
       md_cols = md_cols
-      #TODO: check if we have other columns
-      #panel_cols = names(reactiveVals$panel),
-    )
+    )},
+    error = function(e){
+      showNotification(HTML(sprintf("Loading the data failed with the following message:<br>
+                                    <b>%s</b>", e$message)), duration = NULL, type = "error")
+    },
+    warning=function(w) {
+      showNotification(HTML(sprintf("Loading the data succeeded with the following warning:<br>
+                                    <b>%s</b>", w$message)), duration = NULL, type = "warning")
+    })
   } else if (input$chooseDataTab == "dataExample") {
     reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
-  } else
+  } else if (input$chooseDataTab == "sceUpload") {
+    reactiveVals$sce <- readRDS(file.path(input$sceFile$datapath))
+
+  }else
     stop("Which tab is selected?")
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
   toggle_menu(enable_menu = TRUE)
   reactiveVals$continue <- TRUE
   })
-
-
 
 output$panelDT <- renderDT(
   checkNullTable(reactiveVals$data$upload$panel),
@@ -86,13 +110,33 @@ output$currentData <- renderInfoBox({
     fcs <- reactiveVals$data$upload$fcs
     panel <- reactiveVals$data$upload$panel
     md <- reactiveVals$data$upload$md
-  } else {
+  } else if (input$chooseDataTab == "sceUpload"){
+    rowdata <- reactiveVals$data$sce$rowdata
+    coldata <- reactiveVals$data$sce$coldata
+  }else {
     fcs <- reactiveVals$data$example$fcs
     panel <- reactiveVals$data$example$panel
      md <- reactiveVals$data$example$md
   }
   
   status <- "warning"
+
+  # if current data tab is sce upload
+  if (input$chooseDataTab == "sceUpload"){
+    value <- list(
+      renderTable(
+        checkNullTable(rowdata),
+        caption = "Rowdata",
+        caption.placement = "top"
+      ), 
+      renderTable(
+        checkNullTable(coldata),
+        caption = "Coldata",
+        caption.placement = "top"
+      )
+    )
+  
+  } else { 
   # if current data tab is upload data
   if(input$chooseDataTab == "dataUpload"){
     tableObj <- fluidRow(column(
@@ -102,7 +146,7 @@ output$currentData <- renderInfoBox({
   }else{
     tableObj <- renderTable(
       checkNullTable(panel),
-      caption = "FCS Data",
+      caption = "Panel Data",
       caption.placement = "top"
     )
   }
@@ -120,17 +164,22 @@ output$currentData <- renderInfoBox({
         caption.placement = "top"
       )
     )
-  
+  }
   if (input$chooseDataTab == "dataUpload" &
       !is.null(input$fcsFiles)) {
     status <- "success"
-  }
-  else if (input$chooseDataTab == "dataExample" &
+  }else if (input$chooseDataTab == "dataExample" &
            input$exampleData != "") {
     status <- "success"
     info <- readRDS(file.path(input$exampleData, "help.rds"))
     value <- c(info,value)
-    
+  } else {
+    if (input$chooseDataTab == "sceUpload" & !is.null(input$sceFile)){
+      tmp <- readRDS(file.path(input$sceFile$datapath))
+      if (class(tmp) == "SingleCellExperiment"){
+        status <- "success"
+      }
+    }
   }
   
   if (status == "success") {

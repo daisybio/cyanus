@@ -35,7 +35,7 @@ startBody <- function() {
     bsPopover(
       id = "metaQ",
       title = "A CSV or Excel file with headers describing the experiment",
-      content = "e.g. 4 columns:<br>file_name,sample_id,patient_id,condition<br>file_name: the FCS file name<br>sample_id: a unique sample identifier<br>patient_id: the patient ID<br>condition: brief sample description (e.g. reference/stimulated, healthy/diseased)<br><b>Example: Check out the PBMC Example Data</b>"
+      content = "e.g. 4 columns:<br>file_name, sample_id, patient_id, condition<br>file_name: the FCS file name<br>sample_id: a unique sample identifier<br>patient_id: the patient ID<br>condition: brief sample description (e.g. reference/stimulated, healthy/diseased)<br><b>Example: Check out the PBMC Example Metadata</b>"
     )
   
   panelUploadBox <- shinydashboard::box(
@@ -69,6 +69,24 @@ startBody <- function() {
     width = 12
   )
   
+  sceUploadBox <- shinydashboard::box(
+    fileInput(
+      "sceFile",
+      "Upload SCE object",
+      accept = c(".rds")
+    ),
+    title = span("Upload SCE object", icon("question-circle"), id = "sceObj"),
+    height = box_height,
+    width = 12
+  )
+  
+  scePopover <- 
+    bsPopover(
+      id = "sceObj",
+      title = "An .rds file with the SCE object.",
+      content = "If you have saved the SCE object from previous analysis, you can upload the object again and continue your analysis."
+    )
+  
   startBody <- tabItem(
     tabName = "start",
     fluidRow(shinydashboard::box(
@@ -84,6 +102,11 @@ startBody <- function() {
           fluidRow(dataUploadBox, panelUploadBox, panelPopover, metaUploadBox, metaPopover),
           value = "dataUpload",
           title = "Upload Data"
+        ),
+        tabPanel(
+          fluidRow(sceUploadBox, scePopover),
+          value = "sceUpload",
+          title = "Upload SCE"
         ),
         tabPanel(
           fluidRow(dataExampleBox),
