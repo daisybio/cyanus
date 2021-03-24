@@ -1,5 +1,4 @@
-plotbox_height <- "48em"
-methods_height <- "35em"
+methods_height_venn <- "45em"
 
 vennBody <- function(){
   
@@ -44,7 +43,7 @@ vennBody <- function(){
     ),
     title = "Choose Method and Parameters",
     width = 12,
-    height = methods_height
+    height = methods_height_venn
   )
   
   
@@ -57,7 +56,7 @@ vennBody <- function(){
           "Here, you can compare the results of different methods run on the same subset. Choose between Differential Abundance and Differential States methods: "
         ),
         div(
-          HTML("<ul><li>Differential Abundance methods: edgeR, voom, GLMM </li><li>Differential States methods: limma, LMM</li></ul><br>For more information, please refer to the DE analysis tab!")
+          HTML("<ul><li>Differential Abundance methods: edgeR, voom, GLMM </li><li>Differential States methods: limma, LMM, EMD</li></ul><br>For more information, please refer to the DE analysis tab!")
         ),
         title = h2("DE Method Comparison"),
         width = 12
@@ -67,7 +66,12 @@ vennBody <- function(){
       selectionBoxVenn
     ),
     fluidRow(
-      shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px"))
+      shinydashboard::box(
+        shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px")),
+        id = "vennDiagramsBox",
+        title= "Venn Diagram",
+        width = 12
+      )
     ),
     fluidRow(
       uiOutput("downloadVenn")

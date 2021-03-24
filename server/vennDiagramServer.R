@@ -1,6 +1,10 @@
-plotbox_height <- "48em"
-methods_height <- "40em"
 library(ggvenn)
+
+output$vennDiagrams <- renderPlot({
+  ggplotObject <- ggplot() + theme_void()
+  return(ggplotObject)
+})
+shinyjs::hide("vennDiagramsBox")
 
 output$modelSelectionVenn <- renderUI({
   if(input$da_dsVenn == "Differential Abundance"){
@@ -160,7 +164,10 @@ output$contrastSelectionVenn <- renderUI({
   if(input$da_dsVenn == "Differential Abundance"){
     uiOutput("DAContrastVenn")
   }else{
-    uiOutput("DSContrastVenn")
+    div(
+      uiOutput("emdInputVenn"),
+      uiOutput("DSContrastVenn")
+    )
   }
 })
 
@@ -193,7 +200,7 @@ output$DSContrastVenn <- renderUI({
   req(input$colsFixedDS)
   choices <- intersect(input$colsDesignDS, input$colsFixedDS)
   div(
-    pickerInput(
+    selectInput(
       "contrastVarsDS",
       choices = choices,
       selected = choices[1],
@@ -202,12 +209,53 @@ output$DSContrastVenn <- renderUI({
         icon("question-circle"),
         id = "deContrastVennDSQ"
       ),
-      multiple = TRUE
+      multiple = F
     ),
     bsPopover(
       id = "deContrastVennDSQ",
       title = "Contrast Matrix Design",
       content = "Here, you specify the comparison of interest. The p-values will be calculated on the basis of this variable, i.e. it will be tested whether the coefficient of this parameter in the model is equal to zero."
+    )
+  )
+})
+
+output$emdInputVenn <- renderUI({
+  req(input$contrastVarsDS)
+  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$contrastVarsDS]]))
+  div(
+    numericInput(
+      "emdNpermVenn",
+      label = span(
+        "EMD: Number of permutations for p-value estimation",
+        icon("question-circle"),
+        id = "emdNpermQVenn"
+      ),
+      value = min(100, maxPerm),
+      min = 0,
+      max = maxPerm,
+      step = 10
+    ),
+    bsPopover(
+      id = "emdNpermQVenn",
+      title = "EMD: Number of permutations for p-value estimation",
+      content = HTML("Note that meaningful results require many permutations. For an unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br><b>This value must not exceed the factorial of the number of samples.</b>")
+    ),
+    numericInput(
+      "emdBinwidthVenn",
+      label = span(
+        "Bin width for comparing histograms",
+        icon("question-circle"),
+        id = "emdBinwidthQVenn"
+      ),
+      value = 0,
+      min = 0,
+      max = 1,
+      step = .1
+    ),
+    bsPopover(
+      id = "emdBinwidthQVenn",
+      title = "Bin width for comparing histograms",
+      content = HTML("You can set a custom binwidth but we recommend to leave this at zero.<br><b>Set this to 0 to compute the binwidth for each marker based on the Freedman-Diaconis rule.</b>")
     )
   )
 })
@@ -409,6 +457,7 @@ observeEvent(input$diffExpButtonVenn, {
       venn
     })
   }
+  shinyjs::show("vennDiagramsBox")
   shinyjs::enable("diffExpButtonVenn")
 })
 
@@ -544,7 +593,7 @@ runMethods <- function(){
           block_id = blockIDVoom
         )
       }
-      resultVenn[[method]] <- out
+      resultVenn[[method]] <- rowData(out$res)
     }
     return(resultVenn)
     
@@ -619,8 +668,46 @@ runMethods <- function(){
           markers_to_test = markersToTest,
         )
       }
-      resultVenn[[method]] <- out
+      resultVenn[[method]] <- rowData(out$res)
     }
+    #run EMD
+    markersToTest <- isolate(input$DEFeaturesInVenn)
+    if (isolate(input$DEMarkerToTestVenn) == "Marker by Class") {
+      sce <- filterSCE(sce, marker_classes(sce) %in% markersToTest)
+    }else{
+      sce <- filterSCE(sce, rownames(sce) %in% markersToTest)
+    }
+    
+    binSize <- isolate(input$emdBinwidthVenn)
+    nperm <- isolate(input$emdNpermVenn)
+    if (binSize == 0) binSize <- NULL
+    
+    showNotification(
+      ui =
+        HTML(
+          "<div id='emdProgress'><b>EMD Progress:</b><div>"
+        ),
+      duration = NULL,
+      id = "emdProgressNote"
+    )
+    #print(paste("k=", clusters, ", condition=", contrast, ", binsize =", binSize, ", nperm=", nperm))
+    withCallingHandlers({
+      out <-
+        sceEMD(
+          sce = sce,
+          k = clusters,
+          condition = contrast,
+          binSize = binSize,
+          nperm = nperm
+        )
+    },
+    message = function(m) {
+      shinyjs::html(id = "emdProgress",
+                    html = sprintf("<br>%s", HTML(m$message)),
+                    add = TRUE)
+    })
+    removeNotification("emdProgressNote")
+    resultVenn[["sceEMD"]] <- out
     return(resultVenn)
   }
 }
@@ -636,11 +723,11 @@ createVennDiagram <- function(res, DS = T) {
   for (ds_method in names(res)) {
     if(feature == "cluster_id"){
       result <-
-          data.frame(rowData(res[[ds_method]]$res))[c(feature, "p_val", "p_adj")]
+          data.frame(res[[ds_method]])[c(feature, "p_val", "p_adj")]
       featureNew <- "cluster_id"
     }else{
       result <-
-        data.frame(rowData(res[[ds_method]]$res))[c("cluster_id", feature, "p_val", "p_adj")]
+        data.frame(res[[ds_method]])[c("cluster_id", feature, "p_val", "p_adj")]
       if(result$cluster_id[1] != "all"){
         result$marker_id_joined <- paste0(result$marker_id, "(", result$cluster_id, ")")
         featureNew <- "marker_id_joined"

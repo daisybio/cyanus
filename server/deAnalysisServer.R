@@ -295,7 +295,7 @@ call_DE <- function(){
       duration = NULL,
       id = "emdProgressNote"
     )
-    
+    #print(paste("k=", isolate(input$deCluster), ", condition=", isolate(input$emdCond), ", binsize =", binSize, ", nperm=", isolate(input$emdNperm)))
     withCallingHandlers({
       out <-
         sceEMD(

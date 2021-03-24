@@ -104,7 +104,7 @@ deBody <- function(){
     
     fluidRow(
       uiOutput("deTopTable")
-    ),
+    )
   
   )
   return(debody)
