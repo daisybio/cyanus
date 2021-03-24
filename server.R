@@ -2,6 +2,8 @@ server <- function(input, output, session) {
   # make reactiveValues and server-wide variables
   reactiveVals <- reactiveValues()
   
+  reactiveVals$preprocessingShowed <- FALSE
+  
   # reactiveVals$enable_blacklist <- new.env()
   # my_enable <- function(id = NULL, selector = NULL, asis = FALSE) {
   #   rm(id, pos = reactiveVals$enable_blacklist)

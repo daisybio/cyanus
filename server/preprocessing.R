@@ -27,24 +27,27 @@ transformData <-
 
 # marker, sample, patient selection -> if markers, patients, samples are selected -> prepValButton can be clicked
 observeEvent({
-  input$markerSelection
+  input$patientSelection
   input$sampleSelection
 }, {
-  if (length(input$sampleSelection) != 0){
+  if (length(input$sampleSelection) == 0 || length(input$patientSelection)==0){
     reactiveVals$continue <- TRUE
-    shinyjs::enable("prepSelectionButton")
-    shinyjs::enable("filterSelectionButton")
-  } else {
     shinyjs::disable("prepSelectionButton")
     shinyjs::disable("filterSelectionButton")
+  } else {
+    shinyjs::enable("prepSelectionButton")
+    shinyjs::enable("filterSelectionButton")
   }
 }, ignoreNULL = FALSE)
 
 # check current tab
 observe({
   if (reactiveVals$current_tab == 3) {
-    plotPreprocessing(reactiveVals$sce)
-    if (!("patient_id" %in% colnames(colData(reactiveVals$sce)))){
+    if (!reactiveVals$preprocessingShowed){
+      plotPreprocessing(reactiveVals$sce)
+      reactiveVals$preprocessingShowed <- TRUE
+    }
+    if (!("patient_id" %in% colnames(colData(reactiveVals$sce)))) {
       shinyjs::hide("patientsBox")
     }
   }
@@ -106,7 +109,8 @@ observeEvent(input$prepButton, {
   shinyjs::disable("prepButton")
   shinyjs::disable("prepSelectionButton")
   shinyjs::disable("filterSelectionButton")
-  shinyjs::disable("continue")
+  shinyjs::disable("previousTab")
+  shinyjs::disable("nextTab")
   # data transformation
   reactiveVals$sce <-
     transformData(sce = reactiveVals$sce,
@@ -114,14 +118,16 @@ observeEvent(input$prepButton, {
   shinyjs::enable("prepButton")
   shinyjs::enable("prepSelectionButton")
   shinyjs::enable("filterSelectionButton")
-  shinyjs::enable("continue")
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
 })
 
 # if visualize selection button is clicked
 observeEvent(input$prepSelectionButton, {
   shinyjs::disable("prepButton")
   shinyjs::disable("prepSelectionButton")
-  shinyjs::disable("continue")
+  shinyjs::disable("previousTab")
+  shinyjs::disable("nextTab")
   shinyjs::disable("filterSelectionButton")
   allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
@@ -147,6 +153,8 @@ observeEvent(input$prepSelectionButton, {
   shinyjs::enable("prepSelectionButton")
   shinyjs::enable("continue")
   shinyjs::enable("filterSelectionButton")
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
 })
 
 # if filtering button is clicked -> selection is applied to sce
@@ -154,7 +162,8 @@ observeEvent(input$filterSelectionButton,{
   shinyjs::disable("prepButton")
   shinyjs::disable("prepSelectionButton")
   shinyjs::disable("filterSelectionButton")
-  shinyjs::disable("continue")
+  shinyjs::disable("previousTab")
+  shinyjs::disable("nextTab")
   allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
   
@@ -174,7 +183,8 @@ observeEvent(input$filterSelectionButton,{
   shinyjs::enable("prepButton")
   shinyjs::enable("prepSelectionButton")
   shinyjs::enable("filterSelectionButton")
-  shinyjs::enable("continue")
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
 })
 
 observeEvent(reactiveVals$sce, {

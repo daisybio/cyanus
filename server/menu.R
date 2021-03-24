@@ -67,7 +67,6 @@ observeEvent({
     shinyjs::disable("nextTab")
   else if (reactiveVals$continue || reactiveVals$current_tab != reactiveVals$max_tab) {
     shinyjs::enable("nextTab")
-    shinyjs::runjs("window.scrollTo(0, 0)")
   }
 })
 

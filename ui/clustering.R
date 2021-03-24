@@ -56,6 +56,7 @@ clusteringBody <- tabItem(
         ),
         style = "float: right;"
       ),
+      id = "clusteringParametersBox",
       title = "Choose Clustering Parameters",
       width = 12,
       collapsible = TRUE,

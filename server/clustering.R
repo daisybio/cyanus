@@ -1,13 +1,28 @@
 ### Helpers ----
 source("server/clusterFun.R", local = TRUE)
 
+# manually add download buttons
+inputs_to_disable <-
+  c(
+    "clusteringParametersBox",
+    "clusteringVisualizationSelection",
+    "downloadClusters",
+    "downloadPlotStar",
+    "downloadPlotDensity",
+    "downloadPlotFrequency",
+    "downloadPlotAbundance",
+    "downloadPlotMarkerStar"
+  )
+
 ### Observer ----
 observeEvent(input$startClustering, {
   updateButton(session,
                "startClustering",
                label = " Clustering...",
                disabled = TRUE)
-  # toggle_inputs()
+  
+  toggle_menu()
+  sapply(inputs_to_disable, shinyjs::disable)
   
   showNotification(
     ui =
@@ -45,13 +60,13 @@ observeEvent(input$startClustering, {
     maxK = input$k
   )
   
-  # toggle_inputs(enable_inputs = TRUE)
+  toggle_menu(enable_menu = TRUE)
+  sapply(inputs_to_disable, shinyjs::enable)
+  
   updateButton(session,
                "startClustering",
                label = " Start Clustering",
                disabled = FALSE)
-  # updateButton(session, "continue", label = " Differential Expression Analysis")
-  # shinyjs::show("continue")
   reactiveVals$continue <- TRUE
   removeNotification("clusteringProgressNote")
   showNotification(
@@ -123,11 +138,20 @@ observeEvent(input$clusterCode, {
     hideTab("clusterVisTabBox", "Cluster Frequencies", session = getDefaultReactiveDomain())
     hideTab("clusterVisTabBox", "Marker Densities", session = getDefaultReactiveDomain())
   } else {
-    showTab("clusterVisTabBox", "Cluster Frequencies", select = FALSE, session = getDefaultReactiveDomain())
-    showTab("clusterVisTabBox", "Marker Densities", select = FALSE, session = getDefaultReactiveDomain())
+    showTab(
+      "clusterVisTabBox",
+      "Cluster Frequencies",
+      select = FALSE,
+      session = getDefaultReactiveDomain()
+    )
+    showTab(
+      "clusterVisTabBox",
+      "Marker Densities",
+      select = FALSE,
+      session = getDefaultReactiveDomain()
+    )
   }
-}
-)
+})
 
 
 ### Renderer ----
@@ -317,7 +341,8 @@ output$clusteringOutput <- renderUI({
   abundanceChoices <- names(colData(reactiveVals$sce))
   names(abundanceChoices) <- names(abundanceChoices)
   
-  densityAssayChoices <- c("Transformed" = "exprs", "Raw" = "counts")
+  densityAssayChoices <-
+    c("Transformed" = "exprs", "Raw" = "counts")
   densityAssayChoices <-
     densityAssayChoices[densityAssayChoices %in% assayNames(reactiveVals$sce)]
   
@@ -382,8 +407,13 @@ output$clusteringOutput <- renderUI({
               selectInput(
                 "densityUseFeatureChoicesIn",
                 label = "Features",
-                choices = 
-                  c("all", levels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)),
+                choices =
+                  c(
+                    "all",
+                    levels(
+                      SummarizedExperiment::rowData(reactiveVals$sce)$marker_class
+                    )
+                  ),
                 selected = "type"
               ),
               circle = TRUE,
@@ -423,7 +453,14 @@ output$clusteringOutput <- renderUI({
               selectInput(
                 "plotStarMarkerFeatureIn",
                 label = "Marker",
-                choices = rownames(reactiveVals$sce)
+                choices = stats::setNames(
+                  rownames(reactiveVals$sce),
+                  sprintf(
+                    "%s (%s)",
+                    rownames(reactiveVals$sce),
+                    as.character(marker_classes(reactiveVals$sce))
+                  )
+                )
               ),
               circle = TRUE,
               status = "info",
@@ -494,7 +531,11 @@ output$clusterStarPlot <- renderPlot({
 
 output$clusterStarMarkerPlot <- renderPlot({
   reactiveVals$starMarkerCluster <-
-    plotMarkerCustom(reactiveVals$sce, input$plotStarMarkerFeatureIn, backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]])
+    plotMarkerCustom(
+      reactiveVals$sce,
+      input$plotStarMarkerFeatureIn,
+      backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]]
+    )
   reactiveVals$starMarkerCluster
 })
 
