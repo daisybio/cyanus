@@ -16,25 +16,31 @@ observeEvent(input$fcsFiles, {
 
 observeEvent(input$metaFile, {
   if(endsWith(input$metaFile$datapath, ".csv")){
-    reactiveVals$data$upload$md <- read.table(input$metaFile$datapath, header = T, sep = ",")
+    reactiveVals$data$upload$md <- data.table::fread(input$metaFile$datapath)
+    data.table::setDF(reactiveVals$data$upload$md)
   }else if(endsWith(input$metaFile$datapath, ".xls") | 
            endsWith(input$metaFile$datapath, ".xlsx")){
     library(xlsx)
-    showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
+    showNotification("There are often problems with reading Excel files. If you can, please upload a .csv file", type = "warning")
     reactiveVals$data$upload$md <- read.xlsx2(input$metaFile$datapath, 1)
   }
 })
 
 observeEvent(input$panelFile, {
   if(endsWith(input$panelFile$datapath, ".csv")){
-    reactiveVals$data$upload$panel <-
-      read.table(input$panelFile$datapath, header = T, sep = ",")
+    tmp_panel <-
+      data.table::fread(input$panelFile$datapath)
+    data.table::setDF(tmp_panel)
   }else if(endsWith(input$panelFile$datapath, ".xls") | 
             endsWith(input$panelFile$datapath, ".xlsx")){
     library(xlsx)
     showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
-    reactiveVals$data$upload$panel <- read.xlsx2(input$panelFile$datapath, 1)
+    tmp_panel <- read.xlsx2(input$panelFile$datapath, 1)
   }
+  if(any(!names(tmp_panel) %in% c("fcs_colname", "antigen", "marker_class")))
+    showNotification(HTML("Error while reading the panel file:<br>A CSV or Excel file with headers describing the panel:<br>for each channel:<br>fcs_colname: its column name in the input data<br>antigen: targeted protein marker<br>marker_class: (optionally) class (type, state, or none)<br>i.e.:<br>fcs_colname,antigen[,marker_class]<br><b>Example: Check out the PBMC Example Data</b>"), duration = NULL, type = "error")
+  else
+    reactiveVals$data$upload$panel <- tmp_panel
 })
 
 observeEvent(input$exampleData, {
@@ -56,15 +62,21 @@ observeEvent(input$loadData, {
                                                      %in% c("sample_id", "file_name")]
     md_cols <- list(file = "file_name", id = "sample_id", factors = conditions)
     
-    reactiveVals$sce <- CATALYST::prepData(
+    tryCatch({reactiveVals$sce <- CATALYST::prepData(
       dn,
       panel = reactiveVals$data$upload$panel,
       md = reactiveVals$data$upload$md,
       transform = FALSE,
       md_cols = md_cols
-      #TODO: check if we have other columns
-      #panel_cols = names(reactiveVals$panel),
-    )
+    )},
+    error = function(e){
+      showNotification(HTML(sprintf("Loading the data failed with the following message:<br>
+                                    <b>%s</b>", e$message)), duration = NULL, type = "error")
+    },
+    warning=function(w) {
+      showNotification(HTML(sprintf("Loading the data succeeded with the following warning:<br>
+                                    <b>%s</b>", w$message)), duration = NULL, type = "warning")
+    })
   } else if (input$chooseDataTab == "dataExample") {
     reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
   } else
