@@ -447,6 +447,8 @@ output$normalizeSelectionVenn <- renderUI({
 
 observeEvent(input$diffExpButtonVenn, {
   shinyjs::disable("diffExpButtonVenn")
+  shinyjs::disable("previousTab")
+  shinyjs::disable("nextTab")
   req(input$da_dsVenn)
   resultVenn <- runMethods()
   if(!is.null(resultVenn)){
@@ -459,6 +461,8 @@ observeEvent(input$diffExpButtonVenn, {
   }
   shinyjs::show("vennDiagramsBox")
   shinyjs::enable("diffExpButtonVenn")
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
 })
 
 output$downloadVenn <- renderUI({

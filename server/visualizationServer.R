@@ -52,7 +52,8 @@ observeEvent(input$selectedRunMethod, {
 })
 
 observeEvent(input$runDRButton, {
-  disable("continue")
+  disable("previousTab")
+  disable("nextTab")
   disable("runDRButton")
   disable("visBox")
   disable("visPlotBox")
@@ -199,7 +200,8 @@ observeEvent(input$runDRButton, {
   }
   enable("visBox")
   enable("visPlotBox")
-  enable("continue")
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
   enable("runDRButton")
   if(!reactiveVals$stopVis){
     shinyjs::show("visPlotBox")
@@ -311,12 +313,14 @@ observeEvent(input$startDimRed, {
 
 plotData <- function(sceObj, method, color, facet, assay, scale, dims = c(1,2)) {
   disable("startDimRed")
-  disable("continue")
+  disable("previousTab")
+  disable("nextTab")
   disable("runDRButton")
   
   g <- makeDR(sceObj, method, color, facet, assay, scale, dims)
   enable("startDimRed")
-  enable("continue")
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
   enable("runDRButton")
   return(g)
 }

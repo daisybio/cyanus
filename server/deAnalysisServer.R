@@ -352,6 +352,54 @@ getBools <- function(names, contrastVars){
 
 ## RENDERER
 
+output$selectionBoxDE <- renderUI({
+  shinydashboard::box(
+    column(
+    radioButtons(
+      inputId = "da_ds",
+      label = span(
+        "What type of analysis method do you want to perform?",
+        icon("question-circle"),
+        id = "da_dsQ"
+      ),
+      choices = c("Differential Abundance", "Differential States"),
+      inline = T
+    ),
+    bsPopover(
+      id = "da_dsQ",
+      title = "Analysis type",
+      content = HTML(
+        "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential abundance:</b> Differential analysis of cell population abundance regarding the clusters. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential States:</b> Differential analysis of the marker expression in each cell population (i.e. cluster or overall)."
+      )
+    ),
+    uiOutput("deMethodSelection"),
+    uiOutput("modelSelection"),
+    uiOutput("contrastSelection"),
+    uiOutput("emdInput"),
+    uiOutput("deSubselection"),
+    width = 6
+  ),
+  column(
+    uiOutput("clusterSelection"),
+    uiOutput("markerToTestSelection"),
+    uiOutput("extraFeatures"),
+    uiOutput("normalizeSelection"),
+    width = 6),
+  div(
+    bsButton(
+      "diffExpButton",
+      "Start Analysis",
+      icon = icon("tools"),
+      style = "success"
+    ),
+    style = "float: right; bottom:5px"
+  ),
+  title = "Choose Method and Parameters",
+  width = 12,
+  height = methods_height
+  )
+})
+
 # displays available methods and selection of DA or DS
 output$deMethodSelection <- renderUI({
   reactiveVals$continue <- TRUE
@@ -928,6 +976,7 @@ output$visDiffExp <- renderUI({
 observe({
   if (reactiveVals$current_tab==6){
     shinyjs::hide("DEVisualization")
+    shinyjs::hide("selectionBoxDE")
   }
 })
 
@@ -942,6 +991,8 @@ observeEvent(input$deBoxFacet, {
 # if Start Analysis button is clicked -> diffcyt method should be performed
 observeEvent(input$diffExpButton,{
   shinyjs:: disable("visExpButton")
+  shinyjs::disable("previousTab")
+  shinyjs::disable("nextTab")
   DAmethod <- isolate(input$chosenDAMethod)
  
   # update button and disable it
@@ -978,6 +1029,8 @@ observeEvent(input$diffExpButton,{
   
     shinyjs::show("DEVisualization")
     shinyjs::enable("visExpButton")
+    shinyjs::enable("previousTab")
+    shinyjs::enable("nextTab")
   }else{
     updateButton(session,
                  "diffExpButton",
@@ -996,6 +1049,9 @@ observeEvent(input$visExpButton,{
   deCluster <- isolate(input$deCluster)
   runs <- isolate(reactiveVals$DEruns)
   topN <- isolate(input$topN)
+  shinyjs::disable("previousTab")
+  shinyjs::disable("nextTab")
+  shinyjs::disable("diffExpButton")
 
   methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
   
@@ -1053,6 +1109,10 @@ observeEvent(input$visExpButton,{
     )
     reactiveVals$diffHeatmapPlot
   })
+  
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
+  shinyjs::enable("diffExpButton")
   
   # ui for download button
   output$heatmapPlotDownload <- renderUI({
@@ -1149,7 +1209,7 @@ observeEvent({
 # if no markers to test are selected -> analysis cant be performed
 observeEvent(input$DEFeaturesIn,{
   if (length(input$DEFeaturesIn)==0){
-    shinyjs:: disable("diffExpButton")
+    shinyjs::disable("diffExpButton")
   } else {
     shinyjs::enable("diffExpButton")
   }
@@ -1283,6 +1343,9 @@ output$clusterDEPlot <- renderPlot({
               color_by = input$deBoxColor, 
               facet_by = facet_by, 
               shape_by = input$deBoxShape)
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
+  shinyjs::show("selectionBoxDE")
   reactiveVals$pbExprsPlot
 })
 

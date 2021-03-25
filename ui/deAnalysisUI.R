@@ -4,52 +4,6 @@ methods_height <- "35em"
 
 deBody <- function(){
   
-  selectionBox <- shinydashboard::box(
-    column(
-      radioButtons(
-        inputId = "da_ds",
-        label = span(
-          "What type of analysis method do you want to perform?",
-          icon("question-circle"),
-          id = "da_dsQ"
-        ),
-        choices = c("Differential Abundance", "Differential States"),
-        inline = T
-      ),
-      bsPopover(
-        id = "da_dsQ",
-        title = "Analysis type",
-        content = HTML(
-          "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential abundance:</b> Differential analysis of cell population abundance regarding the clusters. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential States:</b> Differential analysis of the marker expression in each cell population (i.e. cluster or overall)."
-        )
-      ),
-      uiOutput("deMethodSelection"),
-      uiOutput("modelSelection"),
-      uiOutput("contrastSelection"),
-      uiOutput("emdInput"),
-      uiOutput("deSubselection"),
-      width = 6
-    ),
-    column(
-      uiOutput("clusterSelection"),
-      uiOutput("markerToTestSelection"),
-      uiOutput("extraFeatures"),
-      uiOutput("normalizeSelection"),
-      width = 6),
-    div(
-      bsButton(
-        "diffExpButton",
-        "Start Analysis",
-        icon = icon("tools"),
-        style = "success"
-      ),
-      style = "float: right; bottom:5px"
-    ),
-    title = "Choose Method and Parameters",
-    width = 12,
-    height = methods_height
-  )
-  
   plotBox <- shinydashboard::box(
     uiOutput("deBoxPlots"),
     title = span("Boxplots", icon("question-circle"), id = "boxplotPopover"),
@@ -95,7 +49,7 @@ deBody <- function(){
     ),
     
     fluidRow(
-      selectionBox,
+      uiOutput("selectionBoxDE"),
     ),
     
     fluidRow(
