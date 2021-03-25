@@ -110,9 +110,10 @@ output$reorderingTabs <- renderUI({
   conditions <- names(metadata(reactiveVals$sce)$experiment_info)
   conditions <- conditions[!conditions %in% c("sample_id", "patient_id", "n_cells")]
   lapply(conditions, function(condition){
+    print(condition)
     rank_list(
       text = paste0("Reorder the condition: ",condition),
-      labels = levels(metadata(sce)$experiment_info[[condition]]),
+      labels = levels(metadata(reactiveVals$sce)$experiment_info[[condition]]),
       input_id = condition
     )
   })
@@ -132,7 +133,8 @@ observeEvent(input$reorderButton, {
   conditions <- conditions[!conditions %in% c("sample_id", "patient_id", "n_cells")]
   lapply(conditions, function(condition){
     ordered <- input[[condition]]
-    levels(reactiveVals$sce[[condition]]) <- ordered
+    reactiveVals$sce[[condition]] <- factor(reactiveVals$sce[[condition]], levels=ordered)
+    metadata(reactiveVals$sce)$experiment_info[[condition]] <- factor(metadata(reactiveVals$sce)$experiment_info[[condition]], levels=ordered)
   })
   plotPreprocessing(reactiveVals$sce)
   shinyjs::enable("prepButton")
