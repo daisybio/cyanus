@@ -70,8 +70,13 @@ observeEvent({
   }
 })
 
+prevNames <- c(" Previous", " Welcome", " Get Started", " Preprocessing", " Visualization", " Clustering", " DE Analysis")
+nextNames <- c(" Get Started", " Preprocessing", " Visualization", " Clustering", " DE Analysis", " DE method comparison", " Next")
+
 observeEvent(input$tabs, {
   reactiveVals$current_tab <- match(input$tabs, tab_ids)
+  shinyBS::updateButton(session, inputId = "previousTab", label = prevNames[reactiveVals$current_tab])
+  shinyBS::updateButton(session, inputId = "nextTab", label = nextNames[reactiveVals$current_tab])
 })
 
 observeEvent(input$previousTab, {
