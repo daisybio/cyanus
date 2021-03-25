@@ -446,6 +446,7 @@ output$normalizeSelectionVenn <- renderUI({
 })
 
 observeEvent(input$diffExpButtonVenn, {
+  toggle_menu()
   shinyjs::disable("diffExpButtonVenn")
   shinyjs::disable("previousTab")
   shinyjs::disable("nextTab")
@@ -459,6 +460,7 @@ observeEvent(input$diffExpButtonVenn, {
       venn
     })
   }
+  toggle_menu(TRUE)
   shinyjs::show("vennDiagramsBox")
   shinyjs::enable("diffExpButtonVenn")
   shinyjs::enable("previousTab")
