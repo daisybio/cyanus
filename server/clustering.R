@@ -6,6 +6,8 @@ inputs_to_disable <-
   c(
     "clusteringParametersBox",
     "clusteringVisualizationSelection",
+    "nextTab",
+    "previousTab",
     "downloadClusters",
     "downloadPlotStar",
     "downloadPlotDensity",
