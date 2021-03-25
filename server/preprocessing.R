@@ -112,7 +112,7 @@ output$reorderingTabs <- renderUI({
   lapply(conditions, function(condition){
     rank_list(
       text = paste0("Reorder the condition: ",condition),
-      labels = levels(metadata(sce)$experiment_info[[condition]]),
+      labels = levels(metadata(reactiveVals$sce)$experiment_info[[condition]]),
       input_id = condition
     )
   })
