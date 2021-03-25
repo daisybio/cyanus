@@ -8,55 +8,6 @@ markerSelectionBox <- shinydashboard::box(
 
 visbody <- function(){
   
-  plotBox <- shinydashboard::box(
-    fluidRow(
-      column(
-        2,
-        div(
-          uiOutput("methodsVis"),
-          uiOutput("radioButtonsColorVis"),
-          uiOutput("selectColorBy"),
-          uiOutput("assayVis"),
-          uiOutput("radioButtonsScale"),
-          bsPopover(
-            id = "scaleVisQ",
-            title = "For coloring by expression",
-            content = "Should the counts / the expression data be scaled between 0 and 1 using lower (1%) and upper (99%) expression quantiles?"
-          ),
-          uiOutput("facet_by"),
-          uiOutput("plotDimensions"),
-          div(
-            bsButton(
-              "startDimRed",
-              "Start Visualization",
-              icon = icon("palette"),
-              style = "success", 
-              disabled = TRUE
-            ),
-            style = "float: right;",  
-            id = "divStartDimRed"
-          ),
-        style = "position: relative; height: 500px;"
-        ),
-      ),
-      column(
-        9,
-        shinycssloaders::withSpinner(plotOutput("visPlot", width = "90%")), 
-        ),
-      column(
-        1,
-        uiOutput("plotInfo")
-        ), 
-      div(
-        downloadButton("downloadPlot", "Download Plot"),
-        style = "position: absolute; bottom: 10px;right:10px"
-      )
-    ),
-    id = "visPlotBox",
-    title = "Dimensionality Reduction",
-    width = 12)
-  
-    
   visbody <- tabItem(
     tabName = "visualization",
     fluidRow(
@@ -73,7 +24,7 @@ visbody <- function(){
         width = 12
     ),
     fluidRow(
-      plotBox
+      uiOutput("visPlotBox")
     )
   )
   return(visbody)
