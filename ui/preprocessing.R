@@ -201,6 +201,30 @@ preprocessingBody <- function() {
         height = panel_height
       )
     ),
+    
+    # possibility to reorder factors
+    fluidRow(
+      shinydashboard::box(
+        uiOutput("reorderingTabs"),
+        div(
+          bsButton(
+            "reorderButton",
+            "Apply Reordering",
+            icon = icon("sort"),
+            style = "success"
+          ),
+          style = "float: right; margin-top: 5px; margin-right: 5px;"
+        ),
+        title = span("Column Reordering of Metadata", icon("question-circle"), id = "reorderingTabBoxTitle"),
+        bsPopover(id = "reorderingTabBoxTitle",
+                  title = "Reorder Metadata", 
+                  placement = "top",
+                  content = "You can reorder the columns of your metadata table. This can be helpfull if it has a natural order other than lexicographical."),
+        width = 12,
+        collapsible = TRUE,
+        collapsed = TRUE
+      ),
+    )
   )
   return(preprocessingBody)
 }

@@ -104,6 +104,45 @@ output$patientsBox <- renderUI({
   )
 })
 
+# render sortable lists for all conditions
+output$reorderingTabs <- renderUI({
+  library(sortable)
+  conditions <- names(metadata(reactiveVals$sce)$experiment_info)
+  conditions <- conditions[!conditions %in% c("sample_id", "patient_id", "n_cells")]
+  lapply(conditions, function(condition){
+    rank_list(
+      text = paste0("Reorder the condition: ",condition),
+      labels = levels(metadata(sce)$experiment_info[[condition]]),
+      input_id = condition
+    )
+  })
+  
+})
+
+# if conditions are ordered
+observeEvent(input$reorderButton, {
+  shinyjs::disable("prepButton")
+  shinyjs::disable("prepSelectionButton")
+  shinyjs::disable("filterSelectionButton")
+  shinyjs::disable("previousTab")
+  shinyjs::disable("nextTab")
+  
+  # reorder levels 
+  conditions <- names(metadata(reactiveVals$sce)$experiment_info)
+  conditions <- conditions[!conditions %in% c("sample_id", "patient_id", "n_cells")]
+  lapply(conditions, function(condition){
+    ordered <- input[[condition]]
+    levels(reactiveVals$sce[[condition]]) <- ordered
+  })
+  plotPreprocessing(reactiveVals$sce)
+  shinyjs::enable("prepButton")
+  shinyjs::enable("prepSelectionButton")
+  shinyjs::enable("filterSelectionButton")
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
+
+})
+
 # if start transformation button is clicked
 observeEvent(input$prepButton, {
   shinyjs::disable("prepButton")
