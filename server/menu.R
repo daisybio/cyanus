@@ -112,10 +112,15 @@ output$sidebar <- renderUI({
 })
 
 toggle_menu <- function(enable_menu = FALSE){
-  for (x in tab_ids[1:reactiveVals$max_tab]) {
-    if (enable_menu) 
+  # manually add dashboardbutton. not nice but works
+  for (x in c(tab_ids[1:reactiveVals$max_tab])) {
+    if (enable_menu) {
       removeCssClass(selector = sprintf("a[data-value='%s']", x), class = "inactiveLink")
-    else 
+      shinyjs::enable("dashboardButton")
+    }
+    else {
       addCssClass(selector = sprintf("a[data-value='%s']", x), class = "inactiveLink")
+      shinyjs::disable("dashboardButton")
+    }
   }
 }
