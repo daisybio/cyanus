@@ -867,10 +867,10 @@
     },
     "emdist": {
       "Package": "emdist",
-      "Version": "0.3-2",
+      "Version": "0.3-1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "f1e5a378781edabc18b7a1eab6663cdf"
+      "Hash": "c89db634df83e6e84e722ec3361540e1"
     },
     "evaluate": {
       "Package": "evaluate",
@@ -1709,7 +1709,8 @@
       "Package": "renv",
       "Version": "0.13.1",
       "Source": "Repository",
-      "Repository": "CRAN"
+      "Repository": "CRAN",
+      "Hash": "be02499761baab60d58b808efd08c3fc"
     },
     "reshape2": {
       "Package": "reshape2",
