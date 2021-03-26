@@ -1,4 +1,3 @@
-source("server/sceEMD.R")
 library(diffcyt)
 
 plotbox_height <- "48em"

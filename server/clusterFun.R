@@ -581,7 +581,7 @@ clusterSCE <-
       FlowSOM::BuildSOM(
         fsom,
         colsToUse = features,
-        silent = TRUE,
+        silent = FALSE,
         xdim = xdim,
         ydim = ydim
       )
@@ -590,7 +590,7 @@ clusterSCE <-
       message("o running ConsensusClusterPlus metaclustering...")
     pdf(NULL)
     mc <-
-      suppressWarnings(suppressMessages(
+      suppressWarnings(
         ConsensusClusterPlus::ConsensusClusterPlus(
           t(som$map$codes),
           maxK = maxK,
@@ -599,7 +599,7 @@ clusterSCE <-
           seed = seed,
           plot = NULL
         )
-      ))
+      )
     dev.off()
     k <- xdim * ydim
     mcs <- seq_len(maxK)[-1]
