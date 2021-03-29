@@ -976,6 +976,10 @@ observe({
   if (reactiveVals$current_tab==6){
     shinyjs::hide("DEVisualization")
     shinyjs::hide("selectionBoxDE")
+    req(reactiveVals$pbExprsPlot)
+    shinyjs::show("selectionBoxDE")
+    req(reactiveVals$DEruns)
+    shinyjs::show("DEVisualization")
   }
 })
 
@@ -1344,7 +1348,7 @@ output$clusterDEPlot <- renderPlot({
               shape_by = input$deBoxShape)
   shinyjs::enable("previousTab")
   shinyjs::enable("nextTab")
-  shinyjs::show("selectionBoxDE")
+  #shinyjs::show("selectionBoxDE")
   reactiveVals$pbExprsPlot
 })
 
