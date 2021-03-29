@@ -16,7 +16,7 @@ RUN echo "options(shiny.maxRequestSize=1000*1024^2)" > .Rprofile
 
 
 #install R packages via renv
-ENV RENV_VERSION 0.12.5-2
+ENV RENV_VERSION 0.13.1
 RUN R -e "install.packages('remotes', repos = c(CRAN = 'https://cloud.r-project.org')); \ 
           remotes::install_github('rstudio/renv@${RENV_VERSION}'); \
           renv::restore()"

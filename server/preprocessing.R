@@ -31,7 +31,6 @@ observeEvent({
   input$sampleSelection
 }, {
   if (length(input$sampleSelection) == 0 || length(input$patientSelection)==0){
-    reactiveVals$continue <- TRUE
     shinyjs::disable("prepSelectionButton")
     shinyjs::disable("filterSelectionButton")
   } else {
@@ -55,6 +54,7 @@ observe({
 
 # render markers box
 output$markersBox <- renderUI({
+  reactiveVals$continue <- TRUE
   pickerInput(
     inputId = "markerSelection",
     label = "Markers",

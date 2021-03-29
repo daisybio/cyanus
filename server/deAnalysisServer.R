@@ -1,4 +1,3 @@
-source("server/sceEMD.R")
 library(diffcyt)
 
 plotbox_height <- "48em"
@@ -341,11 +340,11 @@ createCustomContrastMatrix <- function(contrastVars, matrix, designMatrix = T){
 }
 
 getBools <- function(names, contrastVars){
-  bool <- unlist(lapply(names, function(x){
-    any(lapply(contrastVars, function(y){
+  bool <- sapply(names, function(x){
+    any(sapply(contrastVars, function(y){
       grepl(y,x, fixed = T )
     }))
-  }))
+  })
   bool <- as.numeric(bool)
   return(bool)
 }
