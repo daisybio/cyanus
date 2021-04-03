@@ -92,7 +92,7 @@ glmm_fit <- CytoGLMM:: cytoglmm(data,
 summary(glmm_fit)
 results <- summary(glmm_fit)
 p.adjust(results$pvalues_unadj, method = "BH")
-
+plot(glmm_fit)
 
 glm_fit <- CytoGLMM::cytoglm(data,
                              protein_names = marker_names,
@@ -114,4 +114,66 @@ glmm_fit <- CytoGLMM:: cytoglmm(data,
 summary(glmm_fit)
 results <- summary(glmm_fit)
 p.adjust(results$pvalues_unadj, method = "BH")
+
+
+library(readxl)
+
+## COVID DATA
+panel <-
+  read_excel(
+    "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/Covid/panel_umap.xlsx"
+  )
+
+md <- 
+  read_excel(
+    "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/Covid/meta_11vs8.xlsx"
+  )
+
+exp <-
+  list.files(
+    "/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/extdata/Covid/FlowRepository_FR-FCM-Z2MT_files",
+    pattern = "\\.fcs$",
+    full.names = T
+  )
+
+library(CATALYST)
+
+sce_covid <-
+  prepData(
+    exp,
+    panel,
+    md,
+    transform = TRUE,
+    md_cols = list(
+      file = "file_name",
+      id = "sample_id",
+      factors = c("covid","patient_id", "platelets")
+    )
+  )
+
+# Activated vs. baseline
+covid_data <- assays(sce_covid)$exprs
+marker_names <- rowData(sce_covid)$marker_name
+marker_names <- sapply(marker_names, function(marker) {
+  gsub("[^[:alnum:]]", "", marker)
+})
+covid_data <- as.data.frame(t(covid_data))
+colnames(covid_data) <- marker_names
+covid_data$donor <- colData(sce_covid)$patient_id
+covid_data$platelets <- colData(sce_covid)$platelets
+
+covid_data$donor <- as.character(covid_data$donor)
+glmm_fit_covid <- CytoGLMM:: cytoglmm(covid_data,
+                                protein_names = marker_names,
+                                condition = "platelets",
+                                group = "donor")
+covid_results <- summary(glmm_fit_covid)
+plot(glmm_fit_covid)
+
+
+# Healthy vs. patient
+
+
+
+
 
