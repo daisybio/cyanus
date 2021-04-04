@@ -67,7 +67,7 @@ call_DE <- function(){
       out <- NULL
     }else{
       reactiveVals$methodsInfo[["diffcyt-DA-edgeR"]] <- data.frame(
-        analysis_type = "Differential Abundance", 
+        analysis_type = "Differential Cluster Abundance", 
         method = "edgeR",
         designmatrix = toString(isolate(input$colsDesign)),
         conditions = toString(contrastVars),
@@ -116,7 +116,7 @@ call_DE <- function(){
       out <- NULL
     }else{
       reactiveVals$methodsInfo[["diffcyt-DA-voom"]] <- data.frame(
-        analysis_type = "Differential Abundance", 
+        analysis_type = "Differential Cluster Abundance", 
         method = "Voom",
         designmatrix = toString(isolate(input$colsDesign)),
         conditions = toString(contrastVars),
@@ -172,7 +172,7 @@ call_DE <- function(){
       out <- NULL
     }else{
       reactiveVals$methodsInfo[["diffcyt-DS-limma"]] <- data.frame(
-        analysis_type = "Differential States", 
+        analysis_type = "Differential Marker Expression", 
         method = "limma",
         designmatrix = toString(isolate(input$colsDesign)),
         conditions = toString(contrastVars),
@@ -211,7 +211,7 @@ call_DE <- function(){
       out <- NULL
     }else{
       reactiveVals$methodsInfo[["diffcyt-DS-LMM"]] <- data.frame(
-        analysis_type = "Differential States", 
+        analysis_type = "Differential Marker Expression", 
         method = "LMM",
         fixed_effects = toString(isolate(input$colsFixed)),
         random_effects = toString(isolate(input$colsRandom)),
@@ -245,7 +245,7 @@ call_DE <- function(){
       out <- NULL
     }else{
       reactiveVals$methodsInfo[["diffcyt-DA-GLMM"]] <- data.frame(
-        analysis_type = "Differential Abundance", 
+        analysis_type = "Differential Cluster Abundance", 
         method = "GLMM",
         fixed_effects = toString(isolate(input$colsFixed)),
         random_effects = toString(isolate(input$colsRandom)),
@@ -274,7 +274,7 @@ call_DE <- function(){
     
     binSize <- isolate(input$emdBinwidth)
     reactiveVals$methodsInfo[["sceEMD"]] <- data.frame(
-      analysis_type = "Differential States", 
+      analysis_type = "Differential Marker Expression", 
       method = "EMD",
       condition = toString(input$emdCond),
       binSize = binSize,
@@ -357,18 +357,18 @@ output$selectionBoxDE <- renderUI({
     radioButtons(
       inputId = "da_ds",
       label = span(
-        "What type of analysis method do you want to perform?",
+        "What type of testing do you want to perform?",
         icon("question-circle"),
         id = "da_dsQ"
       ),
-      choices = c("Differential Abundance", "Differential States"),
+      choices = c("Differential Cluster Abundance", "Differential Marker Expression"),
       inline = T
     ),
     bsPopover(
       id = "da_dsQ",
       title = "Analysis type",
       content = HTML(
-        "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential abundance:</b> Differential analysis of cell population abundance regarding the clusters. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential States:</b> Differential analysis of the marker expression in each cell population (i.e. cluster or overall)."
+        "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential Cluster Abundance:</b> Differential analysis of cell population abundance regarding the clusters. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential Marker Expression:</b> Differential analysis of the marker expression in each cell population (i.e. cluster or overall)."
       )
     ),
     uiOutput("deMethodSelection"),
@@ -404,7 +404,7 @@ output$deMethodSelection <- renderUI({
   reactiveVals$continue <- TRUE
    methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
    methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD")
-   if(input$da_ds == "Differential Abundance"){
+   if(input$da_ds == "Differential Cluster Abundance"){
      choices <- methodsDA
      reactiveVals$methodType <- "DA"
    }else{
@@ -453,7 +453,7 @@ output$normalizeSelection <- renderUI({
       bsPopover(
         id = "normalizeDEQ",
         title = "Composition Effects",
-        content = "Whether to include optional normalization factors to adjust for composition effects. Only relevant for Differential Abundance methods."
+        content = "Whether to include optional normalization factors to adjust for composition effects. Only relevant for Differential Cluster Abundance methods."
       )
     )
   }
@@ -672,8 +672,8 @@ output$deSubselection <- renderUI({
     ),
     bsPopover(
       id = "subSelectQ",
-      title = "Run differential expression on a subset of your data",
-      content = "Sometimes it might make sense to compare differential expression just in a subset of your data, e.g. you have two different treatment groups and want to investigate the effect of an activation agent separately. You can do the subselection right at the beginning (Preprocessing) or here.",
+      title = "Run differential analysis on a subset of your data",
+      content = "Sometimes it might make sense to compare differential expression/abundance just in a subset of your data, e.g. you have two different treatment groups and want to investigate the effect of an activation agent separately. You can do the subselection right at the beginning (Preprocessing) or here.",
       placement = "top"
     )
   )
@@ -799,7 +799,7 @@ output$DEFeatureSelection <- renderUI({
     stop("by name or by class?")
   shinyWidgets::pickerInput(
     inputId = "DEFeaturesIn",
-    label = "Features to use for differential expression analysis",
+    label = "Features to use for differential analysis",
     choices = choices,
     selected = selected,
     multiple = TRUE,
@@ -830,7 +830,7 @@ output$DEVisualization <- renderUI({
       width = 1,
       uiOutput("infoDE")
     ),
-    title = "Visualize Differential Expression Results",
+    title = "Visualize Differential Analysis Results",
     height = plotbox_height,
     width = 12,
   )

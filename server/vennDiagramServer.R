@@ -7,7 +7,7 @@ output$vennDiagrams <- renderPlot({
 shinyjs::hide("vennDiagramsBox")
 
 output$modelSelectionVenn <- renderUI({
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     uiOutput("DAVenn")
   }else{
     uiOutput("DSVenn")
@@ -161,7 +161,7 @@ output$DSVenn <- renderUI({
 })
 
 output$contrastSelectionVenn <- renderUI({
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     uiOutput("DAContrastVenn")
   }else{
     div(
@@ -287,7 +287,7 @@ output$deSubselectionVenn <- renderUI({
 
 output$clusterSelectionVenn <- renderUI({
   clusters <- rev(names(cluster_codes(reactiveVals$sce)))
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     clusters <- clusters[!clusters %in% c("all")]
   }
   selectizeInput(
@@ -300,7 +300,7 @@ output$clusterSelectionVenn <- renderUI({
 
 output$markerToTestSelectionVenn <- renderUI({
   req(input$da_dsVenn)
-  if(input$da_dsVenn == "Differential States"){
+  if(input$da_dsVenn == "Differential Marker Expression"){
     div(
       selectInput(
         "DEMarkerToTestVenn",
@@ -356,7 +356,7 @@ output$DEFeatureSelectionVenn <- renderUI({
 
 output$extraFeaturesVenn <- renderUI({
   req(input$da_dsVenn)
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     cols <- colnames(metadata(reactiveVals$sce)$experiment_info)
     cols <- cols[!cols %in% c("n_cells", "sample_id")]
     div(
@@ -428,7 +428,7 @@ output$extraFeaturesVenn <- renderUI({
 
 output$normalizeSelectionVenn <- renderUI({
   req(input$da_dsVenn)
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     div(
       radioButtons(
         inputId = "normalizeDEVenn",
@@ -439,7 +439,7 @@ output$normalizeSelectionVenn <- renderUI({
       bsPopover(
         id = "normalizeDEQVenn",
         title = "Composition Effects",
-        content = "Whether to include optional normalization factors to adjust for composition effects. Only relevant for Differential Abundance methods."
+        content = "Whether to include optional normalization factors to adjust for composition effects. Only relevant for Differential Cluster Abundance methods."
       )
     )
   }
@@ -487,7 +487,7 @@ output$downloadVennButton <- downloadHandler(
 runMethods <- function(){
   resultVenn <- list()
   reactiveVals$ds_bool <- T
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     contrast <- isolate(input$contrastVarsDA)
   }else{
     contrast <- isolate(input$contrastVarsDS)
@@ -532,7 +532,7 @@ runMethods <- function(){
   ei <- metadata(sce)$experiment_info
   nr_samples <- length(levels(colData(sce)$sample_id))
   
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     reactiveVals$ds_bool <- F
     colsDesignDA <- isolate(input$colsDesignDA)
     
