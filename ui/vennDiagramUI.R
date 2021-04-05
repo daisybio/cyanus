@@ -31,6 +31,7 @@ vennBody <- function(){
       uiOutput("markerToTestSelectionVenn"),
       uiOutput("extraFeaturesVenn"),
       uiOutput("normalizeSelectionVenn"),
+      uiOutput("fdrVenn"),
       width = 6),
     div(
       bsButton(
@@ -67,7 +68,10 @@ vennBody <- function(){
     ),
     fluidRow(
       shinydashboard::box(
-        shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px")),
+        div(
+          uiOutput("vennTitle"),
+          shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px"))
+          ),
         id = "vennDiagramsBox",
         title= "Venn Diagram",
         width = 12

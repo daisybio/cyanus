@@ -4,6 +4,12 @@ output$vennDiagrams <- renderPlot({
   ggplotObject <- ggplot() + theme_void()
   return(ggplotObject)
 })
+
+output$vennTitle <- renderUI({
+  div(
+    ""
+  )
+})
 shinyjs::hide("vennDiagramsBox")
 
 output$modelSelectionVenn <- renderUI({
@@ -445,6 +451,19 @@ output$normalizeSelectionVenn <- renderUI({
   }
 })
 
+output$fdrVenn <- renderUI({
+  div(
+    numericInput(
+      inputId = "fdrThresholdVenn",
+      label = "FDR threshold",
+      value = 0.05,
+      min = 0.0,
+      max = 1.0,
+      step = 0.01
+    )
+  )
+})
+
 observeEvent(input$diffExpButtonVenn, {
   toggle_menu()
   shinyjs::disable("diffExpButtonVenn")
@@ -453,6 +472,11 @@ observeEvent(input$diffExpButtonVenn, {
   req(input$da_dsVenn)
   resultVenn <- runMethods()
   if(!is.null(resultVenn)){
+    output$vennTitle <- renderUI({
+      div(
+        paste("Significant results for FDR threshold", isolate(input$fdrThresholdVenn))
+      )
+    })
     output$vennDiagrams <- renderPlot({
       ds_bool <- isolate(reactiveVals$ds_bool)
       venn <- createVennDiagram(resultVenn, ds_bool)
@@ -742,7 +766,7 @@ createVennDiagram <- function(res, DS = T) {
       }
       
     }
-    result$significant <- result$p_adj < 0.05
+    result$significant <- result$p_adj < isolate(input$fdrThresholdVenn)
     significants <-
       unlist(subset(
         result,
