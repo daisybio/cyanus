@@ -6,6 +6,7 @@ library(shinyWidgets)
 library(shinyBS)
 library(plotly)
 library(DT)
+library(waiter)
 
 # read all ui files
 
@@ -26,6 +27,7 @@ sidebar <- dashboardSidebar(useShinyjs(),
 
 body <-
   dashboardBody(
+    use_waiter(spinners = 5), # include dependencies
     div(
       id = "loading",
       fluidRow(box(
@@ -52,20 +54,20 @@ body <-
     ),
     fluidRow(column(
       6,
-      bsButton(
+      shinyjs::hidden(bsButton(
         inputId = "previousTab",
-        label = "App",
+        label = "",
         icon = icon("spinner"),
         style = "warning",
         block = TRUE,
         disabled = TRUE
-      )
+      ))
     ),
     column(
       6,
       bsButton(
         inputId = "nextTab",
-        label = "Loading",
+        label = "App Loading",
         icon = icon("spinner"),
         style = "warning",
         block = TRUE,
