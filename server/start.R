@@ -63,7 +63,11 @@ observeEvent(input$exampleData, {
 
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
-  toggle_menu()
+  
+  waiter_show(html = tagList(spinner$logo, 
+                             HTML("<br>Loading Data...<br>Please be patient")), 
+              color=spinner$color)
+  
   library(CATALYST)
   if (input$chooseDataTab == "dataUpload") {
     dn <- dirname(input$fcsFiles$datapath)[1]
@@ -96,7 +100,7 @@ observeEvent(input$loadData, {
   }else
     stop("Which tab is selected?")
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
-  toggle_menu(enable_menu = TRUE)
+  waiter_hide()
   reactiveVals$continue <- TRUE
   runjs("document.getElementById('nextTab').scrollIntoView();")
   })

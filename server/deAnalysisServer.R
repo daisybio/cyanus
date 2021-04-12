@@ -42,7 +42,9 @@ call_DE <- function(){
     }
   }
 
-  # toggle_inputs()
+  waiter_show(html = tagList(spinner$logo, 
+                             HTML("<br>DE Analysis in Progress...<br>Please be patient")), 
+              color=spinner$color)
   ei <- ei(sce)
   nr_samples <- nlevels(sample_ids(sce))
 
@@ -312,7 +314,7 @@ call_DE <- function(){
     })
     
   }
-  # toggle_inputs(enable_inputs = TRUE)
+  waiter_hide()
   removeNotification("emdProgressNote")
   return(out)
 }

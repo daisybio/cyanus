@@ -1,21 +1,6 @@
 ### Helpers ----
 source("server/clusterFun.R", local = TRUE)
 
-# manually add download buttons
-inputs_to_disable <-
-  c(
-    "clusteringParametersBox",
-    "clusteringVisualizationSelection",
-    "nextTab",
-    "previousTab",
-    "downloadClusters",
-    "downloadPlotStar",
-    "downloadPlotDensity",
-    "downloadPlotFrequency",
-    "downloadPlotAbundance",
-    "downloadPlotMarkerStar"
-  )
-
 ### Observer ----
 observeEvent(input$startClustering, {
   updateButton(session,
@@ -26,9 +11,6 @@ observeEvent(input$startClustering, {
   waiter_show(html = tagList(spinner$logo, 
                              HTML("<br>Clustering in Progress...<br>Please be patient")), 
               color=spinner$color)
-  
-  # toggle_menu()
-  # sapply(inputs_to_disable, shinyjs::disable)
   
   showNotification(
     ui =
@@ -66,8 +48,6 @@ observeEvent(input$startClustering, {
     maxK = input$k
   )
   
-  # toggle_menu(enable_menu = TRUE)
-  # sapply(inputs_to_disable, shinyjs::enable)
   waiter_hide()
   
   updateButton(session,
