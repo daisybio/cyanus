@@ -103,7 +103,7 @@ md <-
 
 exp <-
   list.files(
-    "/nfs/home/students/l.arend/data/covid/FlowRepository_FR-FCM-Z2MT_files",
+    "/nfs/home/students/l.arend/data/covid/covid_platelets",
     pattern = "\\.fcs$",
     full.names = T
   )
@@ -164,8 +164,10 @@ CATALYST::plotPbExprs(sce_baseline, k = "all", features = NULL , color_by = "cov
 
 # run cytoGLMM
 #runCytoGLMM(sce_baseline, "covid", "patient_id")
-runCytoGLM(sce_baseline, "covid", "patient_id")
+#glm_baseline <- runCytoGLM(sce_baseline, "covid", "patient_id")
 ```
+
+
 ```{r}
 CATALYST::plotExprs(
       sce_baseline,
@@ -193,26 +195,49 @@ CATALYST::plotPbExprs(sce_activated, k = "all", features = NULL , color_by = "co
 # covid vs healthy in baseline platelets
 res_baseline <- runDS(sce = sce_baseline,
       condition = "covid",
-      de_methods = c("LMM", "limma"),
+      de_methods = c("LMM"),
       k = "all",
       features = "all"
       )
 
 rowData(res_baseline$LMM$res)
 
-rowData(res_baseline$limma$res)
+#rowData(res_baseline$limma$res)
 ```
 
 
 ```{r}
 # calculation of median marker expression
 library(data.table)
-data <- assays(sce_baseline)$exprs
+data <- assays(sce_activated)$exprs
 data <- as.data.frame(t(data))
-data$sample_id <- colData(sce_baseline)$sample_id
+data$sample_id <- colData(sce_activated)$sample_id
 data <- as.data.table(data)
 tmp <- melt(data, id.vars="sample_id", variable.name = "markers", value.name = "expression")
 medians <- tmp %>% group_by(sample_id, markers) %>% summarise(median = median(expression, na.rm=TRUE))
 medians <- dcast(medians, ... ~ markers, value.var = "median")
+rownames(medians) <- medians$sample_id
+medians$sample_id <- NULL
 medians
+
+medians_act <- fread("/nfs/home/students/l.arend/covid-paper/SARS-CoV-2-platelets-analysis/data/medians_act.csv")
+medians_act <- as.data.frame(medians_act)
+rownames(medians_act) <- medians_act$V1
+medians_act$V1 <- NULL
+as.data.frame(t(medians_act))
+```
+
+
+```{r}
+ei(sce_baseline)
+markers_to_test <- getMarkersToTest(sce_baseline,"LMM","all")
+LMM_res <- diffcyt::diffcyt(d_input = sce_baseline,
+                                formula = createFormula(ei(sce_baseline), cols_fixed = c("covid") , cols_random = c("sample_id")),
+                                contrast = createContrast(c(0,1)),
+                                analysis_type = "DS",
+                                method_DS = "diffcyt-DS-LMM",
+                                clustering_to_use = "all",
+                                markers_to_test = markers_to_test)
+View(as.data.frame(rowData(LMM_res$res)))
+
 ```
