@@ -195,6 +195,117 @@ out <- runCytoGLMM(
 summary(out)
 ```
 
+```{r}
+#EMD
+source("server/sceEMD.R")
+outEMD <- sceEMD(
+  sce = sceDiffcytMain, 
+  k = "population", 
+  condition = "condition"
+)
+outEMD[order(p_adj)]
+```
 
 
+### 2.1. less 50 pc
+
+```{r}
+#limma 
+
+outLimma <- diffcyt(
+  d_input = sceDiffcyt50pc, 
+  design = designMain,
+  contrast = contrastMainLimma,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-limma",
+  clustering_to_use = "population",
+  markers_to_test = markersToTest
+)
+
+toptableLimma <- as.data.table(diffcyt::topTable(outLimma$res,all=TRUE,format_vals=TRUE))
+toptableLimma
+```
+```{r}
+#LMM
+outLMM <- diffcyt(
+  d_input = sceDiffcyt50pc,
+  formula = formulaMain,
+  contrast = contrastMainLMM,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-LMM",
+  clustering_to_use = "population",
+  markers_to_test = markersToTest
+)
+
+toptableLMM <- as.data.table(diffcyt::topTable(outLMM$res,all=TRUE,format_vals=TRUE))
+toptableLMM
+```
+```{r}
+out <- runCytoGLMM(
+  sceDiffcyt50pc, 
+  condition = "condition",
+  group = "patient_id"
+)
+summary(out)
+```
+```{r}
+outEMD <- sceEMD(
+  sce = sceDiffcyt50pc, 
+  k = "population", 
+  condition = "condition",
+  nperm=500
+)
+outEMD[order(p_adj)]
+```
+
+### 2.1. less 75 pc
+
+```{r}
+#limma 
+
+outLimma <- diffcyt(
+  d_input = sceDiffcyt75pc, 
+  design = designMain,
+  contrast = contrastMainLimma,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-limma",
+  clustering_to_use = "population",
+  markers_to_test = markersToTest
+)
+
+toptableLimma <- as.data.table(diffcyt::topTable(outLimma$res,all=TRUE,format_vals=TRUE))
+toptableLimma
+```
+```{r}
+#LMM
+outLMM <- diffcyt(
+  d_input = sceDiffcyt75pc,
+  formula = formulaMain,
+  contrast = contrastMainLMM,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-LMM",
+  clustering_to_use = "population",
+  markers_to_test = markersToTest
+)
+
+toptableLMM <- as.data.table(diffcyt::topTable(outLMM$res,all=TRUE,format_vals=TRUE))
+toptableLMM
+```
+```{r}
+out <- runCytoGLMM(
+  sceDiffcyt75pc, 
+  condition = "condition",
+  group = "patient_id"
+)
+summary(out)
+```
+```{r}
+outEMD <- sceEMD(
+  sce = sceDiffcyt75pc, 
+  k = "population", 
+  condition = "condition",
+  nperm=500
+)
+outEMD[order(p_adj)]
+```
 
