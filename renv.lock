@@ -114,15 +114,9 @@
     },
     "CytoML": {
       "Package": "CytoML",
-      "Version": "2.3.2",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "CytoML",
-      "RemoteUsername": "RGLab",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "f0ab9b58e4dcc07446d0029f7dca55bfd9b0328e",
-      "Hash": "f20621495f4de8f9934124ffb0f51ebe"
+      "Version": "2.2.2",
+      "Source": "Bioconductor",
+      "Hash": "bbe9e7b3bf9a4c0036645ee2633b92fa"
     },
     "CytobankAPI": {
       "Package": "CytobankAPI",
@@ -353,15 +347,9 @@
     },
     "RProtoBufLib": {
       "Package": "RProtoBufLib",
-      "Version": "2.3.1",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "RProtoBufLib",
-      "RemoteUsername": "RGLab",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "1dba4427c190c6e858e983a8692c009afc62b34f",
-      "Hash": "bfbdff997e352228ce666e0fb5fd9909"
+      "Version": "2.2.0",
+      "Source": "Bioconductor",
+      "Hash": "13cee985e2b760ab2c9d146fc917d57f"
     },
     "RSpectra": {
       "Package": "RSpectra",
@@ -834,15 +822,9 @@
     },
     "cytolib": {
       "Package": "cytolib",
-      "Version": "2.3.3",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "cytolib",
-      "RemoteUsername": "RGLab",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "2757ba8a5d37b648cab564000b1fe0de9ef1a5c3",
-      "Hash": "c687ba6efc67ea6456ef9cbb02338ae3"
+      "Version": "2.2.1",
+      "Source": "Bioconductor",
+      "Hash": "a845d719d5277f063a6dcea2f6d0d7d9"
     },
     "data.table": {
       "Package": "data.table",
@@ -1043,15 +1025,9 @@
     },
     "flowWorkspace": {
       "Package": "flowWorkspace",
-      "Version": "4.3.2",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "flowWorkspace",
-      "RemoteUsername": "RGLab",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "d90dc4bd28cd8befcbd3e91912300530ac847532",
-      "Hash": "2c8293d4b591a97566c1e25743df7fa4"
+      "Version": "4.2.0",
+      "Source": "Bioconductor",
+      "Hash": "d3e8a6ffde0e2cc7343b250c7d939e21"
     },
     "forcats": {
       "Package": "forcats",
