@@ -8,7 +8,7 @@ observeEvent(input$startClustering, {
                label = " Clustering...",
                disabled = TRUE)
   
-  waiter_show(html = tagList(spinner$logo, 
+  waiter_show(id = "app",html = tagList(spinner$logo, 
                              HTML("<br>Clustering in Progress...<br>Please be patient")), 
               color=spinner$color)
   
@@ -48,7 +48,7 @@ observeEvent(input$startClustering, {
     maxK = input$k
   )
   
-  waiter_hide()
+  waiter_hide(id = "app")
   
   updateButton(session,
                "startClustering",

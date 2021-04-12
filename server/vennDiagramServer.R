@@ -466,7 +466,7 @@ output$fdrVenn <- renderUI({
 })
 
 observeEvent(input$diffExpButtonVenn, {
-  waiter_show(html = tagList(spinner$logo, 
+  waiter_show(id = "app",html = tagList(spinner$logo, 
                              HTML("<br>DE Analysis in Progress...<br>Please be patient")), 
               color=spinner$color)
   shinyjs::disable("diffExpButtonVenn")
@@ -545,7 +545,7 @@ observeEvent(input$diffExpButtonVenn, {
       )
     })
   }
-  waiter_hide()
+  waiter_hide(id = "app")
   shinyjs::show("vennDiagramsBox")
   shinyjs::enable("diffExpButtonVenn")
   shinyjs::enable("previousTab")

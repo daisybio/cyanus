@@ -42,7 +42,7 @@ call_DE <- function(){
     }
   }
 
-  waiter_show(html = tagList(spinner$logo, 
+  waiter_show(id = "app",html = tagList(spinner$logo, 
                              HTML("<br>DE Analysis in Progress...<br>Please be patient")), 
               color=spinner$color)
   ei <- ei(sce)
@@ -314,7 +314,7 @@ call_DE <- function(){
     })
     
   }
-  waiter_hide()
+  waiter_hide(id = "app")
   removeNotification("emdProgressNote")
   return(out)
 }
