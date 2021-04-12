@@ -79,6 +79,12 @@ vennBody <- function(){
     ),
     fluidRow(
       uiOutput("downloadVenn")
+    ),
+    fluidRow(
+      uiOutput("vennTable")
+    ),
+    fluidRow(
+      uiOutput("downloadTableVenn")
     )
   )
   return(vennBody)
