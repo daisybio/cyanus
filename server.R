@@ -39,7 +39,11 @@ server <- function(input, output, session) {
       paste("sce.rds")
     },
     content = function(file){
+      waiter_show(id = "app",html = tagList(spinner$logo, 
+                                            HTML("<br>Downloading...")), 
+                  color=spinner$color)
       saveRDS(object = reactiveVals$sce, file = file)
+      waiter_hide(id="app")
     }
   )
   

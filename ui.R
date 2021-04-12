@@ -28,6 +28,14 @@ sidebar <- dashboardSidebar(useShinyjs(),
 body <-
   dashboardBody(
     use_waiter(spinners = 5), # include dependencies
+    tags$style( # manually make waiter overly for the whole page
+      ".waiter-overlay-content{
+      height: 100vh;
+      position: absolute;
+      top: 50px; /*30 pixels from the top*/
+      right: 50px; /*48% from the right*/
+    }"
+    ),
     div(
       id = "loading",
       fluidRow(box(
@@ -78,4 +86,4 @@ body <-
    
 
 
-ui <- dashboardPage(header, sidebar, body)
+ui <- tags$div(id = "app", dashboardPage(header, sidebar, body))

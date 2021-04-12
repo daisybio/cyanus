@@ -64,7 +64,7 @@ observeEvent(input$exampleData, {
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
   
-  waiter_show(html = tagList(spinner$logo, 
+  waiter_show(id = "app",html = tagList(spinner$logo, 
                              HTML("<br>Loading Data...<br>Please be patient")), 
               color=spinner$color)
   
@@ -99,8 +99,11 @@ observeEvent(input$loadData, {
 
   }else
     stop("Which tab is selected?")
+  start_tab <- which(tab_ids == "start")
+  if (isolate(reactiveVals$max_tab > start_tab))
+    reactiveVals$max_tab <- start_tab + 1
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
-  waiter_hide()
+  waiter_hide(id = "app")
   reactiveVals$continue <- TRUE
   runjs("document.getElementById('nextTab').scrollIntoView();")
   })

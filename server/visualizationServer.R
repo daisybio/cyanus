@@ -5,7 +5,11 @@ output$downloadPlot <- downloadHandler(
     paste0(reactiveVals$lastMethod, ".pdf")
   },
   content = function(file){
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     ggsave(file, plot = reactiveVals$lastPlot, width=14, height=11)
+    waiter_hide(id="app")
   }
 )
 
@@ -52,11 +56,14 @@ observeEvent(input$selectedRunMethod, {
 })
 
 observeEvent(input$runDRButton, {
-  disable("previousTab")
-  disable("nextTab")
-  disable("runDRButton")
-  disable("visBox")
-  disable("visPlotBox")
+  waiter_show(id = "app",html = tagList(spinner$logo, 
+                                        HTML("<br>Computing Dimensionality Reduction...")), 
+              color=spinner$color)
+  # disable("previousTab")
+  # disable("nextTab")
+  # disable("runDRButton")
+  # disable("visBox")
+  # disable("visPlotBox")
   reactiveVals$stopVis <- F
   if (reactiveVals$useClassesRun) {
     if (all(
@@ -198,11 +205,13 @@ observeEvent(input$runDRButton, {
       input$nrDimensions
     )
   }
-  enable("visBox")
-  enable("visPlotBox")
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
-  enable("runDRButton")
+  # enable("visBox")
+  # enable("visPlotBox")
+  # shinyjs::enable("previousTab")
+  # shinyjs::enable("nextTab")
+  # enable("runDRButton")
+  # 
+  waiter_hide(id="app")
   if(!reactiveVals$stopVis){
     shinyjs::show("visPlotBox")
     if (length(reactiveVals$availableDRs) == 1) {

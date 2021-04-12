@@ -42,7 +42,7 @@ call_DE <- function(){
     }
   }
 
-  waiter_show(html = tagList(spinner$logo, 
+  waiter_show(id = "app",html = tagList(spinner$logo, 
                              HTML("<br>DE Analysis in Progress...<br>Please be patient")), 
               color=spinner$color)
   ei <- ei(sce)
@@ -314,7 +314,7 @@ call_DE <- function(){
     })
     
   }
-  waiter_hide()
+  waiter_hide(id = "app")
   removeNotification("emdProgressNote")
   return(out)
 }
@@ -1129,9 +1129,13 @@ observeEvent(input$visExpButton,{
   output$downloadPlotDiffHeatmap <- downloadHandler(
     filename = "DE_Heatmap.pdf", 
     content = function(file){
+      waiter_show(id = "app",html = tagList(spinner$logo, 
+                                            HTML("<br>Downloading...")), 
+                  color=spinner$color)
       pdf(file, width = 12, height = 8)
       draw(reactiveVals$diffHeatmapPlot)
       dev.off()
+      waiter_hide(id="app")
     }
   )
   
@@ -1182,7 +1186,11 @@ observeEvent(input$visExpButton,{
   output$downloadTopTable <- downloadHandler(
     filename = "Differential_Expression_Results.csv",
     content = function(file) {
+      waiter_show(id = "app",html = tagList(spinner$logo, 
+                                            HTML("<br>Downloading...")), 
+                  color=spinner$color)
       write.csv(reactiveVals$topTable, file, row.names = FALSE)
+      waiter_hide(id="app")
     }
   )
   
@@ -1366,7 +1374,11 @@ output$downloadPlotPbExprs <- downloadHandler(
     paste0("Pb_Exprs_plot", ".pdf")
   },
   content = function(file){
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     ggsave(file, plot =reactiveVals$pbExprsPlot, width=10, height=12)
+    waiter_hide(id="app")
   }
 )
 
