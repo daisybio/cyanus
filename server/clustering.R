@@ -8,7 +8,7 @@ observeEvent(input$startClustering, {
                label = " Clustering...",
                disabled = TRUE)
   
-  waiter_show(html = tagList(spinner$logo, 
+  waiter_show(id = "app",html = tagList(spinner$logo, 
                              HTML("<br>Clustering in Progress...<br>Please be patient")), 
               color=spinner$color)
   
@@ -48,7 +48,7 @@ observeEvent(input$startClustering, {
     maxK = input$k
   )
   
-  waiter_hide()
+  waiter_hide(id = "app")
   
   updateButton(session,
                "startClustering",
@@ -140,6 +140,12 @@ observeEvent(input$clusterCode, {
   }
 })
 
+observeEvent(reactiveVals$sce$cluster_id, {
+  if (is.null(reactiveVals$sce$cluster_id)) {
+    reactiveVals$clusterRun <- NULL
+  }
+}, ignoreNULL = FALSE)
+
 
 ### Renderer ----
 
@@ -182,7 +188,7 @@ output$assayTypeOut <- renderUI({
 })
 
 output$clusteringVisualizationSelection <- renderUI({
-  req(reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
   
   shinydashboard::box(
     column(
@@ -226,7 +232,7 @@ caption = "Run Parameters",
 caption.placement = "top")
 
 output$selectClusterCode <- renderUI({
-  req(reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
   
   choicesClusterCode <- names(cluster_codes(reactiveVals$sce))
   choicesClusterCode <-
@@ -237,7 +243,7 @@ output$selectClusterCode <- renderUI({
 })
 
 output$clusterSizes <- renderTable({
-  req(input$clusterCode)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun, input$clusterCode)
   res <-
     as.data.frame(table(cluster_ids(reactiveVals$sce, input$clusterCode),
                         useNA =
@@ -249,7 +255,7 @@ caption = "Cluster Sizes",
 caption.placement = "top", rownames = TRUE, colnames = FALSE)
 
 output$mergeClustersDT <- renderDT({
-  req(reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
   
   reactiveVals$mergingFrame
 },
@@ -262,7 +268,7 @@ options = list(pageLength = nlevels(
 )))
 
 output$delta_area <- renderUI({
-  req(reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
   
   runjs(
     "document.getElementById('clusteringVisualizationSelection').scrollIntoView();"
@@ -275,9 +281,9 @@ output$delta_area <- renderUI({
                           The "natural" number of clusters present in the data should thus corresponds to the value of k where there is no longer a considerable increase in stability (plateau onset)."',
       style = "text-align: center;vertical-align: middle;"
     ),
-    renderPlotly(ggplotly(
+    renderPlot(
       CATALYST::delta_area(reactiveVals$sce)
-    )),
+    ),
     title = "1. Delta Area",
     width = 12,
     collapsible = TRUE,
@@ -286,7 +292,7 @@ output$delta_area <- renderUI({
 })
 
 output$clusterMergingBox <- renderUI({
-  req(reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
   
   shinydashboard::box(
     HTML(
@@ -313,15 +319,19 @@ output$clusterMergingBox <- renderUI({
 output$downloadClusters <- downloadHandler(
   filename = "Clustering_Assignments.csv",
   content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     add_meta <- list(cluster_ids(reactiveVals$sce, input$clusterCode))
     names(add_meta) <- input$clusterCode
     
     write.csv(cbind(colData(reactiveVals$sce), add_meta), file, row.names = FALSE)
+    waiter_hide(id = "app")
   }
 )
 
 output$clusteringOutput <- renderUI({
-  req(reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
   
   abundanceByChoices <-
     c("Samples" = "sample_id", "Clusters" = "cluster_id")
@@ -578,18 +588,26 @@ output$clusterExprsPlot <- renderPlot({
 output$downloadPlotStar <- downloadHandler(
   filename = "Star_Charts_overall.pdf",
   content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     pdf(file, width = 12, height = 8)
     print(reactiveVals$starCluster)
     dev.off()
+    waiter_hide(id= "app")
   }
 )
 
 output$downloadPlotMarkerStar <- downloadHandler(
   filename = sprintf("Star_Charts_%s.pdf", input$plotStarMarkerFeatureIn),
   content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     pdf(file, width = 12, height = 8)
     print(reactiveVals$starMarkerCluster)
     dev.off()
+    waiter_hide(id= "app")
   }
 )
 
@@ -598,12 +616,16 @@ output$downloadPlotAbundance <- downloadHandler(
     paste0("Population_Abundances", ".pdf")
   },
   content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     ggsave(
       file,
       plot = reactiveVals$abundanceCluster,
       width = 12,
       height = 6
     )
+    waiter_hide(id= "app")
   }
 )
 
@@ -612,20 +634,28 @@ output$downloadPlotDensity <- downloadHandler(
     paste0("Cluster_Expression", ".pdf")
   },
   content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     ggsave(
       file,
       plot = reactiveVals$exprsCluster,
       width = 16,
       height = 12
     )
+    waiter_hide(id = "app")
   }
 )
 
 output$downloadPlotFrequency <- downloadHandler(
   filename = "Cluster_Heatmap.pdf",
   content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     pdf(file, width = 12, height = 8)
     draw(reactiveVals$heatmapCluster)
     dev.off()
+    waiter_hide(id = "app")
   }
 )
