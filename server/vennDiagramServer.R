@@ -565,7 +565,11 @@ output$downloadVennButton <- downloadHandler(
     paste0("VennDiagram", ".pdf")
   },
   content = function(file){
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     ggsave(file, plot = reactiveVals$lastVenn, width=12, height=12)
+    waiter_hide(id="app")
   }
 )
 
@@ -587,14 +591,22 @@ output$downloadTableVenn <- renderUI({
 output$downloadTableSign <- downloadHandler(
   filename = "VennDiagramResults.csv",
   content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     write.csv(reactiveVals$lastAllResultsSign, file, row.names = FALSE)
+    waiter_hide(id="app")
   }
 )
 
 output$downloadTableVennAll <- downloadHandler(
   filename = "AllResults.csv",
   content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
     write.csv(reactiveVals$lastAllResults, file, row.names = FALSE)
+    waiter_hide(id="app")
   }
 )
 

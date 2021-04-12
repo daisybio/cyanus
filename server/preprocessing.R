@@ -310,7 +310,11 @@ plotPreprocessing <- function(sce) {
       paste0("Counts_Plot", ".pdf")
     },
     content = function(file){
+      waiter_show(id = "app",html = tagList(spinner$logo, 
+                                            HTML("<br>Downloading...")), 
+                  color=spinner$color)
       ggsave(file, plot = reactiveVals$countsPlot, width=12, height=6)
+      waiter_hide(id="app")
     }
   )
   
@@ -385,7 +389,11 @@ plotPreprocessing <- function(sce) {
       paste0("MDS_Plot", ".pdf")
     },
     content = function(file){
+      waiter_show(id = "app",html = tagList(spinner$logo, 
+                                            HTML("<br>Downloading...")), 
+                  color=spinner$color)
       ggsave(file, plot = reactiveVals$mdsPlot, width=16, height=11)
+      waiter_hide(id="app")
     }
   )
   
@@ -455,7 +463,11 @@ plotPreprocessing <- function(sce) {
       paste0("NRS_Plot", ".pdf")
     },
     content = function(file){
+      waiter_show(id = "app",html = tagList(spinner$logo, 
+                                            HTML("<br>Downloading...")), 
+                  color=spinner$color)
       ggsave(file, plot = reactiveVals$nrsPlot, width=12, height=6)
+      waiter_hide(id="app")
     }
   )
   
@@ -525,7 +537,11 @@ plotPreprocessing <- function(sce) {
       paste0("Expr_Plot", ".pdf")
     },
     content = function(file){
+      waiter_show(id = "app",html = tagList(spinner$logo, 
+                                            HTML("<br>Downloading...")), 
+                  color=spinner$color)
       ggsave(file, plot = reactiveVals$exprsPlot, width=14, height=9)
+      waiter_hide(id="app")
     }
   )
   
@@ -598,9 +614,13 @@ plotPreprocessing <- function(sce) {
   output$downloadPlotExprsHeatmap <- downloadHandler(
     filename = "Expression_Heatmap.pdf", 
     content = function(file){
+      waiter_show(id = "app",html = tagList(spinner$logo, 
+                                            HTML("<br>Downloading...")), 
+                  color=spinner$color)
       pdf(file, width = 12, height = 8)
       draw(reactiveVals$exprsPlotHeatmap)
       dev.off()
+      waiter_hide(id="app")
     }
   )
   
