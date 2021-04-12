@@ -1,0 +1,243 @@
+---
+title: "CytoGLMM"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+
+#devtools::install_github("ChristofSeiler/CytoGLMM")
+
+knitr::opts_chunk$set(echo = TRUE)
+library("CytoGLMM")
+library("magrittr")
+library(dplyr)
+library(readxl)
+library(CATALYST)
+source("../pipeline/shiny_functions.R")
+source("../server/clusterFun.R")
+source("cytoGLMM_functions.R")
+
+library(BiocParallel)
+# Set the parameters and register the back-end to be used
+param <- MulticoreParam(workers = 22)
+register(param)
+```
+
+## GENERATED DATA
+```{r, eval=FALSE}
+set.seed(23)
+df <- generate_data()
+df
+
+protein_names <- names(df)[3:12]
+df %<>% dplyr:: mutate_at(protein_names, function(x) asinh(x/5))
+glmm_fit <- CytoGLMM::cytoglmm(df,
+                               protein_names = protein_names,
+                               condition = "condition",
+                               group = "donor",
+                               num_cores=1)
+glmm_fit
+plot(glmm_fit)
+summary(glmm_fit)
+summary(glmm_fit) %>% dplyr::filter(pvalues_adj < 0.05)
+
+
+glm_fit <- CytoGLMM::cytoglm(df,
+                             protein_names = protein_names,
+                             condition = "condition",
+                             group = "donor",
+                             num_boot = 1000)
+glm_fit
+summary(glm_fit)
+
+```
+
+
+## TRY WITH PBMC DATA
+```{r, eval=FALSE}
+data(PBMC_panel, PBMC_md, PBMC_fs)
+sce_pbmc <- prepData(PBMC_fs, PBMC_panel, PBMC_md, transform=T)
+
+runCytoGLMM(sce_pbmc, "condition", "patient_id")
+
+```
+
+
+## TRY WITH PLATELETS DATA (DUAL TRIPLE THERAPY)
+```{r, eval=FALSE}
+sce_platelets <- readRDS("/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/cytof/data/platelets_small/sce.rds")
+sce_platelets
+
+runCytoGLMM(sce_platelets, "platelets", "patient_id")
+
+
+## SAMPLE PLATELETS DATA
+ei_platelets <- ei(sce_platelets)
+ei_platelets$platelets <- sample(ei_platelets$platelets)
+platelets <- rep(ei_platelets$platelets, times = as.numeric(ei_platelets$n_cells))
+data$condition <- platelets
+
+glmm_fit <- CytoGLMM:: cytoglmm(data,
+                                protein_names = marker_names,
+                                condition = "condition",
+                                group = "donor")
+summary(glmm_fit)
+results <- summary(glmm_fit)
+p.adjust(results$pvalues_unadj, method = "BH")
+```
+
+
+## COVID DATA
+```{r}
+panel <-
+  read_excel(
+    "/nfs/home/students/l.arend/data/covid/panel_umap.xlsx"
+  )
+
+md <- 
+  read_excel(
+    "/nfs/home/students/l.arend/data/covid/meta_11vs8.xlsx"
+  )
+
+exp <-
+  list.files(
+    "/nfs/home/students/l.arend/data/covid/covid_platelets",
+    pattern = "\\.fcs$",
+    full.names = T
+  )
+
+sce_covid <-
+  prepData(
+    exp,
+    panel,
+    md,
+    transform = TRUE,
+    md_cols = list(
+      file = "file_name",
+      id = "sample_id",
+      factors = c("covid","patient_id", "platelets")
+    )
+  )
+
+sce_covid <- clusterSCE(sce_covid)
+```
+
+```{r}
+# read in sce_covid
+#sce_covid <- readRDS("/nfs/home/students/l.arend/data/covid/sce_covid")
+```
+
+
+## Activated vs. baseline in healthy patients
+```{r}
+# filter SCE
+sce_healthy <- filterSCE(sce_covid, covid == "healthy")
+
+# plot boxplots
+CATALYST::plotPbExprs(sce_healthy, k = "all", features = NULL , color_by = "platelets",  ncol=5, facet_by = "antigen") #+  theme(text = element_text(size=16))
+
+# run cytoglmm
+runCytoGLMM(sce_healthy, "platelets", "patient_id")
+```
+
+## Activated vs. baseline in covid patients
+```{r}
+# filter SCE
+sce_patients <- filterSCE(sce_covid, covid == "patient")
+
+# plot boxplots
+CATALYST::plotPbExprs(sce_patients, k = "all", features = NULL , color_by = "platelets",  ncol=5, facet_by = "antigen") #+  theme(text = element_text(size=16))
+
+# run cytoGLMM
+runCytoGLMM(sce_patients, "platelets", "patient_id")
+```
+
+## Healthy vs. covid in non-stimulated platelets
+```{r}
+# filter SCE
+sce_baseline <- filterSCE(sce_covid, platelets == "B")
+
+# plot boxplots
+CATALYST::plotPbExprs(sce_baseline, k = "all", features = NULL , color_by = "covid",  ncol=5, facet_by = "antigen") #+  theme(text = element_text(size=16))
+
+# run cytoGLMM
+#runCytoGLMM(sce_baseline, "covid", "patient_id")
+#glm_baseline <- runCytoGLM(sce_baseline, "covid", "patient_id")
+```
+
+
+```{r}
+CATALYST::plotExprs(
+      sce_baseline,
+      color_by = "covid",
+      features = NULL,
+      assay = "exprs"
+    )  
+```
+
+## Healthy vs. covid in stimulated platelets
+```{r}
+# filter SCE
+sce_activated <- filterSCE(sce_covid, platelets == "A")
+
+# plot boxplots
+CATALYST::plotPbExprs(sce_activated, k = "all", features = NULL , color_by = "covid",  ncol=5, facet_by = "antigen") #+  theme(text = element_text(size=16))
+
+# run cytoGLMM
+#runCytoGLMM(sce_activated, "covid", "patient_id")
+```
+
+
+# Test diffcyt methods on covid platelet data
+```{r}
+# covid vs healthy in baseline platelets
+res_baseline <- runDS(sce = sce_baseline,
+      condition = "covid",
+      de_methods = c("LMM"),
+      k = "all",
+      features = "all"
+      )
+
+rowData(res_baseline$LMM$res)
+
+#rowData(res_baseline$limma$res)
+```
+
+
+```{r}
+# calculation of median marker expression
+library(data.table)
+data <- assays(sce_activated)$exprs
+data <- as.data.frame(t(data))
+data$sample_id <- colData(sce_activated)$sample_id
+data <- as.data.table(data)
+tmp <- melt(data, id.vars="sample_id", variable.name = "markers", value.name = "expression")
+medians <- tmp %>% group_by(sample_id, markers) %>% summarise(median = median(expression, na.rm=TRUE))
+medians <- dcast(medians, ... ~ markers, value.var = "median")
+rownames(medians) <- medians$sample_id
+medians$sample_id <- NULL
+medians
+
+medians_act <- fread("/nfs/home/students/l.arend/covid-paper/SARS-CoV-2-platelets-analysis/data/medians_act.csv")
+medians_act <- as.data.frame(medians_act)
+rownames(medians_act) <- medians_act$V1
+medians_act$V1 <- NULL
+as.data.frame(t(medians_act))
+```
+
+
+```{r}
+ei(sce_baseline)
+markers_to_test <- getMarkersToTest(sce_baseline,"LMM","all")
+LMM_res <- diffcyt::diffcyt(d_input = sce_baseline,
+                                formula = createFormula(ei(sce_baseline), cols_fixed = c("covid") , cols_random = c("sample_id")),
+                                contrast = createContrast(c(0,1)),
+                                analysis_type = "DS",
+                                method_DS = "diffcyt-DS-LMM",
+                                clustering_to_use = "all",
+                                markers_to_test = markers_to_test)
+View(as.data.frame(rowData(LMM_res$res)))
+
+```
