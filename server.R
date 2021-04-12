@@ -4,29 +4,7 @@ server <- function(input, output, session) {
   
   reactiveVals$preprocessingShowed <- FALSE
   
-  # reactiveVals$enable_blacklist <- new.env()
-  # my_enable <- function(id = NULL, selector = NULL, asis = FALSE) {
-  #   rm(id, pos = reactiveVals$enable_blacklist)
-  #   shinyjs::enable(id, selector, asis)
-  # }
-  # 
-  # my_disable <- function(id = NULL, selector = NULL, asis = FALSE) {
-  #   assign(id, TRUE, pos = reactiveVals$enable_blacklist)
-  #   shinyjs::disable(id, selector, asis)
-  # }
-  # 
-  # toggle_inputs <- function(enable_inputs = FALSE,
-  #                           input_list = input)
-  # {
-  #   # Toggle elements 
-  #   #also disables all downloadButtons automatically
-  #   for (x in c(names(input_list), session$downloads$keys()))
-  #     if (enable_inputs & !exists(x, reactiveVals$enable_blacklist)) {
-  #       shinyjs::enable(x) # TODO: make reactive value with all ids that should not be enabled
-  #     } else {
-  #       shinyjs::disable(x)
-  #     }
-  # }
+  spinner <- list(logo = spin_square_circle(), color="rgb(0, 102, 204, .2)")
   
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())
@@ -65,8 +43,8 @@ server <- function(input, output, session) {
     }
   )
   
-  shinyBS::updateButton(session, inputId = "previousTab", label = " Previous", icon = icon("arrow-left"), style = "success")
-  shinyBS::updateButton(session, inputId = "nextTab", label = " Next", icon = icon("arrow-right"), style = "success", disabled = FALSE)
+  shinyBS::updateButton(session, inputId = "previousTab", icon = icon("arrow-left"), style = "success")
+  shinyBS::updateButton(session, inputId = "nextTab", icon = icon("arrow-right"), style = "success", disabled = FALSE)
   shinyjs::hide("loading")
 }
 

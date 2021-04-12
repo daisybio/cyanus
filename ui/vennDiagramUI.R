@@ -11,14 +11,14 @@ vennBody <- function(){
           icon("question-circle"),
           id = "da_dsVennQ"
         ),
-        choices = c("Differential Abundance", "Differential States"),
+        choices = c("Differential Cluster Abundance", "Differential Marker Expression"),
         inline = T
       ),
       bsPopover(
         id = "da_dsVennQ",
         title = "Analysis type",
         content = HTML(
-          "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential abundance:</b> Differential analysis of cell population abundance regarding the clusters. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential States:</b> Differential analysis of the marker expression in each cell population (i.e. cluster or overall)."
+          "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential Cluster Abundance:</b> Differential analysis of cell population abundance regarding the clusters. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential Marker Expression:</b> Differential analysis of the marker expression in each cell population (i.e. cluster or overall)."
         )
       ),
       uiOutput("modelSelectionVenn"),
@@ -31,6 +31,7 @@ vennBody <- function(){
       uiOutput("markerToTestSelectionVenn"),
       uiOutput("extraFeaturesVenn"),
       uiOutput("normalizeSelectionVenn"),
+      uiOutput("fdrVenn"),
       width = 6),
     div(
       bsButton(
@@ -53,10 +54,10 @@ vennBody <- function(){
     fluidRow(
       shinydashboard::box(
         div(
-          "Here, you can compare the results of different methods run on the same subset. Choose between Differential Abundance and Differential States methods: "
+          "Here, you can compare the results of different methods run on the same subset. Choose between Differential Cluster Abundance and Differential Marker Expression methods: "
         ),
         div(
-          HTML("<ul><li>Differential Abundance methods: edgeR, voom, GLMM </li><li>Differential States methods: limma, LMM, EMD</li></ul><br>For more information, please refer to the DE analysis tab!")
+          HTML("<ul><li>Differential Cluster Abundance methods: edgeR, voom, GLMM </li><li>Differential Marker Expression methods: limma, LMM, EMD</li></ul><br>For more information, please refer to the DE analysis tab!")
         ),
         title = h2("DE Method Comparison"),
         width = 12
@@ -67,7 +68,10 @@ vennBody <- function(){
     ),
     fluidRow(
       shinydashboard::box(
-        shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px")),
+        div(
+          uiOutput("vennTitle"),
+          shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px"))
+          ),
         id = "vennDiagramsBox",
         title= "Venn Diagram",
         width = 12
@@ -75,6 +79,12 @@ vennBody <- function(){
     ),
     fluidRow(
       uiOutput("downloadVenn")
+    ),
+    fluidRow(
+      uiOutput("vennTable")
+    ),
+    fluidRow(
+      uiOutput("downloadTableVenn")
     )
   )
   return(vennBody)

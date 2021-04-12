@@ -1,21 +1,6 @@
 ### Helpers ----
 source("server/clusterFun.R", local = TRUE)
 
-# manually add download buttons
-inputs_to_disable <-
-  c(
-    "clusteringParametersBox",
-    "clusteringVisualizationSelection",
-    "nextTab",
-    "previousTab",
-    "downloadClusters",
-    "downloadPlotStar",
-    "downloadPlotDensity",
-    "downloadPlotFrequency",
-    "downloadPlotAbundance",
-    "downloadPlotMarkerStar"
-  )
-
 ### Observer ----
 observeEvent(input$startClustering, {
   updateButton(session,
@@ -23,8 +8,9 @@ observeEvent(input$startClustering, {
                label = " Clustering...",
                disabled = TRUE)
   
-  toggle_menu()
-  sapply(inputs_to_disable, shinyjs::disable)
+  waiter_show(html = tagList(spinner$logo, 
+                             HTML("<br>Clustering in Progress...<br>Please be patient")), 
+              color=spinner$color)
   
   showNotification(
     ui =
@@ -62,8 +48,7 @@ observeEvent(input$startClustering, {
     maxK = input$k
   )
   
-  toggle_menu(enable_menu = TRUE)
-  sapply(inputs_to_disable, shinyjs::enable)
+  waiter_hide()
   
   updateButton(session,
                "startClustering",
@@ -348,6 +333,11 @@ output$clusteringOutput <- renderUI({
   densityAssayChoices <-
     densityAssayChoices[densityAssayChoices %in% assayNames(reactiveVals$sce)]
   
+  # sceEI <- ei(reactiveVals$sce)
+  # starMarkerFacets <- names(which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2)))
+  # names(starMarkerFacets) <- starMarkerFacets
+  # starMarkerFacets <- c("No Facetting" = NA, starMarkerFacets)
+  
   shinydashboard::box(
     fluidRow(
       shinydashboard::tabBox(
@@ -464,6 +454,11 @@ output$clusteringOutput <- renderUI({
                   )
                 )
               ),
+              # selectInput(
+              #   "plotStarMarkerFacets",
+              #   label = "Facet By",
+              #   choices = starMarkerFacets
+              # ),
               circle = TRUE,
               status = "info",
               icon = icon("gear"),
@@ -536,6 +531,7 @@ output$clusterStarMarkerPlot <- renderPlot({
     plotMarkerCustom(
       reactiveVals$sce,
       input$plotStarMarkerFeatureIn,
+      # facet_by = input$plotStarMarkerFacets,
       backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]]
     )
   reactiveVals$starMarkerCluster

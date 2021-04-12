@@ -4,10 +4,17 @@ output$vennDiagrams <- renderPlot({
   ggplotObject <- ggplot() + theme_void()
   return(ggplotObject)
 })
+
+output$vennTitle <- renderUI({
+  div(
+    ""
+  )
+})
 shinyjs::hide("vennDiagramsBox")
+#shinyjs::hidden("vennTable")
 
 output$modelSelectionVenn <- renderUI({
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     uiOutput("DAVenn")
   }else{
     uiOutput("DSVenn")
@@ -161,7 +168,7 @@ output$DSVenn <- renderUI({
 })
 
 output$contrastSelectionVenn <- renderUI({
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     uiOutput("DAContrastVenn")
   }else{
     div(
@@ -287,7 +294,7 @@ output$deSubselectionVenn <- renderUI({
 
 output$clusterSelectionVenn <- renderUI({
   clusters <- rev(names(cluster_codes(reactiveVals$sce)))
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     clusters <- clusters[!clusters %in% c("all")]
   }
   selectizeInput(
@@ -300,7 +307,7 @@ output$clusterSelectionVenn <- renderUI({
 
 output$markerToTestSelectionVenn <- renderUI({
   req(input$da_dsVenn)
-  if(input$da_dsVenn == "Differential States"){
+  if(input$da_dsVenn == "Differential Marker Expression"){
     div(
       selectInput(
         "DEMarkerToTestVenn",
@@ -356,7 +363,7 @@ output$DEFeatureSelectionVenn <- renderUI({
 
 output$extraFeaturesVenn <- renderUI({
   req(input$da_dsVenn)
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     cols <- colnames(metadata(reactiveVals$sce)$experiment_info)
     cols <- cols[!cols %in% c("n_cells", "sample_id")]
     div(
@@ -428,7 +435,7 @@ output$extraFeaturesVenn <- renderUI({
 
 output$normalizeSelectionVenn <- renderUI({
   req(input$da_dsVenn)
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     div(
       radioButtons(
         inputId = "normalizeDEVenn",
@@ -439,28 +446,106 @@ output$normalizeSelectionVenn <- renderUI({
       bsPopover(
         id = "normalizeDEQVenn",
         title = "Composition Effects",
-        content = "Whether to include optional normalization factors to adjust for composition effects. Only relevant for Differential Abundance methods."
+        content = "Whether to include optional normalization factors to adjust for composition effects. Only relevant for Differential Cluster Abundance methods."
       )
     )
   }
 })
 
+output$fdrVenn <- renderUI({
+  div(
+    numericInput(
+      inputId = "fdrThresholdVenn",
+      label = "FDR threshold",
+      value = 0.05,
+      min = 0.0,
+      max = 1.0,
+      step = 0.01
+    )
+  )
+})
+
 observeEvent(input$diffExpButtonVenn, {
-  toggle_menu()
+  waiter_show(html = tagList(spinner$logo, 
+                             HTML("<br>DE Analysis in Progress...<br>Please be patient")), 
+              color=spinner$color)
   shinyjs::disable("diffExpButtonVenn")
   shinyjs::disable("previousTab")
   shinyjs::disable("nextTab")
   req(input$da_dsVenn)
   resultVenn <- runMethods()
   if(!is.null(resultVenn)){
+    output$vennTitle <- renderUI({
+      div(
+        paste("Significant results for FDR threshold", isolate(input$fdrThresholdVenn))
+      )
+    })
     output$vennDiagrams <- renderPlot({
       ds_bool <- isolate(reactiveVals$ds_bool)
       venn <- createVennDiagram(resultVenn, ds_bool)
       reactiveVals$lastVenn <- venn
       venn
     })
+    output$vennTable <- renderUI({
+      req(resultVenn)
+      if("diffcyt-DA-edgeR" %in% names(resultVenn)){
+        firstCol <- c("cluster_id")
+      }else{
+        firstCol <- c("marker_id", "cluster_id")
+      }
+      library(data.table)
+      
+      listDT <- lapply(resultVenn, function(x) {
+        vec <- c(firstCol, "p_val", "p_adj")
+        as.data.table(x)[, ..vec]
+      })
+      allResultsDT <- rbindlist(listDT, idcol = "method")
+      reactiveVals$lastAllResults <- allResultsDT
+      
+      fdrThreshold <- isolate(input$fdrThresholdVenn)
+      allResultsSign <- allResultsDT[p_adj < fdrThreshold]
+      if("diffcyt-DA-edgeR" %in% names(resultVenn)){
+        allResultsSign <- dcast(allResultsSign, cluster_id ~ method, value.var = "p_adj")
+      }else{
+        allResultsSign <- dcast(allResultsSign, marker_id + cluster_id ~ method, value.var = "p_adj")
+      }
+      allResultsSign <- allResultsSign[rev(order(allResultsSign[, Reduce(`+`, lapply(.SD,function(x) !is.na(x)))]))]
+      reactiveVals$lastAllResultsSign <- allResultsSign
+      
+      shinydashboard::tabBox(
+        shiny::tabPanel(
+          renderDataTable(
+            DT::datatable(
+              allResultsSign,
+              rownames = F,
+              options = list(pageLength = 10, searching = FALSE, 
+                             columnDefs = list(list( targets = "_all", 
+                                                     render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}"))))
+            )
+          ),
+          value = "resultsIntersections",
+          title = "Venn Diagram Results"
+        ),
+        shiny::tabPanel(
+          renderDataTable(
+            DT::datatable(
+              allResultsDT,
+              rownames = F,
+              options = list(pageLength = 10, searching = FALSE, 
+                             columnDefs = list(list( targets = "_all", 
+                                                     render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}"))))
+            )
+          ),
+          value = "resultsAllVenn",
+          title = "All results"
+        ),
+        id = "vennResultsTable",
+        title = "Results",
+        width = 12
+      )
+    })
   }
-  toggle_menu(TRUE)
+  waiter_hide()
   shinyjs::show("vennDiagramsBox")
   shinyjs::enable("diffExpButtonVenn")
   shinyjs::enable("previousTab")
@@ -484,10 +569,39 @@ output$downloadVennButton <- downloadHandler(
   }
 )
 
+output$downloadTableVenn <- renderUI({
+  req(reactiveVals$lastAllResults)
+  req(reactiveVals$lastAllResultsSign)
+  fluidRow(
+    div(
+      downloadButton("downloadTableVennAll", "Download All Results"),
+      style = "float:right;"
+    ),
+    div(
+      downloadButton("downloadTableSign", "Download Venn Diagram Results"),
+      style = "float:right;"
+    )
+  )
+})
+
+output$downloadTableSign <- downloadHandler(
+  filename = "VennDiagramResults.csv",
+  content = function(file) {
+    write.csv(reactiveVals$lastAllResultsSign, file, row.names = FALSE)
+  }
+)
+
+output$downloadTableVennAll <- downloadHandler(
+  filename = "AllResults.csv",
+  content = function(file) {
+    write.csv(reactiveVals$lastAllResults, file, row.names = FALSE)
+  }
+)
+
 runMethods <- function(){
   resultVenn <- list()
   reactiveVals$ds_bool <- T
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     contrast <- isolate(input$contrastVarsDA)
   }else{
     contrast <- isolate(input$contrastVarsDS)
@@ -532,7 +646,7 @@ runMethods <- function(){
   ei <- metadata(sce)$experiment_info
   nr_samples <- length(levels(colData(sce)$sample_id))
   
-  if(input$da_dsVenn == "Differential Abundance"){
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
     reactiveVals$ds_bool <- F
     colsDesignDA <- isolate(input$colsDesignDA)
     
@@ -742,7 +856,7 @@ createVennDiagram <- function(res, DS = T) {
       }
       
     }
-    result$significant <- result$p_adj < 0.05
+    result$significant <- result$p_adj < isolate(input$fdrThresholdVenn)
     significants <-
       unlist(subset(
         result,

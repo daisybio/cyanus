@@ -243,7 +243,7 @@ plotStarsCustom <-
     # return(list(star_legend = star_legend_plot, background_legend = background_legend_plot, tree = tree_plot))
   }
 
-plotMarkerCustom <- function (sce, marker, view = "MST", main = NULL, colorPalette = grDevices::colorRampPalette(c("#00007F", 
+plotMarkerCustom <- function (sce, marker, facet_by = "NA", view = "MST", main = NULL, colorPalette = grDevices::colorRampPalette(c("#00007F", 
                                                                                                                            "blue", "#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", 
                                                                                                                            "red", "#7F0000")), backgroundValues = NULL, backgroundColor = function(n) {
                                                                                                                              grDevices::rainbow(n, alpha = 0.3)
@@ -275,12 +275,25 @@ plotMarkerCustom <- function (sce, marker, view = "MST", main = NULL, colorPalet
                         edge.lty = lty)
   }
   else {
-    igraph::V(metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[as.numeric(cut(metadata(sce)$SOM_medianValues[, 
-                                                                                           marker], breaks = 100))]
-    igraph::plot.igraph(metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = metadata(sce)$SOM_MST$size, 
-                        vertex.label = NA, main = main, edge.lty = lty, 
-                        mark.groups = background$groups, mark.col = background$col[background$values], 
-                        mark.border = background$col[background$values])
+    if (facet_by == "NA") {
+      igraph::V(metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[as.numeric(cut(metadata(sce)$SOM_medianValues[, 
+                                                                                                                      marker], breaks = 100))]
+      igraph::plot.igraph(metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = metadata(sce)$SOM_MST$size, 
+                          vertex.label = NA, main = main, edge.lty = lty, 
+                          mark.groups = background$groups, mark.col = background$col[background$values], 
+                          mark.border = background$col[background$values])
+    } else {
+      # graphics::layout(matrix(c(1, 2), nrow = 2))
+      # browser()
+      # for (cond in levels(ei(sce)[[facet_by]])) {
+      # igraph::V(metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[as.numeric(cut(metadata(sce)$SOM_medianValues[, 
+      #                                                                                                                 marker], breaks = 100))]
+      # igraph::plot.igraph(metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = metadata(sce)$SOM_MST$size, 
+      #                     vertex.label = NA, main = main, edge.lty = lty, 
+      #                     mark.groups = background$groups, mark.col = background$col[background$values], 
+      #                     mark.border = background$col[background$values])
+      # }
+    }
     graphics::par(fig = c(0, 0.2, 0, 1), mar = c(0, 0, 0, 
                                                  0), new = TRUE)
     FlowSOM:::legendContinuous(colorPalette(100), metadata(sce)$SOM_medianValues[, 
