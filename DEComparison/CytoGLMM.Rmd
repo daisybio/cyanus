@@ -17,7 +17,7 @@ library(readxl)
 library(CATALYST)
 source("../pipeline/shiny_functions.R")
 source("../server/clusterFun.R")
-source("cytoGLMM_functions.R")
+source("../server/cytoGLMM_functions.R")
 
 library(BiocParallel)
 # Set the parameters and register the back-end to be used
