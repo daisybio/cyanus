@@ -344,10 +344,10 @@ output$clusteringOutput <- renderUI({
   densityAssayChoices <-
     densityAssayChoices[densityAssayChoices %in% assayNames(reactiveVals$sce)]
   
-  # sceEI <- ei(reactiveVals$sce)
-  # starMarkerFacets <- names(which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2)))
-  # names(starMarkerFacets) <- starMarkerFacets
-  # starMarkerFacets <- c("No Facetting" = NA, starMarkerFacets)
+  sceEI <- ei(reactiveVals$sce)
+  starMarkerFacets <- names(which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2)))
+  names(starMarkerFacets) <- starMarkerFacets
+  starMarkerFacets <- c("No Facetting" = NA, starMarkerFacets)
   
   shinydashboard::box(
     fluidRow(
@@ -465,11 +465,11 @@ output$clusteringOutput <- renderUI({
                   )
                 )
               ),
-              # selectInput(
-              #   "plotStarMarkerFacets",
-              #   label = "Facet By",
-              #   choices = starMarkerFacets
-              # ),
+              selectInput(
+                "plotStarMarkerFacets",
+                label = "Facet By",
+                choices = starMarkerFacets
+              ),
               circle = TRUE,
               status = "info",
               icon = icon("gear"),
@@ -542,7 +542,8 @@ output$clusterStarMarkerPlot <- renderPlot({
     plotMarkerCustom(
       reactiveVals$sce,
       input$plotStarMarkerFeatureIn,
-      # facet_by = input$plotStarMarkerFacets,
+      facet_by = input$plotStarMarkerFacets,
+      assayType = names(metadata(reactiveVals$sce)$clusterRun$assayType),
       backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]]
     )
   reactiveVals$starMarkerCluster
