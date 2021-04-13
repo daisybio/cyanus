@@ -58,7 +58,8 @@ body <-
       visbody(),
       clusteringBody,
       deBody(),
-      vennBody()
+      vennBody(),
+      goodbyeBody
     ),
     fluidRow(column(
       6,
