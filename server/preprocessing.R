@@ -156,6 +156,7 @@ observeEvent(input$prepButton, {
   reactiveVals$sce <-
     transformData(sce = reactiveVals$sce,
                   cf = as.numeric(input$cofactor))
+  plotPreprocessing(reactiveVals$sce)
   shinyjs::enable("prepButton")
   shinyjs::enable("prepSelectionButton")
   shinyjs::enable("filterSelectionButton")
@@ -241,6 +242,9 @@ plotPreprocessing <- function(sce) {
   possAssays <- assayNames(sce)
   if (all(possAssays == c("counts", "exprs"))) {
     possAssays <- c("Normalized" = "exprs", "Raw" = "counts")
+  }
+  if (all(possAssays == c("counts"))){
+    possAssays <- c("Raw" = "counts")
   }
   features <-
     c("all", as.character(unique(rowData(sce)$marker_class)))

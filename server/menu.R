@@ -65,8 +65,8 @@ observeEvent({
   if (reactiveVals$current_tab < length(tab_ids))
     shinyjs::show("nextTab")
   else if (reactiveVals$current_tab == length(tab_ids))
-    #shinyjs::hide("nextTab")
-    reactiveVals$continue <- TRUE #so that Exit App button is directly enabled
+    shinyjs::hide("nextTab")
+    #shinyBS::updateButton(session, inputId = "nextTab", icon = icon("times-circle"), style = "warning", disabled = FALSE)
   else
     stop("what is the current id?")
   if (!reactiveVals$continue &&
@@ -78,7 +78,7 @@ observeEvent({
 })
 
 prevNames <- c(" Previous", " Welcome", " Get Started", " Preprocessing", " Visualization", " Clustering", " DE Analysis", " DE Method Comparison")
-nextNames <- c(" Get Started", " Preprocessing", " Visualization", " Clustering", " DE Analysis", " DE Method Comparison", " Goodbye", " Exit App")
+nextNames <- c(" Get Started", " Preprocessing", " Visualization", " Clustering", " DE Analysis", " DE Method Comparison", " Goodbye")
 
 observeEvent(input$tabs, {
   reactiveVals$current_tab <- match(input$tabs, tab_ids)
@@ -98,9 +98,6 @@ observeEvent(input$nextTab, {
   reactiveVals$current_tab <- reactiveVals$current_tab + 1
   if (reactiveVals$current_tab > reactiveVals$max_tab){
     reactiveVals$max_tab <- reactiveVals$current_tab
-    if (reactiveVals$current_tab == length(tab_ids) + 1){
-      stopApp(7)
-    }
   } else
     updateTabItems(session, "tabs", tab_ids[reactiveVals$current_tab + 1]) # here we update in case the new current tab is not a new max tab
   shinyjs::runjs("window.scrollTo(0, 0)")

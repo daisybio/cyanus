@@ -1,9 +1,10 @@
 server <- function(input, output, session) {
+  
   # make reactiveValues and server-wide variables
   reactiveVals <- reactiveValues()
   
   reactiveVals$preprocessingShowed <- FALSE
-  
+
   spinner <- list(logo = spin_square_circle(), color="rgb(0, 102, 204, .2)")
   
   # read all server files
