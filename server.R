@@ -8,6 +8,7 @@ server <- function(input, output, session) {
   
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())
+  sapply(list.files("functions", full.names = TRUE), source, environment())
   
   # additional functions
   #downloadPlotFunction <- function(name, ggplotObject, width = 7, height = 7){

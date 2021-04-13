@@ -1,6 +1,41 @@
+library(CATALYST)
+library(diffcyt)
+library(uwot)
+library(ggplot2)
 library(dimRed)
 library(RANN)
+library(ggvenn)
 
+#run the dimensionality reduction; function either calls CATALYST::runDR or runIsomap
+runDimRed <- function(sce, dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap"), 
+                      cells_chosen = NULL, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3){
+  match.arg(dr_chosen)
+  if (dr_chosen == "Isomap") {
+    sce <- runIsomap(
+      sce,
+      cells = cells_chosen,
+      features = feature_chosen,
+      assay = assay_chosen,
+      scale = scale,
+      k = k
+    )
+    
+  } else{
+    sce <- CATALYST::runDR(
+      sce,
+      dr = dr_chosen,
+      cells = cells_chosen,
+      features = feature_chosen,
+      assay = assay_chosen,
+      scale = scale
+    )
+  }
+}
+
+#plot the dimensionality reduction by calling:
+#CATALYST::plotDR(sce, dr = dr_chosen, color_by = color_chosen, facet_by = facet_chosen, assay = assay_chosen, scale = scale)
+
+#adapted from CATALYST::runDR
 runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scale = TRUE, k = 5, dimensions = 2) 
 {
   stopifnot(is(x, "SingleCellExperiment"))

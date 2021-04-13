@@ -54,8 +54,7 @@ library(VennDiagram)
 library(stringr)
 set.seed(1234)
 
-source("pipeline/shiny_functions.R")
-source("server/clusterFun.R")
+sapply(list.files("./functions", full.names = TRUE), source)
 ```
 
 

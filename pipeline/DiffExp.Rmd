@@ -20,8 +20,8 @@ library(grid)
 library(futile.logger)
 set.seed(1234)
 
-source("shiny_functions.R")
-source("../server/clusterFun.R")
+sapply(list.files("../functions", full.names = TRUE), source)
+source("../SigEMD/sigEMD.R")
 ```
 
 # Upload Data, Preprocessing and Clustering

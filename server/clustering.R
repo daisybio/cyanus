@@ -1,5 +1,5 @@
 ### Helpers ----
-source("server/clusterFun.R", local = TRUE)
+#source("server/clusterFun.R", local = TRUE)
 
 ### Observer ----
 observeEvent(input$startClustering, {
