@@ -14,6 +14,7 @@ shinyjs::hide("vennDiagramsBox")
 #shinyjs::hidden("vennTable")
 
 output$modelSelectionVenn <- renderUI({
+  reactiveVals$continue <- TRUE #added so next tab display immediately
   if(input$da_dsVenn == "Differential Cluster Abundance"){
     uiOutput("DAVenn")
   }else{
@@ -471,7 +472,7 @@ observeEvent(input$diffExpButtonVenn, {
               color=spinner$color)
   shinyjs::disable("diffExpButtonVenn")
   shinyjs::disable("previousTab")
-  shinyjs::disable("nextTab")
+  #shinyjs::disable("nextTab")
   req(input$da_dsVenn)
   resultVenn <- runMethods()
   if(!is.null(resultVenn)){
@@ -482,7 +483,7 @@ observeEvent(input$diffExpButtonVenn, {
     })
     output$vennDiagrams <- renderPlot({
       ds_bool <- isolate(reactiveVals$ds_bool)
-      venn <- createVennDiagram(resultVenn, ds_bool)
+      venn <- createVennDiagramApp(resultVenn, ds_bool)
       reactiveVals$lastVenn <- venn
       venn
     })
@@ -662,8 +663,16 @@ runMethods <- function(){
     reactiveVals$ds_bool <- F
     colsDesignDA <- isolate(input$colsDesignDA)
     
-    design <- createDesignMatrix(ei, cols_design = colsDesignDA)
-    contrastMatrix <- createCustomContrastMatrix(contrast, design, designMatrix = T)
+    parameters <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrast,
+      colsDesign = colsDesignDA,
+      method = "diffcyt-DA-edgeR"
+    )
+    
+    design <- parameters[["design"]]
+    contrastMatrix <- parameters[["contrast"]]
+    
     if(ncol(design) >= nr_samples){
       showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
       return(NULL)
@@ -672,8 +681,16 @@ runMethods <- function(){
     colsFixedDA <- isolate(input$colsFixedDA)
     colsRandomDA <- isolate(input$colsRandomDA)
     
-    formulaGLMM <- createFormula(ei, cols_fixed = colsFixedDA, cols_random = colsRandomDA)
-    contrastGLMM <- createCustomContrastMatrix(contrast, diffcyt::createDesignMatrix(ei, cols_design = colsFixedDA), designMatrix = T)
+    parameters <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrast,
+      colsFixed = colsFixedDA, 
+      colsRandom = colsRandomDA,
+      method = "diffcyt-DA-GLMM"
+    )
+    
+    formulaGLMM <- parameters[["formula"]]
+    contrastGLMM <- parameters[["contrast"]]
     if(nrow(contrastGLMM) >= nr_samples){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
       out <- NULL
@@ -732,8 +749,14 @@ runMethods <- function(){
   }else{
     colsDesignDS <- isolate(input$colsDesignDS)
     
-    design <- createDesignMatrix(ei, cols_design = colsDesignDS)
-    contrastMatrix <- createCustomContrastMatrix(contrast, design, designMatrix = T)
+    parameters <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrast,
+      colsDesign = colsDesignDS,
+      method = "diffcyt-DS-limma"
+    )
+    design <- parameters[["design"]]
+    contrastMatrix <- parameters[["contrast"]]
     if(ncol(design) >= nr_samples){
       showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
       return(NULL)
@@ -742,8 +765,16 @@ runMethods <- function(){
     colsFixedDS <- isolate(input$colsFixedDS)
     colsRandomDS <- isolate(input$colsRandomDS)
     
-    formulaLMM <- createFormula(ei, cols_fixed = colsFixedDS, cols_random = colsRandomDS)
-    contrastLMM <- createCustomContrastMatrix(contrast, diffcyt::createDesignMatrix(ei, cols_design = colsFixedDS), designMatrix = T)
+    parameters <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrast,
+      colsFixed = colsFixedDS, 
+      colsRandom = colsRandomDS,
+      method = "diffcyt-DS-LMM"
+    )
+    
+    formulaLMM <- parameters[["formula"]]
+    contrastLMM <- parameters[["contrast"]]
     if(nrow(contrastLMM) >= nr_samples){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
       return(NULL)
@@ -844,7 +875,7 @@ runMethods <- function(){
   }
 }
 
-createVennDiagram <- function(res, DS = T) {
+createVennDiagramApp <- function(res, DS = T) {
   input_venn <- list()
   if(DS){
     feature <- "marker_id"
@@ -855,7 +886,7 @@ createVennDiagram <- function(res, DS = T) {
   for (ds_method in names(res)) {
     if(feature == "cluster_id"){
       result <-
-          data.frame(res[[ds_method]])[c(feature, "p_val", "p_adj")]
+        data.frame(res[[ds_method]])[c(feature, "p_val", "p_adj")]
       featureNew <- "cluster_id"
     }else{
       result <-

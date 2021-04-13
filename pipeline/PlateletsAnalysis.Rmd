@@ -23,8 +23,7 @@ library(VennDiagram)
 library(stringr)
 set.seed(1234)
 
-source("shiny_functions.R")
-source("../server/clusterFun.R")
+sapply(list.files("../functions", full.names = TRUE), source)
 ```
 
 Data from human platelets of patients with chronic coronary syndrome undergoing different therapy: dual antiplatelet therapy versus triple antiplatelet therapy, before and after platelet activation with 10µm TRAP. There are files of 7 patients with triple therapy and 12 patients with dual therapy (each in two condtions).

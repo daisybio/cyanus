@@ -8,14 +8,16 @@ library(plotly)
 library(DT)
 library(waiter)
 
-# read all ui files
+jscode <- "shinyjs.closewindow = function() { window.close(); }"
 
+# read all ui files
 sapply(list.files("ui", full.names = TRUE), source, environment())
 
 header <-
   dashboardHeader(title = "CyTOF Pipeline", uiOutput("dashboard"))
 
 sidebar <- dashboardSidebar(useShinyjs(),
+                            extendShinyjs(text = jscode, functions = c("closewindow")),
                             tags$head(
                               tags$style(".inactiveLink {
                             pointer-events: none;
@@ -58,7 +60,8 @@ body <-
       visbody(),
       clusteringBody,
       deBody(),
-      vennBody()
+      vennBody(),
+      goodbyeBody
     ),
     fluidRow(column(
       6,
@@ -81,7 +84,7 @@ body <-
         block = TRUE,
         disabled = TRUE
       )
-    ))
+    )),
 )
    
 

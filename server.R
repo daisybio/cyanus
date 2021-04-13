@@ -1,13 +1,15 @@
 server <- function(input, output, session) {
+  
   # make reactiveValues and server-wide variables
   reactiveVals <- reactiveValues()
   
   reactiveVals$preprocessingShowed <- FALSE
-  
+
   spinner <- list(logo = spin_square_circle(), color="rgb(0, 102, 204, .2)")
   
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())
+  sapply(list.files("functions", full.names = TRUE), source, environment())
   
   # additional functions
   #downloadPlotFunction <- function(name, ggplotObject, width = 7, height = 7){
@@ -50,5 +52,6 @@ server <- function(input, output, session) {
   shinyBS::updateButton(session, inputId = "previousTab", icon = icon("arrow-left"), style = "success")
   shinyBS::updateButton(session, inputId = "nextTab", icon = icon("arrow-right"), style = "success", disabled = FALSE)
   shinyjs::hide("loading")
+
 }
 
