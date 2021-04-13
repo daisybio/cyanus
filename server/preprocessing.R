@@ -54,7 +54,6 @@ observe({
 
 # render markers box
 output$markersBox <- renderUI({
-  reactiveVals$continue <- TRUE
   pickerInput(
     inputId = "markerSelection",
     label = "Markers",

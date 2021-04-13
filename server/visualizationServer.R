@@ -343,7 +343,6 @@ observeEvent(input$radioButtonsColor, {
 })
 
 output$useFeaturesInVis <- renderUI({
-  reactiveVals$continue <- TRUE
   selectInput(
     "useFeaturesInVis",
     label = "Features to choose from",
