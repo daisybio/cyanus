@@ -9,7 +9,7 @@ tab_ids <-
     "goodbye")
 reactiveVals$current_tab <- 1
 reactiveVals$max_tab <- 1
-reactiveVals$continue <- c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE)
+reactiveVals$continue <- c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE)
 
 tabs <- list(
   menuItem("Welcome",

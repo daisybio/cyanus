@@ -2,5 +2,5 @@
 
 observeEvent(input$exit, {
   js$closewindow();
-  stopApp(7)
+  stopApp("Quit App on Goodbye...")
 })
