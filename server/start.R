@@ -63,12 +63,13 @@ observeEvent(input$exampleData, {
 
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
-  
+  resetVisualization()
   waiter_show(id = "app",html = tagList(spinner$logo, 
                              HTML("<br>Loading Data...<br>Please be patient")), 
               color=spinner$color)
   
   library(CATALYST)
+  
   if (input$chooseDataTab == "dataUpload") {
     dn <- dirname(input$fcsFiles$datapath)[1]
     file.rename(input$fcsFiles$datapath, file.path(dn, "/", input$fcsFiles$name))
