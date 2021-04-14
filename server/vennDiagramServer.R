@@ -14,7 +14,6 @@ shinyjs::hide("vennDiagramsBox")
 #shinyjs::hidden("vennTable")
 
 output$modelSelectionVenn <- renderUI({
-  reactiveVals$continue <- TRUE #added so next tab display immediately
   if(input$da_dsVenn == "Differential Cluster Abundance"){
     uiOutput("DAVenn")
   }else{

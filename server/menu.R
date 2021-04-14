@@ -9,7 +9,7 @@ tab_ids <-
     "goodbye")
 reactiveVals$current_tab <- 1
 reactiveVals$max_tab <- 1
-reactiveVals$continue <- TRUE
+reactiveVals$continue <- c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE)
 
 tabs <- list(
   menuItem("Welcome",
@@ -69,10 +69,10 @@ observeEvent({
     #shinyBS::updateButton(session, inputId = "nextTab", icon = icon("times-circle"), style = "warning", disabled = FALSE)
   else
     stop("what is the current id?")
-  if (!reactiveVals$continue &&
+  if (!reactiveVals$continue[reactiveVals$current_tab] &&
       reactiveVals$current_tab == reactiveVals$max_tab)
     shinyjs::disable("nextTab")
-  else if (reactiveVals$continue || reactiveVals$current_tab != reactiveVals$max_tab) {
+  else if (reactiveVals$continue[reactiveVals$current_tab] || reactiveVals$current_tab != reactiveVals$max_tab) {
     shinyjs::enable("nextTab")
   }
 })
@@ -113,7 +113,7 @@ output$sidebar <- renderUI({
   # }
   # here we update in case the new current tab is also a new max tab
   updateTabItems(session, "tabs", tab_ids[reactiveVals$max_tab])
-  if (reactiveVals$max_tab > 1) reactiveVals$continue <- FALSE
+  # if (reactiveVals$max_tab > 1) reactiveVals$continue <- FALSE
   shinyjs::runjs("window.scrollTo(0, 0)")
   return(curr_menu)
 })

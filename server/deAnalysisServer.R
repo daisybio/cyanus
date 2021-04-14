@@ -395,7 +395,6 @@ output$selectionBoxDE <- renderUI({
 
 # displays available methods and selection of DA or DS
 output$deMethodSelection <- renderUI({
-  reactiveVals$continue <- TRUE
    methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
    methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD")
    if(input$da_ds == "Differential Cluster Abundance"){

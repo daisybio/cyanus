@@ -72,7 +72,7 @@ PlotBackgroundLegendCustom <- function (backgroundValues, background, main = "Ba
 {
   graphics::plot.new()
   if (is.numeric(backgroundValues)) {
-    legendContinuous(background$col, as.numeric(gsub(".*,", 
+    FlowSOM:::legendContinuous(background$col, as.numeric(gsub(".*,", 
                                                      "", gsub("].*", "", levels(background$values)))))
   }
   else {
@@ -243,7 +243,7 @@ plotStarsCustom <-
     # return(list(star_legend = star_legend_plot, background_legend = background_legend_plot, tree = tree_plot))
   }
 
-plotMarkerCustom <- function (sce, marker, facet_by = "NA", view = "MST", main = NULL, colorPalette = grDevices::colorRampPalette(c("#00007F", 
+plotMarkerCustom <- function (sce, marker, facet_by = "NA", assayType = "exprs", view = "MST", main = NULL, colorPalette = grDevices::colorRampPalette(c("#00007F", 
                                                                                                                            "blue", "#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", 
                                                                                                                            "red", "#7F0000")), backgroundValues = NULL, backgroundColor = function(n) {
                                                                                                                              grDevices::rainbow(n, alpha = 0.3)
@@ -282,22 +282,40 @@ plotMarkerCustom <- function (sce, marker, facet_by = "NA", view = "MST", main =
                           vertex.label = NA, main = main, edge.lty = lty, 
                           mark.groups = background$groups, mark.col = background$col[background$values], 
                           mark.border = background$col[background$values])
+      
+      graphics::par(fig = c(0, 0.2, 0, 1), mar = c(0, 0, 0, 
+                                                   0), new = TRUE)
+      
+      FlowSOM:::legendContinuous(colorPalette(100), metadata(sce)$SOM_medianValues[, marker])
     } else {
-      # graphics::layout(matrix(c(1, 2), nrow = 2))
-      # browser()
-      # for (cond in levels(ei(sce)[[facet_by]])) {
-      # igraph::V(metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[as.numeric(cut(metadata(sce)$SOM_medianValues[, 
-      #                                                                                                                 marker], breaks = 100))]
-      # igraph::plot.igraph(metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = metadata(sce)$SOM_MST$size, 
-      #                     vertex.label = NA, main = main, edge.lty = lty, 
-      #                     mark.groups = background$groups, mark.col = background$col[background$values], 
-      #                     mark.border = background$col[background$values])
-      # }
+      graphics::layout(matrix(c(3, 1, 2, 4), ncol = 4), width = c(1,2,2,1))
+      
+      cond_levels <- levels(ei(sce)[[facet_by]])
+      both_cond <- data.table::rbindlist(sapply(cond_levels, function(cond){
+        sce_filtered <- filterSCE(filterSCE(sce, get(facet_by) == cond), marker_name == marker)
+        median_cond <- data.table::data.table(t(assay(sce_filtered, assayType)))
+        median_cond[, cluster_id := sce_filtered$cluster_id]
+        median_cond <- median_cond[, .(my_marker = median(get(marker))), by = cluster_id]
+        data.table::setkey(median_cond, cluster_id)
+      }, simplify = FALSE), idcol = "condition")
+      lev <- both_cond[, my_marker]
+      yval <- seq(min(lev), max(lev), by = (max(lev) - min(lev))/length(colorPalette(100)))
+      for (cond in cond_levels) {
+        igraph::V(metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[findInterval(both_cond[condition == cond, my_marker], yval)]
+        if (cond != cond_levels[1]) main <- NULL
+        igraph::plot.igraph(metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = metadata(sce)$SOM_MST$size,
+                          vertex.label = NA, edge.lty = lty, 
+                          mark.groups = background$groups, mark.col = background$col[background$values],
+                          mark.border = background$col[background$values])
+        title(main = main, sub = cond, cex.main=2, cex.sub = 2)
+      }
+      
+      graphics::par(oldpar)
+      graphics::par(fig = c(0, 0.2, 0, 1), mar = c(0, 0, 0, 
+                                                   0), new = TRUE)
+      
+      FlowSOM:::legendContinuous(colorPalette(100), both_cond[, my_marker])
     }
-    graphics::par(fig = c(0, 0.2, 0, 1), mar = c(0, 0, 0, 
-                                                 0), new = TRUE)
-    FlowSOM:::legendContinuous(colorPalette(100), metadata(sce)$SOM_medianValues[, 
-                                                              marker])
     if (!is.null(backgroundValues)) {
       graphics::par(fig = c(0.8, 1, 0, 1), mar = c(0, 0, 0, 
                                                    0), new = TRUE)
@@ -305,6 +323,7 @@ plotMarkerCustom <- function (sce, marker, facet_by = "NA", view = "MST", main =
     }
   }
   graphics::par(oldpar)
+  graphics::layout(1)
   return(recordPlot())
 }
 

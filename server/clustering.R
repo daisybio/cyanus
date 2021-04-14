@@ -40,21 +40,19 @@ observeEvent(input$startClustering, {
   
   assays <- c("exprs" = "Transformed", "counts" = "Raw")
   
-  reactiveVals$clusterRun <- list(
+  metadata(reactiveVals$sce)$clusterRun <- list(
     features = reactiveVals$clusterFeatureNames,
     assayType = assays[input$assayTypeIn],
     xdim = input$xdim,
     ydim = input$ydim,
     maxK = input$k
   )
-  
   waiter_hide(id = "app")
   
   updateButton(session,
                "startClustering",
                label = " Start Clustering",
                disabled = FALSE)
-  reactiveVals$continue <- TRUE
   removeNotification("clusteringProgressNote")
   showNotification(
     HTML(
@@ -140,11 +138,14 @@ observeEvent(input$clusterCode, {
   }
 })
 
-observeEvent(reactiveVals$sce$cluster_id, {
-  if (is.null(reactiveVals$sce$cluster_id)) {
-    reactiveVals$clusterRun <- NULL
-  }
-}, ignoreNULL = FALSE)
+observeEvent(reactiveVals$sce, {
+  if (!is.null(reactiveVals$sce$cluster_id) &&
+      !is.null(cluster_codes(reactiveVals$sce))  &&
+      !is.null(metadata(reactiveVals$sce)$clusterRun))
+    reactiveVals$continue[which(tab_ids == "clustering")] <- TRUE
+  else
+    reactiveVals$continue[which(tab_ids == "clustering")] <- FALSE
+})
 
 
 ### Renderer ----
@@ -188,7 +189,7 @@ output$assayTypeOut <- renderUI({
 })
 
 output$clusteringVisualizationSelection <- renderUI({
-  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
   shinydashboard::box(
     column(
@@ -224,7 +225,7 @@ output$clusterRunParams <- renderTable({
     "document.getElementById('clusteringVisualizationSelection').scrollIntoView();"
   )
   runParams <-
-    reactiveVals$clusterRun
+    metadata(reactiveVals$sce)$clusterRun
   runParams$features <- paste(runParams$features, collapse = ",")
   data.frame(runParams)
 },
@@ -232,18 +233,18 @@ caption = "Run Parameters",
 caption.placement = "top")
 
 output$selectClusterCode <- renderUI({
-  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
   choicesClusterCode <- names(cluster_codes(reactiveVals$sce))
   choicesClusterCode <-
     c('all', choicesClusterCode[choicesClusterCode != 'all'])
   selectInput("clusterCode",
-              "Meta-Clusters",
+              "Select Meta-Clusters",
               rev(choicesClusterCode))
 })
 
 output$clusterSizes <- renderTable({
-  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun, input$clusterCode)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun, input$clusterCode)
   res <-
     as.data.frame(table(cluster_ids(reactiveVals$sce, input$clusterCode),
                         useNA =
@@ -255,7 +256,7 @@ caption = "Cluster Sizes",
 caption.placement = "top", rownames = TRUE, colnames = FALSE)
 
 output$mergeClustersDT <- renderDT({
-  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
   reactiveVals$mergingFrame
 },
@@ -268,7 +269,7 @@ options = list(pageLength = nlevels(
 )))
 
 output$delta_area <- renderUI({
-  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
   runjs(
     "document.getElementById('clusteringVisualizationSelection').scrollIntoView();"
@@ -292,7 +293,7 @@ output$delta_area <- renderUI({
 })
 
 output$clusterMergingBox <- renderUI({
-  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
   shinydashboard::box(
     HTML(
@@ -331,7 +332,7 @@ output$downloadClusters <- downloadHandler(
 )
 
 output$clusteringOutput <- renderUI({
-  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), reactiveVals$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
   abundanceByChoices <-
     c("Samples" = "sample_id", "Clusters" = "cluster_id")
@@ -343,10 +344,10 @@ output$clusteringOutput <- renderUI({
   densityAssayChoices <-
     densityAssayChoices[densityAssayChoices %in% assayNames(reactiveVals$sce)]
   
-  # sceEI <- ei(reactiveVals$sce)
-  # starMarkerFacets <- names(which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2)))
-  # names(starMarkerFacets) <- starMarkerFacets
-  # starMarkerFacets <- c("No Facetting" = NA, starMarkerFacets)
+  sceEI <- ei(reactiveVals$sce)
+  starMarkerFacets <- names(which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2)))
+  names(starMarkerFacets) <- starMarkerFacets
+  starMarkerFacets <- c("No Facetting" = NA, starMarkerFacets)
   
   shinydashboard::box(
     fluidRow(
@@ -464,11 +465,11 @@ output$clusteringOutput <- renderUI({
                   )
                 )
               ),
-              # selectInput(
-              #   "plotStarMarkerFacets",
-              #   label = "Facet By",
-              #   choices = starMarkerFacets
-              # ),
+              selectInput(
+                "plotStarMarkerFacets",
+                label = "Facet By",
+                choices = starMarkerFacets
+              ),
               circle = TRUE,
               status = "info",
               icon = icon("gear"),
@@ -541,7 +542,8 @@ output$clusterStarMarkerPlot <- renderPlot({
     plotMarkerCustom(
       reactiveVals$sce,
       input$plotStarMarkerFeatureIn,
-      # facet_by = input$plotStarMarkerFacets,
+      facet_by = input$plotStarMarkerFacets,
+      assayType = names(metadata(reactiveVals$sce)$clusterRun$assayType),
       backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]]
     )
   reactiveVals$starMarkerCluster
