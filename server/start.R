@@ -102,7 +102,7 @@ observeEvent(input$loadData, {
     stop("Which tab is selected?")
   start_tab <- which(tab_ids == "start")
   if (isolate(reactiveVals$max_tab > start_tab))
-    reactiveVals$max_tab <- start_tab + 1
+    reactiveVals$max_tab <- start_tab
   reactiveVals$continue[which(tab_ids == "start")] <- TRUE
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
   waiter_hide(id = "app")
