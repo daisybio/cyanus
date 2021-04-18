@@ -19,7 +19,7 @@ cytofA:
  volumes:
   - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
   - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - ./logs/:/var/log
+  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
  restart: always
 
 cytofB:
@@ -28,7 +28,7 @@ cytofB:
  volumes:
   - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
   - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - ./logs/:/var/log
+  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
  restart: always
 
 cytofC:
@@ -37,7 +37,7 @@ cytofC:
  volumes:
   - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
   - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - ./logs/:/var/log
+  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
  restart: always
 
 cytofD:
@@ -46,7 +46,7 @@ cytofD:
  volumes:
   - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
   - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - ./logs/:/var/log
+  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
  restart: always
 
 cytofE:
@@ -55,7 +55,7 @@ cytofE:
  volumes:
   - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
   - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - ./logs/:/var/log
+  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
  restart: always
 
 cytofF:
@@ -64,7 +64,7 @@ cytofF:
  volumes:
   - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
   - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - ./logs/:/var/log
+  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
  restart: always
 
 cytof-watchtower:
