@@ -25,7 +25,12 @@ visbody <- function(){
     ),
     fluidRow(
       uiOutput("visPlotBox")
-    )
+    ),
+    tags$script("
+    Shiny.addCustomMessageHandler('resetValue', function(variableName) {
+      Shiny.onInputChange(variableName, null);
+    });
+  ")
   )
   return(visbody)
 }
