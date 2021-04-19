@@ -1,5 +1,12 @@
 shinyjs::hide("visPlotBox")
-#reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
+
+resetVisualization <- function(){
+  shinyjs::hide("visPlotBox")
+  reactiveVals$availableDRs <- NULL
+  reactiveVals$lastMethod <- NULL
+  session$sendCustomMessage(type = "resetValue", message = "selectedVisMethod")
+  reactiveVals$lastPlot <- NULL
+}
 
 output$downloadPlot <- downloadHandler(
   filename = function(){
@@ -13,12 +20,6 @@ output$downloadPlot <- downloadHandler(
     waiter_hide(id="app")
   }
 )
-
-observeEvent(reactiveVals$availableDRs, {
-  if(reactiveVals$availableDRs == 0){
-    shinyjs::hide("visPlotBox")
-  }
-})
 
 observeEvent(input$visTabs, {
   if (input$visTabs == "expressionTab") {
@@ -707,6 +708,7 @@ output$facet_by <- renderUI({
 
 output$plotDimensions <- renderUI({
   req(input$selectedVisMethod)
+  req(reactiveVals$availableDRs)
   nrDimensionsPossible <- ncol(reducedDim(reactiveVals$sce, input$selectedVisMethod))
   options <- seq(nrDimensionsPossible)
   div(

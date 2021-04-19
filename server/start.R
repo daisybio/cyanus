@@ -63,12 +63,13 @@ observeEvent(input$exampleData, {
 
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
-  
+  resetVisualization()
   waiter_show(id = "app",html = tagList(spinner$logo, 
                              HTML("<br>Loading Data...<br>Please be patient")), 
               color=spinner$color)
   
   library(CATALYST)
+  
   if (input$chooseDataTab == "dataUpload") {
     dn <- dirname(input$fcsFiles$datapath)[1]
     file.rename(input$fcsFiles$datapath, file.path(dn, "/", input$fcsFiles$name))
@@ -101,7 +102,7 @@ observeEvent(input$loadData, {
     stop("Which tab is selected?")
   start_tab <- which(tab_ids == "start")
   if (isolate(reactiveVals$max_tab > start_tab))
-    reactiveVals$max_tab <- start_tab + 1
+    reactiveVals$max_tab <- start_tab
   reactiveVals$continue[which(tab_ids == "start")] <- TRUE
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
   waiter_hide(id = "app")

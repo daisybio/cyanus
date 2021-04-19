@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y libxml2-dev libssl-dev libcurl4-openssl
 RUN mkdir /srv/cytof_pipeline
 WORKDIR /srv/cytof_pipeline
 COPY . .
-RUN echo "options(shiny.maxRequestSize=1000*1024^2)" > .Rprofile
+RUN echo "options(shiny.maxRequestSize=5000*1024^2)" > .Rprofile
 
 
 #install R packages via renv
