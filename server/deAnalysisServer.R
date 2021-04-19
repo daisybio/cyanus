@@ -179,6 +179,10 @@ call_DE <- function(){
       colsDesign = input$colsDesign,
       method = "diffcyt-DS-limma"
     )
+    
+    includeWeights <- isolate(input$weightsSelection)
+    includeWeights <- if(includeWeights=="Yes") TRUE else FALSE
+    
     if(ncol(parameters[["design"]]) >= nr_samples){
       showNotification("You selected more conditions than there are samples left which is not meaningful. Try again.", type = "error")
       out <- NULL
@@ -195,6 +199,7 @@ call_DE <- function(){
         features = toString(isolate(input$DEFeaturesIn)),
         block_id = toString(isolate(input$blockID_limma)),
         trend_method = toString(isolate(input$trend_limma)),
+        weights = toString(isolate(input$weightsSelection)),
         filter = toString(subselection)
       )
       out <- diffcyt::diffcyt(
@@ -206,7 +211,8 @@ call_DE <- function(){
         clustering_to_use = input$deCluster,
         block_id = blockID,
         trend = trend,
-        markers_to_test = markersToTest
+        markers_to_test = markersToTest,
+        weights = includeWeights
       )
     }
   } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
@@ -218,6 +224,9 @@ call_DE <- function(){
       colsRandom = input$colsRandom,
       method = "diffcyt-DS-LMM"
     )
+    
+    includeWeights <- isolate(input$weightsSelection)
+    includeWeights <- if(includeWeights=="Yes") TRUE else FALSE
     
     markersToTest <- isolate(input$DEFeaturesIn)
     is_marker <- rowData(sce)$marker_class %in% c("type", "state")
@@ -239,10 +248,11 @@ call_DE <- function(){
         conditions = toString(contrastVars),
         clustering = toString(isolate(input$deCluster)),
         features = toString(isolate(input$DEFeaturesIn)),
+        weights = toString(isolate(input$weightsSelection)),
         filter = toString(subselection)
       )
-      
-    out <- diffcyt::diffcyt(
+
+    out <- diffcyt_method(
       d_input = sce,
       formula = parameters[["formula"]],
       contrast = parameters[["contrast"]],
@@ -250,6 +260,7 @@ call_DE <- function(){
       method_DS = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
       markers_to_test = markersToTest,
+      use_weights = includeWeights
     )
     }
   } else if (input$chosenDAMethod %in% c("diffcyt-DA-GLMM")){
@@ -377,6 +388,7 @@ output$selectionBoxDE <- renderUI({
     uiOutput("markerToTestSelection"),
     uiOutput("extraFeatures"),
     uiOutput("normalizeSelection"),
+    uiOutput("weightSelection"),
     width = 6),
   div(
     bsButton(
@@ -417,6 +429,27 @@ output$deMethodSelection <- renderUI({
       content = "Depending on what you want to analyse, there are different methods available. Please see their documentation for further explanation"
     )
    )
+})
+
+# selection of weights for analysis
+output$weightSelection <- renderUI({
+  req(input$chosenDAMethod)
+  if (input$chosenDAMethod %in% c("diffcyt-DS-LMM", "diffcyt-DS-limma")){
+    div(
+      radioButtons(
+        inputId = "weightsSelection",
+        label = span("Do you want to include precision weights (cell counts) within the model?", icon("question-circle"), id = "weightSelectQ"),
+        choices = c("Yes", "No"), 
+        inline = T
+      ),
+      bsPopover(
+        id = "weigthSelectQ",
+        title = "Whether to include precision weights within each model (across samples).",
+        content = "These represent the relative uncertainty in calculating each median value. The cell counts of each sample are incorporated in the analysis.",
+        placement = "top"
+      )
+    )
+  }
 })
 
 # box with cluster populations you want to compare
