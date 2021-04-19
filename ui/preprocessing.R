@@ -11,8 +11,8 @@ preprocessingBody <- function() {
       id = "noTransformationWarning",
       shinydashboard::infoBox(
         title = "No Transformation Applied",
-        subtitle = "You should transform your raw cytometry data.",
-        value = "You can ignore this warning if you supplied already transformed data.",
+        subtitle = "You can ignore this warning if you supplied already transformed data.",
+        value = "You should transform your raw cytometry data.",
         width = 12,
         color = "orange",
         fill = TRUE,

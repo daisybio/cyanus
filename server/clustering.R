@@ -1,6 +1,3 @@
-### Helpers ----
-#source("server/clusterFun.R", local = TRUE)
-
 ### Observer ----
 observeEvent(input$startClustering, {
   updateButton(session,
@@ -21,21 +18,27 @@ observeEvent(input$startClustering, {
     id = "clusteringProgressNote"
   )
   
-  withCallingHandlers({
-    reactiveVals$sce <-
-      clusterSCE(
-        reactiveVals$sce,
-        input$assayTypeIn,
-        reactiveVals$clusterFeatureNames,
-        input$xdim,
-        input$ydim,
-        input$k
-      )
+  tryCatch({
+    withCallingHandlers({
+      reactiveVals$sce <-
+        clusterSCE(
+          reactiveVals$sce,
+          input$assayTypeIn,
+          reactiveVals$clusterFeatureNames,
+          input$xdim,
+          input$ydim,
+          input$k
+        )
+    },
+    message = function(m) {
+      shinyjs::html(id = "clusteringProgress",
+                    html = sprintf("<br>%s", HTML(m$message)),
+                    add = TRUE)
+    })
   },
-  message = function(m) {
-    shinyjs::html(id = "clusteringProgress",
-                  html = sprintf("<br>%s", HTML(m$message)),
-                  add = TRUE)
+  error = function(e){
+    showNotification(HTML(sprintf("Loading the data failed with the following message:<br>
+                                    <b>%s</b>", e$message)), duration = NULL, type = "error")
   })
   
   assays <- c("exprs" = "Transformed", "counts" = "Raw")
@@ -76,11 +79,36 @@ observeEvent(input$featuresIn,
              ignoreNULL = FALSE,
              ignoreInit = TRUE)
 
-observe({
-  if (length(reactiveVals$clusterFeatureNames) == 0)
+observeEvent(reactiveVals$clusterFeatureNames, {
+  if (length(reactiveVals$clusterFeatureNames) == 0){
+    shinyjs::show("invalidClusteringFeaturesWarning")
     disable("startClustering")
-  else
+  }
+  else if (floor(0.8 * (input$xdim * input$ydim)) >= (input$k)){
+    shinyjs::hide("invalidClusteringFeaturesWarning")
     enable("startClustering")
+  }
+  else {
+    shinyjs::hide("invalidClusteringFeaturesWarning")
+    message("features ok but dimensions?")
+  } 
+})
+
+observeEvent({
+  input$xdim
+  input$ydim
+  input$k
+}, {
+  if (floor(0.8 * (input$xdim * input$ydim)) < (input$k)) {
+    shinyjs::show("invalidClusteringParamsWarning")
+    shinyjs::disable("startClustering")
+  } else if (length(reactiveVals$clusterFeatureNames) > 0) {
+    shinyjs::hide("invalidClusteringParamsWarning")
+    shinyjs::enable("startClustering")
+  } else {
+    shinyjs::hide("invalidClusteringParamsWarning")
+    message("dimensions ok but features?")
+  }
 })
 
 observeEvent(input$clusterCode, {

@@ -1,30 +1,5 @@
 # Preprocessing Server
 
-# transform SingleCellExperiment
-transformData <-
-  function (sce,
-            cf = 5,
-            ain = "counts",
-            aout = "exprs") {
-    y <- assay(sce, ain)
-    chs <- channels(sce)
-    stopifnot(is.numeric(cf), cf > 0)
-    if (length(cf) == 1) {
-      int_metadata(sce)$cofactor <- cf
-      cf <- rep(cf, nrow(sce))
-    }
-    else {
-      stopifnot(!is.null(names(cf)), chs %in% names(cf))
-      cf <- cf[match(chs, names(cf))]
-      int_metadata(sce)$cofactor <- cf
-    }
-    fun <- asinh
-    op <- "/"
-    y <- fun(sweep(y, 1, cf, op))
-    assay(sce, aout, FALSE) <- y
-    sce
-  }
-
 # marker, sample, patient selection -> if markers, patients, samples are selected -> prepValButton can be clicked
 observeEvent({
   input$patientSelection
@@ -146,21 +121,16 @@ observeEvent(input$reorderButton, {
 
 # if start transformation button is clicked
 observeEvent(input$prepButton, {
-  shinyjs::disable("prepButton")
-  shinyjs::disable("prepSelectionButton")
-  shinyjs::disable("filterSelectionButton")
-  shinyjs::disable("previousTab")
-  shinyjs::disable("nextTab")
+  waiter_show(id = "app",html = tagList(spinner$logo, 
+                                        HTML("<br>Transforming Data...<br>Please be patient")), 
+              color=spinner$color)
   # data transformation
   reactiveVals$sce <-
     transformData(sce = reactiveVals$sce,
                   cf = as.numeric(input$cofactor))
   plotPreprocessing(reactiveVals$sce)
-  shinyjs::enable("prepButton")
-  shinyjs::enable("prepSelectionButton")
-  shinyjs::enable("filterSelectionButton")
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
+  waiter_hide(id = "app")
+  runjs("document.getElementById('nextTab').scrollIntoView();")
 })
 
 # if visualize selection button is clicked
