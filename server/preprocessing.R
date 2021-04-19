@@ -1,29 +1,30 @@
 # Preprocessing Server
 
 # transform SingleCellExperiment
-transformData <-
-  function (sce,
-            cf = 5,
-            ain = "counts",
-            aout = "exprs") {
-    y <- assay(sce, ain)
-    chs <- channels(sce)
-    stopifnot(is.numeric(cf), cf > 0)
-    if (length(cf) == 1) {
-      int_metadata(sce)$cofactor <- cf
-      cf <- rep(cf, nrow(sce))
-    }
-    else {
-      stopifnot(!is.null(names(cf)), chs %in% names(cf))
-      cf <- cf[match(chs, names(cf))]
-      int_metadata(sce)$cofactor <- cf
-    }
-    fun <- asinh
-    op <- "/"
-    y <- fun(sweep(y, 1, cf, op))
-    assay(sce, aout, FALSE) <- y
-    sce
-  }
+#Judith put the function in prep_functions.R
+#transformData <-
+#  function (sce,
+#            cf = 5,
+#            ain = "counts",
+#            aout = "exprs") {
+#    y <- assay(sce, ain)
+#    chs <- channels(sce)
+#    stopifnot(is.numeric(cf), cf > 0)
+#    if (length(cf) == 1) {
+#      int_metadata(sce)$cofactor <- cf
+#      cf <- rep(cf, nrow(sce))
+#    }
+#    else {
+#      stopifnot(!is.null(names(cf)), chs %in% names(cf))
+#      cf <- cf[match(chs, names(cf))]
+#      int_metadata(sce)$cofactor <- cf
+#    }
+#    fun <- asinh
+#    op <- "/"
+#    y <- fun(sweep(y, 1, cf, op))
+#    assay(sce, aout, FALSE) <- y
+#    sce
+#  }
 
 # marker, sample, patient selection -> if markers, patients, samples are selected -> prepValButton can be clicked
 observeEvent({
