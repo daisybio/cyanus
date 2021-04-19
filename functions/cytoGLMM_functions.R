@@ -88,7 +88,7 @@ runCytoGLMM <-
            num_cores = 1,
            num_boot = 100) {
     match.arg(method, c("cytoglmm", "cytoglm"))
-    match.arg(assay_to_use, names(assays(sce)))
+    match.arg(assay_to_use, names(SummarizedExperiment::assays(sce)))
     data <-
       as.data.frame(t(SummarizedExperiment::assay(sce, assay_to_use)))
     marker_names <-
