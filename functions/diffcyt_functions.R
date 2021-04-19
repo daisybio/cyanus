@@ -188,7 +188,6 @@ lmm_method <- function (d_counts, d_medians, formula, contrast, use_weights = TR
     p_vals[i] <- tryCatch({
       y <- meds[i, ]
       data_i <- cbind(cbind(y, weight), formula$data)
-      browser()
       if (formula$random_terms) {
         if (!use_weights){
           fit <- lmer(formula$formula, data = data_i) #weights = NULL
