@@ -1,0 +1,368 @@
+---
+title: "Testing methods"
+output: html_notebook
+---
+
+This notebook is for testing methods on the semi-simulated dataset of the diffcyt package. There are three kinds of datasets: 
+1. Main dataset: contains spiked in B-cells 
+2. Less distinct dataset 50%
+3. Less distinct dataset 75%
+
+
+
+```{r}
+library(CATALYST)
+library(data.table)
+library(diffcyt)
+library(flowCore)
+library(SummarizedExperiment)
+library(magrittr)
+sapply(list.files("../functions/", full.names = TRUE), source)
+```
+
+## 1. Read in SCE objects 
+
+```{r}
+pathToData = "../data/diffcyt"
+sceDiffcytMain <- readRDS(paste0(pathToData, "/main/sce.rds"))
+sceDiffcyt75pc <- readRDS(paste0(pathToData, "/less_75pc/sce.rds"))  
+sceDiffcyt50pc <- readRDS(paste0(pathToData, "/less_50pc/sce.rds"))
+```
+
+
+## 2. Start Analysis
+
+### 2.1. Main
+```{r}
+diffcyt_custom <- function (d_input, experiment_info = NULL, marker_info = NULL, 
+  design = NULL, formula = NULL, contrast, analysis_type = c("DA", 
+    "DS"), method_DA = c("diffcyt-DA-edgeR", "diffcyt-DA-voom", 
+    "diffcyt-DA-GLMM"), method_DS = c("diffcyt-DS-limma", 
+    "diffcyt-DS-LMM"), markers_to_test = NULL, clustering_to_use = NULL, 
+  cols_to_include = NULL, subsampling = FALSE, n_sub = NULL, 
+  seed_sub = NULL, transform = TRUE, cofactor = 5, cols_clustering = NULL, 
+  xdim = 10, ydim = 10, meta_clustering = FALSE, meta_k = 40, 
+  seed_clustering = NULL, min_cells = 3, min_samples = NULL, 
+  normalize = FALSE, norm_factors = "TMM", trend_method = "none", 
+  block_id = NULL, trend = TRUE, weights = TRUE, plot = FALSE, 
+  path = ".", verbose = TRUE) 
+{
+  analysis_type <- match.arg(analysis_type)
+  method_DA <- match.arg(method_DA)
+  method_DS <- match.arg(method_DS)
+  if (!is(d_input, "SingleCellExperiment")) {
+    if (is.null(experiment_info) | is.null(marker_info)) {
+      stop("'experiment_info' and 'marker_info' must be provided (unless using a SingleCellExperiment ", 
+        "object from CATALYST as input)")
+    }
+    if (verbose) 
+      message("preparing data...")
+    d_se <- prepareData(d_input, experiment_info, marker_info, 
+      cols_to_include, subsampling, n_sub, seed_sub)
+    if (transform) {
+      if (verbose) 
+        message("transforming data...")
+      d_se <- transformData(d_se, cofactor)
+    }
+    if (verbose) 
+      message("generating clusters...")
+    d_se <- generateClusters(d_se, cols_clustering, xdim, 
+      ydim, meta_clustering, meta_k, seed_clustering)
+  }
+  else if (is(d_input, "SingleCellExperiment")) {
+    if (verbose) 
+      message("using SingleCellExperiment object from CATALYST as input")
+    if (is.null(clustering_to_use)) {
+      stopifnot("cluster_id" %in% colnames(colData(d_input)))
+      if (verbose) 
+        message("using cluster IDs stored in column named 'cluster_id' in 'colData' of ", 
+          "SingleCellExperiment object from CATALYST")
+      clustering_name <- colnames(metadata(d_input)$cluster_codes)[1]
+    }
+    else if (!is.null(clustering_to_use)) {
+      stopifnot(as.character(clustering_to_use) %in% colnames(metadata(d_input)$cluster_codes))
+      stopifnot("cluster_id" %in% colnames(colData(d_input)))
+      if (verbose) 
+        message("using cluster IDs from clustering stored in column '", 
+          clustering_to_use, "' of 'cluster_codes' data frame in 'metadata' of SingleCellExperiment object from CATALYST")
+      code_id <- colData(d_input)$cluster_id
+      cluster_id <- metadata(d_input)$cluster_codes[, 
+        clustering_to_use][code_id]
+      stopifnot(length(cluster_id) == nrow(colData(d_input)), 
+        length(code_id) == nrow(colData(d_input)))
+      colData(d_input)$code_id <- code_id
+      colData(d_input)$cluster_id <- cluster_id
+      clustering_name <- clustering_to_use
+    }
+    stopifnot("sample_id" %in% colnames(colData(d_input)))
+    stopifnot("cluster_id" %in% colnames(colData(d_input)))
+    stopifnot("cluster_codes" %in% names(metadata(d_input)))
+    if (!("experiment_info" %in% names(metadata(d_input)))) {
+      if (verbose) 
+        message("generating 'experiment_info' from input object")
+      m <- match(levels(droplevels(factor(d_input$sample_id))), 
+        d_input$sample_id)
+      experiment_info <- data.frame(colData(d_input)[m, 
+        ], check.names = FALSE, row.names = NULL)
+      metadata <- as.list(c(metadata(d_input), experiment_info))
+    }
+    else {
+      experiment_info <- metadata(d_input)$experiment_info
+      metadata <- metadata(d_input)
+    }
+    cs_by_s <- split(seq_len(ncol(d_input)), colData(d_input)$sample_id)
+    cs <- unlist(cs_by_s[as.character(experiment_info$sample_id)])
+    es <- t(assays(d_input)[["exprs"]])[cs, , drop = FALSE]
+    d_se <- SummarizedExperiment(assays = list(exprs = es), 
+      rowData = colData(d_input)[cs, ], colData = rowData(d_input), 
+      metadata = metadata)
+  }
+  if (verbose) 
+    message("calculating features...")
+  d_counts <- calcCounts(d_se)
+  if (analysis_type == "DS") {
+    d_medians <- calcMedians(d_se)
+    d_medians_by_cluster_marker <- calcMediansByClusterMarker(d_se)
+    d_medians_by_sample_marker <- calcMediansBySampleMarker(d_se)
+  }
+  if (analysis_type == "DA" && method_DA == "diffcyt-DA-edgeR") {
+    if (verbose) 
+      message("calculating DA tests using method 'diffcyt-DA-edgeR'...")
+    res <- testDA_edgeR(d_counts, design, contrast, trend_method, 
+      min_cells, min_samples, normalize, norm_factors)
+  }
+  if (analysis_type == "DA" && method_DA == "diffcyt-DA-voom") {
+    if (verbose) 
+      message("calculating DA tests using method 'diffcyt-DA-voom'...")
+    res <- testDA_voom(d_counts, design, contrast, block_id, 
+      min_cells, min_samples, normalize, norm_factors, 
+      plot, path)
+  }
+  if (analysis_type == "DA" && method_DA == "diffcyt-DA-GLMM") {
+    if (verbose) 
+      message("calculating DA tests using method 'diffcyt-DA-GLMM'...")
+    res <- testDA_GLMM(d_counts, formula, contrast, min_cells, 
+      min_samples, normalize, norm_factors)
+  }
+  if (analysis_type == "DS" && method_DS == "diffcyt-DS-limma") {
+    if (verbose) 
+      message("calculating DS tests using method 'diffcyt-DS-limma'...")
+    res <- testDS_limma(d_counts, d_medians, design, contrast, 
+      block_id, trend, weights, markers_to_test, min_cells, 
+      min_samples, plot, path)
+  }
+  if (analysis_type == "DS" && method_DS == "diffcyt-DS-LMM") {
+    if (verbose) 
+      message("calculating DS tests using method 'diffcyt-DS-LMM'...")
+    browser()
+    res <- testDS_LMM(d_counts, d_medians, formula, contrast, 
+      weights, markers_to_test, min_cells, min_samples)
+  }
+  if (!is(d_input, "SingleCellExperiment")) {
+    if (analysis_type == "DA") {
+      return(list(res = res, d_se = d_se, d_counts = d_counts))
+    }
+    else if (analysis_type == "DS") {
+      return(list(res = res, d_se = d_se, d_counts = d_counts, 
+        d_medians = d_medians, d_medians_by_cluster_marker = d_medians_by_cluster_marker, 
+        d_medians_by_sample_marker = d_medians_by_sample_marker))
+    }
+  }
+  else if (is(d_input, "SingleCellExperiment")) {
+    metadata(res) <- as.list(c(metadata(res), clustering_name = clustering_name))
+    if (analysis_type == "DA") {
+      return(list(res = res, d_counts = d_counts))
+    }
+    else if (analysis_type == "DS") {
+      return(list(res = res, d_counts = d_counts, d_medians = d_medians, 
+        d_medians_by_cluster_marker = d_medians_by_cluster_marker, 
+        d_medians_by_sample_marker = d_medians_by_sample_marker))
+    }
+  }
+}
+
+```
+
+
+```{r}
+designMain <- createDesignMatrix(
+  ei(sceDiffcytMain),
+  cols_design = c("condition", "patient_id")
+)
+
+contrastMainLimma <- createContrast(
+  c(0, 1, rep(0, 7))
+)
+
+contrastMainLMM <- createContrast(
+  c(0, 1)
+)
+
+formulaMain <- createFormula(
+  ei(sceDiffcytMain),
+  cols_fixed = "condition",
+  cols_random = "patient_id"
+)
+
+
+```
+
+```{r}
+#limma 
+
+outLimma <- diffcyt(
+  d_input = sceDiffcytMain, 
+  design = designMain,
+  contrast = contrastMainLimma,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-limma",
+  clustering_to_use = "population",
+  markers_to_test = markersToTest
+)
+
+toptableLimma <- as.data.table(diffcyt::topTable(outLimma$res,all=TRUE,format_vals=TRUE))
+toptableLimma
+```
+
+```{r}
+#LMM
+outLMM <- diffcyt(
+  d_input = sceDiffcytMain,
+  formula = formulaMain,
+  contrast = contrastMainLMM,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-LMM",
+  clustering_to_use = "population",
+  markers_to_test = markersToTest
+)
+
+toptableLMM <- as.data.table(diffcyt::topTable(outLMM$res,all=TRUE,format_vals=TRUE))
+toptableLMM
+```
+
+```{r}
+out <- runCytoGLMM(
+  sceDiffcytMain, 
+  condition = "condition",
+  group = "patient_id"
+)
+summary(out)
+```
+
+```{r}
+#EMD
+source("../server/sceEMD.R")
+outEMD <- sceEMD(
+  sce = sceDiffcytMain, 
+  k = "population", 
+  condition = "condition"
+)
+outEMD[order(p_adj)]
+```
+
+
+### 2.1. less 50 pc
+
+```{r}
+#limma 
+
+outLimma <- diffcyt(
+  d_input = sceDiffcyt50pc, 
+  design = designMain,
+  contrast = contrastMainLimma,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-limma",
+  clustering_to_use = "population",
+  markers_to_test = markersToTest
+)
+
+toptableLimma <- as.data.table(diffcyt::topTable(outLimma$res,all=TRUE,format_vals=TRUE))
+toptableLimma
+```
+```{r}
+#LMM
+outLMM <- diffcyt(
+  d_input = sceDiffcyt50pc,
+  formula = formulaMain,
+  contrast = contrastMainLMM,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-LMM",
+  clustering_to_use = "population",
+  markers_to_test = markersToTest
+)
+
+toptableLMM <- as.data.table(diffcyt::topTable(outLMM$res,all=TRUE,format_vals=TRUE))
+toptableLMM
+```
+```{r}
+out <- runCytoGLMM(
+  sceDiffcyt50pc, 
+  condition = "condition",
+  group = "patient_id"
+)
+summary(out)
+```
+```{r}
+outEMD <- sceEMD(
+  sce = sceDiffcyt50pc, 
+  k = "population", 
+  condition = "condition",
+  nperm=500
+)
+outEMD[order(p_adj)]
+```
+
+### 2.1. less 75 pc
+
+```{r}
+#limma 
+
+outLimma <- diffcyt(
+  d_input = sceDiffcyt75pc, 
+  design = designMain,
+  contrast = contrastMainLimma,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-limma",
+  clustering_to_use = "population",
+  markers_to_test = markersToTest
+)
+
+toptableLimma <- as.data.table(diffcyt::topTable(outLimma$res,all=TRUE,format_vals=TRUE))
+toptableLimma
+```
+```{r}
+#LMM
+outLMM <- diffcyt(
+  d_input = sceDiffcyt75pc,
+  formula = formulaMain,
+  contrast = contrastMainLMM,
+  analysis_type = "DS",
+  method_DS = "diffcyt-DS-LMM",
+  clustering_to_use = "population",
+  markers_to_test = markersToTest
+)
+
+toptableLMM <- as.data.table(diffcyt::topTable(outLMM$res,all=TRUE,format_vals=TRUE))
+toptableLMM
+```
+```{r}
+out <- runCytoGLMM(
+  sceDiffcyt75pc, 
+  condition = "condition",
+  group = "patient_id"
+)
+summary(out)
+```
+```{r}
+outEMD <- sceEMD(
+  sce = sceDiffcyt75pc, 
+  k = "population", 
+  condition = "condition",
+  nperm=500
+)
+```
+```{r}
+outEMD[order(p_adj)]
+```
+
+

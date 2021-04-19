@@ -9,7 +9,7 @@ tab_ids <-
     "goodbye")
 reactiveVals$current_tab <- 1
 reactiveVals$max_tab <- 1
-reactiveVals$continue <- TRUE
+reactiveVals$continue <- c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE)
 
 tabs <- list(
   menuItem("Welcome",
@@ -65,20 +65,20 @@ observeEvent({
   if (reactiveVals$current_tab < length(tab_ids))
     shinyjs::show("nextTab")
   else if (reactiveVals$current_tab == length(tab_ids))
-    #shinyjs::hide("nextTab")
-    reactiveVals$continue <- TRUE #so that Exit App button is directly enabled
+    shinyjs::hide("nextTab")
+    #shinyBS::updateButton(session, inputId = "nextTab", icon = icon("times-circle"), style = "warning", disabled = FALSE)
   else
     stop("what is the current id?")
-  if (!reactiveVals$continue &&
+  if (!reactiveVals$continue[reactiveVals$current_tab] &&
       reactiveVals$current_tab == reactiveVals$max_tab)
     shinyjs::disable("nextTab")
-  else if (reactiveVals$continue || reactiveVals$current_tab != reactiveVals$max_tab) {
+  else if (reactiveVals$continue[reactiveVals$current_tab] || reactiveVals$current_tab != reactiveVals$max_tab) {
     shinyjs::enable("nextTab")
   }
 })
 
 prevNames <- c(" Previous", " Welcome", " Get Started", " Preprocessing", " Visualization", " Clustering", " DE Analysis", " DE Method Comparison")
-nextNames <- c(" Get Started", " Preprocessing", " Visualization", " Clustering", " DE Analysis", " DE Method Comparison", " Goodbye", " Exit App")
+nextNames <- c(" Get Started", " Preprocessing", " Visualization", " Clustering", " DE Analysis", " DE Method Comparison", " Goodbye")
 
 observeEvent(input$tabs, {
   reactiveVals$current_tab <- match(input$tabs, tab_ids)
@@ -98,9 +98,6 @@ observeEvent(input$nextTab, {
   reactiveVals$current_tab <- reactiveVals$current_tab + 1
   if (reactiveVals$current_tab > reactiveVals$max_tab){
     reactiveVals$max_tab <- reactiveVals$current_tab
-    if (reactiveVals$current_tab == length(tab_ids) + 1){
-      stopApp(7)
-    }
   } else
     updateTabItems(session, "tabs", tab_ids[reactiveVals$current_tab + 1]) # here we update in case the new current tab is not a new max tab
   shinyjs::runjs("window.scrollTo(0, 0)")
@@ -116,7 +113,7 @@ output$sidebar <- renderUI({
   # }
   # here we update in case the new current tab is also a new max tab
   updateTabItems(session, "tabs", tab_ids[reactiveVals$max_tab])
-  if (reactiveVals$max_tab > 1) reactiveVals$continue <- FALSE
+  # if (reactiveVals$max_tab > 1) reactiveVals$continue <- FALSE
   shinyjs::runjs("window.scrollTo(0, 0)")
   return(curr_menu)
 })

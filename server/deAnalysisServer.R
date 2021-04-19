@@ -62,9 +62,14 @@ call_DE <- function(){
         return(NULL)
       }
     }
-    design <- createDesignMatrix(ei, cols_design = input$colsDesign)
-    contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
-    if(ncol(design) >= nr_samples){
+    parameters <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrastVars,
+      colsDesign = input$colsDesign,
+      method = "diffcyt-DA-edgeR"
+    )
+    
+    if(ncol(parameters[["design"]]) >= nr_samples){
       showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
       out <- NULL
     }else{
@@ -81,8 +86,8 @@ call_DE <- function(){
       
       out <- diffcyt::diffcyt(
         d_input = sce,
-        design = design,
-        contrast = contrast,
+        design = parameters[["design"]],
+        contrast = parameters[["contrast"]],
         analysis_type = reactiveVals$methodType,
         method_DA = input$chosenDAMethod,
         clustering_to_use = input$deCluster,
@@ -108,9 +113,13 @@ call_DE <- function(){
         return(NULL)
       }
     }
-    design <- createDesignMatrix(ei, cols_design = input$colsDesign)
-    contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
-    if(ncol(design) >= nr_samples){
+    parameters <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrastVars,
+      colsDesign = input$colsDesign,
+      method = "diffcyt-DA-voom"
+    )
+    if(ncol(parameters[["design"]]) >= nr_samples){
       showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
       out <- NULL
     }else if(input$blockID_voom %in% input$colsDesign){
@@ -129,8 +138,8 @@ call_DE <- function(){
       )
         out <- diffcyt::diffcyt(
           d_input = sce,
-          design = design,
-          contrast = contrast,
+          design = parameters[["design"]],
+          contrast = parameters[["contrast"]],
           analysis_type = reactiveVals$methodType,
           method_DA = input$chosenDAMethod,
           clustering_to_use = input$deCluster,
@@ -164,9 +173,13 @@ call_DE <- function(){
         return(NULL)
       }
     }
-    design <- createDesignMatrix(ei, cols_design = input$colsDesign)
-    contrast <- createCustomContrastMatrix(contrastVars, design, designMatrix = T)
-    if(ncol(design) >= nr_samples){
+    parameters <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrastVars,
+      colsDesign = input$colsDesign,
+      method = "diffcyt-DS-limma"
+    )
+    if(ncol(parameters[["design"]]) >= nr_samples){
       showNotification("You selected more conditions than there are samples left which is not meaningful. Try again.", type = "error")
       out <- NULL
     }else if(input$blockID_limma %in% input$colsDesign){
@@ -186,8 +199,8 @@ call_DE <- function(){
       )
       out <- diffcyt::diffcyt(
         d_input = sce,
-        design = design,
-        contrast = contrast,
+        design = parameters[["design"]],
+        contrast = parameters[["contrast"]],
         analysis_type = reactiveVals$methodType,
         method_DS = input$chosenDAMethod,
         clustering_to_use = input$deCluster,
@@ -197,8 +210,14 @@ call_DE <- function(){
       )
     }
   } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
-    formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
-    contrast <- createCustomContrastMatrix(contrastVars, diffcyt::createDesignMatrix(ei, cols_design = input$colsFixed), designMatrix = T)
+    
+    parameters <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrastVars,
+      colsFixed = input$colsFixed, 
+      colsRandom = input$colsRandom,
+      method = "diffcyt-DS-LMM"
+    )
     
     markersToTest <- isolate(input$DEFeaturesIn)
     is_marker <- rowData(sce)$marker_class %in% c("type", "state")
@@ -208,7 +227,7 @@ call_DE <- function(){
       markersToTest <- rownames(sce)[is_marker] %in% markersToTest
     }
     
-    if(nrow(contrast) >= nr_samples){
+    if(nrow(parameters[["contrast"]]) >= nr_samples){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
       out <- NULL
     }else{
@@ -225,8 +244,8 @@ call_DE <- function(){
       
     out <- diffcyt::diffcyt(
       d_input = sce,
-      formula = formula,
-      contrast = contrast,
+      formula = parameters[["formula"]],
+      contrast = parameters[["contrast"]],
       analysis_type = reactiveVals$methodType,
       method_DS = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
@@ -240,9 +259,14 @@ call_DE <- function(){
       normalize <- FALSE
     }
     
-    formula <- createFormula(ei, cols_fixed = input$colsFixed, cols_random = input$colsRandom)
-    contrast <- createCustomContrastMatrix(contrastVars, diffcyt::createDesignMatrix(ei, cols_design = input$colsFixed), designMatrix = T)
-    if(nrow(contrast) >= nr_samples){
+    parameters <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrastVars,
+      colsFixed = input$colsFixed, 
+      colsRandom = input$colsRandom,
+      method = "diffcyt-DA-GLMM"
+    )
+    if(nrow(parameters[["contrast"]]) >= nr_samples){
       showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
       out <- NULL
     }else{
@@ -258,8 +282,8 @@ call_DE <- function(){
       )
     out <- diffcyt::diffcyt(
       d_input = sce,
-      formula = formula,
-      contrast = contrast,
+      formula = parameters[["formula"]],
+      contrast = parameters[["contrast"]],
       analysis_type = reactiveVals$methodType,
       method_DA = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
@@ -319,38 +343,6 @@ call_DE <- function(){
   return(out)
 }
 
-createCustomContrastMatrix <- function(contrastVars, matrix, designMatrix = T){
-  if(designMatrix){
-    #the entries have to correspond to the columns of the design matrix
-    cnames <- colnames(matrix)
-    bool <- getBools(cnames, contrastVars)
-    contrast <- createContrast(bool)
-    print(contrast)
-    return(contrast)
-  }else{
-    #the entries have to correspond to the levels of the fixed effect terms in the model formula
-    lvlList <- lapply(matrix, function(x){levels(colData(reactiveVals$sce)[[x]])})
-    names(lvlList) <- matrix
-    bool <- getBools(matrix, contrastVars)
-    names(bool) <- matrix
-    contrast <- unlist(lapply(names(lvlList), function(x){
-      return( c( 0, rep(bool[x], length(lvlList[[x]]) -1 )) ) 
-      }))
-    print(contrast)
-    return(createContrast(unname(contrast)))
-  }
-}
-
-getBools <- function(names, contrastVars){
-  bool <- sapply(names, function(x){
-    any(sapply(contrastVars, function(y){
-      grepl(y,x, fixed = T )
-    }))
-  })
-  bool <- as.numeric(bool)
-  return(bool)
-}
-
 ## RENDERER
 
 output$selectionBoxDE <- renderUI({
@@ -403,7 +395,6 @@ output$selectionBoxDE <- renderUI({
 
 # displays available methods and selection of DA or DS
 output$deMethodSelection <- renderUI({
-  reactiveVals$continue <- TRUE
    methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
    methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD")
    if(input$da_ds == "Differential Cluster Abundance"){

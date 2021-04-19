@@ -1,4 +1,5 @@
 shinyjs::hide("visPlotBox")
+#reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
 
 output$downloadPlot <- downloadHandler(
   filename = function(){
@@ -12,6 +13,12 @@ output$downloadPlot <- downloadHandler(
     waiter_hide(id="app")
   }
 )
+
+observeEvent(reactiveVals$availableDRs, {
+  if(reactiveVals$availableDRs == 0){
+    shinyjs::hide("visPlotBox")
+  }
+})
 
 observeEvent(input$visTabs, {
   if (input$visTabs == "expressionTab") {
@@ -343,7 +350,6 @@ observeEvent(input$radioButtonsColor, {
 })
 
 output$useFeaturesInVis <- renderUI({
-  reactiveVals$continue <- TRUE
   selectInput(
     "useFeaturesInVis",
     label = "Features to choose from",

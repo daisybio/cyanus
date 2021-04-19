@@ -15,9 +15,8 @@ library("magrittr")
 library(dplyr)
 library(readxl)
 library(CATALYST)
-source("../pipeline/shiny_functions.R")
-source("../server/clusterFun.R")
-source("../server/cytoGLMM_functions.R")
+
+sapply(list.files("../functions", full.names = TRUE), source)
 
 library(BiocParallel)
 # Set the parameters and register the back-end to be used
