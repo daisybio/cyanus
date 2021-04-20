@@ -83,7 +83,7 @@ runCytoGLMM <-
            condition,
            group,
            method = "cytoglmm",
-           protein_names = SingleCellExperiment::rowData(sce)$marker_name,
+           protein_names = SummarizedExperiment::rowData(sce)$marker_name,
            assay_to_use = "exprs",
            num_cores = 1,
            num_boot = 100) {
@@ -92,13 +92,13 @@ runCytoGLMM <-
     data <-
       as.data.frame(t(SummarizedExperiment::assay(sce, assay_to_use)))
     marker_names <-
-      match.arg(protein_names, rowData(sce)$marker_name, several.ok = TRUE)
+      match.arg(protein_names, SummarizedExperiment::rowData(sce)$marker_name, several.ok = TRUE)
     marker_names <- sapply(marker_names, function(marker) {
       gsub("[^[:alnum:]]", "", marker)
     })
     colnames(data) <- marker_names
-    data$donor <- SingleCellExperiment::colData(sce)[[group]]
-    data$condition <- SingleCellExperiment::colData(sce)[[condition]]
+    data$donor <- SummarizedExperiment::colData(sce)[[group]]
+    data$condition <- SummarizedExperiment::colData(sce)[[condition]]
     args <-
       list(
         df_samples_subset = data,
