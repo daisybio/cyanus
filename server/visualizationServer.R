@@ -1,5 +1,9 @@
 shinyjs::hide("visPlotBox")
 
+# ---------------------------------------------------------------
+# For resetting after loading a new object 
+# ---------------------------------------------------------------
+
 resetVisualization <- function(){
   shinyjs::hide("visPlotBox")
   reactiveVals$availableDRs <- NULL
@@ -9,18 +13,9 @@ resetVisualization <- function(){
   reactiveVals$visInfo <- NULL
 }
 
-output$downloadPlot <- downloadHandler(
-  filename = function(){
-    paste0(reactiveVals$lastMethod, ".pdf")
-  },
-  content = function(file){
-    waiter_show(id = "app",html = tagList(spinner$logo, 
-                                          HTML("<br>Downloading...")), 
-                color=spinner$color)
-    ggsave(file, plot = reactiveVals$lastPlot, width=14, height=11)
-    waiter_hide(id="app")
-  }
-)
+# ---------------------------------------------------------------
+# Observers
+# ---------------------------------------------------------------
 
 observeEvent(input$visTabs, {
   if (input$visTabs == "expressionTab") {
@@ -196,8 +191,12 @@ observeEvent(input$startDimRed, {
     sceObj <- isolate(reactiveVals$sce)
     dim1 <- as.numeric(isolate(input$dimension1))
     dim2 <- as.numeric(isolate(input$dimension2))
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Visualizing Dimensionality Reduction...")), 
+                color=spinner$color)
     ggplotObject <-
-      plotData(sceObj, method, color, facet, assay, scale, c(dim1, dim2))
+      makeDR(sceObj, method, color, facet, assay, scale, c(dim1, dim2))
+    waiter_hide(id="app")
     reactiveVals$lastPlot <- ggplotObject
     return(ggplotObject)
   })
@@ -217,20 +216,6 @@ observeEvent(input$startDimRed, {
   })
 })
 
-plotData <- function(sceObj, method, color, facet, assay, scale, dims = c(1,2)) {
-  disable("startDimRed")
-  disable("previousTab")
-  disable("nextTab")
-  disable("runDRButton")
-  
-  g <- makeDR(sceObj, method, color, facet, assay, scale, dims)
-  enable("startDimRed")
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
-  enable("runDRButton")
-  return(g)
-}
-
 observeEvent(input$radioButtonsColor, {
   if (input$radioButtonsColor == "expression") {
     shinyjs::show("scaleVis")
@@ -238,6 +223,10 @@ observeEvent(input$radioButtonsColor, {
     shinyjs::hide("scaleVis")
   }
 })
+
+# ---------------------------------------------------------------
+# Render UI 
+# ---------------------------------------------------------------
 
 output$useFeaturesInVis <- renderUI({
   selectInput(
@@ -533,27 +522,6 @@ output$assayVis <- renderUI({
   ))
 })
 
-renameColorColumn <- function(columnNames, color_by = T) {
-  returnVector <- c()
-  if ("sample_id" %in% columnNames) {
-    returnVector <- c(returnVector, "Sample ID" = "sample_id")
-    columnNames <- columnNames[columnNames != "sample_id"]
-  }
-  if ("patient_id" %in% columnNames) {
-    returnVector <- c(returnVector, "Patient ID" = "patient_id")
-    columnNames <- columnNames[columnNames != "patient_id"]
-  }
-  if ("cluster_id" %in% columnNames) {
-    returnVector <- c(returnVector, "flowSOM ID" = "cluster_id")
-    columnNames <- columnNames[columnNames != "cluster_id"]
-    if (color_by) {
-      returnVector <-
-        c(returnVector, names(cluster_codes(reactiveVals$sce))[-1])
-    }
-  }
-  returnVector <- c(returnVector, columnNames)
-  return(returnVector)
-}
 
 output$selectColorBy <- renderUI({
   req(input$radioButtonsColor)
@@ -617,3 +585,18 @@ output$plotDimensions <- renderUI({
     )
   )
 })
+
+output$downloadPlot <- downloadHandler(
+  filename = function(){
+    paste0(reactiveVals$lastMethod, ".pdf")
+  },
+  content = function(file){
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    ggsave(file, plot = reactiveVals$lastPlot, width=14, height=11)
+    waiter_hide(id="app")
+  }
+)
+
+

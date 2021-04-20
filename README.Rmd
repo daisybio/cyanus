@@ -157,7 +157,7 @@ We try UMAP and PCA on our data and color by the expression of our state markers
 DR_methods <- c("UMAP","PCA")
 
 for( method in DR_methods ){
-  sce <- runDimRed(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T)
+  sce <- runCatalystDR(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T)
 }
 
 state_markers <- rowData(sce)[rowData(sce)$marker_class=="state",]$marker_name

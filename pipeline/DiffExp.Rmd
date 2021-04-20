@@ -96,7 +96,7 @@ sce <- clusterSCE(sce)
 DR_methods <- c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")
 for( method in DR_methods ){
   print(method)
-  sce <- runDimRed(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
+  sce <- runCatalystDR(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
 }
 
 #saveRDS(sce,"../data/platelets/sceSampledCells.rds")
