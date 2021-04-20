@@ -1,11 +1,75 @@
-library(CATALYST)
-library(diffcyt)
-library(uwot)
-library(ggplot2)
-library(dimRed)
-library(RANN)
-library(ggvenn)
+runCatalystDR <-
+  function(dr_chosen,
+           cells_chosen,
+           feature_chosen,
+           assay_chosen,
+           scale,
+           k,
+           dimensions) {
+    if (scale == "yes") {
+      scale <- T
+    } else{
+      scale <- F
+    }
+    if (dr_chosen == "Isomap") {
+      reactiveVals$sce <- runIsomap(
+        reactiveVals$sce,
+        cells = cells_chosen,
+        features = feature_chosen,
+        assay = assay_chosen,
+        scale = scale,
+        k = k,
+        dimensions = dimensions
+      )
+      
+    } else{
+      reactiveVals$sce <- runDR(
+        reactiveVals$sce,
+        dr = dr_chosen,
+        cells = cells_chosen,
+        features = feature_chosen,
+        assay = assay_chosen,
+        scale = scale,
+        ncomponents = dimensions
+      )
+    }
+    reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
+  }
 
+makeDR <-
+  function(sce,
+           dr_chosen,
+           color_chosen,
+           facet_chosen,
+           assay_chosen,
+           scale,
+           dims = c(1,2)) {
+    if (color_chosen == "") {
+      color_chosen <- NULL
+    }
+    if (facet_chosen == "") {
+      facet_chosen <- NULL
+    }
+    if (scale == "yes") {
+      scale <- T
+    } else{
+      scale <- F
+    }
+    g <-
+      plotDR(
+        sce,
+        dr = dr_chosen,
+        color_by = color_chosen,
+        facet_by = facet_chosen,
+        assay = assay_chosen,
+        scale = scale,
+        dims = dims
+      )
+    return(g)
+  }
+
+
+### FROM ALL THE NOTEBOOKS----
 #run the dimensionality reduction; function either calls CATALYST::runDR or runIsomap
 runDimRed <- function(sce, dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap"), 
                       cells_chosen = NULL, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3){
@@ -38,6 +102,8 @@ runDimRed <- function(sce, dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "Diffusio
 #adapted from CATALYST::runDR
 runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scale = TRUE, k = 5, dimensions = 2) 
 {
+  library(dimRed)
+  library(RANN)
   stopifnot(is(x, "SingleCellExperiment"))
   #sample cells from each sample if cells is specified, if not take the whole SCE
   if (is.null(cells)) {
@@ -67,7 +133,7 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
   if(scale){
     selectedCounts <- scale(selectedCounts, center = TRUE, scale = TRUE)
   }
-  res_isomap <- embed(t(selectedCounts), "Isomap", knn = k, ndim = dimensions)
+  res_isomap <- dimRed::embed(t(selectedCounts), "Isomap", knn = k, ndim = dimensions)
   
   if (is.null(cells)){
     reducedDim(x, "Isomap") <- res_isomapb@data@data

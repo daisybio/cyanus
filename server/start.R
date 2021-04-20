@@ -1,10 +1,3 @@
-checkNullTable <- function(toCheck) {
-  if (is.null(toCheck))
-    return(data.frame("Nothing" = ""))
-  else
-    return(toCheck)
-}
-
 reactiveVals$data <- list(upload = list(fcs=NULL, panel=NULL, md=NULL), example = list(fcs=NULL, panel=NULL, md=NULL) )
 
 observeEvent(input$fcsFiles, {

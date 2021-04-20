@@ -47,7 +47,7 @@ rowwiseEMD <- function(mat, condition, binSize = NULL) {
 }
 
 sceEMD <- function(sce, k, condition, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
-  suppressPackageStartupMessages(library(data.table))
+  # suppressPackageStartupMessages(library(data.table))
   
   bppar <- BiocParallel::bpparam()
   
@@ -66,14 +66,14 @@ sceEMD <- function(sce, k, condition, binSize=NULL, nperm=100, assay="exprs", se
   res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
     message(sprintf("calculating sceEMD for cluster %s", curr_cluster_id))
     
-    sce_cluster <- filterSCE(sce, cluster_id == curr_cluster_id, k = k)
+    sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = k)
     data <- assay(sce_cluster, assay)
     
     condition_cluster <- colData(sce_cluster)[[condition]]
     emd_real <- rowwiseEMD(mat = data, condition = condition_cluster, binSize = binSize)
     emd_real$cluster_id <- as.factor(curr_cluster_id)
-    setnames(emd_real, "result", "real_emd")
-    setkey(emd_real, marker_id)
+    data.table::setnames(emd_real, "result", "real_emd")
+    data.table::setkey(emd_real, marker_id)
     
     sceEI <- ei(sce_cluster)
     perms <- RcppAlgos::permuteSample(sceEI[[condition]], n = nperm, seed = seed)
@@ -83,11 +83,11 @@ sceEMD <- function(sce, k, condition, binSize=NULL, nperm=100, assay="exprs", se
       rowwiseEMD(mat = data, condition = condition_permutation_cells, binSize = binSize)
     }, sceEI, data, binSize, BPPARAM = bppar)
     
-    all_perms <- rbindlist(perm_res, idcol = "permutation")
-    setkey(all_perms, marker_id)
+    all_perms <- data.table::rbindlist(perm_res, idcol = "permutation")
+    data.table::setkey(all_perms, marker_id)
     
     res_agg <- all_perms[emd_real][, .(p_val = (sum(result >= real_emd) + 1)/(nperm + 1)), by = c("marker_id", "real_emd", "cluster_id")]
-    setnames(res_agg, "real_emd", "emd")
+    data.table::setnames(res_agg, "real_emd", "emd")
     res_agg[, p_adj := p.adjust(p_val, "BH")]
     res_agg
   })

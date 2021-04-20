@@ -1,13 +1,4 @@
-library(CATALYST)
-library(diffcyt)
-library(uwot)
-library(ggplot2)
-library(dimRed)
-library(RANN)
-library(ggvenn)
-
 #the EMD functions are in sceEMD.R
-
 prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom=NULL,
                         method = c( "diffcyt-DA-edgeR", "diffcyt-DA-voom","diffcyt-DA-GLMM", "diffcyt-DS-limma", "diffcyt-DS-LMM") ){
   match.arg(method)
@@ -172,41 +163,3 @@ runDS <- function(sce, condition, random_effect = NULL, de_methods = c("limma", 
   }
   result
 }
-
-
-DEsingleSCE <- function(sce, condition, k, assay="exprs", parallel=FALSE){
-  library(DEsingle)
-  
-  CATALYST:::.check_sce(sce, TRUE)
-  k <- CATALYST:::.check_k(sce, k)
-  CATALYST:::.check_cd_factor(sce, condition)
-  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
-  
-  sce_desingle <- sce
-  new_counts <- assay(sce_desingle, "exprs")
-  new_counts <- (abs(new_counts) + new_counts)/2
-  assay(sce_desingle, "counts") <- new_counts
-  set.seed(1)
-  
-  cluster_ids <- cluster_ids(sce_desingle, k)
-  res <- lapply(levels(cluster_ids), function(cluster_id) {
-    print(sprintf("calculating DEsingle for cluster %s", cluster_id))
-    
-    group <- colData(sce_desingle[, cluster_ids == cluster_id])[[condition]]
-    
-    
-    results <- DEsingle::DEsingle(sce_desingle[, cluster_ids == cluster_id], group, parallel = parallel)
-    results.classified <- DEsingle::DEtype(results = results, threshold = 0.05)
-    
-    data.table::setnames(results.classified, old = c("pvalue", "pvalue.adj.FDR"), new = c("p_val", "p_adj"))
-    results.classified$cluster_id <- cluster_id
-    results.classified$marker_id <- rownames(results.classified)
-    
-    results.classified
-  })
-  
-  return(data.table::rbindlist(res))
-}
-
-
-

@@ -221,17 +221,17 @@ output$clusteringVisualizationSelection <- renderUI({
   
   shinydashboard::box(
     column(
-      tableOutput("clusterRunParams"),
-      width = 8,
-      style = "overflow-x: scroll;"
-    ),
-    column(
       uiOutput("selectClusterCode"),
       div(
         downloadButton("downloadClusters", "Download Cluster Assignments"),
         style = "float: right;"
       ),
       width = 4
+    ),
+    column(
+      tableOutput("clusterRunParams"),
+      width = 8,
+      style = "overflow-x: scroll;"
     ),
     column(withSpinner(uiOutput("clusterSizes")),
            width = 12,

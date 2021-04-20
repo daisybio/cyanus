@@ -98,8 +98,8 @@ observeEvent(input$nextTab, {
   reactiveVals$current_tab <- reactiveVals$current_tab + 1
   if (reactiveVals$current_tab > reactiveVals$max_tab){
     reactiveVals$max_tab <- reactiveVals$current_tab
-  } else
-    updateTabItems(session, "tabs", tab_ids[reactiveVals$current_tab + 1]) # here we update in case the new current tab is not a new max tab
+  } else 
+    updateTabItems(session, "tabs", tab_ids[reactiveVals$current_tab]) # here we update in case the new current tab is not a new max tab
   shinyjs::runjs("window.scrollTo(0, 0)")
 })
 

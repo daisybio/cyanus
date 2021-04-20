@@ -288,11 +288,11 @@ plotMarkerCustom <- function (sce, marker, facet_by = "NA", assayType = "exprs",
       
       FlowSOM:::legendContinuous(colorPalette(100), metadata(sce)$SOM_medianValues[, marker])
     } else {
-      graphics::layout(matrix(c(3, 1, 2, 4), ncol = 4), width = c(1,2,2,1))
+      graphics::layout(matrix(c(3, 1, 2, 4), ncol = 4), widths = c(1,2,2,1))
       
       cond_levels <- levels(ei(sce)[[facet_by]])
       both_cond <- data.table::rbindlist(sapply(cond_levels, function(cond){
-        sce_filtered <- filterSCE(filterSCE(sce, get(facet_by) == cond), marker_name == marker)
+        sce_filtered <- CATALYST::filterSCE(filterSCE(sce, get(facet_by) == cond), marker_name == marker)
         median_cond <- data.table::data.table(t(assay(sce_filtered, assayType)))
         median_cond[, cluster_id := sce_filtered$cluster_id]
         median_cond <- median_cond[, .(my_marker = median(get(marker))), by = cluster_id]
@@ -385,7 +385,7 @@ plotAbundancesCustom <-
       o <- colnames(fq)[h$order]
       df$sample_id <- factor(df$sample_id, o)
     }
-    p <- ggplot(df, aes_string(y = "Freq")) + labs(x = NULL,
+    p <- ggplot2::ggplot(df, aes_string(y = "Freq")) + labs(x = NULL,
                                                    y = "Proportion [%]") + theme_bw() + theme(
                                                      panel.grid = element_blank(),
                                                      strip.text = element_text(face = "bold"),
