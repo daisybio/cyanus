@@ -66,8 +66,8 @@ runCytoGLMM(sce_pbmc, "condition", "patient_id")
 
 ## TRY WITH PLATELETS DATA (DUAL TRIPLE THERAPY)
 ```{r, eval=FALSE}
-sce_platelets <- readRDS("/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/cytof/data/platelets_small/sce.rds")
-sce_platelets
+#sce_platelets <- readRDS("/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/cytof/data/platelets_small/sce.rds")
+#sce_platelets
 
 runCytoGLMM(sce_platelets, "platelets", "patient_id")
 
@@ -120,7 +120,7 @@ sce_covid <-
     )
   )
 
-sce_covid <- clusterSCE(sce_covid)
+#sce_covid <- clusterSCE(sce_covid)
 ```
 
 ```{r}

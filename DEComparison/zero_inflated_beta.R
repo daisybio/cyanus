@@ -9,11 +9,10 @@ source("functions/cytoGLMM_functions.R")
 source("functions/ZIBseq_functions.R")
 
 
+################## PBMC DATA ####################
 data(PBMC_panel, PBMC_md, PBMC_fs)
 sce_pbmc<- prepData(PBMC_fs, PBMC_panel, PBMC_md, transform=T)
-
 sce_pbmc <- clusterSCE(sce_pbmc)
-
 rowData(sce_pbmc)$marker_class <- rowData(sce_pbmc)$marker_class[rowData(sce_pbmc)$marker_class == "none"] <- "state"
 
 
@@ -37,7 +36,8 @@ padj <- p.adjust(result$pvalues, method="BH")
 names(padj) <- colnames(exprs)
 
 
-# simulated data set
+
+################# Simulated data set ########################
 sce_cytoGLMM <- simulateSCE()
 
 result <- zibSeq(sce = sce_cytoGLMM, condition = "condition")
@@ -47,3 +47,48 @@ names(padj) <- colnames(exprs)
 results_cytoGLMM <- runCytoGLMM(sce_cytoGLMM, "condition", "patient_id")
 
 
+#################### Covid spiked data #########################
+sce_covid_spiked <- readRDS("/nfs/home/students/l.arend/data/covid_spiked/sce_spiked_full.rds")
+
+sce_covid_spiked <- transformData(sce_covid_spiked)
+sce_covid_spiked <- clusterSCE(sce_covid_spiked)
+
+rowData(sce_covid_spiked)$marker_class <- rowData(sce_covid_spiked)$marker_class[rowData(sce_covid_spiked)$marker_class == "none"] <- "type"
+
+zib_results <- zibSeq(sce = sce_covid_spiked, condition = "base_spike")
+
+markers_to_test <- getMarkersToTest(sce_covid_spiked,"LMM","all")
+LMM_results <- diffcyt_method(d_input = sce_covid_spiked,
+                                     formula = createFormula(ei(sce_covid_spiked), cols_fixed = c("base_spike")),
+                                     contrast = createContrast(c(0,1)),
+                                     analysis_type = "DS",
+                                     method_DS = "diffcyt-DS-LMM",
+                                     clustering_to_use = "all",
+                                     use_weights = FALSE,
+                                     markers_to_test = markers_to_test)
+
+
+
+transformData <-
+  function (sce,
+            cf = 5,
+            ain = "counts",
+            aout = "exprs") {
+    y <- assay(sce, ain)
+    chs <- channels(sce)
+    stopifnot(is.numeric(cf), cf > 0)
+    if (length(cf) == 1) {
+      int_metadata(sce)$cofactor <- cf
+      cf <- rep(cf, nrow(sce))
+    }
+    else {
+      stopifnot(!is.null(names(cf)), chs %in% names(cf))
+      cf <- cf[match(chs, names(cf))]
+      int_metadata(sce)$cofactor <- cf
+    }
+    fun <- asinh
+    op <- "/"
+    y <- fun(sweep(y, 1, cf, op))
+    assay(sce, aout, FALSE) <- y
+    sce
+  }
