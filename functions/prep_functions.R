@@ -1,11 +1,10 @@
 # transform SingleCellExperiment
-transformData <-
-  function (sce,
+transformData <- function (sce,
             cf = 5,
             ain = "counts",
             aout = "exprs") {
     y <- assay(sce, ain)
-    chs <- channels(sce)
+    chs <- CATALYST::channels(sce)
     stopifnot(is.numeric(cf), cf > 0)
     if (length(cf) == 1) {
       int_metadata(sce)$cofactor <- cf
@@ -31,7 +30,7 @@ makeSampleSelection <- function(sce=sce, deselected_samples){
   samples <- all_samples[!all_samples %in% deselected_samples]
   
   # Filter Single Cell Experiment
-  sce <- filterSCE(sce, sample_id %in% samples)
+  sce <- CATALYST::filterSCE(sce, sample_id %in% samples)
   
   return (sce)
 }
@@ -105,7 +104,7 @@ plotExprHeatmapCustom <- function (x, features = NULL, by = c("sample_id", "clus
   x <- x[unique(CATALYST:::.get_features(x, features)), ]
   if (by != "sample_id") {
     CATALYST:::.check_k(x, k)
-    x$cluster_id <- cluster_ids(x, k)
+    x$cluster_id <- CATALYST::cluster_ids(x, k)
   }
   if (by == "both") 
     by <- c("cluster_id", "sample_id")
@@ -234,7 +233,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
   y_cols <- y_cols[y_cols %in% names(y)]
   if (is.null(k)) {
     kids <- levels(y$cluster_id)
-    same <- vapply(cluster_codes(x), function(u) identical(levels(u), 
+    same <- vapply(CATALYST::cluster_codes(x), function(u) identical(levels(u), 
                                                            kids), logical(1))
     if (!any(same)) 
       stop("Couldn't match any clustering", " in input data 'x' with results in 'y'.")
@@ -310,9 +309,9 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
     names(fdr_pal) <- levels(s)
     anno_cols$significant <- fdr_pal
     right_anno <- ComplexHeatmap::rowAnnotation(logFC = lfc_anno, significant = s, na_col = "deeppink1",
-                                                foo = ComplexHeatmap::row_anno_text(scales::scientific(top$padj, 2), gp = gpar(fontsize = 8)), 
-                                                col = anno_cols, gp = gpar(col = "white"), show_annotation_name = FALSE, 
-                                                simple_anno_size = unit(4, "mm"))
+                                                foo = ComplexHeatmap::row_anno_text(scales::scientific(top$padj, 2), gp = grid::gpar(fontsize = 8)), 
+                                                col = anno_cols, gp = grid::gpar(col = "white"), show_annotation_name = FALSE, 
+                                                simple_anno_size = grid::unit(4, "mm"))
   }
   else right_anno <- NULL
   switch(type, da = {
