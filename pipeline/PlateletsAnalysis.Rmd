@@ -173,7 +173,7 @@ DR_methods <- c("UMAP","PCA")
 
 for( method in DR_methods ){
   print(method)
-  sce <- runDimRed(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
+  sce <- runCatalystDR(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
 }
 
 
@@ -202,7 +202,7 @@ DR_methods <- c("UMAP","PCA")
 
 for( method in DR_methods ){
   print(method)
-  sce <- runDimRed(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
+  sce <- runCatalystDR(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
 }
 
 state_markers <- rowData(sce)[rowData(sce)$marker_class=="state",]$marker_name
@@ -213,7 +213,7 @@ for( method in DR_methods ){
 
 for( method in DR_methods ){
   print(method)
-  sce <- runDimRed(sce, method, cells_chosen = 1000, feature_chosen = "state", assay_chosen = "exprs", scale = T, k = 3)
+  sce <- runCatalystDR(sce, method, cells_chosen = 1000, feature_chosen = "state", assay_chosen = "exprs", scale = T, k = 3)
 }
 
 for( method in DR_methods ){
@@ -285,7 +285,7 @@ DR_methods <- c("UMAP","PCA")
 
 for( method in DR_methods ){
   print(method)
-  sce <- runDimRed(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
+  sce <- runCatalystDR(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
 }
 
 for( method in DR_methods ){
