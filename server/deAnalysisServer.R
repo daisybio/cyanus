@@ -3,344 +3,215 @@ library(diffcyt)
 plotbox_height <- "48em"
 methods_height <- "40em"
 
-# checks which methods is selected and executes the diffcyt function accordingly
+resetDEAnalysis <- function(){
+  reactiveVals$exclusionList <- NULL
+}
 
-call_DE <- function(){
-  contrastVars <- isolate(input$contrastVars)
-  if(is.null(input$deSubselection)){
+# checks which methods is selected and executes the diffcyt function accordingly
+call_DE <- function() {
+  waiter_show(
+    id = "app",
+    html = tagList(
+      spinner$logo,
+      HTML("<br>DE Analysis in Progress...<br>Please be patient")
+    ),
+    color = spinner$color
+  )
+  # ------------------------------------------
+  # read/initialize input
+  # ------------------------------------------
+  method <- isolate(input$chosenDAMethod)
+  methodType <- isolate(reactiveVals$methodType)
+  sce <- isolate(reactiveVals$sce)
+  ei <- ei(sce)
+  if (method == "sceEMD") {
+    contrastVars <- input$emdCond
+  } else{
+    contrastVars <- isolate(input$contrastVars)
+  }
+  nr_samples <- nlevels(sample_ids(sce))
+  clustering_to_use <- isolate(input$deCluster)
+  design_matrix <- NULL
+  fixed_effects <- NULL
+  random_effects <- NULL
+  normalize <- NULL
+  featuresIn <- NULL
+  trend_edgeR <- NULL
+  trend_limma <- NULL
+  blockID <- NULL
+  includeWeights <- NULL
+  binSize <- NULL
+  nperm <- NULL
+  
+  #check if subselection is valid, set subselection:
+  if (is.null(input$deSubselection)) {
     subselection <- "No"
-  }else{
+  } else{
     subselection <- isolate(input$deSubselection)
   }
-  sce <- isolate(reactiveVals$sce)
-  if(subselection != "No"){
-    catCount <- sapply(colnames(metadata(sce)$experiment_info)[!colnames(metadata(sce)$experiment_info) %in% c("n_cells", "sample_id")], function(x){
-      return(0)
-    })
-    names(catCount) <- colnames(metadata(sce)$experiment_info)[!colnames(metadata(sce)$experiment_info) %in% c("n_cells", "sample_id")]
-    exclude <- list()
-    for(s in subselection){
-      category <- reactiveVals$subselectionMap[[s]]
-      catCount[[category]] <- catCount[[category]] + 1 
-      if(!is.null(exclude[[category]])){
-        exclude[[category]] <- c(exclude[[category]], s)
-      }else{
-        exclude[[category]] <- s
-      }
+  if (subselection != "No") {
+    if (is.null(reactiveVals$exclusionList)) {
+      reactiveVals$exclusionList <- list()
     }
-    for(x in names(catCount)){
-      if(x %in% contrastVars & catCount[[x]] == 1){
-        showNotification("You want to analyse a condition you subsetted. That is not meaningful. Try again.", type = "error")
+    returned <-
+      doConditionSubselection(
+        sce,
+        subselection,
+        isolate(reactiveVals$subselectionMap),
+        contrastVars,
+        reactiveVals$exclusionList,
+        method
+      )
+    sce <- returned[["sce"]]
+    reactiveVals$exclusionList <- returned[["exclusionList"]]
+    remove(returned)
+  }
+  # ------------------------------------------
+  # error handling, make parameters
+  # ------------------------------------------
+  parameters <- list()
+  if (method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DS-limma")) {
+    design_matrix <- isolate(input$colsDesign)
+    parameters[[method]] <- prepDiffExp(
+      sce = sce,
+      contrastVars = contrastVars,
+      colsDesign = design_matrix,
+      method = method
+    )
+    for (designCols in design_matrix) {
+      if (length(levels(ei[[designCols]])) < 2) {
+        msg <-
+          paste(
+            "Your design column",
+            designCols,
+            "has less than 2 levels left. Please do not include this in the design matrix."
+          )
+        showNotification(msg, type = "error")
         return(NULL)
       }
     }
-    reactiveVals$exclusionList <- exclude
-    for(cat in names(exclude)){
-      sub <- exclude[[cat]]
-      print(sprintf("only using %s from the condition %s", sub, cat))
-      sce <- filterSCE(sce, get(cat) %in% sub)
+    if (ncol(parameters[[method]][["design"]]) >= nr_samples) {
+      showNotification(
+        "You selected more conditions than there are samples which is not meaningful. Try again.",
+        type = "error"
+      )
+      return(NULL)
+    }
+    if (method == "diffcyt-DA-voom" &&
+        input$blockID_voom %in% design_matrix) {
+      showNotification(
+        "Please don't put your blocking variable in the design matrix. See our tooltip for more information",
+        type = "error"
+      )
+      return(NULL)
+    }
+    if (method == "diffcyt-DS-limma" &&
+        input$blockID_limma %in% design_matrix) {
+      showNotification(
+        "Please don't put your blocking variable in the design matrix. See our tooltip for more information",
+        type = "error"
+      )
+      return(NULL)
+    }
+    
+  } else if (method %in% c("diffcyt-DS-LMM", "diffcyt-DA-GLMM")) {
+    fixed_effects = isolate(input$colsFixed)
+    random_effects = isolate(input$colsRandom)
+    parameters[[method]] <- prepDiffExp(
+      sce = sce,
+      contrastVars = contrastVars,
+      colsFixed = input$colsFixed,
+      colsRandom = input$colsRandom,
+      method = method
+    )
+    if (nrow(parameters[[method]][["contrast"]]) >= nr_samples) {
+      showNotification(
+        "You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.",
+        type = "error"
+      )
+      return(NULL)
     }
   }
-
-  waiter_show(id = "app",html = tagList(spinner$logo, 
-                             HTML("<br>DE Analysis in Progress...<br>Please be patient")), 
-              color=spinner$color)
-  ei <- ei(sce)
-  nr_samples <- nlevels(sample_ids(sce))
-
-
-  if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR")){
-    if(input$normalizeDE == "Yes"){
-      normalize <- TRUE
-    }else{
-      normalize <- FALSE
-    }
-    for(designCols in input$colsDesign){
-      if(length(levels(ei[[designCols]])) < 2){
-        msg <- paste("Your design column", designCols, "has less than 2 levels left. Please do not include this in the design matrix.")
-        showNotification(msg, type = "error")
-        return(NULL)
-      }
-    }
-    parameters <- prepDiffExp(
-      sce = sce, 
-      contrastVars = contrastVars,
-      colsDesign = input$colsDesign,
-      method = "diffcyt-DA-edgeR"
-    )
-    
-    if(ncol(parameters[["design"]]) >= nr_samples){
-      showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
-      out <- NULL
-    }else{
-      reactiveVals$methodsInfo[["diffcyt-DA-edgeR"]] <- data.frame(
-        analysis_type = "Differential Cluster Abundance", 
-        method = "edgeR",
-        designmatrix = toString(isolate(input$colsDesign)),
-        conditions = toString(contrastVars),
-        clustering = toString(isolate(input$deCluster)),
-        trend_method = toString(isolate(input$edgeR_trendMethod)),
-        normalize = toString(isolate(input$normalizeDE)), 
-        filter = toString(subselection)
-      )
-      
-      out <- diffcyt::diffcyt(
-        d_input = sce,
-        design = parameters[["design"]],
-        contrast = parameters[["contrast"]],
-        analysis_type = reactiveVals$methodType,
-        method_DA = input$chosenDAMethod,
-        clustering_to_use = input$deCluster,
-        normalize = normalize,
-        trend_method = input$edgeR_trendMethod
-      )
-    }
-  } else if(input$chosenDAMethod %in% c("diffcyt-DA-voom")){
-    if(input$normalizeDE == "Yes"){
-      normalize <- TRUE
-    }else{
-      normalize <- FALSE
-    }
-    if(input$blockID_voom != ""){
-      blockID <- metadata(sce)$experiment_info[[input$blockID_voom]]
-    }else{
-      blockID <- NULL
-    }
-    for(designCols in input$colsDesign){
-      if(length(levels(ei[[designCols]])) < 2){
-        msg <- paste("Your design column", designCols, "has less than 2 levels left. Please do not include this in the design matrix.")
-        showNotification(msg, type = "error")
-        return(NULL)
-      }
-    }
-    parameters <- prepDiffExp(
-      sce = sce, 
-      contrastVars = contrastVars,
-      colsDesign = input$colsDesign,
-      method = "diffcyt-DA-voom"
-    )
-    if(ncol(parameters[["design"]]) >= nr_samples){
-      showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
-      out <- NULL
-    }else if(input$blockID_voom %in% input$colsDesign){
-      showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
-      out <- NULL
-    }else{
-      reactiveVals$methodsInfo[["diffcyt-DA-voom"]] <- data.frame(
-        analysis_type = "Differential Cluster Abundance", 
-        method = "Voom",
-        designmatrix = toString(isolate(input$colsDesign)),
-        conditions = toString(contrastVars),
-        clustering = toString(isolate(input$deCluster)),
-        block_id = toString(isolate(input$blockID_voom)),
-        normalize = toString(isolate(input$normalizeDE)),
-        filter = toString(subselection)
-      )
-        out <- diffcyt::diffcyt(
-          d_input = sce,
-          design = parameters[["design"]],
-          contrast = parameters[["contrast"]],
-          analysis_type = reactiveVals$methodType,
-          method_DA = input$chosenDAMethod,
-          clustering_to_use = input$deCluster,
-          normalize = normalize,
-          block_id = blockID
-        )
-    }
-  }else if (input$chosenDAMethod %in% c("diffcyt-DS-limma")){
-    if(input$blockID_limma != ""){
-      blockID <- metadata(sce)$experiment_info[[input$blockID_limma]]
-    }else{
-      blockID <- NULL
-    }
-    if(input$trend_limma == "Yes"){
-      trend <- TRUE
-    }else{
-      trend <- FALSE
-    }
-    
-    markersToTest <- input$DEFeaturesIn
-    is_marker <- rowData(sce)$marker_class %in% c("type", "state")
-    if (input$DEMarkerToTest == "Marker by Class") {
-      markersToTest <- (rowData(sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
-    }else{
-      markersToTest <- rownames(sce)[is_marker] %in% markersToTest
-    }
-    for(designCols in input$colsDesign){
-      if(length(levels(ei[[designCols]])) < 2){
-        msg <- paste("Your design column", designCols, "has less than 2 levels left. Please do not include this in the design matrix.")
-        showNotification(msg, type = "error")
-        return(NULL)
-      }
-    }
-    parameters <- prepDiffExp(
-      sce = sce, 
-      contrastVars = contrastVars,
-      colsDesign = input$colsDesign,
-      method = "diffcyt-DS-limma"
-    )
-    
+  
+  # ------------------------------------------
+  # set method dependent parameters
+  # ------------------------------------------
+  
+  if (method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM")) {
+    normalize <- ifelse(input$normalizeDE == "Yes", TRUE, FALSE)
+  } 
+  if (method == "diffcyt-DA-edgeR") {
+    trend_edgeR <- isolate(input$edgeR_trendMethod)
+  }
+  if (method == "diffcyt-DA-voom" && input$blockID_voom != "") {
+    blockID <- metadata(sce)$experiment_info[[input$blockID_voom]]
+  } else if (method == "diffcyt-DS-limma" &&
+             input$blockID_limma != "") {
+    blockID <- metadata(sce)$experiment_info[[input$blockID_limma]]
+  }
+  if (method == "diffcyt-DS-limma") {
+    trend_limma <- ifelse(input$trend_limma == "Yes", TRUE, FALSE)
+  }
+  if (method %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
+    featuresIn <- isolate(input$DEFeaturesIn)
     includeWeights <- isolate(input$weightsSelection)
-    includeWeights <- if(includeWeights=="Yes") TRUE else FALSE
-    
-    if(ncol(parameters[["design"]]) >= nr_samples){
-      showNotification("You selected more conditions than there are samples left which is not meaningful. Try again.", type = "error")
-      out <- NULL
-    }else if(input$blockID_limma %in% input$colsDesign){
-      showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
-      out <- NULL
-    }else{
-      reactiveVals$methodsInfo[["diffcyt-DS-limma"]] <- data.frame(
-        analysis_type = "Differential Marker Expression", 
-        method = "limma",
-        designmatrix = toString(isolate(input$colsDesign)),
-        conditions = toString(contrastVars),
-        clustering = toString(isolate(input$deCluster)),
-        features = toString(isolate(input$DEFeaturesIn)),
-        block_id = toString(isolate(input$blockID_limma)),
-        trend_method = toString(isolate(input$trend_limma)),
-        weights = toString(isolate(input$weightsSelection)),
-        filter = toString(subselection)
-      )
-      out <- diffcyt::diffcyt(
-        d_input = sce,
-        design = parameters[["design"]],
-        contrast = parameters[["contrast"]],
-        analysis_type = reactiveVals$methodType,
-        method_DS = input$chosenDAMethod,
-        clustering_to_use = input$deCluster,
-        block_id = blockID,
-        trend = trend,
-        markers_to_test = markersToTest,
-        weights = includeWeights
-      )
-    }
-  } else if (input$chosenDAMethod %in% c("diffcyt-DS-LMM")){
-    
-    parameters <- prepDiffExp(
-      sce = sce, 
-      contrastVars = contrastVars,
-      colsFixed = input$colsFixed, 
-      colsRandom = input$colsRandom,
-      method = "diffcyt-DS-LMM"
-    )
-    
-    includeWeights <- isolate(input$weightsSelection)
-    includeWeights <- if(includeWeights=="Yes") TRUE else FALSE
-    
-    markersToTest <- isolate(input$DEFeaturesIn)
-    is_marker <- rowData(sce)$marker_class %in% c("type", "state")
-    if (input$DEMarkerToTest == "Marker by Class") {
-      markersToTest <- (rowData(sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
-    }else{
-      markersToTest <- rownames(sce)[is_marker] %in% markersToTest
-    }
-    
-    if(nrow(parameters[["contrast"]]) >= nr_samples){
-      showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
-      out <- NULL
-    }else{
-      reactiveVals$methodsInfo[["diffcyt-DS-LMM"]] <- data.frame(
-        analysis_type = "Differential Marker Expression", 
-        method = "LMM",
-        fixed_effects = toString(isolate(input$colsFixed)),
-        random_effects = toString(isolate(input$colsRandom)),
-        conditions = toString(contrastVars),
-        clustering = toString(isolate(input$deCluster)),
-        features = toString(isolate(input$DEFeaturesIn)),
-        weights = toString(isolate(input$weightsSelection)),
-        filter = toString(subselection)
-      )
-
-    out <- diffcyt::diffcyt(
-      d_input = sce,
-      formula = parameters[["formula"]],
-      contrast = parameters[["contrast"]],
-      analysis_type = reactiveVals$methodType,
-      method_DS = input$chosenDAMethod,
-      clustering_to_use = input$deCluster,
-      markers_to_test = markersToTest,
-      weights = includeWeights
-    )
-    }
-  } else if (input$chosenDAMethod %in% c("diffcyt-DA-GLMM")){
-    if(input$normalizeDE == "Yes"){
-      normalize <- TRUE
-    }else{
-      normalize <- FALSE
-    }
-    
-    parameters <- prepDiffExp(
-      sce = sce, 
-      contrastVars = contrastVars,
-      colsFixed = input$colsFixed, 
-      colsRandom = input$colsRandom,
-      method = "diffcyt-DA-GLMM"
-    )
-    if(nrow(parameters[["contrast"]]) >= nr_samples){
-      showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
-      out <- NULL
-    }else{
-      reactiveVals$methodsInfo[["diffcyt-DA-GLMM"]] <- data.frame(
-        analysis_type = "Differential Cluster Abundance", 
-        method = "GLMM",
-        fixed_effects = toString(isolate(input$colsFixed)),
-        random_effects = toString(isolate(input$colsRandom)),
-        conditions = toString(contrastVars),
-        clustering = toString(isolate(input$deCluster)),
-        normalize = toString(isolate(input$normalizeDE)),
-        filter = toString(subselection)
-      )
-    out <- diffcyt::diffcyt(
-      d_input = sce,
-      formula = parameters[["formula"]],
-      contrast = parameters[["contrast"]],
-      analysis_type = reactiveVals$methodType,
-      method_DA = input$chosenDAMethod,
-      clustering_to_use = input$deCluster,
-      normalize = normalize
-    )
-    }
+    includeWeights <- ifelse(includeWeights == "Yes", TRUE, FALSE)
   } else if (input$chosenDAMethod == "sceEMD") {
-    markersToTest <- isolate(input$DEFeaturesIn)
-    if (isolate(input$DEMarkerToTest) == "Marker by Class") {
-      sce <- filterSCE(sce, marker_classes(sce) %in% markersToTest)
-    }else{
-      sce <- filterSCE(sce, rownames(sce) %in% markersToTest)
-    }
-    
+    featuresIn <- isolate(input$DEFeaturesIn)
     binSize <- isolate(input$emdBinwidth)
-    reactiveVals$methodsInfo[["sceEMD"]] <- data.frame(
-      analysis_type = "Differential Marker Expression", 
-      method = "EMD",
-      condition = toString(input$emdCond),
-      binSize = binSize,
-      nperm = isolate(input$emdNperm),
-      clustering = toString(isolate(input$deCluster)),
-      features = toString(markersToTest),
-      filter = subselection
-    )
-    
-    if (binSize == 0) binSize <- NULL
+    nperm <- isolate(input$emdNperm)
+  }
+  
+  # ------------------------------------------
+  # make info data table
+  # ------------------------------------------
+  
+  reactiveVals$methodsInfo[[method]] <- data.frame(
+    analysis_type = isolate(input$da_ds),
+    method = method,
+    designmatrix = toString(design_matrix),
+    fixed_effects = toString(fixed_effects),
+    random_effects = toString(random_effects),
+    conditions = toString(contrastVars),
+    clustering = toString(clustering_to_use),
+    normalize = toString(normalize),
+    filter = toString(subselection),
+    features = toString(featuresIn),
+    trend_edgeR = toString(trend_edgeR),
+    trend_limma = toString(trend_limma),
+    block_id = toString(blockID),
+    weights = toString(includeWeights),
+    binSize = toString(binSize),
+    nperm = toString(nperm)
+  )
+  
+  # ------------------------------------------
+  # MAIN: run method
+  # ------------------------------------------
+  
+  if (method == "sceEMD") {
+    if (binSize == 0)
+      binSize <- NULL
     
     showNotification(
       ui =
-        HTML(
-          "<div id='emdProgress'><b>EMD Progress:</b><div>"
-        ),
+        HTML("<div id='emdProgress'><b>EMD Progress:</b><div>"),
       duration = NULL,
       id = "emdProgressNote"
     )
-    #print(paste("k=", isolate(input$deCluster), ", condition=", isolate(input$emdCond), ", binsize =", binSize, ", nperm=", isolate(input$emdNperm)))
+    
     withCallingHandlers({
-      out <-
-        sceEMD(
-          sce = sce,
-          k = isolate(input$deCluster),
-          condition = isolate(input$emdCond),
-          binSize = binSize,
-          nperm = isolate(input$emdNperm)
-        )
+      #extra args: sceEMD_condition, binSize, nperm
+      results <- runDS(
+        sce = sce,
+        ds_methods = method,
+        clustering_to_use = clustering_to_use,
+        markers_to_test = featuresIn,
+        sceEMD_condition = contrastVars,
+        binSize = binSize,
+        nperm = nperm
+      )
+      out <- results[[method]]
     },
     message = function(m) {
       shinyjs::html(id = "emdProgress",
@@ -348,6 +219,30 @@ call_DE <- function(){
                     add = TRUE)
     })
     
+  } else if (methodType == "DA") {
+    results <- runDA(
+      sce = sce, 
+      parameters = parameters,
+      da_methods = method,
+      clustering_to_use = clustering_to_use, 
+      normalize = normalize, 
+      trend_edgeR = trend_edgeR, 
+      blockID = blockID
+    )
+    out <- results[[method]]
+  } else{
+    #extra args: parameters, blockID, trend_limma, markersToTest, includeWeights
+    results <- runDS(
+      sce = sce,
+      ds_methods = method,
+      clustering_to_use = clustering_to_use,
+      parameters = parameters,
+      blockID = blockID,
+      trend_limma = trend_limma,
+      markers_to_test = featuresIn,
+      includeWeights = includeWeights
+    )
+    out <- results[[method]]
   }
   waiter_hide(id = "app")
   removeNotification("emdProgressNote")
@@ -1101,16 +996,13 @@ observeEvent(input$visExpButton,{
     methodsDS <- c("diffcyt-DS-limma","diffcyt-DS-LMM", "sceEMD")
     subselection <- isolate(reactiveVals$methodsInfo[[visMethod]]$filter)
     sce <- isolate(reactiveVals$sce)
-    
     if(subselection != "No"){
-      exclude <- isolate(reactiveVals$exclusionList)
+      exclude <- isolate(reactiveVals$exclusionList[[visMethod]])
       for(cat in names(exclude)){
         sub <- exclude[[cat]]
         print(sprintf("only using %s from the condition %s", sub, cat))
         sce <- filterSCE(sce, get(cat) %in% sub)
       }
-      #category <- isolate(reactiveVals$subselectionMap[[subselection]])
-      #sce <- filterSCE(sce, get(category) == subselection)
     }
     
     if(visMethod %in% methodsDA){
@@ -1166,13 +1058,17 @@ observeEvent(input$visExpButton,{
   ## Info button
   output$infoDE <- renderUI({
     table <- reactiveVals$methodsInfo[[visMethod]]
+    columnsToKeep <- sapply(table, function(x){
+      ifelse(x[1] == "", FALSE, TRUE)
+    })
+    table <- table[, columnsToKeep]
     value <- renderTable(
       checkNullTable(table),
       caption.placement = "top"
     )
     
     dropdownButton(
-      shinydashboard::box(value, title = "Info", width = 12),
+      value,
       icon = icon("info-circle"),
       status = "info",
       right = TRUE
