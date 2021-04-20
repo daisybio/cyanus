@@ -1,19 +1,21 @@
 runCatalystDR <-
-  function(dr_chosen,
-           cells_chosen,
-           feature_chosen,
-           assay_chosen,
-           scale,
-           k,
-           dimensions) {
+  function(sce, 
+           dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap"),
+           cells_chosen = NULL,
+           feature_chosen = "type",
+           assay_chosen = "exprs",
+           scale = T,
+           k = 5,
+           dimensions = 2) {
+    match.arg(dr_chosen)
     if (scale == "yes") {
       scale <- T
     } else{
       scale <- F
     }
     if (dr_chosen == "Isomap") {
-      reactiveVals$sce <- runIsomap(
-        reactiveVals$sce,
+      sce <- runIsomap(
+        sce,
         cells = cells_chosen,
         features = feature_chosen,
         assay = assay_chosen,
@@ -23,8 +25,8 @@ runCatalystDR <-
       )
       
     } else{
-      reactiveVals$sce <- runDR(
-        reactiveVals$sce,
+      sce <- CATALYST::runDR(
+        x = sce,
         dr = dr_chosen,
         cells = cells_chosen,
         features = feature_chosen,
@@ -33,7 +35,7 @@ runCatalystDR <-
         ncomponents = dimensions
       )
     }
-    reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
+    return(sce)
   }
 
 makeDR <-
