@@ -52,6 +52,7 @@ makePatientSelection <- function(sce, deselected_patients){
 # function anno_features from CATALYST with different color palette
 .anno_factors <- function (x, ids, which, type = c("row", "column")) 
 {
+  library(magrittr)
   type <- match.arg(type)
   cd <- colData(x)
   df <- data.frame(cd, check.names = FALSE)
@@ -80,7 +81,7 @@ makePatientSelection <- function(sce, deselected_patients){
     names(u) <- lvls[[i]]
     u
   })
-  ComplexHeatmap::HeatmapAnnotation(which = type, df = df, col = cols, gp = gpar(col = "white"))
+  ComplexHeatmap::HeatmapAnnotation(which = type, df = df, col = cols, gp = grid::gpar(col = "white"))
 }
 
 plotExprHeatmapCustom <- function (x, features = NULL, by = c("sample_id", "cluster_id", 
@@ -186,7 +187,7 @@ plotExprHeatmapCustom <- function (x, features = NULL, by = c("sample_id", "clus
                                                                                                                                                   "cluster_id" || isFALSE(row_anno) && !row_dend || 
                                                                                                                                                   isFALSE(row_clust), "left", "right"), top_annotation = top_anno, 
                           left_annotation = left_anno, right_annotation = right_anno, 
-                          rect_gp = gpar(col = "white"), heatmap_legend_param = lgd_aes)
+                          rect_gp = grid::gpar(col = "white"), heatmap_legend_param = lgd_aes)
 }
 
 
@@ -322,7 +323,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
     if (normalize) y <- CATALYST:::.z_normalize(asin(sqrt(y)))
     ComplexHeatmap::Heatmap(matrix = y, name = paste0("normalized\n"[normalize], 
                                                       "frequency"), col = hm_pal, na_col = "grey", 
-                            rect_gp = gpar(col = "white"), cluster_rows = FALSE, 
+                            rect_gp = grid::gpar(col = "white"), cluster_rows = FALSE, 
                             cluster_columns = FALSE, row_names_side = "left", 
                             top_annotation = top_anno, right_annotation = right_anno)
   }, ds = {
@@ -337,8 +338,8 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
     ComplexHeatmap::Heatmap(matrix = z, name = paste0("z-normalized\n"[normalize], 
                                                       "expression"), col = hm_pal, cluster_rows = FALSE, 
                             cluster_columns = FALSE, top_annotation = top_anno, 
-                            row_names_side = "left", rect_gp = gpar(col = "white"), 
-                            right_annotation = right_anno, heatmap_legend_param = list(title_gp = gpar(fontsize = 10, 
+                            row_names_side = "left", rect_gp = grid::gpar(col = "white"), 
+                            right_annotation = right_anno, heatmap_legend_param = list(title_gp = grid::gpar(fontsize = 10, 
                                                                                                        fontface = "bold", lineheight = 0.8)))
   })
 }

@@ -149,8 +149,9 @@ source("functions/de_functions.R")
 
 parameters <- prepDiffExp(sce = sce, 
                           contrastVars = c("base_spike"), 
-                          colsDesign = c("base_spike", "patient_id"), 
-                          method = "diffcyt-DS-limma")
+                          colsFixed= c("base_spike"),
+                          colsRandom = c("patient_id"),
+                          method = "diffcyt-DS-LMM")
 markersToTest <- c("type", "state")
 is_marker <- rowData(sce)$marker_class %in% c("type", "state")
 markersToTest <- (rowData(sce)$marker_class %in% markersToTest)[is_marker]
@@ -158,10 +159,10 @@ markersToTest <- (rowData(sce)$marker_class %in% markersToTest)[is_marker]
 library(diffcyt)
 out <- diffcyt::diffcyt(
   d_input = sce,
-  design = parameters[["design"]],
+  formula = parameters[["formula"]],
   contrast = parameters[["contrast"]],
   analysis_type = "DS",
-  method_DS = "diffcyt-DS-limma",
+  method_DS = "diffcyt-DS-LMM",
   clustering_to_use = "all",
   markers_to_test = markersToTest
 )
@@ -171,3 +172,11 @@ CATALYST::plotDiffHeatmap(
   y = rowData(out$res),
   all = T
 )
+
+plotDiffHeatmapCustom(
+  x = sce, 
+  y = rowData(out$res),
+  all = T,
+  normalize = F
+)
+
