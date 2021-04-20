@@ -97,8 +97,8 @@ runCytoGLMM <-
       gsub("[^[:alnum:]]", "", marker)
     })
     colnames(data) <- marker_names
-    data$donor <- colData(sce)[[group]]
-    data$condition <- colData(sce)[[condition]]
+    data$donor <- SingleCellExperiment::colData(sce)[[group]]
+    data$condition <- SingleCellExperiment::colData(sce)[[condition]]
     args <-
       list(
         df_samples_subset = data,

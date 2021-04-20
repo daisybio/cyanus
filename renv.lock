@@ -132,12 +132,6 @@
       "Repository": "CRAN",
       "Hash": "4fdd17df6c1b897cb59bdd9cf6621a43"
     },
-    "DEsingle": {
-      "Package": "DEsingle",
-      "Version": "1.10.0",
-      "Source": "Bioconductor",
-      "Hash": "baf0ad379649376f31fdfcb491c27866"
-    },
     "DRR": {
       "Package": "DRR",
       "Version": "0.0.4",
@@ -486,13 +480,6 @@
       "Repository": "CRAN",
       "Hash": "84dffc44f23c419537c1c79cc46347a5"
     },
-    "VGAM": {
-      "Package": "VGAM",
-      "Version": "1.1-5",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "457a2a08a76cc33cb5510c94d2006e02"
-    },
     "VennDiagram": {
       "Package": "VennDiagram",
       "Version": "1.6.20",
@@ -512,6 +499,13 @@
       "Version": "0.30.0",
       "Source": "Bioconductor",
       "Hash": "9bd9f991fb4ecde6adeff2fa2e401cc5"
+    },
+    "ZIBseq": {
+      "Package": "ZIBseq",
+      "Version": "1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2474eecb506f5f2e5f8257f49b2cc5ad"
     },
     "abind": {
       "Package": "abind",
@@ -582,20 +576,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "543776ae6848fde2f48ff3816d0628bc"
-    },
-    "bbmle": {
-      "Package": "bbmle",
-      "Version": "1.0.23.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "89eef0faafa404fe20f23290c322bbeb"
-    },
-    "bdsmatrix": {
-      "Package": "bdsmatrix",
-      "Version": "1.3-4",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "1012f2033c32d595e1a16bee3bb0b3e5"
     },
     "beachmat": {
       "Package": "beachmat",
@@ -1493,13 +1473,6 @@
       "Repository": "CRAN",
       "Hash": "c318d148056e5bb8d7de79b0876f9ae6"
     },
-    "maxLik": {
-      "Package": "maxLik",
-      "Version": "1.4-6",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "48b777057f2aa9539028284e98fafdbd"
-    },
     "mbest": {
       "Package": "mbest",
       "Version": "0.6",
@@ -1534,13 +1507,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "eaee7d2a6f3ed4491df868611cb064cc"
-    },
-    "miscTools": {
-      "Package": "miscTools",
-      "Version": "0.6-26",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "340f0789cb2dcc816d9856d375c1df83"
     },
     "mnormt": {
       "Package": "mnormt",
@@ -1797,13 +1763,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "ebaed51a03411fd5cfc1e12d9079b353"
-    },
-    "pscl": {
-      "Package": "pscl",
-      "Version": "1.5.5",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "c55158537b8c4754a8c3de3382f1a659"
     },
     "purrr": {
       "Package": "purrr",

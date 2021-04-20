@@ -1,4 +1,3 @@
-library(Rcpp)
 Rcpp::cppFunction('double emdC(NumericVector a, NumericVector b) {
   int n = a.size();
   NumericVector dist = NumericVector(n);
@@ -62,20 +61,20 @@ sceEMD <- function(sce, k, condition, binSize=NULL, nperm=100, assay="exprs", se
   assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
   
   
-  cluster_ids <- cluster_ids(sce, k)
+  cluster_ids <- CATALYST::cluster_ids(sce, k)
   res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
     message(sprintf("calculating sceEMD for cluster %s", curr_cluster_id))
     
     sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = k)
-    data <- assay(sce_cluster, assay)
+    data <- SummarizedExperiment::assay(sce_cluster, assay)
     
-    condition_cluster <- colData(sce_cluster)[[condition]]
+    condition_cluster <- SingleCellExperiment::colData(sce_cluster)[[condition]]
     emd_real <- rowwiseEMD(mat = data, condition = condition_cluster, binSize = binSize)
     emd_real$cluster_id <- as.factor(curr_cluster_id)
     data.table::setnames(emd_real, "result", "real_emd")
     data.table::setkey(emd_real, marker_id)
     
-    sceEI <- ei(sce_cluster)
+    sceEI <- CATALYST::ei(sce_cluster)
     perms <- RcppAlgos::permuteSample(sceEI[[condition]], n = nperm, seed = seed)
     
     perm_res <- BiocParallel::bplapply(as.data.frame(t(unclass(perms))), function(perm, sceEI, data, binSize) {
