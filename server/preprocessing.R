@@ -96,11 +96,9 @@ output$reorderingTabs <- renderUI({
 
 # if conditions are ordered
 observeEvent(input$reorderButton, {
-  shinyjs::disable("prepButton")
-  shinyjs::disable("prepSelectionButton")
-  shinyjs::disable("filterSelectionButton")
-  shinyjs::disable("previousTab")
-  shinyjs::disable("nextTab")
+  waiter_show(id = "app",html = tagList(spinner$logo, 
+                                        HTML("<br>Reordering Data...<br>Please be patient")), 
+              color=spinner$color)
   
   # reorder levels 
   conditions <- names(metadata(reactiveVals$sce)$experiment_info)
@@ -111,11 +109,7 @@ observeEvent(input$reorderButton, {
     metadata(reactiveVals$sce)$experiment_info[[condition]] <- factor(metadata(reactiveVals$sce)$experiment_info[[condition]], levels=ordered)
   })
   plotPreprocessing(reactiveVals$sce)
-  shinyjs::enable("prepButton")
-  shinyjs::enable("prepSelectionButton")
-  shinyjs::enable("filterSelectionButton")
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
+  waiter_hide(id = "app")
 
 })
 
@@ -135,11 +129,9 @@ observeEvent(input$prepButton, {
 
 # if visualize selection button is clicked
 observeEvent(input$prepSelectionButton, {
-  shinyjs::disable("prepButton")
-  shinyjs::disable("prepSelectionButton")
-  shinyjs::disable("previousTab")
-  shinyjs::disable("nextTab")
-  shinyjs::disable("filterSelectionButton")
+  waiter_show(id = "app",html = tagList(spinner$logo, 
+                                        HTML("<br>Applying Selection...<br>Please be patient")), 
+              color=spinner$color)
   allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
   if ((length(input$patientSelection) != allpatients) || (length(input$sampleSelection) != allsamples)){
@@ -160,18 +152,13 @@ observeEvent(input$prepSelectionButton, {
   
   sce <- sce[rownames(sce) %in% markers, ]
   plotPreprocessing(sce)
-  shinyjs::enable("prepButton")
-  shinyjs::enable("prepSelectionButton")
-  shinyjs::enable("continue")
-  shinyjs::enable("filterSelectionButton")
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
+  waiter_hide(id = "app")
 })
 
 # if filtering button is clicked -> selection is applied to sce
 observeEvent(input$filterSelectionButton,{
   waiter_show(id = "app",html = tagList(spinner$logo, 
-                                        HTML("<br>Reordering Data...<br>Please be patient")), 
+                                        HTML("<br>Applying Filtering...<br>Please be patient")), 
               color=spinner$color)
   allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
@@ -573,7 +560,6 @@ plotPreprocessing <- function(sce) {
   # ui for download button
   output$exprsHeatmapPlotDownload <- renderUI({
     req(reactiveVals$exprsPlotHeatmap)
-    library(ComplexHeatmap)
     downloadButton("downloadPlotExprsHeatmap", "Download Plot")
   })
   
@@ -585,7 +571,7 @@ plotPreprocessing <- function(sce) {
                                             HTML("<br>Downloading...")), 
                   color=spinner$color)
       pdf(file, width = 12, height = 8)
-      draw(reactiveVals$exprsPlotHeatmap)
+      ComplexHeatmap::draw(reactiveVals$exprsPlotHeatmap)
       dev.off()
       waiter_hide(id="app")
     }
