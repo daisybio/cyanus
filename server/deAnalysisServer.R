@@ -252,7 +252,7 @@ call_DE <- function(){
         filter = toString(subselection)
       )
 
-    out <- diffcyt_method(
+    out <- diffcyt::diffcyt(
       d_input = sce,
       formula = parameters[["formula"]],
       contrast = parameters[["contrast"]],
@@ -260,7 +260,7 @@ call_DE <- function(){
       method_DS = input$chosenDAMethod,
       clustering_to_use = input$deCluster,
       markers_to_test = markersToTest,
-      use_weights = includeWeights
+      weights = FALSE
     )
     }
   } else if (input$chosenDAMethod %in% c("diffcyt-DA-GLMM")){
