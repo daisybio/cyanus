@@ -9,7 +9,7 @@ zibSeq <- function (sce, condition, alpha = 0.05)
     x.prop[x.prop < 0] <- 0
     x.prop <- (x.prop - min(x.prop))/(max(x.prop)-min(x.prop))
     x.prop[which(x.prop==1)] <- x.prop[which(x.prop==1)] - 2.225074e-10
-    bereg = gamlss(x.prop ~ Y, family = BEZI(), 
+    bereg = gamlss::gamlss(x.prop ~ Y, family = BEZI(), 
                    trace = FALSE, control = gamlss.control(n.cyc = 100))
     out = summary(bereg)
     beta[i, ] = out[2, c(1, 4)]
