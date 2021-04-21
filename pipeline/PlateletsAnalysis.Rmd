@@ -242,7 +242,7 @@ Comparing both conditions in dual patients, the state markers CD62P and CD63 sho
 
 Finally, the differential analysis can be performed using the linear mixed effect models of CATALYST.
 ```{r,fig.width=12, fig.height=8}
-res_d <- runDS(sce = sce_d,
+res_d <- runDS_old(sce = sce_d,
       condition = "activated_baseline",
       de_methods = c("LMM"),
       k = "all",
@@ -265,7 +265,7 @@ rowData(sce_t)$marker_class <- rowData(sce_t)$marker_class[rowData(sce_t)$marker
 
 CATALYST::plotPbExprs(sce_t, k = "all", features = NULL , color_by = "activated_baseline",  ncol=8, facet_by = "antigen") +  theme(text = element_text(size=16))
 
-res_t <- runDS(sce = sce_t,
+res_t <- runDS_old(sce = sce_t,
       condition = "activated_baseline",
       de_methods = c("LMM"),
       k = "all",
@@ -303,7 +303,7 @@ rowData(sce_a)$marker_class <- rowData(sce_a)$marker_class[rowData(sce_a)$marker
 
 CATALYST::plotPbExprs(sce_a, k = "all", features = NULL , color_by = "dual_triple",  ncol=8, facet_by = "antigen") +  theme(text = element_text(size=16))
 
-res_a <- runDS(sce = sce_a,
+res_a <- runDS_old(sce = sce_a,
       condition = "dual_triple",
       de_methods = c("LMM"),
       k = "all",
@@ -320,7 +320,7 @@ rowData(sce_b)$marker_class <- rowData(sce_b)$marker_class[rowData(sce_b)$marker
 
 CATALYST::plotPbExprs(sce_b, k = "all", features = NULL , color_by = "dual_triple",  ncol=8, facet_by = "antigen") +  theme(text = element_text(size=16))
 
-res_b <- runDS(sce = sce_b,
+res_b <- runDS_old(sce = sce_b,
       condition = "dual_triple",
       de_methods = c("LMM"),
       k = "all",

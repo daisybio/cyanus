@@ -3,20 +3,17 @@ library(diffcyt)
 plotbox_height <- "48em"
 methods_height <- "40em"
 
-resetDEAnalysis <- function(){
-  reactiveVals$exclusionList <- NULL
-}
+#resetDEAnalysis <- function(){
+#  reactiveVals$exclusionList <- NULL
+#  reactiveVals$subselectionMap <- NULL
+#}
 
+# ---------------------------------------------------------------------------------
+# Main function: 
 # checks which methods is selected and executes the diffcyt function accordingly
+# ---------------------------------------------------------------------------------
+ 
 call_DE <- function() {
-  waiter_show(
-    id = "app",
-    html = tagList(
-      spinner$logo,
-      HTML("<br>DE Analysis in Progress...<br>Please be patient")
-    ),
-    color = spinner$color
-  )
   # ------------------------------------------
   # read/initialize input
   # ------------------------------------------
@@ -53,15 +50,31 @@ call_DE <- function() {
     if (is.null(reactiveVals$exclusionList)) {
       reactiveVals$exclusionList <- list()
     }
-    returned <-
-      doConditionSubselection(
-        sce,
-        subselection,
-        isolate(reactiveVals$subselectionMap),
-        contrastVars,
-        reactiveVals$exclusionList,
-        method
-      )
+    showNotification(
+      ui =
+        HTML("<div id='subselection'><b>Subselecting...</b><div>"),
+      duration = NULL,
+      id = "subselectionNote",
+      type = "error"
+    )
+    withCallingHandlers({
+      returned <-
+        doConditionSubselection(
+          sce,
+          subselection,
+          isolate(reactiveVals$subselectionMap),
+          contrastVars,
+          reactiveVals$exclusionList,
+          method
+        )
+    },
+    message = function(m) {
+      shinyjs::html(id = "subselection",
+                    html = sprintf("<br>%s", HTML(m$message)),
+                    add = TRUE)
+    })
+    removeNotification("subselection")
+    if(is.null(returned)) return(NULL)
     sce <- returned[["sce"]]
     reactiveVals$exclusionList <- returned[["exclusionList"]]
     remove(returned)
@@ -244,12 +257,13 @@ call_DE <- function() {
     )
     out <- results[[method]]
   }
-  waiter_hide(id = "app")
   removeNotification("emdProgressNote")
   return(out)
 }
 
-## RENDERER
+# ---------------------------------------------------------------------------------
+# Renderer
+# ---------------------------------------------------------------------------------
 
 output$selectionBoxDE <- renderUI({
   shinydashboard::box(
@@ -703,7 +717,7 @@ output$DEFeatureSelection <- renderUI({
       selected <- choices[1]
     }
   } else if (input$DEMarkerToTest == "Marker by Name") {
-    is_marker <- rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
+    is_marker <- SummarizedExperiment::rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
     choices <- rownames(reactiveVals$sce)
     names(choices) <-
       sprintf("%s (%s)", choices, as.character(marker_classes(reactiveVals$sce)))
@@ -761,8 +775,8 @@ output$DEVisualization <- renderUI({
 output$visClusterSelection <- renderUI({
   out <- reactiveVals$DEruns[[input$deVisMethod]]
 
-  if (input$deVisMethod != "sceEMD")
-    out <- rowData(out$res)
+  #if (input$deVisMethod != "sceEMD")
+  #  out <- rowData(out$res)
   div(
     pickerInput(
       "DEClusterSelection",
@@ -783,9 +797,6 @@ output$visClusterSelection <- renderUI({
 # heatmap can be visualized for selected features (DS)
 output$visMarkerSelection <- renderUI({
   out <- reactiveVals$DEruns[[input$deVisMethod]]
-  
-  if (input$deVisMethod != "sceEMD")
-    out <- rowData(out$res)
   div(
     pickerInput(
       "DEMarkerSelection",
@@ -814,9 +825,8 @@ output$visSelection <- renderUI({
 })
 
 output$topNSelection <- renderUI({
+  req(!is.null(reactiveVals$DEruns[[input$deVisMethod]]))
   out <- reactiveVals$DEruns[[input$deVisMethod]]
-  if (input$deVisMethod != "sceEMD")
-    out <- rowData(out$res)
   methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
   if(input$deVisMethod %in% methodsDA){
     label <- "Number of top clusters to display:"
@@ -890,8 +900,142 @@ output$visDiffExp <- renderUI({
   )
 })
 
+### BOXPLOT FUNCTIONS
 
-## OBSERVER
+output$deBoxPlots <- renderUI({
+  uiOutput("deExprsCluster")
+})
+
+output$deExprsCluster <- renderUI({
+  #if we only have counts -> copy counts to exprs
+  if(length(assays(reactiveVals$sce)) == 1){
+    showNotification("You have not normalized your data. We will assume that you have given us expression data as input.", type = "warning", duration = 10)
+    assays(reactiveVals$sce)$exprs <- assays(reactiveVals$sce)$counts
+  }
+  
+  factors <- names(colData(reactiveVals$sce))[!names(colData(reactiveVals$sce)) %in% c("patient_id", "sample_id")]
+  markers <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+  if("state" %in% markers){
+    selected_marker <- "state"
+  }else{
+    selected_marker <- markers[1]
+  }
+  choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
+  choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
+  
+  choices <- unlist(sapply(choices, function(x){
+    lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
+    return(lvls)
+  }))
+  names(choices) <- paste("only", choices)
+  
+  fluidRow(column(1,
+                  div(dropdownButton(
+                    tags$h3("Plot Options"),
+                    selectizeInput("deBoxFacet",
+                                   "Facet by:",
+                                   c("antigen", "cluster_id"), 
+                                   multiple = F, 
+                                   selected = "antigen"),
+                    hidden(selectizeInput(
+                      "deBoxK",
+                      "Clusters",
+                      names(cluster_codes(reactiveVals$sce)),
+                      multiple = F,
+                      selected = "meta9"
+                    )),
+                    selectizeInput("deBoxFeatures",
+                                   "Markers:",
+                                   markers, 
+                                   selected = selected_marker,
+                                   multiple = F),
+                    selectizeInput(
+                      "deBoxColor",
+                      "Color by:",
+                      c(names(colData(reactiveVals$sce)), names(cluster_codes(reactiveVals$sce))),
+                      selected = factors[1],
+                      multiple = F
+                    ),
+                    selectizeInput(
+                      "deBoxShape",
+                      "Shape By: ",
+                      c(names(colData(reactiveVals$sce))),
+                      multiple = F
+                    ),
+                    selectizeInput(
+                      "deBoxSubselect",
+                      "Subselection",
+                      choices = c("No", choices), 
+                      multiple = F
+                    ),
+                    circle = TRUE,
+                    status = "info",
+                    icon = icon("gear"),
+                    width = "400px",
+                    tooltip = tooltipOptions(title = "Click to see plot options")
+                  ),
+                  style = "position: relative; height: 550px;"
+                  )
+  ),
+  column(11, shinycssloaders::withSpinner(
+    plotOutput("clusterDEPlot", width = "100%", height = "500px")
+  )),
+  div(
+    uiOutput("pbExprsPlotDownload"),
+    style = "position: absolute; bottom: 5px; right:5px"
+  ),
+  )
+})
+
+output$clusterDEPlot <- renderPlot({
+  if(input$deBoxK == "all"){
+    k <- NULL
+    facet_by <- NULL
+  }else{
+    k <- input$deBoxK
+    facet_by <- input$deBoxFacet
+  }
+  sce <- isolate(reactiveVals$sce)
+  if(input$deBoxSubselect != "No"){
+    category <- isolate(reactiveVals$subselectionMap[[input$deBoxSubselect]])
+    sce <- filterSCE(sce, get(category) == input$deBoxSubselect)
+  }
+  reactiveVals$pbExprsPlot <- plotPbExprs(sce, 
+                                          k = k, 
+                                          features = input$deBoxFeatures, 
+                                          color_by = input$deBoxColor, 
+                                          facet_by = facet_by, 
+                                          shape_by = input$deBoxShape)
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
+  #shinyjs::show("selectionBoxDE")
+  reactiveVals$pbExprsPlot
+})
+
+# ui for download button
+output$pbExprsPlotDownload <- renderUI({
+  req(reactiveVals$pbExprsPlot)
+  downloadButton("downloadPlotPbExprs", "Download Plot")
+})
+
+# function for downloading MDS plot
+output$downloadPlotPbExprs <- downloadHandler(
+  filename = function(){
+    paste0("Pb_Exprs_plot", ".pdf")
+  },
+  content = function(file){
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    ggsave(file, plot =reactiveVals$pbExprsPlot, width=10, height=12)
+    waiter_hide(id="app")
+  }
+)
+
+
+# ---------------------------------------------------------------------------------
+# Observer
+# ---------------------------------------------------------------------------------
 
 observe({
   if (reactiveVals$current_tab==6){
@@ -915,8 +1059,6 @@ observeEvent(input$deBoxFacet, {
 # if Start Analysis button is clicked -> diffcyt method should be performed
 observeEvent(input$diffExpButton,{
   shinyjs:: disable("visExpButton")
-  shinyjs::disable("previousTab")
-  shinyjs::disable("nextTab")
   DAmethod <- isolate(input$chosenDAMethod)
  
   # update button and disable it
@@ -940,7 +1082,16 @@ observeEvent(input$diffExpButton,{
   
 
   # call diffcyt function
+  waiter_show(
+    id = "app",
+    html = tagList(
+      spinner$logo,
+      HTML("<br>DE Analysis in Progress...<br>Please be patient")
+    ),
+    color = spinner$color
+  )
   out <- call_DE()
+  waiter_hide(id = "app")
   if(!is.null(out)){
     # add method to DAruns
     reactiveVals$DEruns[[DAmethod]] <- out
@@ -951,10 +1102,7 @@ observeEvent(input$diffExpButton,{
                label = " Start Analysis",
                disabled = FALSE)
   
-    shinyjs::show("DEVisualization")
     shinyjs::enable("visExpButton")
-    shinyjs::enable("previousTab")
-    shinyjs::enable("nextTab")
   }else{
     updateButton(session,
                  "diffExpButton",
@@ -1013,8 +1161,8 @@ observeEvent(input$visExpButton,{
     }
     
     out <- runs[[visMethod]]
-    if (visMethod != "sceEMD")
-      out <- rowData(out$res)
+    #if (visMethod != "sceEMD")
+    #  out <- rowData(out$res)
     #out$p_val[is.na(out$p_val)] <- 1
     #out$p_adj[is.na(out$p_adj)] <- 1
     
@@ -1092,10 +1240,6 @@ observeEvent(input$visExpButton,{
   
   output$topTable <- renderDataTable({
     out <- reactiveVals$DEruns[[visMethod]] 
-    if (visMethod != "sceEMD")
-      out <- diffcyt::topTable(out$res,all=TRUE,format_vals=TRUE)
-    #out$p_val[is.na(out$p_val)] <- 1
-    #out$p_adj[is.na(out$p_adj)] <- 1
     reactiveVals$topTable <- data.frame(out)
     DT::datatable(reactiveVals$topTable, rownames = FALSE, 
                   options = list(pageLength = 10, searching = FALSE, 
@@ -1147,157 +1291,3 @@ observeEvent(input$DEFeaturesIn,{
     shinyjs::enable("diffExpButton")
   }
   }, ignoreNULL=FALSE, ignoreInit=TRUE)
-
-
-
-### BOXPLOT FUNCTIONS
-
-output$deBoxPlots <- renderUI({
-  uiOutput("deExprsCluster")
-  #shinydashboard::tabBox(
-  #  tabPanel(
-  #    plotOutput("deExprsBoxPlot"), 
-  #    title = "Overall marker expression",
-  #    value = "deExprsTab", 
-  #    with = 12
-  #    ),
-  #  tabPanel(
-  #    uiOutput("deExprsCluster"),
-  #    title = "Cluster marker expression",
-  #    value = "deExprsClusterTab", 
-  #    with = 12
-  #  ),
-  #  width = 12
-  #)
-  
-})
-
-#output$deExprsBoxPlot <- renderPlot(
-#  plotPbExprs(reactiveVals$sce, features = "state", shape_by = "patient_id")
-#)
-
-output$deExprsCluster <- renderUI({
-  #if we only have counts -> copy counts to exprs
-  if(length(assays(reactiveVals$sce)) == 1){
-    showNotification("You have not normalized your data. We will assume that you have given us expression data as input.", type = "warning", duration = 10)
-    assays(reactiveVals$sce)$exprs <- assays(reactiveVals$sce)$counts
-  }
-  
-  factors <- names(colData(reactiveVals$sce))[!names(colData(reactiveVals$sce)) %in% c("patient_id", "sample_id")]
-  markers <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
-  if("state" %in% markers){
-    selected_marker <- "state"
-  }else{
-    selected_marker <- markers[1]
-  }
-  choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
-  choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
-  
-  choices <- unlist(sapply(choices, function(x){
-    lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
-    return(lvls)
-  }))
-  names(choices) <- paste("only", choices)
-
-  fluidRow(column(1,
-                  div(dropdownButton(
-                    tags$h3("Plot Options"),
-                    selectizeInput("deBoxFacet",
-                                   "Facet by:",
-                                   c("antigen", "cluster_id"), 
-                                   multiple = F, 
-                                   selected = "antigen"),
-                    hidden(selectizeInput(
-                      "deBoxK",
-                      "Clusters",
-                      names(cluster_codes(reactiveVals$sce)),
-                      multiple = F,
-                      selected = "meta9"
-                    )),
-                    selectizeInput("deBoxFeatures",
-                                   "Markers:",
-                                   markers, 
-                                   selected = selected_marker,
-                                   multiple = F),
-                    selectizeInput(
-                      "deBoxColor",
-                      "Color by:",
-                      c(names(colData(reactiveVals$sce)), names(cluster_codes(reactiveVals$sce))),
-                      selected = factors[1],
-                      multiple = F
-                    ),
-                    selectizeInput(
-                      "deBoxShape",
-                      "Shape By: ",
-                      c(names(colData(reactiveVals$sce))),
-                      multiple = F
-                    ),
-                    selectizeInput(
-                      "deBoxSubselect",
-                      "Subselection",
-                      choices = c("No", choices), 
-                      multiple = F
-                    ),
-                    circle = TRUE,
-                    status = "info",
-                    icon = icon("gear"),
-                    width = "400px",
-                    tooltip = tooltipOptions(title = "Click to see plot options")
-                  ),
-                  style = "position: relative; height: 550px;"
-                  )
-                ),
-           column(11, shinycssloaders::withSpinner(
-             plotOutput("clusterDEPlot", width = "100%", height = "500px")
-           )),
-           div(
-             uiOutput("pbExprsPlotDownload"),
-             style = "position: absolute; bottom: 5px; right:5px"
-           ),
-           )
-})
-
-output$clusterDEPlot <- renderPlot({
-  if(input$deBoxK == "all"){
-    k <- NULL
-    facet_by <- NULL
-  }else{
-    k <- input$deBoxK
-    facet_by <- input$deBoxFacet
-  }
-  sce <- isolate(reactiveVals$sce)
-  if(input$deBoxSubselect != "No"){
-    category <- isolate(reactiveVals$subselectionMap[[input$deBoxSubselect]])
-    sce <- filterSCE(sce, get(category) == input$deBoxSubselect)
-  }
-  reactiveVals$pbExprsPlot <- plotPbExprs(sce, 
-              k = k, 
-              features = input$deBoxFeatures, 
-              color_by = input$deBoxColor, 
-              facet_by = facet_by, 
-              shape_by = input$deBoxShape)
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
-  #shinyjs::show("selectionBoxDE")
-  reactiveVals$pbExprsPlot
-})
-
-# ui for download button
-output$pbExprsPlotDownload <- renderUI({
-  req(reactiveVals$pbExprsPlot)
-  downloadButton("downloadPlotPbExprs", "Download Plot")
-})
-
-# function for downloading MDS plot
-output$downloadPlotPbExprs <- downloadHandler(
-  filename = function(){
-    paste0("Pb_Exprs_plot", ".pdf")
-  },
-  content = function(file){
-    waiter_show(id = "app",html = tagList(spinner$logo, 
-                                          HTML("<br>Downloading...")), 
-                color=spinner$color)
-    ggsave(file, plot =reactiveVals$pbExprsPlot, width=10, height=12)
-    waiter_hide(id="app")
-  }
-)

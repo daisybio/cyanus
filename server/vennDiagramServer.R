@@ -1,5 +1,236 @@
 library(ggvenn)
 
+# ---------------------------------------------------------------------------------
+# Main function: 
+# parses inputs and runs all methods by calling runDA / runDS
+# ---------------------------------------------------------------------------------
+
+runMethods <- function(){
+  resultVenn <- list()
+  parameters <- list()
+  reactiveVals$ds_bool <- T
+  sce <- isolate(reactiveVals$sce)
+  ei <- metadata(sce)$experiment_info
+  nr_samples <- length(levels(colData(sce)$sample_id))
+  
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
+    contrast <- isolate(input$contrastVarsDA)
+  }else{
+    contrast <- isolate(input$contrastVarsDS)
+  }
+  clusters <- isolate(input$deClusterVenn)
+  
+  if(is.null(input$deSubselectionVenn)){
+    subselection <- "No"
+  }else{
+    subselection <- isolate(input$deSubselectionVenn)
+  }
+  
+  if (subselection != "No") {
+    excluded <- list()
+    showNotification(
+      ui =
+        HTML("<div id='subselection'><b>Subselecting...</b><div>"),
+      duration = NULL,
+      id = "subselectionNote",
+      type = "error"
+    )
+    withCallingHandlers({
+      returned <-
+        doConditionSubselection(
+          sce,
+          subselection,
+          isolate(reactiveVals$subselectionMap),
+          contrast,
+          excluded,
+          method
+        )
+    },
+    message = function(m) {
+      shinyjs::html(id = "subselection",
+                    html = sprintf("<br>%s", HTML(m$message)),
+                    add = TRUE)
+    })
+    removeNotification("subselection")
+    if(is.null(returned)) return(NULL)
+    sce <- returned[["sce"]]
+    remove(returned)
+  }
+  
+  if(input$da_dsVenn == "Differential Cluster Abundance"){
+    reactiveVals$ds_bool <- F
+    # -------------------------------
+    # DA: get parameters
+    # -------------------------------
+    colsDesignDA <- isolate(input$colsDesignDA)
+    edgeRTrend <- isolate(input$edgeR_trendMethodVenn)
+    colsFixedDA <- isolate(input$colsFixedDA)
+    colsRandomDA <- isolate(input$colsRandomDA)
+    blockIDVoom <- isolate(input$blockID_voomVenn)
+    if(blockIDVoom != ""){
+      blockIDVoom <- metadata(sce)$experiment_info[[blockIDVoom]]
+    }else{
+      blockIDVoom <- NULL
+    }
+    normalize <- isolate(input$normalizeDEVenn)
+    if(normalize == "Yes"){
+      normalize <- TRUE
+    }else{
+      normalize <- FALSE
+    }
+
+    parameters[["diffcyt-DA-edgeR"]] <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrast,
+      colsDesign = colsDesignDA,
+      method = "diffcyt-DA-edgeR"
+    )
+    parameters[["diffcyt-DA-voom"]] <-  prepDiffExp(
+      sce = sce, 
+      contrastVars = contrast,
+      colsDesign = colsDesignDA,
+      method = "diffcyt-DA-voom"
+    )
+    
+    parameters[["diffcyt-DA-GLMM"]] <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrast,
+      colsFixed = colsFixedDA, 
+      colsRandom = colsRandomDA,
+      method = "diffcyt-DA-GLMM"
+    )
+    
+    # -------------------------------
+    # DA: control inputs
+    # -------------------------------
+    
+    if(ncol(parameters[["diffcyt-DA-edgeR"]][["design"]]) >= nr_samples){
+      showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
+      return(NULL)
+    }
+    
+    if(nrow(parameters[["diffcyt-DA-GLMM"]][["contrast"]]) >= nr_samples){
+      showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
+      return(NULL)
+    }
+    
+    if(isolate(input$blockID_voomVenn) %in% colsDesignDA){
+      showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
+      return(NULL)
+    }
+    
+    # -------------------------------
+    # DA: run all methods
+    # -------------------------------
+  
+    resultVenn <- runDA(sce = sce, 
+          parameters = parameters,
+          da_methods = c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM"),
+          clustering_to_use = clusters, 
+          normalize = normalize, 
+          trend_edgeR = edgeRTrend, 
+          blockID = blockIDVoom
+    )
+    return(resultVenn)
+    
+  }else{
+    # -------------------------------
+    # DS: get parameters
+    # -------------------------------
+    colsDesignDS <- isolate(input$colsDesignDS)
+    colsFixedDS <- isolate(input$colsFixedDS)
+    colsRandomDS <- isolate(input$colsRandomDS)
+    markersToTest <- isolate(input$DEFeaturesInVenn)
+    blockIDLimma <- isolate(input$blockID_limmaVenn)
+    includeWeights <- isolate(input$weightsSelectionVenn)
+    includeWeights <- ifelse(includeWeights == "Yes", TRUE, FALSE)
+    if(blockIDLimma != ""){
+      blockIDLimma <- metadata(sce)$experiment_info[[blockIDLimma]]
+    }else{
+      blockIDLimma <- NULL
+    }
+    limmaTrend <- ifelse(isolate(input$trend_limmaVenn) == "Yes", TRUE, FALSE)
+    binSize <- isolate(input$emdBinwidthVenn)
+    nperm <- isolate(input$emdNpermVenn)
+    if (binSize == 0) binSize <- NULL
+    
+    parameters[["diffcyt-DS-limma"]] <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrast,
+      colsDesign = colsDesignDS,
+      method = "diffcyt-DS-limma"
+    )
+    
+    parameters[["diffcyt-DS-LMM"]] <- prepDiffExp(
+      sce = sce, 
+      contrastVars = contrast,
+      colsFixed = colsFixedDS, 
+      colsRandom = colsRandomDS,
+      method = "diffcyt-DS-LMM"
+    )
+    
+    # -------------------------------
+    # DS: control inputs
+    # -------------------------------
+
+    if(ncol(parameters[["diffcyt-DS-limma"]][["design"]]) >= nr_samples){
+      showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
+      return(NULL)
+    }
+
+    if(nrow(parameters[["diffcyt-DS-LMM"]][["contrast"]]) >= nr_samples){
+      showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
+      return(NULL)
+    }
+    
+    if(isolate(input$blockID_limmaVenn) %in% input$colsDesignDS){
+      showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
+      return(NULL)
+    }
+    
+    # -------------------------------
+    # DS: run all methods
+    # -------------------------------
+    
+    showNotification(
+      ui =
+        HTML(
+          "<div id='emdProgress'><b>Progress:</b><div>"
+        ),
+      duration = NULL,
+      id = "emdProgressNote"
+    )
+
+    withCallingHandlers({
+      #TODO: include weights
+      resultVenn <- runDS(
+        sce = sce, 
+        parameters = parameters,
+        ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD"),
+        clustering_to_use = clusters,
+        markers_to_test = markersToTest,
+        blockID = blockIDLimma,
+        trend_limma = limmaTrend,
+        includeWeights = includeWeights,
+        sceEMD_condition = contrast,
+        binSize = binSize,
+        nperm = nperm
+      )
+    },
+    message = function(m) {
+      shinyjs::html(id = "emdProgress",
+                    html = sprintf("<br>%s", HTML(m$message)),
+                    add = TRUE)
+    })
+    removeNotification("emdProgressNote")
+    return(resultVenn)
+  }
+}
+
+# ---------------------------------------------------------------------------------
+# Renderer
+# ---------------------------------------------------------------------------------
+
 output$vennDiagrams <- renderPlot({
   ggplotObject <- ggplot() + theme_void()
   return(ggplotObject)
@@ -11,7 +242,6 @@ output$vennTitle <- renderUI({
   )
 })
 shinyjs::hide("vennDiagramsBox")
-#shinyjs::hidden("vennTable")
 
 output$modelSelectionVenn <- renderUI({
   if(input$da_dsVenn == "Differential Cluster Abundance"){
@@ -452,6 +682,27 @@ output$normalizeSelectionVenn <- renderUI({
   }
 })
 
+# selection of weights for analysis
+output$weightSelectionVenn <- renderUI({
+  req(input$da_dsVenn)
+  if (input$da_dsVenn == "Differential Marker Expression"){
+    div(
+      radioButtons(
+        inputId = "weightsSelectionVenn",
+        label = span("Do you want to include precision weights (cell counts) within the model?", icon("question-circle"), id = "weightSelectVennQ"),
+        choices = c("Yes", "No"), 
+        inline = T
+      ),
+      bsPopover(
+        id = "weightSelectVennQ",
+        title = "Whether to include precision weights within each model (across samples).",
+        content = "These represent the relative uncertainty in calculating each median value. The cell counts of each sample are incorporated in the analysis.",
+        placement = "top"
+      )
+    )
+  }
+})
+
 output$fdrVenn <- renderUI({
   div(
     numericInput(
@@ -465,13 +716,74 @@ output$fdrVenn <- renderUI({
   )
 })
 
+output$downloadVenn <- renderUI({
+  req(reactiveVals$lastVenn)
+  div(
+    downloadButton("downloadVennButton", "Download Plot"),
+    style = "float:right;"
+  )
+})
+
+output$downloadVennButton <- downloadHandler(
+  filename = function(){
+    paste0("VennDiagram", ".pdf")
+  },
+  content = function(file){
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    ggsave(file, plot = reactiveVals$lastVenn, width=12, height=12)
+    waiter_hide(id="app")
+  }
+)
+
+###Download buttons
+
+output$downloadTableVenn <- renderUI({
+  req(reactiveVals$lastAllResults)
+  req(reactiveVals$lastAllResultsSign)
+  fluidRow(
+    div(
+      downloadButton("downloadTableVennAll", "Download All Results"),
+      style = "float:right;"
+    ),
+    div(
+      downloadButton("downloadTableSign", "Download Venn Diagram Results"),
+      style = "float:right;"
+    )
+  )
+})
+
+output$downloadTableSign <- downloadHandler(
+  filename = "VennDiagramResults.csv",
+  content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    write.csv(reactiveVals$lastAllResultsSign, file, row.names = FALSE)
+    waiter_hide(id="app")
+  }
+)
+
+output$downloadTableVennAll <- downloadHandler(
+  filename = "AllResults.csv",
+  content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    write.csv(reactiveVals$lastAllResults, file, row.names = FALSE)
+    waiter_hide(id="app")
+  }
+)
+
+# ---------------------------------------------------------------------------------
+# Observer
+# ---------------------------------------------------------------------------------
+
 observeEvent(input$diffExpButtonVenn, {
   waiter_show(id = "app",html = tagList(spinner$logo, 
                              HTML("<br>DE Analysis in Progress...<br>Please be patient")), 
               color=spinner$color)
-  shinyjs::disable("diffExpButtonVenn")
-  shinyjs::disable("previousTab")
-  #shinyjs::disable("nextTab")
   req(input$da_dsVenn)
   resultVenn <- runMethods()
   if(!is.null(resultVenn)){
@@ -482,7 +794,7 @@ observeEvent(input$diffExpButtonVenn, {
     })
     output$vennDiagrams <- renderPlot({
       ds_bool <- isolate(reactiveVals$ds_bool)
-      venn <- createVennDiagramApp(resultVenn, ds_bool)
+      venn <- createVennDiagram(resultVenn, ds_bool, isolate(input$fdrThresholdVenn))
       reactiveVals$lastVenn <- venn
       venn
     })
@@ -552,366 +864,6 @@ observeEvent(input$diffExpButtonVenn, {
   shinyjs::enable("nextTab")
 })
 
-output$downloadVenn <- renderUI({
-  req(reactiveVals$lastVenn)
-  div(
-    downloadButton("downloadVennButton", "Download Plot"),
-    style = "float:right;"
-  )
-})
-
-output$downloadVennButton <- downloadHandler(
-  filename = function(){
-    paste0("VennDiagram", ".pdf")
-  },
-  content = function(file){
-    waiter_show(id = "app",html = tagList(spinner$logo, 
-                                          HTML("<br>Downloading...")), 
-                color=spinner$color)
-    ggsave(file, plot = reactiveVals$lastVenn, width=12, height=12)
-    waiter_hide(id="app")
-  }
-)
-
-output$downloadTableVenn <- renderUI({
-  req(reactiveVals$lastAllResults)
-  req(reactiveVals$lastAllResultsSign)
-  fluidRow(
-    div(
-      downloadButton("downloadTableVennAll", "Download All Results"),
-      style = "float:right;"
-    ),
-    div(
-      downloadButton("downloadTableSign", "Download Venn Diagram Results"),
-      style = "float:right;"
-    )
-  )
-})
-
-output$downloadTableSign <- downloadHandler(
-  filename = "VennDiagramResults.csv",
-  content = function(file) {
-    waiter_show(id = "app",html = tagList(spinner$logo, 
-                                          HTML("<br>Downloading...")), 
-                color=spinner$color)
-    write.csv(reactiveVals$lastAllResultsSign, file, row.names = FALSE)
-    waiter_hide(id="app")
-  }
-)
-
-output$downloadTableVennAll <- downloadHandler(
-  filename = "AllResults.csv",
-  content = function(file) {
-    waiter_show(id = "app",html = tagList(spinner$logo, 
-                                          HTML("<br>Downloading...")), 
-                color=spinner$color)
-    write.csv(reactiveVals$lastAllResults, file, row.names = FALSE)
-    waiter_hide(id="app")
-  }
-)
-
-runMethods <- function(){
-  resultVenn <- list()
-  reactiveVals$ds_bool <- T
-  if(input$da_dsVenn == "Differential Cluster Abundance"){
-    contrast <- isolate(input$contrastVarsDA)
-  }else{
-    contrast <- isolate(input$contrastVarsDS)
-  }
-  clusters <- isolate(input$deClusterVenn)
-  
-  if(is.null(input$deSubselectionVenn)){
-    subselection <- "No"
-  }else{
-    subselection <- isolate(input$deSubselectionVenn)
-  }
-  
-  sce <- isolate(reactiveVals$sce)
-  if(subselection != "No"){
-    catCount <- sapply(colnames(metadata(sce)$experiment_info)[!colnames(metadata(sce)$experiment_info) %in% c("n_cells", "sample_id")], function(x){
-      return(0)
-    })
-    names(catCount) <- colnames(metadata(sce)$experiment_info)[!colnames(metadata(sce)$experiment_info) %in% c("n_cells", "sample_id")]
-    exclude <- list()
-    for(s in subselection){
-      category <- reactiveVals$subselectionMap[[s]]
-      catCount[[category]] <- catCount[[category]] + 1 
-      if(!is.null(exclude[[category]])){
-        exclude[[category]] <- c(exclude[[category]], s)
-      }else{
-        exclude[[category]] <- s
-      }
-    }
-    for(x in names(catCount)){
-      if(x %in% contrast & catCount[[x]] == 1){
-        showNotification("You want to analyse a condition you subsetted. That is not meaningful. Try again.", type = "error")
-        return(NULL)
-      }
-    }
-    for(cat in names(exclude)){
-      sub <- exclude[[cat]]
-      print(sprintf("only using %s from the condition %s", sub, cat))
-      sce <- filterSCE(sce, get(cat) %in% sub)
-    }
-  }
-  
-  ei <- metadata(sce)$experiment_info
-  nr_samples <- length(levels(colData(sce)$sample_id))
-  
-  if(input$da_dsVenn == "Differential Cluster Abundance"){
-    reactiveVals$ds_bool <- F
-    colsDesignDA <- isolate(input$colsDesignDA)
-    
-    parameters <- prepDiffExp(
-      sce = sce, 
-      contrastVars = contrast,
-      colsDesign = colsDesignDA,
-      method = "diffcyt-DA-edgeR"
-    )
-    
-    design <- parameters[["design"]]
-    contrastMatrix <- parameters[["contrast"]]
-    
-    if(ncol(design) >= nr_samples){
-      showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
-      return(NULL)
-    }
-    
-    colsFixedDA <- isolate(input$colsFixedDA)
-    colsRandomDA <- isolate(input$colsRandomDA)
-    
-    parameters <- prepDiffExp(
-      sce = sce, 
-      contrastVars = contrast,
-      colsFixed = colsFixedDA, 
-      colsRandom = colsRandomDA,
-      method = "diffcyt-DA-GLMM"
-    )
-    
-    formulaGLMM <- parameters[["formula"]]
-    contrastGLMM <- parameters[["contrast"]]
-    if(nrow(contrastGLMM) >= nr_samples){
-      showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
-      out <- NULL
-    }
-    
-    edgeRTrend <- isolate(input$edgeR_trendMethodVenn)
-    
-    blockIDVoom <- isolate(input$blockID_voomVenn)
-    if(blockIDVoom %in% colsDesignDA){
-      showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
-      return(NULL)
-    }
-    if(blockIDVoom != ""){
-      blockIDVoom <- metadata(sce)$experiment_info[[blockIDVoom]]
-    }else{
-      blockIDVoom <- NULL
-    }
-    
-    normalize <- isolate(input$normalizeDEVenn)
-    if(normalize == "Yes"){
-      normalize <- TRUE
-    }else{
-      normalize <- FALSE
-    }
-    
-    for(method in c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM")){
-      print(method)
-      showNotification(sprintf("Calculating %s", method))
-      if(method == "diffcyt-DA-GLMM"){
-        out <- diffcyt::diffcyt(
-          d_input = sce,
-          formula = formulaGLMM,
-          contrast = contrastGLMM,
-          analysis_type = "DA",
-          method_DA = method,
-          clustering_to_use = clusters,
-          normalize = normalize
-        )
-      }else{
-        out <- diffcyt::diffcyt(
-          d_input = sce,
-          design = design,
-          contrast = contrastMatrix,
-          analysis_type = "DA",
-          method_DA = method,
-          clustering_to_use = clusters,
-          normalize = normalize,
-          trend_method = edgeRTrend,
-          block_id = blockIDVoom
-        )
-      }
-      resultVenn[[method]] <- rowData(out$res)
-    }
-    return(resultVenn)
-    
-  }else{
-    colsDesignDS <- isolate(input$colsDesignDS)
-    
-    parameters <- prepDiffExp(
-      sce = sce, 
-      contrastVars = contrast,
-      colsDesign = colsDesignDS,
-      method = "diffcyt-DS-limma"
-    )
-    design <- parameters[["design"]]
-    contrastMatrix <- parameters[["contrast"]]
-    if(ncol(design) >= nr_samples){
-      showNotification("You selected more conditions than there are samples which is not meaningful. Try again.", type = "error")
-      return(NULL)
-    }
-    
-    colsFixedDS <- isolate(input$colsFixedDS)
-    colsRandomDS <- isolate(input$colsRandomDS)
-    
-    parameters <- prepDiffExp(
-      sce = sce, 
-      contrastVars = contrast,
-      colsFixed = colsFixedDS, 
-      colsRandom = colsRandomDS,
-      method = "diffcyt-DS-LMM"
-    )
-    
-    formulaLMM <- parameters[["formula"]]
-    contrastLMM <- parameters[["contrast"]]
-    if(nrow(contrastLMM) >= nr_samples){
-      showNotification("You selected more conditions than there are samples as fixed effects which is not meaningful. Try again.", type = "error")
-      return(NULL)
-    }
-    
-    markersToTest <- isolate(input$DEFeaturesInVenn)
-    is_marker <- rowData(sce)$marker_class %in% c("type", "state")
-    if (input$DEMarkerToTestVenn == "Marker by Class") {
-      markersToTest <- (rowData(sce)$marker_class %in% markersToTest)[is_marker] # type and state (but not none)
-    }else{
-      markersToTest <- rownames(sce)[is_marker] %in% markersToTest
-    }
-    
-    blockIDLimma <- isolate(input$blockID_limmaVenn)
-    if(blockIDLimma %in% input$colsDesignDS){
-      showNotification("Please don't put your blocking variable in the design matrix. See our tooltip for more information", type = "error")
-      return(NULL)
-    }
-    if(blockIDLimma != ""){
-      blockIDLimma <- metadata(sce)$experiment_info[[blockIDLimma]]
-    }else{
-      blockIDLimma <- NULL
-    }
-    
-    limmaTrend <- isolate(input$trend_limmaVenn)
-    if(limmaTrend == "Yes"){
-      limmaTrend <- TRUE
-    }else{
-      limmaTrend <- FALSE
-    }
-    for(method in c("diffcyt-DS-limma", "diffcyt-DS-LMM")){
-      print(method)
-      showNotification(sprintf("Calculating %s", method))
-      if(method == "diffcyt-DS-limma"){
-        out <- diffcyt::diffcyt(
-          d_input = sce,
-          design = design,
-          contrast = contrastMatrix,
-          analysis_type = "DS",
-          method_DS = method,
-          clustering_to_use = clusters,
-          block_id = blockIDLimma,
-          trend = limmaTrend,
-          markers_to_test = markersToTest
-        )
-      }else{
-        out <- diffcyt::diffcyt(
-          d_input = sce,
-          formula = formulaLMM,
-          contrast = contrastLMM,
-          analysis_type = "DS",
-          method_DS = method,
-          clustering_to_use = clusters,
-          markers_to_test = markersToTest,
-        )
-      }
-      resultVenn[[method]] <- rowData(out$res)
-    }
-    #run EMD
-    markersToTest <- isolate(input$DEFeaturesInVenn)
-    if (isolate(input$DEMarkerToTestVenn) == "Marker by Class") {
-      sce <- filterSCE(sce, marker_classes(sce) %in% markersToTest)
-    }else{
-      sce <- filterSCE(sce, rownames(sce) %in% markersToTest)
-    }
-    
-    binSize <- isolate(input$emdBinwidthVenn)
-    nperm <- isolate(input$emdNpermVenn)
-    if (binSize == 0) binSize <- NULL
-    
-    showNotification(
-      ui =
-        HTML(
-          "<div id='emdProgress'><b>EMD Progress:</b><div>"
-        ),
-      duration = NULL,
-      id = "emdProgressNote"
-    )
-    #print(paste("k=", clusters, ", condition=", contrast, ", binsize =", binSize, ", nperm=", nperm))
-    withCallingHandlers({
-      out <-
-        sceEMD(
-          sce = sce,
-          k = clusters,
-          condition = contrast,
-          binSize = binSize,
-          nperm = nperm
-        )
-    },
-    message = function(m) {
-      shinyjs::html(id = "emdProgress",
-                    html = sprintf("<br>%s", HTML(m$message)),
-                    add = TRUE)
-    })
-    removeNotification("emdProgressNote")
-    resultVenn[["sceEMD"]] <- out
-    return(resultVenn)
-  }
-}
-
-createVennDiagramApp <- function(res, DS = T) {
-  input_venn <- list()
-  if(DS){
-    feature <- "marker_id"
-  }else{
-    feature <- "cluster_id"
-  }
-  # take of each method the data table containing the pvalues
-  for (ds_method in names(res)) {
-    if(feature == "cluster_id"){
-      result <-
-        data.frame(res[[ds_method]])[c(feature, "p_val", "p_adj")]
-      featureNew <- "cluster_id"
-    }else{
-      result <-
-        data.frame(res[[ds_method]])[c("cluster_id", feature, "p_val", "p_adj")]
-      if(result$cluster_id[1] != "all"){
-        result$marker_id_joined <- paste0(result$marker_id, "(", result$cluster_id, ")")
-        featureNew <- "marker_id_joined"
-      }else{
-        featureNew <- "marker_id"
-      }
-      
-    }
-    result$significant <- result$p_adj < isolate(input$fdrThresholdVenn)
-    significants <-
-      unlist(subset(
-        result,
-        significant == TRUE,
-        select = c(get(featureNew)),
-        use.names = FALSE
-      ))
-    input_venn[[ds_method]] <- significants
-  }
-  
-  venn <- ggvenn::ggvenn(input_venn, show_elements = TRUE, label_sep ="\n", fill_alpha = 0.3, set_name_size = 6, text_size = 4)
-  return(venn)
-}
 
 
 
