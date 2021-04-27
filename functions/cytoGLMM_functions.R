@@ -59,8 +59,7 @@ simulateSCE <- function (n_samples = 16,
   panel <- data.frame(
     fcs_colname = protein_names,
     antigen = protein_names,
-    marker_class = "state",
-    differential = c(rep(TRUE, n_true), rep(FALSE, n_markers - n_true))
+    marker_class = "state"
   )
   
   fs <- flowCore::flowSet(mapply(
@@ -69,12 +68,13 @@ simulateSCE <- function (n_samples = 16,
     md$file_name,
     md$sample_id
   ))
-  CATALYST::prepData(
+  sce <- CATALYST::prepData(
     x = fs,
     panel = panel,
-    md = md,
-    panel_cols = list(differential = "differential")
+    md = md
   )
+  SummarizedExperiment::rowData(sce)$differential <- c(rep(TRUE, n_true), rep(FALSE, n_markers - n_true))
+  sce
 }
 
 
@@ -83,26 +83,26 @@ runCytoGLMM <-
            condition,
            group,
            method = "cytoglmm",
-           protein_names = SummarizedExperiment::rowData(sce)$marker_name,
+           features = SummarizedExperiment::rowData(sce)$marker_name,
            assay_to_use = "exprs",
            num_cores = 1,
            num_boot = 100) {
     match.arg(method, c("cytoglmm", "cytoglm"))
-    match.arg(assay_to_use, names(SummarizedExperiment::assays(sce)))
+    match.arg(assay_to_use, SummarizedExperiment::assayNames(sce))
     data <-
       as.data.frame(t(SummarizedExperiment::assay(sce, assay_to_use)))
-    marker_names <-
-      match.arg(protein_names, SummarizedExperiment::rowData(sce)$marker_name, several.ok = TRUE)
-    marker_names <- sapply(marker_names, function(marker) {
+    # features <-
+    #   match.arg(features, SummarizedExperiment::rowData(sce)$marker_name, several.ok = TRUE)
+    features <- sapply(features, function(marker) {
       gsub("[^[:alnum:]]", "", marker)
     })
-    colnames(data) <- marker_names
+    colnames(data) <- features
     data$donor <- SummarizedExperiment::colData(sce)[[group]]
     data$condition <- SummarizedExperiment::colData(sce)[[condition]]
     args <-
       list(
         df_samples_subset = data,
-        protein_names = marker_names,
+        protein_names = features,
         condition = "condition",
         group = "donor",
         num_cores = num_cores
