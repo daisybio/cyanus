@@ -24,69 +24,6 @@ param <- MulticoreParam(workers = 22)
 register(param)
 ```
 
-## GENERATED DATA
-```{r, eval=FALSE}
-set.seed(23)
-df <- generate_data()
-df
-
-protein_names <- names(df)[3:12]
-df %<>% dplyr:: mutate_at(protein_names, function(x) asinh(x/5))
-glmm_fit <- CytoGLMM::cytoglmm(df,
-                               protein_names = protein_names,
-                               condition = "condition",
-                               group = "donor",
-                               num_cores=1)
-glmm_fit
-plot(glmm_fit)
-summary(glmm_fit)
-summary(glmm_fit) %>% dplyr::filter(pvalues_adj < 0.05)
-
-
-glm_fit <- CytoGLMM::cytoglm(df,
-                             protein_names = protein_names,
-                             condition = "condition",
-                             group = "donor",
-                             num_boot = 1000)
-glm_fit
-summary(glm_fit)
-
-```
-
-
-## TRY WITH PBMC DATA
-```{r, eval=FALSE}
-data(PBMC_panel, PBMC_md, PBMC_fs)
-sce_pbmc <- prepData(PBMC_fs, PBMC_panel, PBMC_md, transform=T)
-
-runCytoGLMM(sce_pbmc, "condition", "patient_id")
-
-```
-
-
-## TRY WITH PLATELETS DATA (DUAL TRIPLE THERAPY)
-```{r, eval=FALSE}
-#sce_platelets <- readRDS("/Users/lisiarend/Desktop/Uni/Master/SysBioMed/CyTOF/cytof/data/platelets_small/sce.rds")
-#sce_platelets
-
-runCytoGLMM(sce_platelets, "platelets", "patient_id")
-
-
-## SAMPLE PLATELETS DATA
-ei_platelets <- ei(sce_platelets)
-ei_platelets$platelets <- sample(ei_platelets$platelets)
-platelets <- rep(ei_platelets$platelets, times = as.numeric(ei_platelets$n_cells))
-data$condition <- platelets
-
-glmm_fit <- CytoGLMM:: cytoglmm(data,
-                                protein_names = marker_names,
-                                condition = "condition",
-                                group = "donor")
-summary(glmm_fit)
-results <- summary(glmm_fit)
-p.adjust(results$pvalues_unadj, method = "BH")
-```
-
 
 ## COVID DATA
 ```{r}
@@ -123,10 +60,41 @@ sce_covid <-
 #sce_covid <- clusterSCE(sce_covid)
 ```
 
+
 ```{r}
-# read in sce_covid
-#sce_covid <- readRDS("/nfs/home/students/l.arend/data/covid/sce_covid")
+CATALYST:: plotCounts(sce_covid,
+                      color_by = "covid",
+                      group_by = "patient_id")
 ```
+
+
+```{r}
+sceBaseline <- filterSCE(sce_covid, platelets == "B")
+
+CATALYST::pbMDS(sceBaseline,
+                label_by = "sample_id",
+                color_by = "covid",
+                features = NULL,
+                assay = "exprs")
+```
+
+```{r}
+CATALYST::plotExprs(sceBaseline, color_by = "covid")
+```
+
+```{r}
+CATALYST::plotExprs(sceBaseline, color_by = "patient_id")
+```
+
+
+
+```{r}
+CATALYST::plotExprHeatmap(sceBaseline, scale="never")
+```
+
+
+
+
 
 
 ## Activated vs. baseline in healthy patients
@@ -166,7 +134,7 @@ rowData(sce_baseline)$marker_class <- rowData(sce_baseline)$marker_class[rowData
 CATALYST::plotPbExprs(sce_baseline, k = "all", features = NULL , color_by = "covid",  ncol=5, facet_by = "antigen") #+  theme(text = element_text(size=16))
 
 # diffcyt methods
-res_baseline <- runDS_old(sce = sce_baseline,
+res_baseline <- runDS(sce = sce_baseline,
       condition = "covid",
       de_methods = c("LMM", "limma"),
       k = "all",
@@ -206,7 +174,7 @@ CATALYST::plotPbExprs(sce_activated, k = "all", features = NULL , color_by = "co
 
 
 # diffcyt methods
-res_activated <- runDS_old(sce = sce_activated,
+res_activated <- runDS(sce = sce_activated,
       condition = "covid",
       de_methods = c("LMM", "limma"),
       k = "all",
