@@ -7,6 +7,7 @@ source("functions/cluster_functions.R")
 source("functions/de_functions.R")
 source("functions/cytoGLMM_functions.R")
 source("functions/ZIBseq_functions.R")
+source("functions/prep_functions.R")
 
 
 ################## PBMC DATA ####################
@@ -67,44 +68,3 @@ LMM_results <- diffcyt_method(d_input = sce_covid_spiked,
                                      use_weights = FALSE,
                                      markers_to_test = markers_to_test)
 
-
-## ZIBR TOOL
-devtools::install_github("chvlyl/ZIBR")
-library(ZIBR)
-
-sim <- ZIBR::simulate_zero_inflated_beta_random_effect_data(
-  subject.n=100,time.n=5,
-  X = as.matrix(c(rep(0,50*5),rep(1,50*5))),
-  Z = as.matrix(c(rep(0,50*5),rep(1,50*5))),
-  alpha = as.matrix(c(-0.5,1)),
-  beta = as.matrix(c(-0.5,0.5)),
-  s1 = 1,s2 = 0.8,
-  v = 5,
-  sim.seed=100)
-
-
-
-
-transformData <-
-  function (sce,
-            cf = 5,
-            ain = "counts",
-            aout = "exprs") {
-    y <- assay(sce, ain)
-    chs <- channels(sce)
-    stopifnot(is.numeric(cf), cf > 0)
-    if (length(cf) == 1) {
-      int_metadata(sce)$cofactor <- cf
-      cf <- rep(cf, nrow(sce))
-    }
-    else {
-      stopifnot(!is.null(names(cf)), chs %in% names(cf))
-      cf <- cf[match(chs, names(cf))]
-      int_metadata(sce)$cofactor <- cf
-    }
-    fun <- asinh
-    op <- "/"
-    y <- fun(sweep(y, 1, cf, op))
-    assay(sce, aout, FALSE) <- y
-    sce
-  }
