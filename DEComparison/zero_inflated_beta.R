@@ -37,9 +37,8 @@ padj <- p.adjust(result$pvalues, method="BH")
 names(padj) <- colnames(exprs)
 
 
-
 ################# Simulated data set ########################
-sce_cytoGLMM <- simulateSCE(n_true=5)
+sce_cytoGLMM <- simulateSCE()
 
 CATALYST::plotExprs(sce_cytoGLMM)
 
