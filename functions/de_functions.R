@@ -134,7 +134,7 @@ runDS <- function(sce, clustering_to_use, contrast_vars,
     sce <- CATALYST::filterSCE(sce, rownames(sce) %in% markers_to_test)
   }
   cluster_ids <- CATALYST::cluster_ids(sce, clustering_to_use)
-  res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
+  res <- sapply(levels(cluster_ids), function(curr_cluster_id) {
     cluster_results <- list()
     #subset sce to the desired cluster_id
     sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = clustering_to_use)
@@ -169,7 +169,7 @@ runDS <- function(sce, clustering_to_use, contrast_vars,
     #TODO: cytoglmm
     #TODO: elasticnet
     return(data.table::rbindlist(cluster_results, idcol = 'method'))
-    })
+    }, simplify=FALSE)
   other_res <- data.table::rbindlist(res, idcol = 'cluster_id')
   other_res[, p_adj := p.adjust(p_val, "BH"), by="method"]
   if(time_methods){
