@@ -68,7 +68,7 @@ runDA <- function(sce, parameters = NULL,
 runDS <- function(sce, parameters = NULL,
                   ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD"),
                   clustering_to_use, contrast_vars = NULL, design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
-                  markers_to_test,
+                  markers_to_test, parallel = FALSE,
                   ...) {
   
   #for limma and LMM: 
@@ -128,7 +128,8 @@ runDS <- function(sce, parameters = NULL,
           k = clustering_to_use,
           condition = extra_args$sceEMD_condition,
           binSize = extra_args$binSize,
-          nperm = extra_args$nperm
+          nperm = extra_args$nperm,
+          parallel = parallel
         )
       results[[method]] <- out
     }
@@ -201,7 +202,7 @@ createCustomContrastMatrix <- function(sce, contrastVars, matrix, designMatrix =
     #the entries have to correspond to the columns of the design matrix
     cnames <- colnames(matrix)
     bool <- getBools(cnames, contrastVars)
-    contrast <- createContrast(bool)
+    contrast <- diffcyt::createContrast(bool)
     print(contrast)
     return(contrast)
   }else{
@@ -214,7 +215,7 @@ createCustomContrastMatrix <- function(sce, contrastVars, matrix, designMatrix =
       return( c( 0, rep(bool[x], length(lvlList[[x]]) -1 )) ) 
     }))
     print(contrast)
-    return(createContrast(unname(contrast)))
+    return(diffcyt::createContrast(unname(contrast)))
   }
 }
 
