@@ -166,7 +166,7 @@ rowData(sce_baseline)$marker_class <- rowData(sce_baseline)$marker_class[rowData
 CATALYST::plotPbExprs(sce_baseline, k = "all", features = NULL , color_by = "covid",  ncol=5, facet_by = "antigen") #+  theme(text = element_text(size=16))
 
 # diffcyt methods
-res_baseline <- runDS(sce = sce_baseline,
+res_baseline <- runDS_old(sce = sce_baseline,
       condition = "covid",
       de_methods = c("LMM", "limma"),
       k = "all",
@@ -206,7 +206,7 @@ CATALYST::plotPbExprs(sce_activated, k = "all", features = NULL , color_by = "co
 
 
 # diffcyt methods
-res_activated <- runDS(sce = sce_activated,
+res_activated <- runDS_old(sce = sce_activated,
       condition = "covid",
       de_methods = c("LMM", "limma"),
       k = "all",

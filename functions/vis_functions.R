@@ -1,19 +1,21 @@
 runCatalystDR <-
-  function(dr_chosen,
-           cells_chosen,
-           feature_chosen,
-           assay_chosen,
-           scale,
-           k,
-           dimensions) {
+  function(sce, 
+           dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap"),
+           cells_chosen = NULL,
+           feature_chosen = "type",
+           assay_chosen = "exprs",
+           scale = T,
+           k = 5,
+           dimensions = 2) {
+    match.arg(dr_chosen)
     if (scale == "yes") {
       scale <- T
     } else{
       scale <- F
     }
     if (dr_chosen == "Isomap") {
-      reactiveVals$sce <- runIsomap(
-        reactiveVals$sce,
+      sce <- runIsomap(
+        sce,
         cells = cells_chosen,
         features = feature_chosen,
         assay = assay_chosen,
@@ -23,8 +25,8 @@ runCatalystDR <-
       )
       
     } else{
-      reactiveVals$sce <- runDR(
-        reactiveVals$sce,
+      sce <- CATALYST::runDR(
+        x = sce,
         dr = dr_chosen,
         cells = cells_chosen,
         features = feature_chosen,
@@ -33,7 +35,7 @@ runCatalystDR <-
         ncomponents = dimensions
       )
     }
-    reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
+    return(sce)
   }
 
 makeDR <-
@@ -56,7 +58,7 @@ makeDR <-
       scale <- F
     }
     g <-
-      plotDR(
+      CATALYST::plotDR(
         sce,
         dr = dr_chosen,
         color_by = color_chosen,
@@ -67,37 +69,6 @@ makeDR <-
       )
     return(g)
   }
-
-
-### FROM ALL THE NOTEBOOKS----
-#run the dimensionality reduction; function either calls CATALYST::runDR or runIsomap
-runDimRed <- function(sce, dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap"), 
-                      cells_chosen = NULL, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3){
-  match.arg(dr_chosen)
-  if (dr_chosen == "Isomap") {
-    sce <- runIsomap(
-      sce,
-      cells = cells_chosen,
-      features = feature_chosen,
-      assay = assay_chosen,
-      scale = scale,
-      k = k
-    )
-    
-  } else{
-    sce <- CATALYST::runDR(
-      sce,
-      dr = dr_chosen,
-      cells = cells_chosen,
-      features = feature_chosen,
-      assay = assay_chosen,
-      scale = scale
-    )
-  }
-}
-
-#plot the dimensionality reduction by calling:
-#CATALYST::plotDR(sce, dr = dr_chosen, color_by = color_chosen, facet_by = facet_chosen, assay = assay_chosen, scale = scale)
 
 #adapted from CATALYST::runDR
 runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scale = TRUE, k = 5, dimensions = 2) 
@@ -144,4 +115,27 @@ runIsomap <- function (x, cells = NULL, features = "type", assay = "exprs", scal
   m[cs, ] <- res_isomap@data@data
   reducedDim(x, "Isomap") <- m
   return(x)
+}
+
+
+renameColorColumn <- function(columnNames, color_by = T) {
+  returnVector <- c()
+  if ("sample_id" %in% columnNames) {
+    returnVector <- c(returnVector, "Sample ID" = "sample_id")
+    columnNames <- columnNames[columnNames != "sample_id"]
+  }
+  if ("patient_id" %in% columnNames) {
+    returnVector <- c(returnVector, "Patient ID" = "patient_id")
+    columnNames <- columnNames[columnNames != "patient_id"]
+  }
+  if ("cluster_id" %in% columnNames) {
+    returnVector <- c(returnVector, "flowSOM ID" = "cluster_id")
+    columnNames <- columnNames[columnNames != "cluster_id"]
+    if (color_by) {
+      returnVector <-
+        c(returnVector, names(cluster_codes(reactiveVals$sce))[-1])
+    }
+  }
+  returnVector <- c(returnVector, columnNames)
+  return(returnVector)
 }

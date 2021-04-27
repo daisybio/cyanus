@@ -68,7 +68,7 @@ sceEMD <- function(sce, k, condition, binSize=NULL, nperm=100, assay="exprs", se
     sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = k)
     data <- SummarizedExperiment::assay(sce_cluster, assay)
     
-    condition_cluster <- SingleCellExperiment::colData(sce_cluster)[[condition]]
+    condition_cluster <- SummarizedExperiment::colData(sce_cluster)[[condition]]
     emd_real <- rowwiseEMD(mat = data, condition = condition_cluster, binSize = binSize)
     emd_real$cluster_id <- as.factor(curr_cluster_id)
     data.table::setnames(emd_real, "result", "real_emd")

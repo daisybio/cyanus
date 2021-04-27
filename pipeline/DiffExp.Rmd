@@ -96,7 +96,7 @@ sce <- clusterSCE(sce)
 DR_methods <- c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")
 for( method in DR_methods ){
   print(method)
-  sce <- runDimRed(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
+  sce <- runCatalystDR(sce, method, cells_chosen = 100, feature_chosen = "type", assay_chosen = "exprs", scale = T, k = 3)
 }
 
 #saveRDS(sce,"../data/platelets/sceSampledCells.rds")
@@ -129,7 +129,7 @@ Let's try all possible methods on the dual samples:
 # subsett SingleCellExperiment for dual patients
 sce_dual <- filterSCE(sce, dual_triple == "dual")
 
-res_dual <- suppressMessages(runDS(sce = sce_dual,
+res_dual <- suppressMessages(runDS_old(sce = sce_dual,
       condition = "activated_baseline",
       random_effect = "patient_id",
       de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
@@ -141,7 +141,7 @@ res_dual <- suppressMessages(runDS(sce = sce_dual,
 
 # significant markers found by all methods:
 
-createVennDiagram(res_dual)
+createVennDiagramOld(res_dual)
 ```
 
 Let's try to permute the labels (activated and baseline) and check the results.
@@ -163,7 +163,7 @@ metadata(sce_dual_sampled)$experiment_info <- ei
 coldata_condition <- rep(condition, times=ei$n_cells)
 colData(sce_dual_sampled)$activated_baseline <- as.factor(coldata_condition)
 
-res_dual_sampled <- suppressMessages(runDS(sce = sce_dual_sampled,
+res_dual_sampled <- suppressMessages(runDS_old(sce = sce_dual_sampled,
       condition = "activated_baseline",
       random_effect = "patient_id",
       de_methods = c("limma","LMM", "SigEMD", "DEsingle"),
@@ -172,7 +172,7 @@ res_dual_sampled <- suppressMessages(runDS(sce = sce_dual_sampled,
       nperm = 100,
       parallel = TRUE))
 
-createVennDiagram(res_dual_sampled)
+createVennDiagramOld(res_dual_sampled)
 
 ```
 
@@ -185,7 +185,7 @@ res_perm_samples <- suppressMessages(SigEMD(sce_dual, "all", "activated_baseline
 res_perm_samples$overall <- data.table::rbindlist(lapply(res_perm_samples, function(x) x$emdall))
 res_dual$SigEMD <- res_perm_samples
 
-createVennDiagram(res_dual)
+createVennDiagramOld(res_dual)
 ```
 
 
@@ -259,7 +259,7 @@ Let's try all possible methods on the triple samples:
 ```{r}
 sce_triple <- filterSCE(sce, dual_triple == "triple")
 
-res_triple <- suppressMessages(runDS(sce = sce_triple,
+res_triple <- suppressMessages(runDS_old(sce = sce_triple,
       condition = "activated_baseline",
       random_effect = "patient_id",
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
@@ -270,7 +270,7 @@ res_triple <- suppressMessages(runDS(sce = sce_triple,
       parallel = TRUE))
 
 # significant markers found by all methods:
-createVennDiagram(res_triple)
+createVennDiagramOld(res_triple)
 ```
 
 
@@ -279,7 +279,7 @@ Let's try all possible methods on the A samples:
 ```{r}
 sce_a <- filterSCE(sce, activated_baseline == "A")
 
-res_a <- suppressMessages(runDS(sce = sce_a,
+res_a <- suppressMessages(runDS_old(sce = sce_a,
       condition = "dual_triple",
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
       k = "all",
@@ -289,7 +289,7 @@ res_a <- suppressMessages(runDS(sce = sce_a,
       parallel = TRUE))
 
 # Significant markers found by all methods:
-createVennDiagram(res_a)
+createVennDiagramOld(res_a)
 ```
 
 
@@ -298,7 +298,7 @@ Let's try all possible methods on the B samples:
 ```{r}
 sce_b <- filterSCE(sce, activated_baseline == "B")
 
-res_b <- suppressMessages(runDS(sce = sce_b,
+res_b <- suppressMessages(runDS_old(sce = sce_b,
       condition = "dual_triple",
       de_methods = c("limma", "LMM", "SigEMD", "DEsingle"),
       k = "all",
@@ -308,6 +308,6 @@ res_b <- suppressMessages(runDS(sce = sce_b,
       parallel = TRUE))
 
 # Significant markers found by all methods:
-createVennDiagram(res_b)
+createVennDiagramOld(res_b)
 ```
 ```

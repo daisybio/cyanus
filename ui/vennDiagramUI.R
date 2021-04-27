@@ -31,6 +31,7 @@ vennBody <- function(){
       uiOutput("markerToTestSelectionVenn"),
       uiOutput("extraFeaturesVenn"),
       uiOutput("normalizeSelectionVenn"),
+      uiOutput("weightSelectionVenn"),
       uiOutput("fdrVenn"),
       width = 6),
     div(

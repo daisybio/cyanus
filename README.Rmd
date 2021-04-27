@@ -157,7 +157,7 @@ We try UMAP and PCA on our data and color by the expression of our state markers
 DR_methods <- c("UMAP","PCA")
 
 for( method in DR_methods ){
-  sce <- runDimRed(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T)
+  sce <- runCatalystDR(sce, method, cells_chosen = 1000, feature_chosen = "type", assay_chosen = "exprs", scale = T)
 }
 
 state_markers <- rowData(sce)[rowData(sce)$marker_class=="state",]$marker_name
@@ -188,7 +188,7 @@ From this plot, we can see that our state markers CD63 and CD62P are probably di
 
 We now perform out differential expression analysis with the LMM. We include patient_id as random effect such that the LMM can compare the marker expressions sample-wise
 ```{r LMM dual}
-res_d <- runDS(sce = sce_d,
+res_d <- runDS_old(sce = sce_d,
       condition = "activated_baseline",
       de_methods = c("LMM"),
       k = "all",
@@ -216,7 +216,7 @@ CATALYST::plotPbExprs(sce_t, k = "all", features = NULL , color_by = "activated_
 ```
 Again, we expect CD62P and CD63 to be differentially expressed. CD107a and CD154 again have a median marker expression in every sample except for one. 
 ```{r LMM triple}
-res_t <- runDS(sce = sce_t,
+res_t <- runDS_old(sce = sce_t,
       condition = "activated_baseline",
       de_methods = c("LMM"),
       k = "all",
@@ -236,7 +236,7 @@ Here, we also find two type markers to be differentially expressed: PAR1 and CD4
 Lastly, let's compare which markers are found by limma and LMM:
 
 ```{r venn triple}
-res_triple <- runDS(sce = sce_t,
+res_triple <- runDS_old(sce = sce_t,
       condition = "activated_baseline",
       random_effect = "patient_id",
       de_methods = c("limma","LMM"),
@@ -245,7 +245,7 @@ res_triple <- runDS(sce = sce_t,
 
 
 # significant markers found by all methods:
-createVennDiagram(res_triple)
+createVennDiagramOld(res_triple)
 ```
 limma only finds the two state markers. When we look into the heatmap from the LMM and the boxplots of the median marker expression, we can see why: 
 The difference between the median marker expressions does not look so different overall in the boxplots. This is the only thing that limma can evaluate. Because we tell the LMM to take the patient_id into account as an random effect, it compares the median marker expressions patient-wise. In the heatmap, the patient samples are shown next to each other. We can see that PAR1 and CD42a are downregulated for the activated platelets in each patient but the expressions per patient vary. This is why limma cannot find these two markers

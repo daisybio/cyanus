@@ -471,7 +471,7 @@ plotClusterExprsCustom <-
       t(CATALYST:::.agg(x[features,], "cluster_id", "median", assay = assay))
     d <- dist(ms, method = "euclidean")
     o <- hclust(d, method = "average")$order
-    cd <- SingleCellExperiment::colData(x)
+    cd <- SummarizedExperiment::colData(x)
     es <- assay(x[features,], assay)
     df <-
       data.table::as.data.table(data.frame(t(es), cd, check.names = FALSE))
@@ -600,15 +600,15 @@ clusterSCE <-
     )
     features <- CATALYST:::.get_features(x, features)
     if (is.null(CATALYST::marker_classes(x))) {
-      SingleCellExperiment::rowData(x)$marker_class <-
+      SummarizedExperiment::rowData(x)$marker_class <-
         factor(c("state", "type")[as.numeric(rownames(x) %in%
                                                features) + 1], levels = c("type", "state", "none"))
     }
-    SingleCellExperiment::rowData(x)$used_for_clustering <- rownames(x) %in% features
+    SummarizedExperiment::rowData(x)$used_for_clustering <- rownames(x) %in% features
     if (verbose)
       message("o running FlowSOM clustering...")
     fsom <-
-      FlowSOM::ReadInput(flowCore::flowFrame(t(SingleCellExperiment::assay(x, assayType))))
+      FlowSOM::ReadInput(flowCore::flowFrame(t(SummarizedExperiment::assay(x, assayType))))
     som <-
       FlowSOM::BuildSOM(
         fsom,
