@@ -9,9 +9,6 @@ source("functions/cytoGLMM_functions.R")
 source("functions/ZIBseq_functions.R")
 source("functions/prep_functions.R")
 
-# cytoGLMM simulator (5 of 20 markers significant)
-sce_cytoGLMM <- simulateSCE(n_true = 5, n_markers = 10)
-
 
 ################## PBMC DATA ####################
 data(PBMC_panel, PBMC_md, PBMC_fs)
@@ -42,13 +39,14 @@ names(padj) <- colnames(exprs)
 
 
 ################# Simulated data set ########################
-sce_cytoGLMM <- simulateSCE()
+sce_cytoGLMM <- simulateSCE(n_true=5)
 
-result <- zibSeq(sce = sce_cytoGLMM, condition = "condition")
-padj <- p.adjust(result$pvalues, method="BH")
-names(padj) <- colnames(exprs)
+CATALYST::plotExprs(sce_cytoGLMM)
 
-results_cytoGLMM <- runCytoGLMM(sce_cytoGLMM, "condition", "patient_id")
+result <- zibSeq(sce = sce_cytoGLMM, condition = "condition", random_effect = "patient_id")
+
+result_weights <- zibSeq(sce = sce_cytoGLMM, condition = "condition", weighted=TRUE)
+result_weights_random <- zibSeq(sce = sce_cytoGLMM, condition = "condition", weighted=TRUE, random_effect = "patient_id")
 
 
 #################### Covid spiked data #########################

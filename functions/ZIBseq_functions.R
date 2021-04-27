@@ -1,7 +1,7 @@
-zibSeq <- function (sce, condition, random_effect=NULL, alpha = 0.05)
+zibSeq <- function (sce, condition, random_effect=NULL, weighted = FALSE)
 {
-  X = t(as.data.frame(assays(sce)$exprs))
-  Y = colData(sce)[[condition]]
+  X <- t(as.data.frame(assays(sce)$exprs))
+  Y <- colData(sce)[[condition]]
   
   if (!is.null(random_effect)){
     R = colData(sce)[[random_effect]]
@@ -9,6 +9,16 @@ zibSeq <- function (sce, condition, random_effect=NULL, alpha = 0.05)
   } else {
     message("Fitting a zero-inflated beta model...")
   }
+  
+  # inverse weights
+  if (weighted){
+    weights <- NULL
+    message("Fitting model with weights")
+  } else{
+    weights <- rep(1/ei(sce)$n_cells, ei(sce)$n_cells)
+    message("Fitting model without weights")
+  }
+  
   P = dim(X)[2]
   beta = matrix(data = NA, P, 2)
   for (i in 1:P) {
@@ -27,20 +37,27 @@ zibSeq <- function (sce, condition, random_effect=NULL, alpha = 0.05)
       # with random effect
       data$random = R
       bereg = gamlss::gamlss(exprs ~ condition + re(random=(~1|random)), family = BEZI(), 
-                             trace = FALSE, control = gamlss.control(n.cyc = 100), data = data)
+                             trace = FALSE, control = gamlss.control(n.cyc = 100), data = data, weights=weights)
     } else {
       # without random effect
       bereg = gamlss::gamlss(exprs ~ condition, family = BEZI(), 
-                             trace = FALSE, control = gamlss.control(n.cyc = 100), data = data)
+                             trace = FALSE, control = gamlss.control(n.cyc = 100), data = data, weights=weights)
     }
   
     out = summary(bereg)
     beta[i, ] = out[2, c(1, 4)]
   }
   pvalues = beta[, 2]
-  qvalues = ZIBseq:::calc_qvalues(pvalues)
-  sig = which(qvalues < alpha)
-  sigFeature = colnames(X)[sig]
-  list(sigFeature = sigFeature, useFeature = P, qvalues = qvalues, 
-       pvalues = pvalues)
+  browser()
+  #qvalues = ZIBseq:::calc_qvalues(pvalues)
+  #sig = which(qvalues < alpha)
+  #sigFeature = colnames(X)[sig]
+  padj <- p.adjust(pvalues, method = "BH")
+  res <- data.table(marker_id = colnames(X), 
+                    p_val = pvalues, 
+                    p_adj = padj
+                    )
+  #list(sigFeature = sigFeature, useFeature = P, qvalues = qvalues, 
+       #pvalues = pvalues)
+  return (res)
 }
