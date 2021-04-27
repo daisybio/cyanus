@@ -1,12 +1,166 @@
-library(CATALYST)
-library(diffcyt)
-library(uwot)
-library(ggplot2)
-library(dimRed)
-library(RANN)
-library(ggvenn)
-
 #the EMD functions are in sceEMD.R
+
+#################################### EXAMPLE #################################################### 
+#source: cluster_functions, de_functions, venn_functions, sceEMD
+#sce <- clusterSCE(sce)
+#DA: 
+#results <- 
+#  runDA(sce, 
+#        da_methods = c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM"), 
+#        clustering_to_use = "meta10", contrast_vars = "activated_baseline", 
+#        design_matrix_vars = c("patient_id", "activated_baseline"), 
+#        fixed_effects = "activated_baseline", 
+#        random_effects = "patient_id")
+#createVennDiagram(results, DS = F, 0.05)
+#DS:
+#results <- runDS(sce, 
+#                 ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD"), 
+#                 clustering_to_use = "all", contrast_vars = "activated_baseline", 
+#                 design_matrix_vars = c("patient_id", "activated_baseline"), fixed_effects = "activated_baseline", 
+#                 random_effects = "patient_id", markers_to_test = "state", 
+#                 sceEMD_condition = "activated_baseline", binSize = 0, nperm = 100)
+#createVennDiagram(results, DS = T, 0.05)
+###################################################################################################
+
+runDA <- function(sce, parameters = NULL,
+                  da_methods = c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM"),
+                  clustering_to_use = "all", normalize = T, trend_edgeR = "none", blockID = NULL, 
+                  contrast_vars = NULL, design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL){
+  
+  #either: first call prepDiffExp by yourself and give runDA the result as list of parameters
+  #or: specify contrast_vars + design_matrix_vars/fixed_effects+random_effects and we make it for you
+  
+  da_methods <- match.arg(da_methods, several.ok = TRUE)
+  if(is.null(parameters)){
+    parameters <- list()
+  }
+  
+  results <- list()
+  for(method in da_methods){
+    message(paste("Calculating results for", method, "..."))
+    
+    if(is.null(parameters[[method]]) & method == "diffcyt-DA-GLMM"){
+      message(paste("Making specific parameters for:", method ,"\nfixed effects:", toString(fixed_effects), ", random effects:", toString(random_effects), ", contrast:", toString(contrast_vars)))
+      parameters[[method]] <- prepDiffExp(sce = sce, contrastVars = contrast_vars, colsFixed = fixed_effects, colsRandom = random_effects, method = method
+      )
+    }else if(is.null(parameters[[method]])){
+      message(paste("Making specific parameters for:", method,"\ninclude in design matrix:", toString(design_matrix_vars), ", contrast:", toString(contrast_vars)))
+      parameters[[method]] <- prepDiffExp(sce = sce, contrastVars = contrast_vars, colsDesign = design_matrix_vars, method = method)
+    }
+    
+    out <- diffcyt::diffcyt(
+      d_input = sce,
+      design = parameters[[method]][["design"]],
+      formula = parameters[[method]][["formula"]],
+      contrast = parameters[[method]][["contrast"]],
+      analysis_type = "DA",
+      method_DA = method,
+      clustering_to_use = clustering_to_use,
+      normalize = normalize,
+      trend_method = trend_edgeR,
+      block_id = blockID
+    )
+    results[[method]] <- rowData(out$res)
+  }
+  return(results)
+}
+
+runDS <- function(sce, parameters = NULL,
+                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD"),
+                  clustering_to_use, contrast_vars = NULL, design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
+                  markers_to_test,
+                  ...) {
+  
+  #for limma and LMM: 
+  ##for parameters:
+  ###either: first call prepDiffExp by yourself and give runDA the result as list of parameters
+  ###or: specify contrast_vars + design_matrix_vars/fixed_effects+random_effects and we make it for you
+  
+  ds_methods <- match.arg(ds_methods, several.ok = TRUE)
+  extra_args <- list(...)
+  
+  if(is.null(parameters)){
+    parameters <- list()
+  }
+  
+  results <- list()
+  for (method in ds_methods) {
+    message(paste("Calculating results for", method, "..."))
+    if (method %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
+      
+      if(is.null(parameters[[method]]) & method == "diffcyt-DS-LMM"){
+        message(paste("Making specific parameters for:", method ,"fixed effects:", fixed_effects, ", random effects:", random_effects, ", contrast:", contrast_vars))
+        parameters[[method]] <- prepDiffExp(sce = sce, contrastVars = contrast_vars, colsFixed = fixed_effects, colsRandom = random_effects, method = method)
+      }else if(is.null(parameters[[method]])){
+        message(paste("Making specific parameters for:", method,"include in design matrix:", design_matrix_vars, ", contrast:", contrast_vars))
+        parameters[[method]] <- prepDiffExp(sce = sce, contrastVars = contrast_vars, colsDesign = design_matrix_vars, method = method)
+      }
+      
+      #extra args: blockID, trend_limma, markersToTest, includeWeights
+      trend <- ifelse(is.null(extra_args$trend_limma), TRUE, extra_args$trend_limma)
+      weights <- ifelse(is.null(extra_args$includeWeights), TRUE, extra_args$includeWeights)
+      
+      out <- diffcyt::diffcyt(
+        d_input = sce,
+        design = parameters[[method]][["design"]],
+        formula = parameters[[method]][["formula"]],
+        contrast = parameters[[method]][["contrast"]],
+        analysis_type = "DS",
+        method_DS = method,
+        clustering_to_use = clustering_to_use,
+        block_id = extra_args$blockID,
+        trend = trend,
+        markers_to_test = getMarkersToTest(sce, method, markers_to_test),
+        weights = weights
+      )
+      results[[method]] <- rowData(out$res)
+    }
+    if(method == "sceEMD"){
+      if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
+        sce <- filterSCE(sce, marker_classes(sce) %in% markers_to_test)
+      } else{
+        sce <- filterSCE(sce, rownames(sce) %in% markers_to_test)
+      }
+      #extra args: sceEMD_condition, binSize, nperm
+      out <-
+        sceEMD(
+          sce = sce,
+          k = clustering_to_use,
+          condition = extra_args$sceEMD_condition,
+          binSize = extra_args$binSize,
+          nperm = extra_args$nperm
+        )
+      results[[method]] <- out
+    }
+  }
+  return(results)
+}
+
+# get appropriate vector for each method containing the markers that want to be tested
+getMarkersToTest <- function(sce, ds_method, markers){
+  if("type" %in% markers | "state" %in% markers){
+    by <- "Marker by Class"
+  }else{
+    by <- "Marker by Name"
+  }
+  
+  if (ds_method %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM")){
+    # vector for diffcyt methods to test on specific markers
+    is_marker <- SummarizedExperiment::rowData(sce)$marker_class %in% c("type","state")
+    if(by == "Marker by Class"){
+      markers_to_test <- (SummarizedExperiment::rowData(sce)$marker_class %in% markers)[is_marker]
+    }else{
+      markers_to_test <- row.names(sce)[is_marker] %in% markers
+    }
+  } else if (ds_method %in% c("SigEMD", "DEsingle")){
+    if(by == "Marker by Class"){
+      markers_to_test <- SummarizedExperiment::rowData(sce)[SummarizedExperiment::rowData(sce)$marker_class %in% markers,]$marker_name
+    }else{
+      markers_to_test <- markers
+    }
+  }
+  return (markers_to_test)
+}
 
 prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom=NULL,
                         method = c( "diffcyt-DA-edgeR", "diffcyt-DA-voom","diffcyt-DA-GLMM", "diffcyt-DS-limma", "diffcyt-DS-LMM") ){
@@ -23,10 +177,8 @@ prepDiffExp <- function(sce, contrastVars, colsDesign, colsFixed, colsRandom=NUL
     parameters[["formula"]] <- diffcyt::createFormula(parameters[["ei"]], cols_fixed = colsFixed, cols_random = colsRandom)
     parameters[["contrast"]] <- createCustomContrastMatrix(sce, contrastVars, diffcyt::createDesignMatrix(parameters[["ei"]], cols_design = colsFixed), designMatrix = T)
   }else{
-    
     parameters[["formula"]] <- diffcyt::createFormula(parameters[["ei"]], cols_fixed = colsFixed, cols_random = colsRandom)
     parameters[["contrast"]] <- createCustomContrastMatrix(sce, contrastVars, colsFixed, designMatrix = F)
-    
   }
   return(parameters) 
 }
@@ -67,48 +219,56 @@ createCustomContrastMatrix <- function(sce, contrastVars, matrix, designMatrix =
 }
 
 getBools <- function(names, contrastVars){
-  bool <- unlist(lapply(names, function(x){
-    any(lapply(contrastVars, function(y){
+  bool <- sapply(names, function(x){
+    any(sapply(contrastVars, function(y){
       grepl(y,x, fixed = T )
     }))
-  }))
+  })
   bool <- as.numeric(bool)
   return(bool)
 }
 
-# get appropriate vector for each method containing the markers that want to be tested
-getMarkersToTest <- function(sce, ds_method, features){
-  if (ds_method %in% c("limma", "LMM")){
-    # vector for diffcyt methods to test on specific markers
-    is_marker <- rowData(sce)$marker_class %in% c("type","state")
-    if (features == "all"){
-      markers_to_test <- (rowData(sce)$marker_class %in% c("type","state"))[is_marker]
-    } else if (features == "state"){
-      markers_to_test <- (rowData(sce)$marker_class == "state")[is_marker]
-    } else if (features == "type") {
-      markers_to_test <- (rowData(sce)$marker_class == "type")[is_marker]
-    }
-  } else if (ds_method %in% c("SigEMD", "DEsingle")){
-    if (features == "all"){
-      markers_to_test <- rowData(sce)[rowData(sce)$marker_class %in% c("type","state"),]$marker_name
-    } else if (features == "state"){
-      markers_to_test <- rowData(sce)[rowData(sce)$marker_class=="state",]$marker_name
-    } else if (features == "type"){
-      markers_to_test <- rowData(sce)[rowData(sce)$marker_class=="type",]$marker_name
+doConditionSubselection <- function(sce, subselected_categories, mappedCategories, contrastVars, exclusionList, method){
+  catCount <- sapply(colnames(metadata(sce)$experiment_info)[!colnames(metadata(sce)$experiment_info) %in% c("n_cells", "sample_id")], function(x){
+    return(0)
+  })
+  names(catCount) <- colnames(metadata(sce)$experiment_info)[!colnames(metadata(sce)$experiment_info) %in% c("n_cells", "sample_id")]
+  exclude <- list()
+  for(s in subselected_categories){
+    category <- mappedCategories[[s]]
+    catCount[[category]] <- catCount[[category]] + 1 
+    if(!is.null(exclude[[category]])){
+      exclude[[category]] <- c(exclude[[category]], s)
+    }else{
+      exclude[[category]] <- s
     }
   }
-  return (markers_to_test)
+  for(x in names(catCount)){
+    if(x %in% contrastVars & catCount[[x]] == 1){
+      message("You want to analyse a condition you subsetted. That is not meaningful. Try again.", type = "error")
+      return(NULL)
+    }
+  }
+  #for rendering the heatmap
+  exclusionList[[method]] <- exclude
+  for(cat in names(exclude)){
+    sub <- exclude[[cat]]
+    print(sprintf("only using %s from the condition %s", sub, cat))
+    sce <- filterSCE(sce, get(cat) %in% sub)
+  }
+  return(list(sce = sce, exclusionList = exclusionList))
 }
 
-
-runDS <- function(sce, condition, random_effect = NULL, de_methods = c("limma", "LMM", "SigEMD", "DEsingle"), k = "all", parallel = TRUE, features = c("all", "type","state"), ...) {
-  de_methods <- match.arg(de_methods, several.ok = TRUE)
-  features <- match.arg(features, several.ok = FALSE)
+runDS_old <- function(sce, condition, random_effect = NULL, 
+                  ds_methods = c("diffcyt-DS-limma", "diffcyt-DS-LMM", "sceEMD","SigEMD", "DEsingle"), 
+                  k = "all", parallel = TRUE, features = c("type","state"), ...) {
+  ds_methods <- match.arg(ds_methods, several.ok = TRUE)
+  features <- match.arg(features, several.ok = TRUE)
   
   extra_args <- list(...)
   
   result <- list()
-  if ("limma" %in% de_methods) {
+  if ("limma" %in% ds_methods) {
     message("Using limma")
     parameters <- prepDiffExp(sce, contrastVars = c(condition), colsDesign = c(condition), method = "diffcyt-DS-limma")
     
@@ -126,7 +286,7 @@ runDS <- function(sce, condition, random_effect = NULL, de_methods = c("limma", 
     result$limma <- limma_res
     
   }
-  if ("LMM" %in% de_methods) {
+  if ("diffcyt-DS-LMM" %in% ds_methods) {
     message("Using LMM")
     parameters <-  prepDiffExp(sce, contrastVars = c(condition), colsFixed = c(condition), colsRandom=c(random_effect), method = "diffcyt-DS-LMM")
     
@@ -141,7 +301,7 @@ runDS <- function(sce, condition, random_effect = NULL, de_methods = c("limma", 
     
     result$LMM <- LMM_res
   }
-  if ("SigEMD" %in% de_methods) {
+  if ("SigEMD" %in% ds_methods) {
     source("SigEMD/sigEMD.R")
     message("Using SigEMD")
     nperm <- ifelse(is.null(extra_args$nperm), 100, extra_args$nperm)
@@ -157,7 +317,7 @@ runDS <- function(sce, condition, random_effect = NULL, de_methods = c("limma", 
     
     result$SigEMD <- SigEMD_res
   }
-  if ("DEsingle" %in% de_methods) {
+  if ("DEsingle" %in% ds_methods) {
     message("Using DEsingle")
     
     markers_to_test <- getMarkersToTest(sce,"DEsingle",features)
@@ -172,41 +332,3 @@ runDS <- function(sce, condition, random_effect = NULL, de_methods = c("limma", 
   }
   result
 }
-
-
-DEsingleSCE <- function(sce, condition, k, assay="exprs", parallel=FALSE){
-  library(DEsingle)
-  
-  CATALYST:::.check_sce(sce, TRUE)
-  k <- CATALYST:::.check_k(sce, k)
-  CATALYST:::.check_cd_factor(sce, condition)
-  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
-  
-  sce_desingle <- sce
-  new_counts <- assay(sce_desingle, "exprs")
-  new_counts <- (abs(new_counts) + new_counts)/2
-  assay(sce_desingle, "counts") <- new_counts
-  set.seed(1)
-  
-  cluster_ids <- cluster_ids(sce_desingle, k)
-  res <- lapply(levels(cluster_ids), function(cluster_id) {
-    print(sprintf("calculating DEsingle for cluster %s", cluster_id))
-    
-    group <- colData(sce_desingle[, cluster_ids == cluster_id])[[condition]]
-    
-    
-    results <- DEsingle::DEsingle(sce_desingle[, cluster_ids == cluster_id], group, parallel = parallel)
-    results.classified <- DEsingle::DEtype(results = results, threshold = 0.05)
-    
-    data.table::setnames(results.classified, old = c("pvalue", "pvalue.adj.FDR"), new = c("p_val", "p_adj"))
-    results.classified$cluster_id <- cluster_id
-    results.classified$marker_id <- rownames(results.classified)
-    
-    results.classified
-  })
-  
-  return(data.table::rbindlist(res))
-}
-
-
-

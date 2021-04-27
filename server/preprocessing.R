@@ -1,31 +1,5 @@
 # Preprocessing Server
 
-# transform SingleCellExperiment
-#Judith put the function in prep_functions.R
-#transformData <-
-#  function (sce,
-#            cf = 5,
-#            ain = "counts",
-#            aout = "exprs") {
-#    y <- assay(sce, ain)
-#    chs <- channels(sce)
-#    stopifnot(is.numeric(cf), cf > 0)
-#    if (length(cf) == 1) {
-#      int_metadata(sce)$cofactor <- cf
-#      cf <- rep(cf, nrow(sce))
-#    }
-#    else {
-#      stopifnot(!is.null(names(cf)), chs %in% names(cf))
-#      cf <- cf[match(chs, names(cf))]
-#      int_metadata(sce)$cofactor <- cf
-#    }
-#    fun <- asinh
-#    op <- "/"
-#    y <- fun(sweep(y, 1, cf, op))
-#    assay(sce, aout, FALSE) <- y
-#    sce
-#  }
-
 # marker, sample, patient selection -> if markers, patients, samples are selected -> prepValButton can be clicked
 observeEvent({
   input$patientSelection
@@ -122,11 +96,9 @@ output$reorderingTabs <- renderUI({
 
 # if conditions are ordered
 observeEvent(input$reorderButton, {
-  shinyjs::disable("prepButton")
-  shinyjs::disable("prepSelectionButton")
-  shinyjs::disable("filterSelectionButton")
-  shinyjs::disable("previousTab")
-  shinyjs::disable("nextTab")
+  waiter_show(id = "app",html = tagList(spinner$logo, 
+                                        HTML("<br>Reordering Data...<br>Please be patient")), 
+              color=spinner$color)
   
   # reorder levels 
   conditions <- names(metadata(reactiveVals$sce)$experiment_info)
@@ -137,40 +109,29 @@ observeEvent(input$reorderButton, {
     metadata(reactiveVals$sce)$experiment_info[[condition]] <- factor(metadata(reactiveVals$sce)$experiment_info[[condition]], levels=ordered)
   })
   plotPreprocessing(reactiveVals$sce)
-  shinyjs::enable("prepButton")
-  shinyjs::enable("prepSelectionButton")
-  shinyjs::enable("filterSelectionButton")
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
+  waiter_hide(id = "app")
 
 })
 
 # if start transformation button is clicked
 observeEvent(input$prepButton, {
-  shinyjs::disable("prepButton")
-  shinyjs::disable("prepSelectionButton")
-  shinyjs::disable("filterSelectionButton")
-  shinyjs::disable("previousTab")
-  shinyjs::disable("nextTab")
+  waiter_show(id = "app",html = tagList(spinner$logo, 
+                                        HTML("<br>Transforming Data...<br>Please be patient")), 
+              color=spinner$color)
   # data transformation
   reactiveVals$sce <-
     transformData(sce = reactiveVals$sce,
                   cf = as.numeric(input$cofactor))
   plotPreprocessing(reactiveVals$sce)
-  shinyjs::enable("prepButton")
-  shinyjs::enable("prepSelectionButton")
-  shinyjs::enable("filterSelectionButton")
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
+  waiter_hide(id = "app")
+  runjs("document.getElementById('nextTab').scrollIntoView();")
 })
 
 # if visualize selection button is clicked
 observeEvent(input$prepSelectionButton, {
-  shinyjs::disable("prepButton")
-  shinyjs::disable("prepSelectionButton")
-  shinyjs::disable("previousTab")
-  shinyjs::disable("nextTab")
-  shinyjs::disable("filterSelectionButton")
+  waiter_show(id = "app",html = tagList(spinner$logo, 
+                                        HTML("<br>Applying Selection...<br>Please be patient")), 
+              color=spinner$color)
   allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
   if ((length(input$patientSelection) != allpatients) || (length(input$sampleSelection) != allsamples)){
@@ -191,21 +152,14 @@ observeEvent(input$prepSelectionButton, {
   
   sce <- sce[rownames(sce) %in% markers, ]
   plotPreprocessing(sce)
-  shinyjs::enable("prepButton")
-  shinyjs::enable("prepSelectionButton")
-  shinyjs::enable("continue")
-  shinyjs::enable("filterSelectionButton")
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
+  waiter_hide(id = "app")
 })
 
 # if filtering button is clicked -> selection is applied to sce
 observeEvent(input$filterSelectionButton,{
-  shinyjs::disable("prepButton")
-  shinyjs::disable("prepSelectionButton")
-  shinyjs::disable("filterSelectionButton")
-  shinyjs::disable("previousTab")
-  shinyjs::disable("nextTab")
+  waiter_show(id = "app",html = tagList(spinner$logo, 
+                                        HTML("<br>Applying Filtering...<br>Please be patient")), 
+              color=spinner$color)
   allpatients <- length(as.character(unique(colData(reactiveVals$sce)$patient_id)))
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
   
@@ -222,11 +176,7 @@ observeEvent(input$filterSelectionButton,{
   sce <- reactiveVals$sce[rownames(reactiveVals$sce) %in% markers, ]
   plotPreprocessing(sce)
   
-  shinyjs::enable("prepButton")
-  shinyjs::enable("prepSelectionButton")
-  shinyjs::enable("filterSelectionButton")
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
+  waiter_hide(id = "app")
 })
 
 observeEvent(reactiveVals$sce, {
@@ -610,7 +560,6 @@ plotPreprocessing <- function(sce) {
   # ui for download button
   output$exprsHeatmapPlotDownload <- renderUI({
     req(reactiveVals$exprsPlotHeatmap)
-    library(ComplexHeatmap)
     downloadButton("downloadPlotExprsHeatmap", "Download Plot")
   })
   
@@ -622,150 +571,10 @@ plotPreprocessing <- function(sce) {
                                             HTML("<br>Downloading...")), 
                   color=spinner$color)
       pdf(file, width = 12, height = 8)
-      draw(reactiveVals$exprsPlotHeatmap)
+      ComplexHeatmap::draw(reactiveVals$exprsPlotHeatmap)
       dev.off()
       waiter_hide(id="app")
     }
   )
   
-}
-
-# function anno_features from CATALYST with different color palette
-.anno_factors <- function (x, ids, which, type = c("row", "column")) 
-{
-  type <- match.arg(type)
-  cd <- colData(x)
-  df <- data.frame(cd, check.names = FALSE)
-  df <- select_if(df, ~!is.numeric(.))
-  df <- mutate_all(df, ~droplevels(factor(.x)))
-  m <- match(ids, df$sample_id)
-  ns <- split(df, df$sample_id) %>% lapply(mutate_all, droplevels) %>% 
-    lapply(summarize_all, nlevels) %>% do.call(what = "rbind")
-  keep <- names(which(colMeans(ns) == 1))
-  keep <- setdiff(keep, c("sample_id", "cluster_id"))
-  if (is.character(which)) 
-    keep <- intersect(keep, which)
-  if (length(keep) == 0) 
-    return(NULL)
-  df <- df[m, keep, drop = FALSE]
-  lvls <- lapply(as.list(df), levels)
-  nlvls <- vapply(lvls, length, numeric(1))
-  #pal <- brewer.pal(8, "Set2")
-  pal <-  c("#999999","#009E73","#E69F00", "#56B4E9", "#F0E442","#D55E00","#0072B2", "#CC79A7")
-  names(is) <- is <- colnames(df)
-  cols <- lapply(is, function(i) {
-    if (nlvls[i] > length(pal)) 
-      pal_i <- colorRampPalette(pal)(max(nlvls))
-    else pal_i <- pal
-    u <- pal_i[seq_len(nlvls[i])]
-    names(u) <- lvls[[i]]
-    u
-  })
-  ComplexHeatmap::HeatmapAnnotation(which = type, df = df, col = cols, gp = gpar(col = "white"))
-}
-
-plotExprHeatmapCustom <- function (x, features = NULL, by = c("sample_id", "cluster_id", 
-                                                        "both"), k = "meta20", m = NULL, assay = "exprs", fun = c("median", 
-                                                                                                                  "mean", "sum"), scale = c("first", "last", "never"), q = 0.01, 
-                             row_anno = TRUE, col_anno = TRUE, row_clust = TRUE, col_clust = TRUE, 
-                             row_dend = TRUE, col_dend = TRUE, bars = FALSE, perc = FALSE, 
-                             bin_anno = FALSE, hm_pal = rev(RColorBrewer::brewer.pal(11, "RdYlBu")), 
-                             k_pal = CATALYST:::.cluster_cols, m_pal = k_pal, distance = c("euclidean", 
-                                                                                           "maximum", "manhattan", "canberra", "binary", "minkowski"), 
-                             linkage = c("average", "ward.D", "single", "complete", "mcquitty", 
-                                         "median", "centroid", "ward.D2")) 
-{
-  args <- as.list(environment())
-  CATALYST:::.check_args_plotExprHeatmap(args)
-  distance <- match.arg(distance)
-  linkage <- match.arg(linkage)
-  scale <- match.arg(scale)
-  fun <- match.arg(fun)
-  by <- match.arg(by)
-  x <- x[unique(CATALYST:::.get_features(x, features)), ]
-  if (by != "sample_id") {
-    CATALYST:::.check_k(x, k)
-    x$cluster_id <- cluster_ids(x, k)
-  }
-  if (by == "both") 
-    by <- c("cluster_id", "sample_id")
-  .do_agg <- function() {
-    z <- CATALYST:::.agg(x, by, fun, assay)
-    if (length(by) == 1) 
-      return(z)
-    magrittr::set_rownames(do.call("rbind", z), levels(x$cluster_id))
-  }
-  .do_scale <- function() {
-    if (scale == "first") {
-      z <- assay(x, assay)
-      z <- CATALYST:::.scale_exprs(z, 1, q)
-      assay(x, assay, FALSE) <- z
-      return(x)
-    }
-    else CATALYST:::.scale_exprs(z, 1, q)
-  }
-  z <- switch(scale, first = {
-    x <- .do_scale()
-    .do_agg()
-  }, last = {
-    z <- .do_agg()
-    .do_scale()
-  }, never = {
-    .do_agg()
-  })
-  if (length(by) == 1) 
-    z <- t(z)
-  if (scale != "never" && !(assay == "counts" && fun == "sum")) {
-    qs <- round(quantile(z, c(0.01, 0.99)) * 5)/5
-    lgd_aes <- list(at = seq(qs[1], qs[2], 0.2))
-  }
-  else lgd_aes <- list()
-  lgd_aes$title_gp <- grid::gpar(fontsize = 10, fontface = "bold", 
-                                 lineheight = 0.8)
-  if (!isFALSE(row_anno)) {
-    left_anno <- switch(by[1], sample_id = .anno_factors(x, 
-                                                         levels(x$sample_id), row_anno, "row"), CATALYST:::.anno_clusters(x, 
-                                                                                                               k, m, k_pal, m_pal))
-  }
-  else left_anno <- NULL
-  if (!isFALSE(col_anno) && length(by) == 2) {
-    top_anno <- .anno_factors(x, levels(x$sample_id), col_anno, 
-                              "colum")
-  }
-  else top_anno <- NULL
-  if (bars) {
-    right_anno <- CATALYST:::.anno_counts(x[[by[1]]], perc)
-  }
-  else right_anno <- NULL
-  if (bin_anno) {
-    cell_fun <- function(j, i, x, y, ...) grid.text(gp = grid::gpar(fontsize = 8), 
-                                                    sprintf("%.2f", z[i, j]), x, y)
-  }
-  else cell_fun <- NULL
-  a <- ifelse(assay == "exprs", "expression", assay)
-  f <- switch(fun, median = "med", fun)
-  hm_title <- switch(scale, first = sprintf("%s %s\n%s", fun, 
-                                            "scaled", a), last = sprintf("%s %s\n%s", "scaled", 
-                                                                         fun, a), never = paste(fun, a, sep = "\n"))
-  if (length(by) == 2) {
-    col_title <- features
-  }
-  else if (length(features) == 1 && features %in% c("type", 
-                                                    "state")) {
-    col_title <- paste0(features, "_markers")
-  }
-  else col_title <- ""
-  ComplexHeatmap::Heatmap(matrix = z, name = hm_title, col = circlize::colorRamp2(seq(min(z), 
-                                                                                      max(z), l = n <- 100), grDevices::colorRampPalette(hm_pal)(n)), 
-                          column_title = col_title, column_title_side = ifelse(length(by) == 
-                                                                                 2, "top", "bottom"), cell_fun = cell_fun, cluster_rows = row_clust, 
-                          cluster_columns = col_clust, show_row_dend = row_dend, 
-                          show_column_dend = col_dend, clustering_distance_rows = distance, 
-                          clustering_method_rows = linkage, clustering_distance_columns = distance, 
-                          clustering_method_columns = linkage, show_row_names = (is.null(left_anno) || 
-                                                                                   isTRUE(by == "sample_id")) && !perc, row_names_side = ifelse(by[1] == 
-                                                                                                                                                  "cluster_id" || isFALSE(row_anno) && !row_dend || 
-                                                                                                                                                  isFALSE(row_clust), "left", "right"), top_annotation = top_anno, 
-                          left_annotation = left_anno, right_annotation = right_anno, 
-                          rect_gp = gpar(col = "white"), heatmap_legend_param = lgd_aes)
 }

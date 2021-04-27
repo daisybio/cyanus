@@ -1,25 +1,21 @@
 shinyjs::hide("visPlotBox")
 
+# ---------------------------------------------------------------
+# For resetting after loading a new object 
+# ---------------------------------------------------------------
+
 resetVisualization <- function(){
   shinyjs::hide("visPlotBox")
   reactiveVals$availableDRs <- NULL
   reactiveVals$lastMethod <- NULL
   session$sendCustomMessage(type = "resetValue", message = "selectedVisMethod")
   reactiveVals$lastPlot <- NULL
+  reactiveVals$visInfo <- NULL
 }
 
-output$downloadPlot <- downloadHandler(
-  filename = function(){
-    paste0(reactiveVals$lastMethod, ".pdf")
-  },
-  content = function(file){
-    waiter_show(id = "app",html = tagList(spinner$logo, 
-                                          HTML("<br>Downloading...")), 
-                color=spinner$color)
-    ggsave(file, plot = reactiveVals$lastPlot, width=14, height=11)
-    waiter_hide(id="app")
-  }
-)
+# ---------------------------------------------------------------
+# Observers
+# ---------------------------------------------------------------
 
 observeEvent(input$visTabs, {
   if (input$visTabs == "expressionTab") {
@@ -67,11 +63,7 @@ observeEvent(input$runDRButton, {
   waiter_show(id = "app",html = tagList(spinner$logo, 
                                         HTML("<br>Computing Dimensionality Reduction...")), 
               color=spinner$color)
-  # disable("previousTab")
-  # disable("nextTab")
-  # disable("runDRButton")
-  # disable("visBox")
-  # disable("visPlotBox")
+
   reactiveVals$stopVis <- F
   if (reactiveVals$useClassesRun) {
     if (all(
@@ -95,130 +87,56 @@ observeEvent(input$runDRButton, {
     reactiveVals$featuresDR <- reactiveVals$markers
     reactiveVals$classes <- c()
   }
+  method <- isolate(input$selectedRunMethod)
   
-  if (input$selectedRunMethod == "UMAP") {
+  if(is.null(reactiveVals$visInfo)){
+    reactiveVals$visInfo <- list()
+  }
+  #error handling
+  if(method == "TSNE" & input$nrDimensions > 3){
+    showNotification("For t-SNE, not more than 3 dimensions are possible. ", type = "error")
+    reactiveVals$stopVis <- T
+  }else{
+    reactiveVals$stopVis <- F
+  }
+  if(method == "UMAP"){
     library(uwot)
-    reactiveVals$umapDF <- data.frame(
-      method = "UMAP",
-      features = toString(reactiveVals$featuresDR),
-      counts = input$assayRunSelected,
-      cells = input$nrCellsRun,
-      scale = input$scaleRun,
-      dimensions = input$nrDimensions
-    )
-    runCatalystDR(
-      "UMAP",
-      input$nrCellsRun,
-      reactiveVals$featuresDR,
-      input$assayRunSelected,
-      input$scaleRun,
-      NULL,
-      input$nrDimensions
-    )
-  } else if (input$selectedRunMethod == "T-SNE") {
-    if(input$nrDimensions > 3){
-      showNotification("For t-SNE, not more than 3 dimensions are possible. ", type = "error")
-      reactiveVals$stopVis <- T
-    }
-    if(!reactiveVals$stopVis){
-      reactiveVals$tsneDF <- data.frame(
-        method = "TSNE",
-        features = toString(reactiveVals$featuresDR),
-        counts = input$assayRunSelected,
-        cells = input$nrCellsRun,
-        scale = input$scaleRun,
-        dimensions = input$nrDimensions
-      )
-      runCatalystDR(
-        "TSNE",
-        input$nrCellsRun,
-        reactiveVals$featuresDR,
-        input$assayRunSelected,
-        input$scaleRun,
-        NULL,
-        input$nrDimensions
-      )
-    }
-  } else if (input$selectedRunMethod == "PCA") {
-    reactiveVals$pcaDF <- data.frame(
-      method = "PCA",
-      features = toString(reactiveVals$featuresDR),
-      counts = input$assayRunSelected,
-      cells = input$nrCellsRun,
-      scale = input$scaleRun,
-      dimensions = input$nrDimensions
-    )
-    runCatalystDR(
-      "PCA",
-      input$nrCellsRun,
-      reactiveVals$featuresDR,
-      input$assayRunSelected,
-      input$scaleRun,
-      NULL,
-      input$nrDimensions
-    )
-  } else if (input$selectedRunMethod == "MDS") {
-    reactiveVals$mdsDF <- data.frame(
-      method = "MDS",
-      features = toString(reactiveVals$featuresDR),
-      counts = input$assayRunSelected,
-      cells = input$nrCellsRun,
-      scale = input$scaleRun,
-      dimensions = input$nrDimensions
-    )
-    runCatalystDR(
-      "MDS",
-      input$nrCellsRun,
-      reactiveVals$featuresDR,
-      input$assayRunSelected,
-      input$scaleRun,
-      NULL,
-      input$nrDimensions
-    )
-  } else if (input$selectedRunMethod == "DiffusionMap") {
-    reactiveVals$diffMapDF <- data.frame(
-      method = "Diffusion Map",
-      features = toString(reactiveVals$featuresDR),
-      counts = input$assayRunSelected,
-      cells = input$nrCellsRun,
-      scale = input$scaleRun,
-      dimensions = input$nrDimensions
-    )
-    runCatalystDR(
-      "DiffusionMap",
-      input$nrCellsRun,
-      reactiveVals$featuresDR,
-      input$assayRunSelected,
-      input$scaleRun,
-      NULL,
-      input$nrDimensions
-    )
-  } else if (input$selectedRunMethod == "Isomap") {
-    reactiveVals$isomapDF <- data.frame(
-      method = "Isomap",
-      features = toString(reactiveVals$featuresDR),
-      counts = input$assayRunSelected,
-      cells = input$nrCellsRun,
-      scale = input$scaleRun,
-      k = input$valueGraph,
-      dimensions = input$nrDimensions
-    )
-    runCatalystDR(
-      "Isomap",
-      input$nrCellsRun,
-      reactiveVals$featuresDR,
-      input$assayRunSelected,
-      input$scaleRun,
-      input$valueGraph,
-      input$nrDimensions
+  }
+  if(method == "Isomap"){
+    k <- isolate(input$valueGraph)
+  }else{
+    k <- NULL
+  }
+  
+  nrCells <- isolate(input$nrCellsRun)
+  features <- isolate(reactiveVals$featuresDR)
+  assay <- isolate(input$assayRunSelected)
+  scale <- isolate(input$scaleRun)
+  nrDims <- isolate(input$nrDimensions)
+
+  reactiveVals$visInfo[[method]] <- data.frame(
+    method = method,
+    features = toString(features),
+    counts = assay,
+    cells = nrCells,
+    scale = scale,
+    k = toString(k),
+    dimensions = nrDims
+  )
+  if(!reactiveVals$stopVis){
+    reactiveVals$sce <- runCatalystDR(
+      sce = reactiveVals$sce,
+      dr_chosen = method,
+      cells_chosen = nrCells,
+      feature_chosen = features,
+      assay_chosen = assay,
+      scale = scale,
+      k = k,
+      dimensions = nrDims
     )
   }
-  # enable("visBox")
-  # enable("visPlotBox")
-  # shinyjs::enable("previousTab")
-  # shinyjs::enable("nextTab")
-  # enable("runDRButton")
-  # 
+
+  reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
   waiter_hide(id="app")
   if(!reactiveVals$stopVis){
     shinyjs::show("visPlotBox")
@@ -273,52 +191,22 @@ observeEvent(input$startDimRed, {
     sceObj <- isolate(reactiveVals$sce)
     dim1 <- as.numeric(isolate(input$dimension1))
     dim2 <- as.numeric(isolate(input$dimension2))
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Visualizing Dimensionality Reduction...")), 
+                color=spinner$color)
     ggplotObject <-
-      plotData(sceObj, method, color, facet, assay, scale, c(dim1, dim2))
+      makeDR(sceObj, method, color, facet, assay, scale, c(dim1, dim2))
+    waiter_hide(id="app")
     reactiveVals$lastPlot <- ggplotObject
     return(ggplotObject)
   })
   output$plotInfo <- renderUI({
     method <- isolate(input$selectedVisMethod)
-    if (method == "UMAP") {
-      value <- renderTable(
-        checkNullTable(reactiveVals$umapDF),
-        caption = "UMAP Run Features",
-        caption.placement = "top"
-      )
-    } else if (method == "TSNE") {
-      value <- renderTable(
-        checkNullTable(reactiveVals$tsneDF),
-        caption = "T-SNE Run Features",
-        caption.placement = "top"
-      )
-    } else if (method == "PCA") {
-      value <- renderTable(
-        checkNullTable(reactiveVals$pcaDF),
-        caption = "PCA Run Features",
-        caption.placement = "top"
-      )
-    } else if (method == "MDS") {
-      value <- renderTable(
-        checkNullTable(reactiveVals$mdsDF),
-        caption = "MDS Run Features",
-        caption.placement = "top"
-      )
-    } else if (method == "DiffusionMap") {
-      value <- renderTable(
-        checkNullTable(reactiveVals$diffMapDF),
-        caption = "Diffusion Map Run Features",
-        caption.placement = "top"
-      )
-    } else if (method == "Isomap") {
-      value <- renderTable(
-        checkNullTable(reactiveVals$isomapDF),
-        caption = "Isomap Run Features",
-        caption.placement = "top"
-      )
-    } else{
-      value <- "failed"
-    }
+    value <- renderTable(
+      checkNullTable(reactiveVals$visInfo[[method]]), 
+      caption = paste(method, "Run Features"),
+      caption.placement = "top"
+    )
     dropdownButton(
       shinydashboard::box(value, title = "Info", width = 12),
       icon = icon("info-circle"),
@@ -328,20 +216,6 @@ observeEvent(input$startDimRed, {
   })
 })
 
-plotData <- function(sceObj, method, color, facet, assay, scale, dims = c(1,2)) {
-  disable("startDimRed")
-  disable("previousTab")
-  disable("nextTab")
-  disable("runDRButton")
-  
-  g <- makeDR(sceObj, method, color, facet, assay, scale, dims)
-  enable("startDimRed")
-  shinyjs::enable("previousTab")
-  shinyjs::enable("nextTab")
-  enable("runDRButton")
-  return(g)
-}
-
 observeEvent(input$radioButtonsColor, {
   if (input$radioButtonsColor == "expression") {
     shinyjs::show("scaleVis")
@@ -349,6 +223,10 @@ observeEvent(input$radioButtonsColor, {
     shinyjs::hide("scaleVis")
   }
 })
+
+# ---------------------------------------------------------------
+# Render UI 
+# ---------------------------------------------------------------
 
 output$useFeaturesInVis <- renderUI({
   selectInput(
@@ -429,7 +307,7 @@ output$dimensionsVis <- renderUI({
 
 output$runDRparBox <- renderUI({
   vis_methods <-
-    c("UMAP", "T-SNE", "PCA", "MDS", "DiffusionMap", "Isomap")
+    c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap")
   choices <- assayNames(reactiveVals$sce)
   selected <- "counts"
   if (all(choices == c("counts", "exprs"))) {
@@ -644,27 +522,6 @@ output$assayVis <- renderUI({
   ))
 })
 
-renameColorColumn <- function(columnNames, color_by = T) {
-  returnVector <- c()
-  if ("sample_id" %in% columnNames) {
-    returnVector <- c(returnVector, "Sample ID" = "sample_id")
-    columnNames <- columnNames[columnNames != "sample_id"]
-  }
-  if ("patient_id" %in% columnNames) {
-    returnVector <- c(returnVector, "Patient ID" = "patient_id")
-    columnNames <- columnNames[columnNames != "patient_id"]
-  }
-  if ("cluster_id" %in% columnNames) {
-    returnVector <- c(returnVector, "flowSOM ID" = "cluster_id")
-    columnNames <- columnNames[columnNames != "cluster_id"]
-    if (color_by) {
-      returnVector <-
-        c(returnVector, names(cluster_codes(reactiveVals$sce))[-1])
-    }
-  }
-  returnVector <- c(returnVector, columnNames)
-  return(returnVector)
-}
 
 output$selectColorBy <- renderUI({
   req(input$radioButtonsColor)
@@ -729,72 +586,17 @@ output$plotDimensions <- renderUI({
   )
 })
 
-runCatalystDR <-
-  function(dr_chosen,
-           cells_chosen,
-           feature_chosen,
-           assay_chosen,
-           scale,
-           k,
-           dimensions) {
-    if (scale == "yes") {
-      scale <- T
-    } else{
-      scale <- F
-    }
-    if (dr_chosen == "Isomap") {
-      reactiveVals$sce <- runIsomap(
-        reactiveVals$sce,
-        cells = cells_chosen,
-        features = feature_chosen,
-        assay = assay_chosen,
-        scale = scale,
-        k = k,
-        dimensions = dimensions
-      )
-      
-    } else{
-      reactiveVals$sce <- runDR(
-        reactiveVals$sce,
-        dr = dr_chosen,
-        cells = cells_chosen,
-        features = feature_chosen,
-        assay = assay_chosen,
-        scale = scale,
-        ncomponents = dimensions
-      )
-    }
-    reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
+output$downloadPlot <- downloadHandler(
+  filename = function(){
+    paste0(reactiveVals$lastMethod, ".pdf")
+  },
+  content = function(file){
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    ggsave(file, plot = reactiveVals$lastPlot, width=14, height=11)
+    waiter_hide(id="app")
   }
+)
 
-makeDR <-
-  function(sce,
-           dr_chosen,
-           color_chosen,
-           facet_chosen,
-           assay_chosen,
-           scale,
-           dims = c(1,2)) {
-    if (color_chosen == "") {
-      color_chosen <- NULL
-    }
-    if (facet_chosen == "") {
-      facet_chosen <- NULL
-    }
-    if (scale == "yes") {
-      scale <- T
-    } else{
-      scale <- F
-    }
-    g <-
-      plotDR(
-        sce,
-        dr = dr_chosen,
-        color_by = color_chosen,
-        facet_by = facet_chosen,
-        assay = assay_chosen,
-        scale = scale,
-        dims = dims
-      )
-    return(g)
-  }
+

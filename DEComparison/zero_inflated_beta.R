@@ -68,6 +68,22 @@ LMM_results <- diffcyt_method(d_input = sce_covid_spiked,
                                      markers_to_test = markers_to_test)
 
 
+## ZIBR TOOL
+devtools::install_github("chvlyl/ZIBR")
+library(ZIBR)
+
+sim <- ZIBR::simulate_zero_inflated_beta_random_effect_data(
+  subject.n=100,time.n=5,
+  X = as.matrix(c(rep(0,50*5),rep(1,50*5))),
+  Z = as.matrix(c(rep(0,50*5),rep(1,50*5))),
+  alpha = as.matrix(c(-0.5,1)),
+  beta = as.matrix(c(-0.5,0.5)),
+  s1 = 1,s2 = 0.8,
+  v = 5,
+  sim.seed=100)
+
+
+
 
 transformData <-
   function (sce,

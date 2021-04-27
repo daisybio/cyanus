@@ -5,7 +5,7 @@ server <- function(input, output, session) {
   
   reactiveVals$preprocessingShowed <- FALSE
 
-  spinner <- list(logo = spin_square_circle(), color="rgb(0, 102, 204, .2)")
+  spinner <- list(logo = spin_square_circle(), color="rgb(0, 102, 204, .5)")
   
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())

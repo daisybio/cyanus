@@ -26,7 +26,7 @@ diffcyt_method <- function (d_input, experiment_info = NULL, marker_info = NULL,
     if (transform) {
       if (verbose) 
         message("transforming data...")
-      d_se <- transformData(d_se, cofactor)
+      d_se <- diffcyt::transformData(d_se, cofactor)
     }
     if (verbose) 
       message("generating clusters...")
@@ -111,7 +111,7 @@ diffcyt_method <- function (d_input, experiment_info = NULL, marker_info = NULL,
   if (analysis_type == "DS" && method_DS == "diffcyt-DS-limma") {
     if (verbose) 
       message("calculating DS tests using method 'diffcyt-DS-limma'...")
-    res <- testDS_limma(d_counts, d_medians, design, contrast, 
+    res <- diffcyt::testDS_limma(d_counts, d_medians, design, contrast, 
                         block_id, trend, use_weights, markers_to_test, min_cells, 
                         min_samples, plot, path)
   }
@@ -143,7 +143,6 @@ diffcyt_method <- function (d_input, experiment_info = NULL, marker_info = NULL,
     }
   }
 }
-
 
 lmm_method <- function (d_counts, d_medians, formula, contrast, use_weights = TRUE, 
                         markers_to_test = NULL, min_cells = 3, min_samples = NULL) 

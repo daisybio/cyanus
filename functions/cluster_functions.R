@@ -126,7 +126,7 @@ plotStarsCustom <-
       )
     )
     if (is.null(thresholds)) {
-      data <- metadata(sce)$SOM_medianValues[, markers, drop = FALSE]
+      data <- S4Vectors::metadata(sce)$SOM_medianValues[, markers, drop = FALSE]
       if (range == "all") {
         min_data <- min(data, na.rm = TRUE)
         max_data <- max(data, na.rm = TRUE)
@@ -167,7 +167,7 @@ plotStarsCustom <-
     }
     switch(view,
            MST = {
-             layout <- metadata(sce)$SOM_MST$l
+             layout <- S4Vectors::metadata(sce)$SOM_MST$l
              lty <- 1
            },
            grid = {
@@ -187,7 +187,7 @@ plotStarsCustom <-
                                                      backgroundLim,
                                                      backgroundBreaks)
       if (is.null(backgroundSize)) {
-        backgroundSize <- metadata(sce)$SOM_MST$size
+        backgroundSize <- S4Vectors::metadata(sce)$SOM_MST$size
         backgroundSize[backgroundSize == 0] <- 3
       }
     }
@@ -221,10 +221,10 @@ plotStarsCustom <-
       }
     }
     igraph::plot.igraph(
-      metadata(sce)$SOM_MST$g,
+      S4Vectors::metadata(sce)$SOM_MST$g,
       vertex.shape = "star",
       vertex.label = NA,
-      vertex.size = metadata(sce)$SOM_MST$size,
+      vertex.size = S4Vectors::metadata(sce)$SOM_MST$size,
       vertex.data = data,
       vertex.cP = colorPalette(ncol(data)),
       vertex.scale = FALSE,
@@ -250,7 +250,7 @@ plotMarkerCustom <- function (sce, marker, facet_by = "NA", assayType = "exprs",
                                                                                                                            }, backgroundBreaks = NULL, backgroundLim = NULL) 
 {
   switch(view, MST = {
-    layout <- metadata(sce)$SOM_MST$l
+    layout <- S4Vectors::metadata(sce)$SOM_MST$l
     lty <- 1
   }, grid = {
     layout <- as.matrix(fsom$map$grid)
@@ -270,15 +270,15 @@ plotMarkerCustom <- function (sce, marker, facet_by = "NA", assayType = "exprs",
   if (is.null(main)) 
     main <- marker
   if (is.null(marker)) {
-    igraph::plot.igraph(metadata(sce)$SOM_MST$graph, layout = layout, 
-                        vertex.size = metadata(sce)$SOM_MST$size, vertex.label = NA, 
+    igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, 
+                        vertex.size = S4Vectors::metadata(sce)$SOM_MST$size, vertex.label = NA, 
                         edge.lty = lty)
   }
   else {
     if (facet_by == "NA") {
-      igraph::V(metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[as.numeric(cut(metadata(sce)$SOM_medianValues[, 
+      igraph::V(S4Vectors::metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[as.numeric(cut(S4Vectors::metadata(sce)$SOM_medianValues[, 
                                                                                                                       marker], breaks = 100))]
-      igraph::plot.igraph(metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = metadata(sce)$SOM_MST$size, 
+      igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = S4Vectors::metadata(sce)$SOM_MST$size, 
                           vertex.label = NA, main = main, edge.lty = lty, 
                           mark.groups = background$groups, mark.col = background$col[background$values], 
                           mark.border = background$col[background$values])
@@ -286,14 +286,14 @@ plotMarkerCustom <- function (sce, marker, facet_by = "NA", assayType = "exprs",
       graphics::par(fig = c(0, 0.2, 0, 1), mar = c(0, 0, 0, 
                                                    0), new = TRUE)
       
-      FlowSOM:::legendContinuous(colorPalette(100), metadata(sce)$SOM_medianValues[, marker])
+      FlowSOM:::legendContinuous(colorPalette(100), S4Vectors::metadata(sce)$SOM_medianValues[, marker])
     } else {
-      graphics::layout(matrix(c(3, 1, 2, 4), ncol = 4), width = c(1,2,2,1))
+      graphics::layout(matrix(c(3, 1, 2, 4), ncol = 4), widths = c(1,2,2,1))
       
-      cond_levels <- levels(ei(sce)[[facet_by]])
+      cond_levels <- levels(CATALYST::ei(sce)[[facet_by]])
       both_cond <- data.table::rbindlist(sapply(cond_levels, function(cond){
-        sce_filtered <- filterSCE(filterSCE(sce, get(facet_by) == cond), marker_name == marker)
-        median_cond <- data.table::data.table(t(assay(sce_filtered, assayType)))
+        sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name == marker), get(facet_by) == cond)
+        median_cond <- data.table::data.table(t(SummarizedExperiment::assay(sce_filtered, assayType)))
         median_cond[, cluster_id := sce_filtered$cluster_id]
         median_cond <- median_cond[, .(my_marker = median(get(marker))), by = cluster_id]
         data.table::setkey(median_cond, cluster_id)
@@ -301,9 +301,9 @@ plotMarkerCustom <- function (sce, marker, facet_by = "NA", assayType = "exprs",
       lev <- both_cond[, my_marker]
       yval <- seq(min(lev), max(lev), by = (max(lev) - min(lev))/length(colorPalette(100)))
       for (cond in cond_levels) {
-        igraph::V(metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[findInterval(both_cond[condition == cond, my_marker], yval)]
+        igraph::V(S4Vectors::metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[findInterval(both_cond[condition == cond, my_marker], yval)]
         if (cond != cond_levels[1]) main <- NULL
-        igraph::plot.igraph(metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = metadata(sce)$SOM_MST$size,
+        igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = S4Vectors::metadata(sce)$SOM_MST$size,
                           vertex.label = NA, edge.lty = lty, 
                           mark.groups = background$groups, mark.col = background$col[background$values],
                           mark.border = background$col[background$values])
@@ -366,7 +366,7 @@ plotAbundancesCustom <-
     if (is.null(shapes))
       shape_by <- NULL
     if (by == "sample_id") {
-      nk <- nlevels(cluster_ids(x, k))
+      nk <- nlevels(CATALYST::cluster_ids(x, k))
       if (length(k_pal) < nk)
         k_pal <- colorRampPalette(k_pal)(nk)
     }
@@ -385,72 +385,72 @@ plotAbundancesCustom <-
       o <- colnames(fq)[h$order]
       df$sample_id <- factor(df$sample_id, o)
     }
-    p <- ggplot(df, aes_string(y = "Freq")) + labs(x = NULL,
-                                                   y = "Proportion [%]") + theme_bw() + theme(
-                                                     panel.grid = element_blank(),
-                                                     strip.text = element_text(face = "bold"),
-                                                     strip.background = element_rect(fill = NA,
+    p <- ggplot2::ggplot(df, ggplot2::aes_string(y = "Freq")) + ggplot2::labs(x = NULL,
+                                                   y = "Proportion [%]") + ggplot2::theme_bw() + ggplot2::theme(
+                                                     panel.grid = ggplot2::element_blank(),
+                                                     strip.text = ggplot2::element_text(face = "bold"),
+                                                     strip.background = ggplot2::element_rect(fill = NA,
                                                                                      color = NA),
-                                                     axis.text = element_text(color = "black"),
-                                                     axis.text.x = element_text(
+                                                     axis.text = ggplot2::element_text(color = "black"),
+                                                     axis.text.x = ggplot2::element_text(
                                                        angle = 45,
                                                        hjust = 1,
                                                        vjust = 1
                                                      ),
-                                                     legend.key.height = unit(0.8, "lines")
+                                                     legend.key.height = grid::unit(0.8, "lines")
                                                    )
     switch(
       by,
       sample_id = p + (if (!is.null(group_by))
-        facet_wrap(group_by,
-                   scales = "free_x")) + geom_bar(
-                     aes_string(x = "sample_id",
+        ggplot2::facet_wrap(group_by,
+                   scales = "free_x")) + ggplot2::geom_bar(
+                     ggplot2::aes_string(x = "sample_id",
                                 fill = "cluster_id"),
                      position = "fill",
                      stat = "identity"
                    ) +
-        scale_fill_manual("cluster_id", values = k_pal) + scale_x_discrete(expand = c(0,
-                                                                                      0)) + scale_y_continuous(expand = c(0, 0), labels = seq(0,
-                                                                                                                                              100, 25)) + theme(
-                                                                                                                                                panel.border = element_blank(),
-                                                                                                                                                panel.spacing.x = unit(1,
+        ggplot2::scale_fill_manual("cluster_id", values = k_pal) + ggplot2::scale_x_discrete(expand = c(0,
+                                                                                      0)) + ggplot2::scale_y_continuous(expand = c(0, 0), labels = seq(0,
+                                                                                                                                              100, 25)) + ggplot2::theme(
+                                                                                                                                                panel.border = ggplot2::element_blank(),
+                                                                                                                                                panel.spacing.x = grid::unit(1,
                                                                                                                                                                        "lines")
                                                                                                                                               ),
       cluster_id = {
         p <-
-          p + scale_shape_manual(values = shapes) + guides(
-            col = guide_legend(order = 1,
+          p + ggplot2::scale_shape_manual(values = shapes) + ggplot2::guides(
+            col = ggplot2::guide_legend(order = 1,
                                override.aes = list(size = 3)),
-            shape = guide_legend(override.aes = list(size = 3))
+            shape = ggplot2::guide_legend(override.aes = list(size = 3))
           )
         if (is.null(group_by)) {
-          p + geom_boxplot(
-            aes_string(x = "cluster_id"),
+          p + ggplot2::geom_boxplot(
+            ggplot2::aes_string(x = "cluster_id"),
             alpha = 0.2,
-            position = position_dodge(),
+            position = ggplot2::position_dodge(),
             outlier.color = NA
           ) +
-            geom_point(aes_string("cluster_id", shape = shape_by),
-                       position = position_jitter(width = 0.2))
+            ggplot2::geom_point(ggplot2::aes_string("cluster_id", shape = shape_by),
+                       position = ggplot2::position_jitter(width = 0.2))
         } else {
-          p + facet_wrap("cluster_id", scales = "free_y",
-                         ncol = 4) + geom_boxplot(
-                           aes_string(
+          p + ggplot2::facet_wrap("cluster_id", scales = "free_y",
+                         ncol = 4) + ggplot2::geom_boxplot(
+                           ggplot2::aes_string(
                              x = group_by,
                              color = group_by,
                              fill = group_by
                            ),
-                           position = position_dodge(),
+                           position = ggplot2::position_dodge(),
                            alpha = 0.2,
                            outlier.color = NA,
                            show.legend = FALSE
                          ) +
-            geom_point(aes_string(
+            ggplot2::geom_point(ggplot2::aes_string(
               x = group_by,
               col = group_by,
               shape = shape_by
             ),
-            position = position_jitter(width = 0.2))
+            position = ggplot2::position_jitter(width = 0.2))
         }
       }
     )
@@ -465,13 +465,13 @@ plotClusterExprsCustom <-
   {
     CATALYST:::.check_sce(x, TRUE)
     k <- CATALYST:::.check_k(x, k)
-    x$cluster_id <- cluster_ids(x, k)
+    x$cluster_id <- CATALYST::cluster_ids(x, k)
     features <- CATALYST:::.get_features(x, features)
     ms <-
       t(CATALYST:::.agg(x[features,], "cluster_id", "median", assay = assay))
     d <- dist(ms, method = "euclidean")
     o <- hclust(d, method = "average")$order
-    cd <- colData(x)
+    cd <- SummarizedExperiment::colData(x)
     es <- assay(x[features,], assay)
     df <-
       data.table::as.data.table(data.frame(t(es), cd, check.names = FALSE))
@@ -497,18 +497,18 @@ plotClusterExprsCustom <-
                               "average",
                               paste0(names(fq), " (", fq, "%)")[o]
                             )))
-    ggplot(df,
-           aes_string(
+    ggplot2::ggplot(df,
+                    ggplot2::aes_string(
              x = "expression",
              y = "cluster_id",
              col = "avg",
              fill = "avg"
-           )) + facet_wrap( ~ antigen, scales = "free_x",
+           )) + ggplot2::facet_wrap( ~ antigen, scales = "free_x",
                             nrow = 2) + ggridges::geom_density_ridges(alpha = 0.2) + ggridges::theme_ridges() +
-      theme(
+      ggplot2::theme(
         legend.position = "none",
-        strip.background = element_blank(),
-        strip.text = element_text(face = "bold")
+        strip.background = ggplot2::element_blank(),
+        strip.text = ggplot2::element_text(face = "bold")
       )
   }
 
@@ -532,7 +532,7 @@ plotFreqHeatmapCustom <- function (x,
   library(ComplexHeatmap)
   args <- as.list(environment())
   CATALYST:::.check_args_plotFreqHeatmap(args)
-  x$cluster_id <- cluster_ids(x, k)
+  x$cluster_id <- CATALYST::cluster_ids(x, k)
   ns <- table(x$cluster_id, x$sample_id)
   fq <- prop.table(ns, 2)
   y <- as.matrix(unclass(fq))
@@ -599,16 +599,16 @@ clusterSCE <-
                length(arg) == 1, logical(1))
     )
     features <- CATALYST:::.get_features(x, features)
-    if (is.null(marker_classes(x))) {
-      rowData(x)$marker_class <-
+    if (is.null(CATALYST::marker_classes(x))) {
+      SummarizedExperiment::rowData(x)$marker_class <-
         factor(c("state", "type")[as.numeric(rownames(x) %in%
                                                features) + 1], levels = c("type", "state", "none"))
     }
-    rowData(x)$used_for_clustering <- rownames(x) %in% features
+    SummarizedExperiment::rowData(x)$used_for_clustering <- rownames(x) %in% features
     if (verbose)
       message("o running FlowSOM clustering...")
     fsom <-
-      FlowSOM::ReadInput(flowCore::flowFrame(t(assay(x, assayType))))
+      FlowSOM::ReadInput(flowCore::flowFrame(t(SummarizedExperiment::assay(x, assayType))))
     som <-
       FlowSOM::BuildSOM(
         fsom,
@@ -643,13 +643,13 @@ clusterSCE <-
     colnames(codes) <- c(sprintf("som%s", k), sprintf("meta%s",
                                                       mcs))
     x$cluster_id <- factor(som$map$mapping[, 1])
-    metadata(x)$cluster_codes <- codes
-    metadata(x)$SOM_codes <- som$map$codes
-    metadata(x)$SOM_medianValues <- som$map$medianValues
-    metadata(x)$SOM_MST <- som$MST
-    metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
+    S4Vectors::metadata(x)$cluster_codes <- codes
+    S4Vectors::metadata(x)$SOM_codes <- som$map$codes
+    S4Vectors::metadata(x)$SOM_medianValues <- som$map$medianValues
+    S4Vectors::metadata(x)$SOM_MST <- som$MST
+    S4Vectors::metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
     x <-
-      mergeClusters(
+      CATALYST::mergeClusters(
         x,
         k = sprintf("meta%s", maxK),
         id = "all",

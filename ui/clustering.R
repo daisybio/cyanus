@@ -21,30 +21,52 @@ clusteringBody <- tabItem(
         ),
         uiOutput("featuresOut"),
         uiOutput("assayTypeOut"),
+        shinyjs::hidden(div(
+          id = "invalidClusteringFeaturesWarning",
+          shinydashboard::infoBox(
+            title = "Invalid clustering features",
+            subtitle = "No features in the current selection.",
+            value = "Please select more features.",
+            width = 12,
+            color = "orange",
+            fill = TRUE,
+            icon = shiny::icon("exclamation-triangle")
+          ))),
         width = 6
       ),
       column(
         sliderInput(
-          inputId = "k",
-          label = "Maximum Number of Clusters to Evaluate in the Metaclustering",
-          value = 20,
-          min = 2,
-          max = 80
-        ),
-        sliderInput(
           inputId = "xdim",
-          label = "xdim of the grid size of the self-organizing map",
+          label = "X-dimension of the grid size of the self-organizing map",
           value = 10,
-          min = 2,
+          min = 1,
           max = 100
         ),
         sliderInput(
           inputId = "ydim",
-          label = "ydim of the grid size of the self-organizing map",
+          label = "Y-dimension of the grid size of the self-organizing map",
           value = 10,
-          min = 2,
+          min = 1,
           max = 100
         ),
+        sliderInput(
+          inputId = "k",
+          label = "Maximum Number of Clusters to Evaluate in the Metaclustering",
+          value = 20,
+          min = 3,
+          max = 80
+        ),
+        shinyjs::hidden(div(
+          id = "invalidClusteringParamsWarning",
+          shinydashboard::infoBox(
+            title = "Invalid clustering dimensions",
+            subtitle = "The following has to be TRUE: floor(0.8*(xdim*ydim)) >= maxK.",
+            value = "Need higher X/Y-dimension or lower maximum number of clusters.",
+            width = 12,
+            color = "orange",
+            fill = TRUE,
+            icon = shiny::icon("exclamation-triangle")
+          ))),
         width = 6
       ),
       div(
