@@ -39,6 +39,7 @@ names(padj) <- colnames(exprs)
 
 ################# Simulated data set ########################
 sce_cytoGLMM <- simulateSCE()
+sce_cytoGLMM <- clusterSCE(sce_cytoGLMM, features="state")
 
 CATALYST::plotExprs(sce_cytoGLMM)
 
@@ -47,6 +48,15 @@ result <- zibSeq(sce = sce_cytoGLMM, condition = "condition", random_effect = "p
 result_weights <- zibSeq(sce = sce_cytoGLMM, condition = "condition", weighted=TRUE)
 result_weights_random <- zibSeq(sce = sce_cytoGLMM, condition = "condition", weighted=TRUE, random_effect = "patient_id")
 
+results <- runDS(
+  sce_cytoGLMM,
+  ds_methods = c("ZIBseq"),
+  clustering_to_use = "meta2",
+  random_effects = "patient_id",
+  markers_to_test = "state",
+  sceEMD_condition = "condition",
+  weights = TRUE
+)
 
 #################### Covid spiked data #########################
 sce_covid_spiked <- readRDS("/nfs/home/students/l.arend/data/covid_spiked/sce_spiked_full.rds")

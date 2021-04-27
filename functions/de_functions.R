@@ -66,7 +66,7 @@ runDA <- function(sce, parameters = NULL,
 }
 
 runDS <- function(sce, parameters = NULL,
-                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD"),
+                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","ZIBseq"),
                   clustering_to_use, contrast_vars = NULL, design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
                   markers_to_test, parallel = FALSE,
                   ...) {
@@ -132,6 +132,43 @@ runDS <- function(sce, parameters = NULL,
           parallel = parallel
         )
       results[[method]] <- out
+    }
+    
+    if (method == "ZIBseq"){
+      condition <- extra_args$sceEMD_condition
+      # check clustering, sce, etc.
+      CATALYST:::.check_sce(sce, TRUE)
+      k <- CATALYST:::.check_k(sce, clustering_to_use)
+      CATALYST:::.check_cd_factor(sce, condition)
+    
+      # check features (markers_to_test)
+      if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
+        sce <- filterSCE(sce, marker_classes(sce) %in% markers_to_test)
+      } else{
+        sce <- filterSCE(sce, rownames(sce) %in% markers_to_test)
+      }
+      
+      # check weights
+      weights <- ifelse(is.null(extra_args$includeWeights), TRUE, extra_args$includeWeights)
+      
+      # iterate over cluster_ids
+      cluster_ids <- CATALYST::cluster_ids(sce, k)
+      res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
+        message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
+        # filtering sce
+        sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = k)
+        
+        # call ZIBseq
+        out <- zibSeq(
+          sce = sce_cluster,
+          condition = condition,
+          random_effect = random_effects,
+          weighted = weights,
+        )
+        out$cluster_id <- curr_cluster_id
+        out
+      })
+      results[[method]] <- data.table::rbindlist(res)
     }
   }
   return(results)
