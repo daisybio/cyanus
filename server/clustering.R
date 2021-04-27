@@ -177,6 +177,7 @@ observeEvent(reactiveVals$sce, {
 
 
 ### Renderer ----
+#TODO: add continue without clustering button
 
 output$featuresOut <- renderUI({
   req(input$useFeaturesIn)
