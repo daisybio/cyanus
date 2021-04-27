@@ -68,7 +68,7 @@ runDA <- function(sce, parameters = NULL,
 runDS <- function(sce, parameters = NULL,
                   ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","ZIBseq"),
                   clustering_to_use, contrast_vars = NULL, design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
-                  markers_to_test, parallel = FALSE,
+                  markers_to_test, parallel = FALSE, time_methods = FALSE,
                   ...) {
   
   #for limma and LMM: 
@@ -84,6 +84,7 @@ runDS <- function(sce, parameters = NULL,
   }
   
   results <- list()
+  timings <- list()
   for (method in ds_methods) {
     message(paste("Calculating results for", method, "..."))
     if (method %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
@@ -99,21 +100,23 @@ runDS <- function(sce, parameters = NULL,
       #extra args: blockID, trend_limma, markersToTest, includeWeights
       trend <- ifelse(is.null(extra_args$trend_limma), TRUE, extra_args$trend_limma)
       weights <- ifelse(is.null(extra_args$includeWeights), TRUE, extra_args$includeWeights)
-      
-      out <- diffcyt::diffcyt(
-        d_input = sce,
-        design = parameters[[method]][["design"]],
-        formula = parameters[[method]][["formula"]],
-        contrast = parameters[[method]][["contrast"]],
-        analysis_type = "DS",
-        method_DS = method,
-        clustering_to_use = clustering_to_use,
-        block_id = extra_args$blockID,
-        trend = trend,
-        markers_to_test = getMarkersToTest(sce, method, markers_to_test),
-        weights = weights
+      t <- system.time(
+        out <- diffcyt::diffcyt(
+          d_input = sce,
+          design = parameters[[method]][["design"]],
+          formula = parameters[[method]][["formula"]],
+          contrast = parameters[[method]][["contrast"]],
+          analysis_type = "DS",
+          method_DS = method,
+          clustering_to_use = clustering_to_use,
+          block_id = extra_args$blockID,
+          trend = trend,
+          markers_to_test = getMarkersToTest(sce, method, markers_to_test),
+          weights = weights
+        )
       )
       results[[method]] <- rowData(out$res)
+      timings[[method]] <- t
     }
     if(method == "sceEMD"){
       if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
@@ -122,16 +125,19 @@ runDS <- function(sce, parameters = NULL,
         sce <- filterSCE(sce, rownames(sce) %in% markers_to_test)
       }
       #extra args: sceEMD_condition, binSize, nperm
-      out <-
-        sceEMD(
-          sce = sce,
-          k = clustering_to_use,
-          condition = extra_args$sceEMD_condition,
-          binSize = extra_args$binSize,
-          nperm = extra_args$nperm,
-          parallel = parallel
-        )
+      t <- system.time(
+        out <-
+          sceEMD(
+            sce = sce,
+            k = clustering_to_use,
+            condition = extra_args$sceEMD_condition,
+            binSize = extra_args$binSize,
+            nperm = extra_args$nperm,
+            parallel = parallel
+          )
+      )
       results[[method]] <- out
+      timings[[method]] <- t
     }
     
     if (method == "ZIBseq"){
@@ -153,25 +159,37 @@ runDS <- function(sce, parameters = NULL,
       
       # iterate over cluster_ids
       cluster_ids <- CATALYST::cluster_ids(sce, k)
-      res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
-        message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
-        # filtering sce
-        sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = k)
-        
-        # call ZIBseq
-        out <- zibSeq(
-          sce = sce_cluster,
-          condition = condition,
-          random_effect = random_effects,
-          weighted = weights,
-        )
-        out$cluster_id <- curr_cluster_id
-        out
-      })
+      t <- system.time(
+        res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
+          message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
+          # filtering sce
+          sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = k)
+          
+          # call ZIBseq
+          out <- zibSeq(
+            sce = sce_cluster,
+            condition = condition,
+            random_effect = random_effects,
+            weighted = weights,
+          )
+          out$cluster_id <- curr_cluster_id
+          out
+        })
+      )
       results[[method]] <- data.table::rbindlist(res)
+      timings[[method]] <- t
     }
   }
-  return(results)
+  if(time_methods){
+    return(
+      list(
+        results = results,
+        times = timings
+      )
+    )
+  }else{
+    return(results)
+  }
 }
 
 # get appropriate vector for each method containing the markers that want to be tested
