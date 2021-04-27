@@ -657,3 +657,10 @@ clusterSCE <-
       )
     return(x)
   }
+
+addClusterAll <- function(sce){
+  sce$cluster_id <- as.factor("all")
+  S4Vectors::metadata(sce)$cluster_codes <- data.frame(all = as.factor("all"))
+  return(sce)
+}
+
