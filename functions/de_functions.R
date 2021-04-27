@@ -70,7 +70,8 @@ runDS <- function(sce, clustering_to_use, contrast_vars,
                   ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","ZIBseq"),
                   design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
                   parallel = FALSE, parameters = NULL, sceEMD_nperm = 500, sceEMD_binsize = NULL,
-                  include_weights = TRUE, trend_limma = TRUE, blockID = NULL) {
+                  include_weights = TRUE, trend_limma = TRUE, blockID = NULL, time_methods = FALSE) {
+
   
   #for limma and LMM: 
   ##for parameters:
@@ -89,6 +90,8 @@ runDS <- function(sce, clustering_to_use, contrast_vars,
   }
   
   results <- list()
+  timings <- list()
+
   for (method in c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
     if (method %in% ds_methods) {
       message(paste("Calculating results for", method, "..."))
@@ -102,7 +105,8 @@ runDS <- function(sce, clustering_to_use, contrast_vars,
       #extra args: blockID, trend_limma, markersToTest, includeWeights
       #trend <- ifelse(is.null(extra_args$trend_limma), TRUE, extra_args$trend_limma)
       
-      out <- diffcyt::diffcyt(
+      t <- system.time(
+        out <- diffcyt::diffcyt(
         d_input = sce,
         design = parameters[[method]][["design"]],
         formula = parameters[[method]][["formula"]],
@@ -114,9 +118,11 @@ runDS <- function(sce, clustering_to_use, contrast_vars,
         trend = trend_limma,
         markers_to_test = getMarkersToTest(sce, method, markers_to_test),
         weights = include_weights
+        )
       )
       ds_methods <- ds_methods[ds_methods != method]
       results[[method]] <- rowData(out$res)
+      timings[[method]] <- t
     }
   }
   if (length(ds_methods) == 0) return(results)
@@ -135,38 +141,47 @@ runDS <- function(sce, clustering_to_use, contrast_vars,
     
     if("sceEMD" %in% ds_methods){
       message(sprintf("calculating sceEMD for cluster %s", curr_cluster_id))
-      out <-
+      t <- system.time(out <-
         sceEMD(
           sce = sce_cluster,
           condition = contrast_vars,
           binSize = sceEMD_binsize,
           nperm = sceEMD_nperm,
           parallel = parallel
-        )
+        ))
       cluster_results[["sceEMD"]] <- out
+      timings[["sceEMD"]][[curr_cluster_id]] <- t
     }
   
     if ("ZIBseq" %in% ds_methods){
       message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
         # call ZIBseq
-        out <- zibSeq(
+        t <- system.time(out <- zibSeq(
           sce = sce_cluster,
           condition = contrast_vars,
           random_effect = random_effects,
           weighted = include_weights,
-        )
+        ))
         cluster_results[["ZIBseq"]] <- out
+        timings[["sceEMD"]][[curr_cluster_id]] <- t
     }
     #TODO: hurdle model
     #TODO: cytoglmm
     #TODO: elasticnet
     return(data.table::rbindlist(cluster_results, idcol = 'method'))
     })
-  browser()
   other_res <- data.table::rbindlist(res, idcol = 'cluster_id')
   other_res[, p_adj := p.adjust(p_val, "BH"), by="method"]
-  
-  return(c(results, split(other_res, other_res$method)))
+  if(time_methods){
+    return(
+      list(
+        results = c(results, split(other_res, other_res$method)),
+        times = timings
+      )
+    )
+  }else{
+    return(c(results, split(other_res, other_res$method)))
+  }
 }
 
 # get appropriate vector for each method containing the markers that want to be tested
