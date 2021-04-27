@@ -66,9 +66,9 @@ runDA <- function(sce, parameters = NULL,
 }
 
 runDS <- function(sce, parameters = NULL,
-                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD"),
+                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","ZIBseq"),
                   clustering_to_use, contrast_vars = NULL, design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
-                  markers_to_test,
+                  markers_to_test, parallel = FALSE,
                   ...) {
   
   #for limma and LMM: 
@@ -128,9 +128,47 @@ runDS <- function(sce, parameters = NULL,
           k = clustering_to_use,
           condition = extra_args$sceEMD_condition,
           binSize = extra_args$binSize,
-          nperm = extra_args$nperm
+          nperm = extra_args$nperm,
+          parallel = parallel
         )
       results[[method]] <- out
+    }
+    
+    if (method == "ZIBseq"){
+      condition <- extra_args$sceEMD_condition
+      # check clustering, sce, etc.
+      CATALYST:::.check_sce(sce, TRUE)
+      k <- CATALYST:::.check_k(sce, clustering_to_use)
+      CATALYST:::.check_cd_factor(sce, condition)
+    
+      # check features (markers_to_test)
+      if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
+        sce <- filterSCE(sce, marker_classes(sce) %in% markers_to_test)
+      } else{
+        sce <- filterSCE(sce, rownames(sce) %in% markers_to_test)
+      }
+      
+      # check weights
+      weights <- ifelse(is.null(extra_args$includeWeights), TRUE, extra_args$includeWeights)
+      
+      # iterate over cluster_ids
+      cluster_ids <- CATALYST::cluster_ids(sce, k)
+      res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
+        message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
+        # filtering sce
+        sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = k)
+        
+        # call ZIBseq
+        out <- zibSeq(
+          sce = sce_cluster,
+          condition = condition,
+          random_effect = random_effects,
+          weighted = weights,
+        )
+        out$cluster_id <- curr_cluster_id
+        out
+      })
+      results[[method]] <- data.table::rbindlist(res)
     }
   }
   return(results)
@@ -201,7 +239,7 @@ createCustomContrastMatrix <- function(sce, contrastVars, matrix, designMatrix =
     #the entries have to correspond to the columns of the design matrix
     cnames <- colnames(matrix)
     bool <- getBools(cnames, contrastVars)
-    contrast <- createContrast(bool)
+    contrast <- diffcyt::createContrast(bool)
     print(contrast)
     return(contrast)
   }else{
@@ -214,7 +252,7 @@ createCustomContrastMatrix <- function(sce, contrastVars, matrix, designMatrix =
       return( c( 0, rep(bool[x], length(lvlList[[x]]) -1 )) ) 
     }))
     print(contrast)
-    return(createContrast(unname(contrast)))
+    return(diffcyt::createContrast(unname(contrast)))
   }
 }
 
