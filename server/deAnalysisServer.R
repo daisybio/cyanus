@@ -220,9 +220,9 @@ call_DE <- function() {
         ds_methods = method,
         clustering_to_use = clustering_to_use,
         markers_to_test = featuresIn,
-        sceEMD_condition = contrastVars,
-        binSize = binSize,
-        nperm = nperm
+        contrast_vars = contrastVars,
+        sceEMD_binsize = binSize,
+        sceEMD_nperm = nperm
       )
       out <- results[[method]]
     },

@@ -211,10 +211,10 @@ runMethods <- function(){
         markers_to_test = markersToTest,
         blockID = blockIDLimma,
         trend_limma = limmaTrend,
-        includeWeights = includeWeights,
-        sceEMD_condition = contrast,
-        binSize = binSize,
-        nperm = nperm
+        include_weights = includeWeights,
+        contrast_vars = contrast,
+        sceEMD_binsize = binSize,
+        sceEMD_nperm = nperm
       )
     },
     message = function(m) {

@@ -32,7 +32,7 @@ myEMD <-  function(A, B, binSize = NULL) {
 }
 
 rowwiseEMD <- function(mat, condition, binSize = NULL) {
-  stopifnot(is.matrix(mat) & is.numeric(mat) & (nlevels(as.factor(condition)) == 2) & (ncol(mat)==length(condition)))
+  stopifnot(is.matrix(mat), is.numeric(mat), nlevels(as.factor(condition)) == 2, ncol(mat)==length(condition))
   
   condition <- as.factor(condition)
   
@@ -45,51 +45,38 @@ rowwiseEMD <- function(mat, condition, binSize = NULL) {
   out_dt
 }
 
-sceEMD <- function(sce, k, condition, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
+sceEMD <- function(sce, condition, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
   # suppressPackageStartupMessages(library(data.table))
-  
   bppar <- BiocParallel::bpparam()
   
   if (parallel == FALSE)
     bppar <- BiocParallel::SerialParam(progressbar = TRUE)
   
   set.seed(1)
-  
-  CATALYST:::.check_sce(sce, TRUE)
-  k <- CATALYST:::.check_k(sce, k)
-  CATALYST:::.check_cd_factor(sce, condition)
   assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
   
+  # get data matrix
+  data <- SummarizedExperiment::assay(sce, assay)
   
-  cluster_ids <- CATALYST::cluster_ids(sce, k)
-  res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
-    message(sprintf("calculating sceEMD for cluster %s", curr_cluster_id))
-    
-    sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = k)
-    data <- SummarizedExperiment::assay(sce_cluster, assay)
-    
-    condition_cluster <- SummarizedExperiment::colData(sce_cluster)[[condition]]
-    emd_real <- rowwiseEMD(mat = data, condition = condition_cluster, binSize = binSize)
-    emd_real$cluster_id <- as.factor(curr_cluster_id)
-    data.table::setnames(emd_real, "result", "real_emd")
-    data.table::setkey(emd_real, marker_id)
-    
-    sceEI <- CATALYST::ei(sce_cluster)
-    perms <- RcppAlgos::permuteSample(sceEI[[condition]], n = nperm, seed = seed)
-    
-    perm_res <- BiocParallel::bplapply(as.data.frame(t(unclass(perms))), function(perm, sceEI, data, binSize) {
-      condition_permutation_cells <- rep(perm, times=sceEI$n_cells)
-      rowwiseEMD(mat = data, condition = condition_permutation_cells, binSize = binSize)
-    }, sceEI, data, binSize, BPPARAM = bppar)
-    
-    all_perms <- data.table::rbindlist(perm_res, idcol = "permutation")
-    data.table::setkey(all_perms, marker_id)
-    
-    res_agg <- all_perms[emd_real][, .(p_val = (sum(result >= real_emd) + 1)/(nperm + 1)), by = c("marker_id", "real_emd", "cluster_id")]
-    data.table::setnames(res_agg, "real_emd", "emd")
-    res_agg[, p_adj := p.adjust(p_val, "BH")]
-    res_agg
-  })
+  # compute actual emd
+  emd_real <- rowwiseEMD(mat = data, condition = sce[[condition]], binSize = binSize)
+  data.table::setnames(emd_real, "result", "real_emd")
+  data.table::setkey(emd_real, marker_id)
   
-  return(data.table::rbindlist(res))
+  # compute permutations of sample conditions
+  sceEI <- CATALYST::ei(sce)
+  perms <- RcppAlgos::permuteSample(sceEI[[condition]], n = nperm, seed = seed)
+  perm_res <- BiocParallel::bplapply(as.data.frame(t(unclass(perms))), function(perm, sceEI, data, binSize) {
+    condition_permutation_cells <- rep(perm, times=sceEI$n_cells)
+    rowwiseEMD(mat = data, condition = condition_permutation_cells, binSize = binSize)
+  }, sceEI, data, binSize, BPPARAM = bppar)
+  
+  # gather results and compute empirical p-value
+  all_perms <- data.table::rbindlist(perm_res, idcol = "permutation")
+  data.table::setkey(all_perms, marker_id)
+  res_agg <- all_perms[emd_real][, .(p_val = (sum(result >= real_emd) + 1)/(nperm + 1)), by = c("marker_id", "real_emd")]
+  data.table::setnames(res_agg, "real_emd", "emd")
+  # res_agg[, p_adj := p.adjust(p_val, "BH")]
+  
+  return(res_agg)
 }

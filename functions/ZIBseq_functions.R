@@ -9,6 +9,8 @@ zibSeq <- function (sce,
   match.arg(condition, names(SummarizedExperiment::colData(sce)))
   
   features <- match.arg(features, SummarizedExperiment:: rowData(sce)$marker_name, several.ok = TRUE)
+  library(gamlss)
+  library(gamlss.dist)
   
   if (!is.null(random_effect)){
     match.arg(random_effect, names(SummarizedExperiment::colData(sce)))
@@ -30,16 +32,16 @@ zibSeq <- function (sce,
     my_weights <- rep(1/ei(sce)$n_cells, ei(sce)$n_cells)
     message("Fitting model without weights")
   }
-
+  
   beta = matrix(data = NA, length(features), 2)
   for (i in seq(length(features))) {
     message(paste("Fitting marker", colnames(X)[i]))
-
+    
     x.prop <- X[, i]
     x.prop[x.prop < 0] <- 0
     x.prop <- (x.prop - min(x.prop))/(max(x.prop)-min(x.prop))
     x.prop[which(x.prop==1)] <- x.prop[which(x.prop==1)] - 2.225074e-10
-    data <- data.table(
+    data <- data.frame(
       exprs = x.prop,
       condition = Y
     )
@@ -60,7 +62,7 @@ zibSeq <- function (sce,
   
   pvalues = beta[, 2]
   padj <- p.adjust(pvalues, method = "BH")
-  res <- data.table(
+  res <- data.frame(
     marker_id = colnames(X), 
     p_val = pvalues, 
     p_adj = padj

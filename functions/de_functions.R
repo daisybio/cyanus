@@ -65,29 +65,33 @@ runDA <- function(sce, parameters = NULL,
   return(results)
 }
 
-runDS <- function(sce, parameters = NULL,
+runDS <- function(sce, clustering_to_use, contrast_vars,
+                  markers_to_test = "state",
                   ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","ZIBseq"),
-                  clustering_to_use, contrast_vars = NULL, design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
-                  markers_to_test, parallel = FALSE,
-                  ...) {
+                  design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
+                  parallel = FALSE, parameters = NULL, sceEMD_nperm = 500, sceEMD_binsize = NULL,
+                  include_weights = TRUE, trend_limma = TRUE, blockID = NULL) {
   
   #for limma and LMM: 
   ##for parameters:
   ###either: first call prepDiffExp by yourself and give runDA the result as list of parameters
   ###or: specify contrast_vars + design_matrix_vars/fixed_effects+random_effects and we make it for you
+  stopifnot(is.logical(include_weights), is.logical(trend_limma))
+  CATALYST:::.check_sce(sce, TRUE)
+  k <- CATALYST:::.check_k(sce, clustering_to_use)
+  CATALYST:::.check_cd_factor(sce, contrast_vars)
   
   ds_methods <- match.arg(ds_methods, several.ok = TRUE)
-  extra_args <- list(...)
+  #extra_args <- list(...)
   
   if(is.null(parameters)){
     parameters <- list()
   }
   
   results <- list()
-  for (method in ds_methods) {
-    message(paste("Calculating results for", method, "..."))
-    if (method %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
-      
+  for (method in c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
+    if (method %in% ds_methods) {
+      message(paste("Calculating results for", method, "..."))
       if(is.null(parameters[[method]]) & method == "diffcyt-DS-LMM"){
         message(paste("Making specific parameters for:", method ,"fixed effects:", fixed_effects, ", random effects:", random_effects, ", contrast:", contrast_vars))
         parameters[[method]] <- prepDiffExp(sce = sce, contrastVars = contrast_vars, colsFixed = fixed_effects, colsRandom = random_effects, method = method)
@@ -95,10 +99,8 @@ runDS <- function(sce, parameters = NULL,
         message(paste("Making specific parameters for:", method,"include in design matrix:", design_matrix_vars, ", contrast:", contrast_vars))
         parameters[[method]] <- prepDiffExp(sce = sce, contrastVars = contrast_vars, colsDesign = design_matrix_vars, method = method)
       }
-      
       #extra args: blockID, trend_limma, markersToTest, includeWeights
-      trend <- ifelse(is.null(extra_args$trend_limma), TRUE, extra_args$trend_limma)
-      weights <- ifelse(is.null(extra_args$includeWeights), TRUE, extra_args$includeWeights)
+      #trend <- ifelse(is.null(extra_args$trend_limma), TRUE, extra_args$trend_limma)
       
       out <- diffcyt::diffcyt(
         d_input = sce,
@@ -108,70 +110,63 @@ runDS <- function(sce, parameters = NULL,
         analysis_type = "DS",
         method_DS = method,
         clustering_to_use = clustering_to_use,
-        block_id = extra_args$blockID,
-        trend = trend,
+        block_id = blockID,
+        trend = trend_limma,
         markers_to_test = getMarkersToTest(sce, method, markers_to_test),
-        weights = weights
+        weights = include_weights
       )
+      ds_methods <- ds_methods[ds_methods != method]
       results[[method]] <- rowData(out$res)
     }
-    if(method == "sceEMD"){
-      if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
-        sce <- filterSCE(sce, marker_classes(sce) %in% markers_to_test)
-      } else{
-        sce <- filterSCE(sce, rownames(sce) %in% markers_to_test)
-      }
-      #extra args: sceEMD_condition, binSize, nperm
+  }
+  if (length(ds_methods) == 0) return(results)
+  
+  # get the cluster_ids for the current meta cluster and iterate over the clusters
+  if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
+    sce <- CATALYST::filterSCE(sce, CATALYST::marker_classes(sce) %in% markers_to_test)
+  } else {
+    sce <- CATALYST::filterSCE(sce, rownames(sce) %in% markers_to_test)
+  }
+  cluster_ids <- CATALYST::cluster_ids(sce, clustering_to_use)
+  res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
+    cluster_results <- list()
+    #subset sce to the desired cluster_id
+    sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = clustering_to_use)
+    
+    if("sceEMD" %in% ds_methods){
+      message(sprintf("calculating sceEMD for cluster %s", curr_cluster_id))
       out <-
         sceEMD(
-          sce = sce,
-          k = clustering_to_use,
-          condition = extra_args$sceEMD_condition,
-          binSize = extra_args$binSize,
-          nperm = extra_args$nperm,
+          sce = sce_cluster,
+          condition = contrast_vars,
+          binSize = sceEMD_binsize,
+          nperm = sceEMD_nperm,
           parallel = parallel
         )
-      results[[method]] <- out
+      cluster_results[["sceEMD"]] <- out
     }
-    
-    if (method == "ZIBseq"){
-      condition <- extra_args$sceEMD_condition
-      # check clustering, sce, etc.
-      CATALYST:::.check_sce(sce, TRUE)
-      k <- CATALYST:::.check_k(sce, clustering_to_use)
-      CATALYST:::.check_cd_factor(sce, condition)
-    
-      # check features (markers_to_test)
-      if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
-        sce <- filterSCE(sce, marker_classes(sce) %in% markers_to_test)
-      } else{
-        sce <- filterSCE(sce, rownames(sce) %in% markers_to_test)
-      }
-      
-      # check weights
-      weights <- ifelse(is.null(extra_args$includeWeights), TRUE, extra_args$includeWeights)
-      
-      # iterate over cluster_ids
-      cluster_ids <- CATALYST::cluster_ids(sce, k)
-      res <- lapply(levels(cluster_ids), function(curr_cluster_id) {
-        message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
-        # filtering sce
-        sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = k)
-        
+  
+    if ("ZIBseq" %in% ds_methods){
+      message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
         # call ZIBseq
         out <- zibSeq(
           sce = sce_cluster,
-          condition = condition,
+          condition = contrast_vars,
           random_effect = random_effects,
-          weighted = weights,
+          weighted = include_weights,
         )
-        out$cluster_id <- curr_cluster_id
-        out
-      })
-      results[[method]] <- data.table::rbindlist(res)
+        cluster_results[["ZIBseq"]] <- out
     }
-  }
-  return(results)
+    #TODO: hurdle model
+    #TODO: cytoglmm
+    #TODO: elasticnet
+    return(data.table::rbindlist(cluster_results, idcol = 'method'))
+    })
+  browser()
+  other_res <- data.table::rbindlist(res, idcol = 'cluster_id')
+  other_res[, p_adj := p.adjust(p_val, "BH"), by="method"]
+  
+  return(c(results, split(other_res, other_res$method)))
 }
 
 # get appropriate vector for each method containing the markers that want to be tested
@@ -292,7 +287,7 @@ doConditionSubselection <- function(sce, subselected_categories, mappedCategorie
   for(cat in names(exclude)){
     sub <- exclude[[cat]]
     print(sprintf("only using %s from the condition %s", sub, cat))
-    sce <- filterSCE(sce, get(cat) %in% sub)
+    sce <- CATALYST::filterSCE(sce, get(cat) %in% sub)
   }
   return(list(sce = sce, exclusionList = exclusionList))
 }
