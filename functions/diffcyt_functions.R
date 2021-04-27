@@ -26,7 +26,7 @@ diffcyt_method <- function (d_input, experiment_info = NULL, marker_info = NULL,
     if (transform) {
       if (verbose) 
         message("transforming data...")
-      d_se <- transformData(d_se, cofactor)
+      d_se <- diffcyt::transformData(d_se, cofactor)
     }
     if (verbose) 
       message("generating clusters...")
