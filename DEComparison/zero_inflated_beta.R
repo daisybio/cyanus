@@ -9,6 +9,9 @@ source("functions/cytoGLMM_functions.R")
 source("functions/ZIBseq_functions.R")
 source("functions/prep_functions.R")
 
+# cytoGLMM simulator (5 of 20 markers significant)
+sce_cytoGLMM <- simulateSCE(n_true = 5, n_markers = 10)
+
 
 ################## PBMC DATA ####################
 data(PBMC_panel, PBMC_md, PBMC_fs)
@@ -67,4 +70,3 @@ LMM_results <- diffcyt_method(d_input = sce_covid_spiked,
                                      clustering_to_use = "all",
                                      use_weights = FALSE,
                                      markers_to_test = markers_to_test)
-
