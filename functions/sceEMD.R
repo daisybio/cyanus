@@ -49,7 +49,7 @@ sceEMD <- function(sce, condition, binSize=NULL, nperm=100, assay="exprs", seed=
   # suppressPackageStartupMessages(library(data.table))
   bppar <- BiocParallel::bpparam()
   
-  if (parallel == FALSE)
+  if (!parallel)
     bppar <- BiocParallel::SerialParam(progressbar = TRUE)
   
   set.seed(1)
