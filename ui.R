@@ -38,6 +38,9 @@ body <-
       right: 50px; /*48% from the right*/
     }"
     ),
+    waiter_show_on_load(html = tagList(spin_square_circle(), 
+                                       HTML("<br>Loading App...")), 
+                        color="rgb(0, 102, 204, .5)"),
     div(
       id = "loading",
       fluidRow(box(
@@ -51,7 +54,7 @@ body <-
                               a clear, understandable and user-friendly pipeline is needed."),
         title = h1("Welcome to the CyTOF Pipeline"),
         width = 12
-      )),
+      ))
     ),
     tabItems(
       welcomeBody,
@@ -84,7 +87,7 @@ body <-
         block = TRUE,
         disabled = TRUE
       )
-    )),
+    ))
 )
    
 
