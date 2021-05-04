@@ -219,9 +219,9 @@ runDS <- function(sce,
         # call GAMLSS
         out <- sceGAMLSS(
           sce = sce_cluster,
+          method = c("BEZI"),
           condition = contrast_vars,
           random_effect = random_effects,
-          weighted = include_weights,
         )
         cluster_results[["sceGAMLSS"]] <- out
       }
@@ -303,9 +303,9 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
       # call GAMLSS
       out <- sceGAMLSS(
         sce = sce_cluster,
+        method = c("BEZI"),
         condition = contrast_vars,
         random_effect = random_effects,
-        weighted = include_weights,
       )
       cluster_results[["sceGAMLSS"]] <- out
     }else if ("ZIBseq" == method){
