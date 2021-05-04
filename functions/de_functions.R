@@ -308,16 +308,6 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         random_effect = random_effects,
       )
       cluster_results[["sceGAMLSS"]] <- out
-    }else if ("ZIBseq" == method){
-      message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
-      # call ZIBseq
-      out <- zibSeq(
-        sce = sce_cluster,
-        condition = contrast_vars,
-        random_effect = random_effects,
-        weighted = include_weights,
-      )
-      cluster_results[["ZIBseq"]] <- out
     }else if ("hurdleBeta" == method){
       message(sprintf("calculating betaHurdle for cluster %s", curr_cluster_id))
       # call hurdleBeta
