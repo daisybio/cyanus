@@ -7,7 +7,7 @@ library(RANN)
 library(ggvenn)
 
 # create venn diagram of all methods that were performed in runDA / runDS
-createVennDiagram <- function(res, DS = T, fdr_threshold = 0.05) {
+createVennDiagram <- function(res, DS = T, fdr_threshold = 0.05, columns = NULL) {
   input_venn <- list()
   if(DS){
     feature <- "marker_id"
@@ -42,8 +42,7 @@ createVennDiagram <- function(res, DS = T, fdr_threshold = 0.05) {
       ))
     input_venn[[ds_method]] <- significants
   }
-  
-  venn <- ggvenn::ggvenn(input_venn, show_elements = TRUE, label_sep ="\n", fill_alpha = 0.3, set_name_size = 6, text_size = 4)
+  venn <- ggvenn::ggvenn(input_venn, columns = columns, show_elements = TRUE, label_sep ="\n", fill_alpha = 0.3, set_name_size = 6, text_size = 4)
   return(venn)
 }
 
@@ -74,7 +73,7 @@ createVennDiagramOld <- function(res) {
       ))
     input_venn[[ds_method]] <- significants
   }
-  
+ 
   venn <- ggvenn::ggvenn(input_venn, show_elements = TRUE, label_sep ="\n", fill_alpha = 0.3, set_name_size = 8, text_size = 4)
   return(venn)
 }

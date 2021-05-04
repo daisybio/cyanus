@@ -24,7 +24,7 @@ results <- runDS(sce,
 res <- results[["results"]]
 times <- results[["times"]]
 #only possible for max. 4 sets
-#createVennDiagram(res, DS=T, 0.05)
+#createVennDiagram(res, DS=T, 0.05, columns = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD", "hurdleBeta")
 dt <- data.table::rbindlist(sapply(res, data.table::as.data.table), fill = T, idcol="method")
 dt[p_adj <= 0.05]
 library(ggplot2)
