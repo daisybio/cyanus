@@ -1,4 +1,4 @@
-zibSeq <- function (sce, 
+sceGAMLSS <- function (sce, 
                     condition, 
                     random_effect = NULL, 
                     weighted = FALSE, 
@@ -13,8 +13,10 @@ zibSeq <- function (sce,
   library(gamlss.dist)
   
   if (!is.null(random_effect)){
-    match.arg(random_effect, names(SummarizedExperiment::colData(sce)))
-    R = SummarizedExperiment::colData(sce)[[random_effect]]
+    for (re in random_effect){
+      match.arg(re, names(SummarizedExperiment::colData(sce)))
+    }
+    R <- SummarizedExperiment::colData(sce)[random_effect]
     message("Fitting a zero-inflated beta mixed model with random effects...")
   } else {
     message("Fitting a zero-inflated beta model...")
@@ -48,8 +50,13 @@ zibSeq <- function (sce,
     
     if (!is.null(random_effect)){ 
       # with random effect
-      data$random = R
-      bereg = gamlss::gamlss(exprs ~ condition + re(random=(~1|random)), family = BEZI(), 
+      data <- cbind(data, R)
+      
+      random_terms <- list()
+      for (re in random_effect){
+        random_terms[[re]] <- ~ 1
+      }
+      bereg = gamlss::gamlss(exprs ~ condition + re(random=random_terms), family = BEZI(), 
                              trace = FALSE, control = gamlss.control(n.cyc = 100), data = data, weights = my_weights)
     } else {
       # without random effect
@@ -61,11 +68,11 @@ zibSeq <- function (sce,
   }
   
   pvalues = beta[, 2]
-  padj <- p.adjust(pvalues, method = "BH")
+  #padj <- p.adjust(pvalues, method = "BH")
   res <- data.frame(
     marker_id = colnames(X), 
-    p_val = pvalues
-    # p_adj = padj
+    p_val = pvalues, 
+    #p_adj = padj
   )
-  return (res)
+  return (bereg)
 }

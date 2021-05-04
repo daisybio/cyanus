@@ -69,24 +69,13 @@ runDS <- function(sce,
                   clustering_to_use,
                   contrast_vars,
                   markers_to_test = "state",
-                  ds_methods = c("diffcyt-DS-limma",
-                                 "diffcyt-DS-LMM",
-                                 "sceEMD",
-                                 "ZIBseq",
-                                 "hurdleBeta",
-                                 "CytoGLMM"),
-                  design_matrix_vars = NULL,
-                  fixed_effects = NULL,
-                  random_effects = NULL,
-                  parallel = FALSE,
-                  parameters = NULL,
-                  sceEMD_nperm = 500,
-                  sceEMD_binsize = NULL,
-                  include_weights = TRUE,
-                  trend_limma = TRUE,
-                  blockID = NULL,
-                  time_methods = FALSE) {
-  #for limma and LMM:
+                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","sceGAMLSS", "hurdleBeta", "CytoGLMM"),
+                  design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
+                  parallel = FALSE, parameters = NULL, sceEMD_nperm = 500, sceEMD_binsize = NULL,
+                  include_weights = TRUE, trend_limma = TRUE, blockID = NULL, time_methods = FALSE) {
+
+  
+  #for limma and LMM: 
   ##for parameters:
   ###either: first call prepDiffExp by yourself and give runDA the result as list of parameters
   ###or: specify contrast_vars + design_matrix_vars/fixed_effects+random_effects and we make it for you
@@ -225,16 +214,16 @@ runDS <- function(sce,
         cluster_results[["sceEMD"]] <- out
       }
       
-      if ("ZIBseq" %in% ds_methods) {
-        message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
-        # call ZIBseq
-        out <- zibSeq(
+      if ("sceGAMLSS" %in% ds_methods){
+        message(sprintf("calculating sceGAMLSS for cluster %s", curr_cluster_id))
+        # call GAMLSS
+        out <- sceGAMLSS(
           sce = sce_cluster,
           condition = contrast_vars,
           random_effect = random_effects,
           weighted = include_weights,
         )
-        cluster_results[["ZIBseq"]] <- out
+        cluster_results[["sceGAMLSS"]] <- out
       }
       
       if ("hurdleBeta" %in% ds_methods) {
@@ -309,6 +298,16 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
           parallel = parallel
         )
       cluster_results[["sceEMD"]] <- out
+    }else if("sceGAMLSS" == method){
+      message(sprintf("calculating sceGAMLSS for cluster %s", curr_cluster_id))
+      # call GAMLSS
+      out <- sceGAMLSS(
+        sce = sce_cluster,
+        condition = contrast_vars,
+        random_effect = random_effects,
+        weighted = include_weights,
+      )
+      cluster_results[["sceGAMLSS"]] <- out
     }else if ("ZIBseq" == method){
       message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
       # call ZIBseq
