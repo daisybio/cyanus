@@ -52,6 +52,6 @@ server <- function(input, output, session) {
   shinyBS::updateButton(session, inputId = "previousTab", icon = icon("arrow-left"), style = "success")
   shinyBS::updateButton(session, inputId = "nextTab", icon = icon("arrow-right"), style = "success", disabled = FALSE)
   shinyjs::hide("loading")
-
+  waiter_hide()
 }
 

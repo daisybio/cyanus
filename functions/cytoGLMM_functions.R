@@ -81,14 +81,16 @@ simulateSCE <- function (n_samples = 16,
 runCytoGLMM <-
   function(sce,
            condition,
-           group,
-           method = "cytoglmm",
+           random_effect = NULL,
            features = SummarizedExperiment::rowData(sce)$marker_name,
            assay_to_use = "exprs",
            num_cores = 1,
            num_boot = 100) {
-    match.arg(method, c("cytoglmm", "cytoglm"))
+    # TODO: how to handle weights?
     match.arg(assay_to_use, SummarizedExperiment::assayNames(sce))
+    if (is.logical(num_cores)) {
+      num_cores <- ifelse(num_cores, BiocParallel::bpparam()[['workers']], 1)
+    } else stopifnot(is.integer(num_cores))
     data <-
       as.data.frame(t(SummarizedExperiment::assay(sce, assay_to_use)))
     # features <-
@@ -97,22 +99,24 @@ runCytoGLMM <-
       gsub("[^[:alnum:]]", "", marker)
     })
     colnames(data) <- features
-    data$donor <- SummarizedExperiment::colData(sce)[[group]]
     data$condition <- SummarizedExperiment::colData(sce)[[condition]]
     args <-
       list(
-        df_samples_subset = data,
         protein_names = features,
         condition = "condition",
         group = "donor",
         num_cores = num_cores
       )
-    if (method == "cytoglmm") {
+    if (!is.null(random_effect)){
+      data$donor <- SummarizedExperiment::colData(sce)[[random_effect]]
+      args$df_samples_subset <- data
       fit <- do.call(CytoGLMM::cytoglmm, args = args)
-    } else if (method == "cytoglm") {
+    } else {
       args$num_boot <- num_boot
+      data$donor <- SummarizedExperiment::colData(sce)$sample_id
+      args$df_samples_subset <- data
       fit <- do.call(CytoGLMM::cytoglm, args = args)
-    } else
-      stop("invalid method")
-    return(fit)
+    }
+    summary_fit <- summary(fit)
+    return(data.frame(marker_id = summary_fit$protein_name, p_val = summary_fit$pvalues_unadj))
   }

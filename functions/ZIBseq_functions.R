@@ -70,9 +70,10 @@ sceGAMLSS <- function (sce,
   pvalues = beta[, 2]
   #padj <- p.adjust(pvalues, method = "BH")
   res <- data.frame(
-    marker_id = colnames(X), 
-    p_val = pvalues, 
-    #p_adj = padj
+    marker_id = colnames(X),
+    p_val = pvalues
+    # p_adj = padj
+
   )
   return (bereg)
 }

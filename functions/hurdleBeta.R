@@ -3,7 +3,15 @@ hurdleBeta <- function(sce,
                        random_effect = NULL,
                        features = SummarizedExperiment::rowData(sce)$marker_name,
                        assay_to_use = "exprs",
-                       weighted = TRUE) {
+                       weighted = TRUE,
+                       parallel = FALSE) {
+  
+  stopifnot(is.logical(parallel))
+  
+  bppar <- BiocParallel::bpparam()
+  if (!parallel)
+    bppar <- BiocParallel::SerialParam(progressbar = TRUE)
+  
   match.arg(assay_to_use, SummarizedExperiment::assayNames(sce))
   match.arg(condition, names(SummarizedExperiment::colData(sce)))
   if (!is.null(random_effect)) {
@@ -29,33 +37,33 @@ hurdleBeta <- function(sce,
   if (!is.null(random_effect)) {
     DF$G <- sce[[random_effect]]
   }
-  res <- matrix(data = NA, length(features), 3)
   
   if (weighted)
     my_weights <- NULL
   else
     my_weights <- rep(1 / ei(sce)$n_cells, ei(sce)$n_cells)
   
-  for (i in seq(length(features))) {
+  data.table::rbindlist(BiocParallel::bplapply(features, function(marker, DF, my_weights) {
+    message(paste('fitting marker', marker))
     if (is.null(random_effect))
-      my_formula <- as.formula(paste0(names(DF)[i], " ~ Y"))
+      my_formula <- as.formula(paste0(marker, " ~ Y"))
     else
-      my_formula <- as.formula(paste0(names(DF)[i], " ~ Y + (1|G)"))
+      my_formula <- as.formula(paste0(marker, " ~ Y + (1|G)"))
     bereg <-
       glmmTMB::glmmTMB(
         formula = my_formula,
         ziformula = ~ .,
         data = DF,
-        family = beta_family(),
+        family = glmmTMB::beta_family(),
         weights = my_weights
       )
     out = summary(bereg)
-    res[i, 2:3] <- c(out$coefficients$cond[2, 4],
-                     out$coefficients$zi[2, 4])#c(out$coef_table["Ytreatment", "p-value"], out$coef_table_zi["Ytreatment", "p-value"])
-  }
-  res[, 1] <- features
-  colnames(res) <- c("marker", "p-value", "p-value-zi")
-  res
+    # res[i, 2:3] <- c(out$coefficients$cond[2, 4],
+    #                  out$coefficients$zi[2, 4])#c(out$coef_table["Ytreatment", "p-value"], out$coef_table_zi["Ytreatment", "p-value"])
+    data.table::data.table(marker_id = marker, 
+                            p_val = out$coefficients$cond[2, 4],
+                           p_val_zi = out$coefficients$zi[2, 4])
+  }, DF, my_weights, BPPARAM = bppar))
 }
 
 # library(CATALYST)

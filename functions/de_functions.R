@@ -67,7 +67,7 @@ runDA <- function(sce, parameters = NULL,
 
 runDS <- function(sce, clustering_to_use, contrast_vars,
                   markers_to_test = "state",
-                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","sceGAMLSS"),
+                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","sceGAMLSS", "hurdleBeta", "CytoGLMM"),
                   design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
                   parallel = FALSE, parameters = NULL, sceEMD_nperm = 500, sceEMD_binsize = NULL,
                   include_weights = TRUE, trend_limma = TRUE, blockID = NULL, time_methods = FALSE) {
@@ -154,21 +154,47 @@ runDS <- function(sce, clustering_to_use, contrast_vars,
     }
   
     if ("sceGAMLSS" %in% ds_methods){
-      message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
-        # call ZIBseq
+      message(sprintf("calculating sceGAMLSS for cluster %s", curr_cluster_id))
+        # call GAMLSS
         t <- system.time(out <- sceGAMLSS(
           sce = sce_cluster,
           condition = contrast_vars,
           random_effect = random_effects,
           weighted = include_weights,
         ))
-        cluster_results[["ZIBseq"]] <- out
-        timings[["sceEMD"]][[curr_cluster_id]] <- t
+        cluster_results[["sceGAMLSS"]] <- out
+        timings[["sceGAMLSS"]][[curr_cluster_id]] <- t
     }
-    #TODO: hurdle model
+    
+    if ("hurdleBeta" %in% ds_methods){
+      message(sprintf("calculating betaHurdle for cluster %s", curr_cluster_id))
+      # call hurdleBeta
+      t <- system.time(out <- hurdleBeta(
+        sce = sce_cluster,
+        condition = contrast_vars,
+        random_effect = random_effects,
+        weighted = include_weights,
+        parallel = parallel
+      ))
+      cluster_results[["hurdleBeta"]] <- out
+      timings[["hurdleBeta"]][[curr_cluster_id]] <- t
+    }
+    
+    if ("CytoGLMM" %in% ds_methods){
+      message(sprintf("calculating CytoGLMM for cluster %s", curr_cluster_id))
+      # call CytoGLMM
+      t <- system.time(out <- runCytoGLMM(
+        sce = sce_cluster,
+        condition = contrast_vars,
+        random_effect = random_effects,
+        num_cores = parallel
+      ))
+      cluster_results[["CytoGLMM"]] <- out
+      timings[["CytoGLMM"]][[curr_cluster_id]] <- t
+    }
     #TODO: cytoglmm
     #TODO: elasticnet
-    return(data.table::rbindlist(cluster_results, idcol = 'method'))
+    return(data.table::rbindlist(cluster_results, idcol = 'method', use.names = TRUE, fill = TRUE))
     }, simplify=FALSE)
   other_res <- data.table::rbindlist(res, idcol = 'cluster_id')
   other_res[, p_adj := p.adjust(p_val, "BH"), by="method"]
