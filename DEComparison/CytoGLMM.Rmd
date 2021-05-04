@@ -34,7 +34,7 @@ panel <-
 
 md <- 
   read_excel(
-    "/nfs/home/students/l.arend/data/covid/meta_11vs8.xlsx"
+    "/nfs/home/students/l.arend/data/covid/meta_11vs8_batch.xlsx"
   )
 
 exp <-
@@ -49,7 +49,7 @@ sce_covid <-
     exp,
     panel,
     md,
-    transform = TRUE,
+    transform = FALSE,
     md_cols = list(
       file = "file_name",
       id = "sample_id",
@@ -58,6 +58,7 @@ sce_covid <-
   )
 
 #sce_covid <- clusterSCE(sce_covid)
+saveRDS(sce_covid, "/nfs/home/students/l.arend/data/covid/sce_untransformed.rds")
 ```
 
 
