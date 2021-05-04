@@ -326,7 +326,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         )
       cluster_results[["sceEMD"]] <- out
       
-    } else if ("BEZI" %in% ds_methods){
+    } else if ("BEZI" == method){
       message(sprintf("calculating BEZI for cluster %s", curr_cluster_id))
       # call BEZI from gamlss
       out <- sceGAMLSS(
@@ -338,7 +338,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
       )
       cluster_results[["BEZI"]] <- out
       
-    } else if ("ZAGA" %in% ds_methods){
+    } else if ("ZAGA" == method){
       message(sprintf("calculating ZAGA for cluster %s", curr_cluster_id))
       # call ZAGA from gamlss
       out <- sceGAMLSS(
@@ -349,7 +349,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         weighted = include_weights,
       )
       cluster_results[["ZAGA"]] <- out
-    } else if ("ZAIG" %in% ds_methods){
+    } else if ("ZAIG" == method){
       message(sprintf("calculating ZAIG  for cluster %s", curr_cluster_id))
       # call ZAIG from gamlss
       out <- sceGAMLSS(
