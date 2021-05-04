@@ -49,16 +49,18 @@ sce_covid <-
     exp,
     panel,
     md,
-    transform = FALSE,
+    transform = TRUE,
     md_cols = list(
       file = "file_name",
       id = "sample_id",
-      factors = c("covid","patient_id", "platelets")
+      factors = c("covid","patient_id", "platelets", "batch", "acquisition_date")
     )
   )
 
 #sce_covid <- clusterSCE(sce_covid)
-saveRDS(sce_covid, "/nfs/home/students/l.arend/data/covid/sce_untransformed.rds")
+saveRDS(sce_covid, "/nfs/home/students/l.arend/data/covid/sce_transformed.rds")
+
+
 ```
 
 
