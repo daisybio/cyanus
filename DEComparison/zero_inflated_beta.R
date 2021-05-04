@@ -1,6 +1,7 @@
 library(CATALYST)
 library(gamlss)
 library(data.table)
+library(diffcyt)
 
 source("functions/diffcyt_functions.R")
 source("functions/cluster_functions.R")
@@ -77,3 +78,19 @@ LMM_results <- diffcyt_method(d_input = sce_covid_spiked,
                                      clustering_to_use = "all",
                                      use_weights = FALSE,
                                      markers_to_test = markers_to_test)
+
+
+
+###################### Time Data ######################
+
+sce_timeData <- readRDS("/nfs/home/students/l.arend/data/timeData/sce.rds")
+sce_timeData <- transformData(sce_timeData)
+sce_timeData <- clusterSCE(sce_timeData)
+
+sce_timeData <- downSampleSCE(sce_timeData, 10000)
+
+result <- zibSeq(sce = sce_timeData, condition = "activated_baseline", random_effect ="patient_id")
+
+
+test <- createFormula(ei(sce), cols_fixed = c("activated_baseline"), cols_random=c("TP1_TP2_TP3_TP4", "patient_id") )
+createFormula()
