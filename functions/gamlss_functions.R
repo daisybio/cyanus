@@ -1,4 +1,4 @@
-sceGAMLSS <- function (sce, 
+zibSeq <- function (sce, 
                     condition, 
                     random_effect = NULL, 
                     weighted = FALSE, 

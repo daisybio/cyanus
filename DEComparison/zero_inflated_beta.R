@@ -7,7 +7,7 @@ source("functions/diffcyt_functions.R")
 source("functions/cluster_functions.R")
 source("functions/de_functions.R")
 source("functions/cytoGLMM_functions.R")
-source("functions/ZIBseq_functions.R")
+source("functions/gamlss_functions.R")
 source("functions/prep_functions.R")
 
 
@@ -33,7 +33,7 @@ results_LMM <- as.data.table(rowData(LMM_res_no_weights$res))$p_adj
 names(results_LMM) <- as.data.table(rowData(LMM_res_no_weights$res))$marker_id
 
 # ZIBSeq
-result <- zibSeq(sce = sce_pbmc, condition = "condition")
+result <- sceGAMLSS(sce = sce_pbmc, condition = "condition")
 padj <- p.adjust(result$pvalues, method="BH")
 names(padj) <- colnames(exprs)
 
@@ -44,10 +44,10 @@ sce_cytoGLMM <- clusterSCE(sce_cytoGLMM, features="state")
 
 CATALYST::plotExprs(sce_cytoGLMM)
 
-result <- zibSeq(sce = sce_cytoGLMM, condition = "condition", random_effect = "patient_id")
+result <- sceGAMLSS(sce = sce_cytoGLMM, condition = "condition", random_effect = "patient_id")
 
-result_weights <- zibSeq(sce = sce_cytoGLMM, condition = "condition", weighted=TRUE)
-result_weights_random <- zibSeq(sce = sce_cytoGLMM, condition = "condition", weighted=TRUE, random_effect = "patient_id")
+result_weights <- sceGAMLSS(sce = sce_cytoGLMM, condition = "condition", weighted=TRUE)
+result_weights_random <- sceGAMLSS(sce = sce_cytoGLMM, condition = "condition", weighted=TRUE, random_effect = "patient_id")
 
 results <- runDS(
   sce_cytoGLMM,
@@ -67,7 +67,7 @@ sce_covid_spiked <- clusterSCE(sce_covid_spiked)
 
 rowData(sce_covid_spiked)$marker_class <- rowData(sce_covid_spiked)$marker_class[rowData(sce_covid_spiked)$marker_class == "none"] <- "type"
 
-zib_results <- zibSeq(sce = sce_covid_spiked, condition = "base_spike")
+zib_results <- sceGAMLSS(sce = sce_covid_spiked, condition = "base_spike")
 
 markers_to_test <- getMarkersToTest(sce_covid_spiked,"LMM","all")
 LMM_results <- diffcyt_method(d_input = sce_covid_spiked,
@@ -89,8 +89,5 @@ sce_timeData <- clusterSCE(sce_timeData)
 
 sce_timeData <- downSampleSCE(sce_timeData, 10000)
 
-result <- zibSeq(sce = sce_timeData, condition = "activated_baseline", random_effect ="patient_id")
+result <- sceGAMLSS(sce = sce_timeData, condition = "activated_baseline", random_effect =c("patient_id","TP1_TP2_TP3_TP4"))
 
-
-test <- createFormula(ei(sce), cols_fixed = c("activated_baseline"), cols_random=c("TP1_TP2_TP3_TP4", "patient_id") )
-createFormula()

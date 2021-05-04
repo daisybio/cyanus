@@ -67,7 +67,7 @@ runDA <- function(sce, parameters = NULL,
 
 runDS <- function(sce, clustering_to_use, contrast_vars,
                   markers_to_test = "state",
-                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","ZIBseq"),
+                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","sceGAMLSS"),
                   design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
                   parallel = FALSE, parameters = NULL, sceEMD_nperm = 500, sceEMD_binsize = NULL,
                   include_weights = TRUE, trend_limma = TRUE, blockID = NULL, time_methods = FALSE) {
@@ -153,10 +153,10 @@ runDS <- function(sce, clustering_to_use, contrast_vars,
       timings[["sceEMD"]][[curr_cluster_id]] <- t
     }
   
-    if ("ZIBseq" %in% ds_methods){
+    if ("sceGAMLSS" %in% ds_methods){
       message(sprintf("calculating ZIBseq for cluster %s", curr_cluster_id))
         # call ZIBseq
-        t <- system.time(out <- zibSeq(
+        t <- system.time(out <- sceGAMLSS(
           sce = sce_cluster,
           condition = contrast_vars,
           random_effect = random_effects,
