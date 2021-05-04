@@ -39,19 +39,22 @@ names(padj) <- colnames(exprs)
 
 
 ################# Simulated data set ########################
-sce_cytoGLMM <- simulateSCE()
-sce_cytoGLMM <- clusterSCE(sce_cytoGLMM, features="state")
+sce <- simulateSCE()
+sce <- clusterSCE(sce, features="state")
 
-CATALYST::plotExprs(sce_cytoGLMM)
+CATALYST::plotExprs(sce)
 
-result <- sceGAMLSS(sce = sce_cytoGLMM, condition = "condition", random_effect = "patient_id")
+BEZI_result <- sceGAMLSS(sce = sce, method=c("BEZI"), condition = "condition", random_effect = "patient_id")
+ZAGA_result <- sceGAMLSS(sce = sce, method=c("ZAGA"), condition = "condition", random_effect = "patient_id")
+ZAIG_result <- sceGAMLSS(sce = sce, method=c("ZAIG"), condition = "condition", random_effect = "patient_id")
+
 
 result_weights <- sceGAMLSS(sce = sce_cytoGLMM, condition = "condition", weighted=TRUE)
 result_weights_random <- sceGAMLSS(sce = sce_cytoGLMM, condition = "condition", weighted=TRUE, random_effect = "patient_id")
 
 results <- runDS(
   sce_cytoGLMM,
-  ds_methods = c("ZIBseq"),
+  ds_methods = c("sceGAMLSS"),
   clustering_to_use = "meta2",
   random_effects = "patient_id",
   markers_to_test = "state",
@@ -80,7 +83,6 @@ LMM_results <- diffcyt_method(d_input = sce_covid_spiked,
                                      markers_to_test = markers_to_test)
 
 
-
 ###################### Time Data ######################
 
 sce_timeData <- readRDS("/nfs/home/students/l.arend/data/timeData/sce.rds")
@@ -89,5 +91,5 @@ sce_timeData <- clusterSCE(sce_timeData)
 
 sce_timeData <- downSampleSCE(sce_timeData, 10000)
 
-result <- sceGAMLSS(sce = sce_timeData, condition = "activated_baseline", random_effect =c("patient_id","TP1_TP2_TP3_TP4"))
-
+result <- sceGAMLSS(sce = sce_timeData, method="BEZI",condition = "activated_baseline")
+result$p_adj <- p.adjust(result$p_val, "BH")
