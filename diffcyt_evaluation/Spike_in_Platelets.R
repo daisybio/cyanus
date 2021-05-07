@@ -124,6 +124,8 @@ spikeInMarkers <- function(pathToSCE = "/nfs/home/students/l.arend/data/covid/sc
       fixed = T,
       keep = 2
     )[[1]],
+    batch = rep(ei(sceBaseline)$batch, each = 2),
+    acquisition_date = rep(ei(sceBaseline)$acquisition_date, each = 2),
     n_cells = n_cells
   )
   setnames(exp_info,
@@ -197,6 +199,13 @@ sce50 <- clusterSCE(sce50)
 sce75 <- clusterSCE(sce75)
 sce100 <- clusterSCE(sce100)
 
+saveRDS(sce, "~/cytof/covid/sce_spiked_clustered_full.rds")
+saveRDS(sce25, "~/cytof/covid/sce_spiked_clustered_25.rds")
+saveRDS(sce50, "~/cytof/covid/sce_spiked_clustered_50.rds")
+saveRDS(sce75, "~/cytof/covid/sce_spiked_clustered_75.rds")
+saveRDS(sce100, "~/cytof/covid/sce_spiked_clustered_100.rds")
+
+
 source("functions/de_functions.R")
 source("functions/sceEMD.R")
 allResults <- list()
@@ -239,7 +248,7 @@ cytoModelSCE <- runCytoGLMM(sce=sce,
 plot(cytoModelSCE)
 allResults[["sce"]]$cytoGLMM <- makeDF(cytoModelSCE)
 createVennDiagram(allResults[["sce"]], DS=T, 0.05)
-saveRDS(sce, "~/cytof/covid/sce_spiked_clustered_full.rds")
+
 
 cytoModelSCE25 <- runCytoGLMM(sce=sce25,
                               condition="base_spike",
@@ -247,7 +256,7 @@ cytoModelSCE25 <- runCytoGLMM(sce=sce25,
 plot(cytoModelSCE25)
 allResults[["sce25"]]$cytoGLMM <- makeDF(cytoModelSCE25)
 createVennDiagram(allResults[["sce25"]], DS=T, 0.05)
-saveRDS(sce25, "~/cytof/covid/sce_spiked_clustered_25.rds")
+
 
 cytoModelSCE50 <- runCytoGLMM(sce=sce50,
                               condition="base_spike",
@@ -255,7 +264,7 @@ cytoModelSCE50 <- runCytoGLMM(sce=sce50,
 plot(cytoModelSCE50)
 allResults[["sce50"]]$cytoGLMM <- makeDF(cytoModelSCE50)
 createVennDiagram(allResults[["sce50"]], DS=T, 0.05)
-saveRDS(sce50, "~/cytof/covid/sce_spiked_clustered_50.rds")
+
 
 cytoModelSCE75 <- runCytoGLMM(sce=sce75,
                               condition="base_spike",
@@ -263,7 +272,7 @@ cytoModelSCE75 <- runCytoGLMM(sce=sce75,
 plot(cytoModelSCE75)
 allResults[["sce75"]]$cytoGLMM <- makeDF(cytoModelSCE75)
 createVennDiagram(allResults[["sce75"]], DS=T, 0.05)
-saveRDS(sce75, "~/cytof/covid/sce_spiked_clustered_75.rds")
+
 
 cytoModelSCE100 <- runCytoGLMM(sce=sce100,
                                condition="base_spike",
@@ -271,6 +280,6 @@ cytoModelSCE100 <- runCytoGLMM(sce=sce100,
 plot(cytoModelSCE100)
 allResults[["sce100"]]$cytoGLMM <- makeDF(cytoModelSCE100)
 createVennDiagram(allResults[["sce100"]], DS=T, 0.05)
-saveRDS(sce100, "~/cytof/covid/sce_spiked_clustered_100.rds")
+
 
 
