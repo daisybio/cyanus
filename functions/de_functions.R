@@ -162,7 +162,12 @@ runDS <- function(sce,
     }
   }
   if (length(ds_methods) == 0)
-    return(results)
+    if(time_methods){
+      return(list(results = results,
+                  times = timings))
+    }else{
+      return(results)
+    }
   
   if (time_methods) {
     for (method in ds_methods) {
