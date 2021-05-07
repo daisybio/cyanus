@@ -5,14 +5,14 @@
 
 # first argument -> path of the sce object or objects -> can be a file or a directory
 # second argument -> output directory
-# third argumetn -> if it should be timed
+# third argument -> if it should be timed
 # fourth argument -> if run parallel
 
 
 library.path <- .libPaths()[1]
 print(library.path)
 
-library(fs)
+library(fs, lib.loc=library.path)
 library(CATALYST, lib.loc=library.path)
 
 # source all files
