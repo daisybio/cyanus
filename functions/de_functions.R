@@ -164,7 +164,7 @@ runDS <- function(sce,
   if (length(ds_methods) == 0)
     if(time_methods){
       return(list(results = results,
-           times = timings))
+                  times = timings))
     }else{
       return(results)
     }
@@ -226,8 +226,7 @@ runDS <- function(sce,
           sce = sce_cluster,
           method = c("BEZI"),
           condition = contrast_vars,
-          random_effect = random_effects,
-          weighted = include_weights,
+          random_effect = random_effects
         )
         cluster_results[["BEZI"]] <- out
       }
@@ -239,8 +238,7 @@ runDS <- function(sce,
           sce = sce_cluster,
           method = c("ZAGA"),
           condition = contrast_vars,
-          random_effect = random_effects,
-          weighted = include_weights,
+          random_effect = random_effects
         )
         cluster_results[["ZAGA"]] <- out
       }
@@ -252,8 +250,7 @@ runDS <- function(sce,
           sce = sce_cluster,
           method = c("ZAIG"),
           condition = contrast_vars,
-          random_effect = random_effects,
-          weighted = include_weights,
+          random_effect = random_effects
         )
         cluster_results[["ZAIG"]] <- out
       }
@@ -338,8 +335,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         sce = sce_cluster,
         method = c("BEZI"),
         condition = contrast_vars,
-        random_effect = random_effects,
-        weighted = include_weights,
+        random_effect = random_effects
       )
       cluster_results[["BEZI"]] <- out
       
@@ -350,8 +346,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         sce = sce_cluster,
         method = c("ZAGA"),
         condition = contrast_vars,
-        random_effect = random_effects,
-        weighted = include_weights,
+        random_effect = random_effects
       )
       cluster_results[["ZAGA"]] <- out
     } else if ("ZAIG" == method){
@@ -361,8 +356,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         sce = sce_cluster,
         method = c("ZAIG"),
         condition = contrast_vars,
-        random_effect = random_effects,
-        weighted = include_weights,
+        random_effect = random_effects
       )
       cluster_results[["ZAIG"]] <- out
       
