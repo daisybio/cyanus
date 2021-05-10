@@ -43,7 +43,7 @@ library(flowCore)
 
 # .fcs files
 
-DIR_BENCHMARK <- "./benchmark_data"
+DIR_BENCHMARK <- "./diffcyt_evaluation/benchmark_data"
 
 DIR_RAW_DATA <- file.path(DIR_BENCHMARK, "BCR_XL_sim/raw_data/experiment_15713_files")
 
@@ -129,8 +129,8 @@ data <- mapply(function(d, l) {
 cofactor <- 5
 
 
-distinctness <- c(0.5, 0.75)  # 50%, 75%
-names(distinctness) <- c("less_50pc", "less_75pc")
+distinctness <- c(0.0, 0.25, 0.5, 0.75, 1.0)  # 50%, 75%
+names(distinctness) <- c("less_0pc", "less_25pc", "less_50pc", "less_75pc", "less_100pc")
 
 
 for (di in 1:length(distinctness)) {
