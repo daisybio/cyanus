@@ -1,5 +1,6 @@
 library(glmnet)
-sce <- readRDS("/nfs/home/students/l.arend/data/covid_spiked/downsampled_files/sce_spiked_clustered_full_ds_15000.rds")
+
+sce <- readRDS("data/downsampled_files/sce_spiked_clustered_full_ds_15000.rds")
 
 regularizedSCE <- function(sce, 
                            condition, 
