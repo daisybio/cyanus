@@ -395,7 +395,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
       )
       cluster_results[["CytoGLMM"]] <- out
       
-    }else if("logRegression" %in% ds_methods){
+    }else if("logRegression" == method){
       message(sprintf("calculating logstic regression model for cluster %s", curr_cluster_id))
       # call logistic regression
       out <- logistic_regression(
