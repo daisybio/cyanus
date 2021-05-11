@@ -69,7 +69,7 @@ runDS <- function(sce,
                   clustering_to_use,
                   contrast_vars,
                   markers_to_test = "state",
-                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","BEZI", "ZAGA","ZAIG","hurdleBeta", "CytoGLMM"),
+                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","BEZI", "ZAGA","ZAIG","hurdleBeta", "CytoGLMM", "logRegression"),
                   design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
                   parallel = FALSE, parameters = NULL, sceEMD_nperm = 500, sceEMD_binsize = NULL,
                   include_weights = TRUE, trend_limma = TRUE, blockID = NULL, time_methods = FALSE) {
@@ -282,6 +282,18 @@ runDS <- function(sce,
         )
         cluster_results[["CytoGLMM"]] <- out
       }
+      
+      if("logRegression" %in% ds_methods){
+        message(sprintf("calculating logstic regression model for cluster %s", curr_cluster_id))
+        # call logistic regression
+        out <- logistic_regression(
+          sce = sce, 
+          condition = contrast_vars, 
+          random_effect = random_effects
+        )
+        cluster_results[["logRegression"]] <- out
+      }
+      
       #TODO: cytoglmm
       #TODO: elasticnet
       return(
@@ -382,6 +394,16 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         num_cores = parallel
       )
       cluster_results[["CytoGLMM"]] <- out
+      
+    }else if("logRegression" %in% ds_methods){
+      message(sprintf("calculating logstic regression model for cluster %s", curr_cluster_id))
+      # call logistic regression
+      out <- logistic_regression(
+        sce = sce, 
+        condition = contrast_vars, 
+        random_effect = random_effects
+      )
+      cluster_results[["logRegression"]] <- out
     }
     
     return(data.table::rbindlist(cluster_results, idcol = 'method', use.names = TRUE, fill = TRUE))
