@@ -64,7 +64,7 @@ sceGAMLSS <- function (sce,
       exprs = x.prop,
       condition = Y
     )
-    
+    tryCatch({
     if (!is.null(random_effect)){ 
       # with random effect
       data <- cbind(data, R)
@@ -73,14 +73,19 @@ sceGAMLSS <- function (sce,
         random_terms[[re]] <- ~ 1
       }
       bereg = gamlss::gamlss(exprs ~ condition + re(random=random_terms), family = family, 
-                             trace = FALSE, control = gamlss.control(n.cyc = 100), data = data, weights = NULL)
+                             trace = FALSE, control = gamlss.control(n.cyc = 200), data = data, weights = NULL)
     } else {
       # without random effect
       bereg = gamlss::gamlss(exprs ~ condition, family = family, 
-                             trace = FALSE, control = gamlss.control(n.cyc = 100), data = data, weights = NULL)
+                             trace = FALSE, control = gamlss.control(n.cyc = 200), data = data, weights = NULL)
     }
     out = summary(bereg)
     beta[i, ] = out[2, c(1, 4)]
+    }, error=function(e){
+      message(e)
+      beta[i, ] = c(NA, NA)
+    }
+    )
   }
   
   pvalues = beta[, 2]
