@@ -16,7 +16,7 @@ regularizedSCE <- function(sce,
   X <- t(SummarizedExperiment::assay(sce, assay_to_use))
   X <- X[, features]
   X <- (abs(X) + X) / 2
-  y <- sce[[condition]]
+  y <- sce[["base_spike"]]
   fit <- glmnet::cv.glmnet(X, y, family = "binomial", alpha=0)  
   
 }
