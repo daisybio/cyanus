@@ -294,7 +294,7 @@ runDS <- function(sce,
       )
     }, simplify = FALSE)
     
-    other_res <- data.table::rbindlist(res, idcol = 'cluster_id')
+    other_res <- data.table::rbindlist(res, idcol = 'cluster_id', fill = T)
     other_res[, p_adj := p.adjust(p_val, "BH"), by = "method"]
     return(c(results, split(other_res, other_res$method)))
   }
