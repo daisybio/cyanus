@@ -69,7 +69,8 @@ runDS <- function(sce,
                   clustering_to_use,
                   contrast_vars,
                   markers_to_test = "state",
-                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","BEZI", "ZAGA","ZAIG","hurdleBeta", "CytoGLMM", "logRegression"),
+                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","BEZI", "ZAGA","ZAIG",
+                                 "hurdleBeta", "CytoGLMM", "logRegression", "wilcoxon_median", "kruskal_median"),
                   design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
                   parallel = FALSE, parameters = NULL, sceEMD_nperm = 500, sceEMD_binsize = NULL,
                   include_weights = TRUE, trend_limma = TRUE, blockID = NULL, 
@@ -298,6 +299,26 @@ runDS <- function(sce,
         cluster_results[["logRegression"]] <- out
       }
       
+      if("wilcoxon_median" %in% ds_methods){
+        message(sprintf("calculating wilcoxon median test for cluster %s", curr_cluster_id))
+        out <- median_wilcoxon_test(
+          sce = sce, 
+          condition = contrast_vars, 
+          parallel = parallel
+        )
+        cluster_results[["wilcoxon_median"]] <- out
+      }
+      
+      if("kruskal_median" %in% ds_methods){
+        message(sprintf("calculating kruskal median test for cluster %s", curr_cluster_id))
+        out <- median_kruskal_test(
+          sce = sce, 
+          condition = contrast_vars, 
+          parallel = parallel
+        )
+        cluster_results[["kruskal_median"]] <- out
+      }
+      
       #TODO: cytoglmm
       #TODO: elasticnet
       return(
@@ -410,6 +431,24 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         parallel = parallel
       )
       cluster_results[["logRegression"]] <- out
+      
+    }else if("wilcoxon_median" == method){
+      message(sprintf("calculating wilcoxon median test for cluster %s", curr_cluster_id))
+      out <- median_wilcoxon_test(
+        sce = sce, 
+        condition = contrast_vars, 
+        parallel = parallel
+      )
+      cluster_results[["wilcoxon_median"]] <- out
+      
+    }else if("kruskal_median" == method){
+      message(sprintf("calculating kruskal median test for cluster %s", curr_cluster_id))
+      out <- median_kruskal_test(
+        sce = sce, 
+        condition = contrast_vars, 
+        parallel = parallel
+      )
+      cluster_results[["kruskal_median"]] <- out
     }
     
     return(data.table::rbindlist(cluster_results, idcol = 'method', use.names = TRUE, fill = TRUE))
