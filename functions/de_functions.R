@@ -280,11 +280,25 @@ runDS <- function(sce,
         out <- runCytoGLMM(
           sce = sce_cluster,
           condition = contrast_vars,
+          method = "cytoglmm",
+          random_effect = random_effects,
+          parallel = parallel
+        )
+        cluster_results[["CytoGLMM"]] <- out
+      }
+      
+      if ("CytoGLM" %in% ds_methods) {
+        message(sprintf("calculating CytoGLM for cluster %s", curr_cluster_id))
+        # call CytoGLMM
+        out <- runCytoGLMM(
+          sce = sce_cluster,
+          condition = contrast_vars,
+          method = "cytoglm",
           random_effect = random_effects,
           parallel = parallel,
           num_boot = cytoGLMM_num_boot
         )
-        cluster_results[["CytoGLMM"]] <- out
+        cluster_results[["CytoGLM"]] <- out
       }
       
       if("logRegression" %in% ds_methods){

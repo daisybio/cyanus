@@ -6,8 +6,6 @@ hurdleBeta <- function(sce,
                        weighted = TRUE,
                        parallel = FALSE) {
   
-  stopifnot(is.logical(parallel))
-  
   bppar <- BiocParallel::bpparam()
   if (!parallel)
     bppar <- BiocParallel::SerialParam(progressbar = TRUE)
@@ -22,7 +20,7 @@ hurdleBeta <- function(sce,
               SummarizedExperiment::rowData(sce)$marker_name,
               several.ok = TRUE)
   X <- t(SummarizedExperiment::assay(sce, assay_to_use))
-  X <- X[, features]
+  X <- X[, features, drop = FALSE]
   X <- (abs(X) + X) / 2
   X <-
     apply(
@@ -38,12 +36,12 @@ hurdleBeta <- function(sce,
     DF$G <- sce[[random_effect]]
   }
   
-  if (weighted)
-    my_weights <- NULL
-  else
-    my_weights <- rep(1 / ei(sce)$n_cells, ei(sce)$n_cells)
+  # if (weighted)
+  #   my_weights <- NULL
+  # else
+  #   my_weights <- rep(1 / CATALYST::ei(sce)$n_cells, CATALYST::ei(sce)$n_cells)
   
-  data.table::rbindlist(BiocParallel::bplapply(features, function(marker, DF, my_weights) {
+  data.table::rbindlist(BiocParallel::bplapply(features, function(marker, DF) {
     message(paste('fitting marker', marker))
     if (is.null(random_effect))
       my_formula <- as.formula(paste0(marker, " ~ Y"))
@@ -54,8 +52,8 @@ hurdleBeta <- function(sce,
         formula = my_formula,
         ziformula = ~ .,
         data = DF,
-        family = glmmTMB::beta_family(),
-        weights = my_weights
+        family = glmmTMB::beta_family()
+        # weights = my_weights
       )
     out = summary(bereg)
     # res[i, 2:3] <- c(out$coefficients$cond[2, 4],
@@ -63,7 +61,7 @@ hurdleBeta <- function(sce,
     data.table::data.table(marker_id = marker, 
                             p_val = out$coefficients$cond[2, 4],
                            p_val_zi = out$coefficients$zi[2, 4])
-  }, DF, my_weights, BPPARAM = bppar))
+  }, DF, BPPARAM = bppar))
 }
 
 # library(CATALYST)
