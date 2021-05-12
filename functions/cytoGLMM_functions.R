@@ -84,13 +84,15 @@ runCytoGLMM <-
            random_effect = NULL,
            features = SummarizedExperiment::rowData(sce)$marker_name,
            assay_to_use = "exprs",
-           num_cores = 1,
+           parallel = FALSE,
            num_boot = 100) {
     # TODO: how to handle weights?
+    stopifnot(is.logical(parallel))
+    bppar <- BiocParallel::bpparam()
+    if (!parallel)
+      bppar <- BiocParallel::SerialParam(progressbar = TRUE)
+    num_cores <- ifelse(parallel, bppar[['workers']], 1)
     match.arg(assay_to_use, SummarizedExperiment::assayNames(sce))
-    if (is.logical(num_cores)) {
-      num_cores <- ifelse(num_cores, BiocParallel::bpparam()[['workers']], 1)
-    } else stopifnot(is.integer(num_cores))
     data <-
       as.data.frame(t(SummarizedExperiment::assay(sce, assay_to_use)))
     # features <-

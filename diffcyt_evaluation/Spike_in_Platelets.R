@@ -205,6 +205,97 @@ saveRDS(sce50, "~/cytof/covid/sce_spiked_clustered_50.rds")
 saveRDS(sce75, "~/cytof/covid/sce_spiked_clustered_75.rds")
 saveRDS(sce100, "~/cytof/covid/sce_spiked_clustered_100.rds")
 
+######tests
+sce <- readRDS("~/cytof/covid/sce_spiked_clustered_full.rds")
+sce25 <- readRDS("~/cytof/covid/sce_spiked_clustered_25.rds")
+sce50 <- readRDS("~/cytof/covid/sce_spiked_clustered_50.rds")
+sce75 <- readRDS("~/cytof/covid/sce_spiked_clustered_75.rds")
+sce100 <- readRDS("~/cytof/covid/sce_spiked_clustered_100.rds")
+
+library(data.table)
+exprsDT <- as.data.table(t(assays(sce)$counts))
+coldataDT <- as.data.table(colData(sce))[, c("patient_id", "base_spike")]
+exprsDT <- cbind(exprsDT, coldataDT)
+CD63_means <- exprsDT[, mean(CD63), by = .(patient_id, base_spike)]
+colnames(CD63_means) <- c("patient_id", "base_spike", "mean_full")
+CD62P_means <- exprsDT[, mean(CD62P), by = .(patient_id, base_spike)]
+colnames(CD62P_means) <- c("patient_id", "base_spike", "mean_full")
+CD107a_means <- exprsDT[, mean(CD107a), by = .(patient_id, base_spike)]
+colnames(CD107a_means) <- c("patient_id", "base_spike", "mean_full")
+CD154_means <- exprsDT[, mean(CD154), by = .(patient_id, base_spike)] 
+colnames(CD154_means) <- c("patient_id", "base_spike", "mean_full")
+CD63_means[, sd_full := exprsDT[, sd(CD63), by = .(patient_id, base_spike)]$V1]
+CD62P_means[, sd_full := exprsDT[, sd(CD62P), by = .(patient_id, base_spike)]$V1]
+CD107a_means[, sd_full := exprsDT[, sd(CD107a), by = .(patient_id, base_spike)]$V1]
+CD154_means[, sd_full := exprsDT[, sd(CD154), by = .(patient_id, base_spike)]$V1]
+
+
+exprsDT <- as.data.table(t(assays(sce25)$counts))
+coldataDT <- as.data.table(colData(sce25))[, c("patient_id", "base_spike")]
+exprsDT <- cbind(exprsDT, coldataDT)
+CD63_means[, mean_25 := exprsDT[, mean(CD63), by = .(patient_id, base_spike)]$V1]
+CD62P_means[, mean_25 := exprsDT[, mean(CD62P), by = .(patient_id, base_spike)]$V1]
+CD107a_means[, mean_25 := exprsDT[, mean(CD107a), by = .(patient_id, base_spike)]$V1]
+CD154_means[, mean_25 := exprsDT[, mean(CD154), by = .(patient_id, base_spike)]$V1]
+CD63_means[, sd_25 := exprsDT[, sd(CD63), by = .(patient_id, base_spike)]$V1]
+CD62P_means[, sd_25 := exprsDT[, sd(CD62P), by = .(patient_id, base_spike)]$V1]
+CD107a_means[, sd_25 := exprsDT[, sd(CD107a), by = .(patient_id, base_spike)]$V1]
+CD154_means[, sd_25 := exprsDT[, sd(CD154), by = .(patient_id, base_spike)]$V1]
+
+exprsDT <- as.data.table(t(assays(sce50)$counts))
+coldataDT <- as.data.table(colData(sce50))[, c("patient_id", "base_spike")]
+exprsDT <- cbind(exprsDT, coldataDT)
+CD63_means[, mean_50 := exprsDT[, mean(CD63), by = .(patient_id, base_spike)]$V1]
+CD62P_means[, mean_50 := exprsDT[, mean(CD62P), by = .(patient_id, base_spike)]$V1]
+CD107a_means[, mean_50 := exprsDT[, mean(CD107a), by = .(patient_id, base_spike)]$V1]
+CD154_means[, mean_50 := exprsDT[, mean(CD154), by = .(patient_id, base_spike)]$V1]
+CD63_means[, sd_50 := exprsDT[, sd(CD63), by = .(patient_id, base_spike)]$V1]
+CD62P_means[, sd_50 := exprsDT[, sd(CD62P), by = .(patient_id, base_spike)]$V1]
+CD107a_means[, sd_50 := exprsDT[, sd(CD107a), by = .(patient_id, base_spike)]$V1]
+CD154_means[, sd_50 := exprsDT[, sd(CD154), by = .(patient_id, base_spike)]$V1]
+
+exprsDT <- as.data.table(t(assays(sce75)$counts))
+coldataDT <- as.data.table(colData(sce75))[, c("patient_id", "base_spike")]
+exprsDT <- cbind(exprsDT, coldataDT)
+CD63_means[, mean_75 := exprsDT[, mean(CD63), by = .(patient_id, base_spike)]$V1]
+CD62P_means[, mean_75 := exprsDT[, mean(CD62P), by = .(patient_id, base_spike)]$V1]
+CD107a_means[, mean_75 := exprsDT[, mean(CD107a), by = .(patient_id, base_spike)]$V1]
+CD154_means[, mean_75 := exprsDT[, mean(CD154), by = .(patient_id, base_spike)]$V1]
+CD63_means[, sd_75 := exprsDT[, sd(CD63), by = .(patient_id, base_spike)]$V1]
+CD62P_means[, sd_75 := exprsDT[, sd(CD62P), by = .(patient_id, base_spike)]$V1]
+CD107a_means[, sd_75 := exprsDT[, sd(CD107a), by = .(patient_id, base_spike)]$V1]
+CD154_means[, sd_75 := exprsDT[, sd(CD154), by = .(patient_id, base_spike)]$V1]
+
+exprsDT <- as.data.table(t(assays(sce100)$counts))
+coldataDT <- as.data.table(colData(sce100))[, c("patient_id", "base_spike")]
+exprsDT <- cbind(exprsDT, coldataDT)
+CD63_means[, mean_100 := exprsDT[, mean(CD63), by = .(patient_id, base_spike)]$V1]
+CD62P_means[, mean_100 := exprsDT[, mean(CD62P), by = .(patient_id, base_spike)]$V1]
+CD107a_means[, mean_100 := exprsDT[, mean(CD107a), by = .(patient_id, base_spike)]$V1]
+CD154_means[, mean_100 := exprsDT[, mean(CD154), by = .(patient_id, base_spike)]$V1]
+CD63_means[, sd_100 := exprsDT[, sd(CD63), by = .(patient_id, base_spike)]$V1]
+CD62P_means[, sd_100 := exprsDT[, sd(CD62P), by = .(patient_id, base_spike)]$V1]
+CD107a_means[, sd_100 := exprsDT[, sd(CD107a), by = .(patient_id, base_spike)]$V1]
+CD154_means[, sd_100 := exprsDT[, sd(CD154), by = .(patient_id, base_spike)]$V1]
+
+all_stats <- rbindlist(list("CD63" = CD63_means, 
+                            "CD62P" = CD62P_means, 
+                            "CD107a" = CD107a_means, 
+                            "CD154" = CD154_means), idcol = "marker")
+
+all_stats <- melt(all_stats, id.vars = c("marker", "patient_id", "base_spike"), 
+                  value.name = "value", variable.name="variable")
+all_stats[, model := tstrsplit(variable, "_", keep=2)]
+all_stats[, model := factor(model, levels = c("full", "25", "50", "75", "100"))]
+all_stats[, mean_sd := tstrsplit(variable, "_", keep=1)]
+all_stats[, mean_sd := as.factor(mean_sd)]
+all_stats[, variable := NULL]
+library(ggplot2)
+ggplot(all_stats, aes(x = model, y = value, fill = base_spike))+
+  geom_boxplot()+
+  theme_bw()+
+  facet_wrap(mean_sd ~ marker, scales = "free")+
+  scale_fill_manual(values = c("indianred1", "lightblue1"))
 
 source("functions/de_functions.R")
 source("functions/sceEMD.R")

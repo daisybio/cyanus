@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.0.5",
+    "Version": "4.0.0",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -480,6 +480,13 @@
       "Repository": "CRAN",
       "Hash": "84dffc44f23c419537c1c79cc46347a5"
     },
+    "TMB": {
+      "Package": "TMB",
+      "Version": "1.7.20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "db241456677ae165b3095b6df5d79009"
+    },
     "VennDiagram": {
       "Package": "VennDiagram",
       "Version": "1.6.20",
@@ -499,13 +506,6 @@
       "Version": "0.30.0",
       "Source": "Bioconductor",
       "Hash": "9bd9f991fb4ecde6adeff2fa2e401cc5"
-    },
-    "ZIBseq": {
-      "Package": "ZIBseq",
-      "Version": "1.2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "2474eecb506f5f2e5f8257f49b2cc5ad"
     },
     "abind": {
       "Package": "abind",
@@ -1037,6 +1037,13 @@
       "Repository": "CRAN",
       "Hash": "ad36e26eeeb7393886d8a0e19bc6ee42"
     },
+    "fs": {
+      "Package": "fs",
+      "Version": "1.5.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "44594a07a42e5f91fac9f93fda6d0109"
+    },
     "futile.logger": {
       "Package": "futile.logger",
       "Version": "1.4.3",
@@ -1145,6 +1152,13 @@
       "RemoteRef": "HEAD",
       "RemoteSha": "062c33d221eb803f8d0874602b05a96fb45db066",
       "Hash": "6a8145863c1364fbcc40144db8102edb"
+    },
+    "glmmTMB": {
+      "Package": "glmmTMB",
+      "Version": "1.0.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a21e7d803995b2a6db11eb8ea3cb0b8c"
     },
     "glue": {
       "Package": "glue",
