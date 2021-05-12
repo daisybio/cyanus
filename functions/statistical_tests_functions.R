@@ -22,12 +22,10 @@ median_test <- function(test = c("Wilcoxon, Kruskal_Wallis"),
   X <- t(as.data.frame(SummarizedExperiment::assay(sce, assay_to_use)))
   data <- data.table::data.table(X[, features], y = SummarizedExperiment::colData(sce)[[condition]], 
                                  sample_id = SummarizedExperiment::colData(sce)[["sample_id"]])
-  data_control <- data[y == levels(data$y)[1], ]
-  data_case <- data[y == levels(data$y)[2], ]
   
   p.values <- data.table::rbindlist(BiocParallel::bplapply(features, function(f){
-    medians_control <- data_control[, median(get(f)), by = sample_id]
-    medians_case <- data_case[, median(get(f)), by = sample_id]
+    medians_control <- data[y == levels(data$y)[1], median(get(f)), by = sample_id]
+    medians_case <- data[y == levels(data$y)[2], median(get(f)), by = sample_id]
     median_data <- data.table::data.table(
       sample_id = medians_control$sample_id,
       median_control = medians_control$V1,
@@ -64,7 +62,7 @@ median_wilcoxon_test <- function(sce,
                      condition,
                      features = SummarizedExperiment::rowData(sce)$marker_name,
                      assay_to_use = "exprs", 
-                     parallel = FALSE))
+                     parallel = parallel))
 }
 
 median_kruskal_test <- function(sce,
@@ -78,7 +76,7 @@ median_kruskal_test <- function(sce,
                      condition,
                      features = SummarizedExperiment::rowData(sce)$marker_name,
                      assay_to_use = "exprs", 
-                     parallel = FALSE))
+                     parallel = parallel))
 
 }
 
@@ -138,7 +136,7 @@ exprs_wilcoxon_test <- function(sce,
                      condition,
                      features = SummarizedExperiment::rowData(sce)$marker_name,
                      assay_to_use = "exprs", 
-                     parallel = FALSE))
+                     parallel = parallel))
 }
 
 exprs_kruskal_test <- function(sce,
@@ -152,7 +150,7 @@ exprs_kruskal_test <- function(sce,
                      condition,
                      features = SummarizedExperiment::rowData(sce)$marker_name,
                      assay_to_use = "exprs", 
-                     parallel = FALSE))
+                     parallel = parallel))
   
 }
 
@@ -167,7 +165,7 @@ exprs_t_test <- function(sce,
                     condition,
                     features = SummarizedExperiment::rowData(sce)$marker_name,
                     assay_to_use = "exprs", 
-                    parallel = FALSE))
+                    parallel = parallel))
   
 }
 
