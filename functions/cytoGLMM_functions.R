@@ -5,7 +5,7 @@ simulateSCE <- function (n_samples = 16,
                          rho_u = 0.1,
                          sigma_b = 1,
                          sigma_u = 1,
-                         beta_treatment = log(24.7),
+                         beta_case = log(24.7),
                          beta_control = log(22.9),
                          n_true = 3)
 {
@@ -13,15 +13,15 @@ simulateSCE <- function (n_samples = 16,
   n_donors <- n_samples / 2
   donor <- rep(rep(seq_len(n_donors), each = n_cells), 2)
   samples <- rep(seq_len(n_samples), each = n_cells)
-  condition <- c(rep("treatment", length(donor) / 2), rep("control",
+  condition <- c(rep("case", length(donor) / 2), rep("control",
                                                           length(donor) /
                                                             2))
   md <- data.frame(
     sample_id = seq_len(n_samples),
     patient_id = rep(sprintf("p%02d", seq_len(n_donors)), 2),
     condition = factor(c(
-      rep("treatment", n_donors), rep("control", n_donors)
-    ), levels = c("control", "treatment"))
+      rep("case", n_donors), rep("control", n_donors)
+    ), levels = c("control", "case"))
   )
   md$file_name <- sprintf("%s.fcs", md$sample_id)
   
@@ -49,8 +49,8 @@ simulateSCE <- function (n_samples = 16,
   u <- MASS::mvrnorm(n = n_donors, mu = rep(0, n_markers), Sigma_u)
   u <- u[donor,]
   beta <- matrix(beta_control, nrow = nrow(b), ncol = n_markers)
-  beta[, seq_len(n_true)] <- ifelse(condition == "treatment",
-                                    beta_treatment, beta_control)
+  beta[, seq_len(n_true)] <- ifelse(condition == "case",
+                                    beta_case, beta_control)
   log_lambda <- beta + b + u
   lambda <- exp(log_lambda)
   y <- rpois(length(lambda), lambda)
