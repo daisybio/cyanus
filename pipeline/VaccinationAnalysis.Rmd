@@ -1,0 +1,82 @@
+---
+title: "VaccinationAnalysis"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(CATALYST)
+sapply(list.files("../functions", full.names = TRUE), source)
+
+```
+
+```{r}
+sce <- readRDS("/nfs/home/students/l.arend/data/vac_study/sce_full.rds")
+
+
+CATALYST::plotCounts(sce, color_by = "platelets", group_by = "TP")
+
+CATALYST::plotCounts(sce, color_by = "platelets", group_by = "patient_id")
+
+CATALYST::plotPbExprs(sce,color_by = "platelets", group_by = "TP")
+
+CATALYST::pbMDS(sce, by="sample_id", color_by ="TP", label_by="platelets")
+
+
+
+sce_TP5 <- filterSCE(sce, TP=="TP5")
+CATALYST::plotPbExprs(sce_TP5,color_by = "platelets")
+CATALYST::plotExprs(sce_TP5, features = "state", color_by = "platelets")
+
+sce_TP5 <- clusterSCE(sce_TP5)
+res <- runDS(sce_TP5, 
+      clustering_to_use ="all", 
+      markers_to_test = "state", 
+      ds_methods = c("diffcyt-DS-LMM"), 
+      contrast_vars = "platelets",
+      fixed_effects = "platelets,",
+      #design_matrix_vars = c("platelets", "patient_id"),
+      random_effects = "patient_id"
+      )
+
+
+
+sce_TP3 <- filterSCE(sce, TP == "TP3")
+CATALYST::plotPbExprs(sce_TP3,color_by = "platelets")
+CATALYST::plotExprs(sce_TP3, features = "state", color_by = "platelets")
+
+sce_TP6 <- filterSCE(sce, TP == "TP6")
+CATALYST::plotPbExprs(sce_TP6,color_by = "platelets")
+CATALYST::plotExprs(sce_TP6, features = "state", color_by = "platelets")
+
+```
+
+```{r}
+# calculation of median marker expression
+library(data.table)
+data <- assays(sce)$exprs
+data <- as.data.frame(t(data))
+data$sample_id <- colData(sce)$sample_id
+data$TP <- colData(sce)$TP
+data <- as.data.table(data)
+tmp <- melt(data, id.vars=c("sample_id","TP"), variable.name = "markers", value.name = "expression")
+medians <- tmp %>% group_by(markers, TP, sample_id) %>% summarise(median = median(expression, na.rm=TRUE))
+medians <- dcast(medians, ... ~ markers, value.var = "median")
+#rownames(medians) <- medians$TP
+#medians$TP <- NULL
+#medians
+
+
+state_markers <- c("sample_id","TP","CD62P", "CD63", "CD154", "CD107a")
+state_medians <- medians[,state_markers]
+
+
+
+medians_act <- fread("/nfs/home/students/l.arend/covid-paper/SARS-CoV-2-platelets-analysis/data/medians_act.csv")
+medians_act <- as.data.frame(medians_act)
+rownames(medians_act) <- medians_act$V1
+medians_act$V1 <- NULL
+as.data.frame(t(medians_act))
+
+
+```
