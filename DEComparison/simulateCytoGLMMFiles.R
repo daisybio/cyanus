@@ -1,7 +1,7 @@
 library(CATALYST)
 source("functions/cytoGLMM_functions.R")
 source("functions/prep_functions.R")
-data_dir <- "data/cytoGLMM_simulated"
+data_dir <- "/nfs/home/students/l.arend/data/cytoGLMM_simulated"
 n <- 20000
 set.seed(1234)
 sce <- simulateSCE(
