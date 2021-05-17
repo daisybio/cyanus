@@ -20,7 +20,16 @@ transformData <- function (sce,
     y <- fun(sweep(y, 1, cf, op))
     assay(sce, aout, FALSE) <- y
     sce
-  }
+}
+
+# DOWNSAMPLE SAMPLES
+downSampleSCE <- function(sce, cells){
+  cs <- split(seq_len(ncol(sce)), sce$sample_id)
+  cs <- unlist(lapply(cs, function(u)
+    sample(u, min(cells, length(u)))))
+  S4Vectors::metadata(sce)$experiment_info$n_cells <- rep(cells, nrow(ei(sce)))
+  return(sce[,cs])
+}
 
 makeSampleSelection <- function(sce=sce, deselected_samples){
   # All Samples

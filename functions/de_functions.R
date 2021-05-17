@@ -69,10 +69,12 @@ runDS <- function(sce,
                   clustering_to_use,
                   contrast_vars,
                   markers_to_test = "state",
-                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","BEZI", "ZAGA","ZAIG","hurdleBeta", "CytoGLMM", "logRegression"),
+                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","BEZI", "ZAGA","ZAIG",
+                                 "hurdleBeta", "CytoGLMM", "logRegression", "wilcoxon_median", "kruskal_median"),
                   design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
                   parallel = FALSE, parameters = NULL, sceEMD_nperm = 500, sceEMD_binsize = NULL,
-                  include_weights = TRUE, trend_limma = TRUE, blockID = NULL, time_methods = FALSE) {
+                  include_weights = TRUE, trend_limma = TRUE, blockID = NULL, 
+                  cytoGLMM_num_boot = 500, time_methods = FALSE) {
 
   
   #for limma and LMM: 
@@ -183,7 +185,8 @@ runDS <- function(sce,
             sceEMD_binsize,
             sceEMD_nperm,
             parallel,
-            include_weights
+            include_weights,
+            cytoGLMM_num_boot
           )
       )
       results[[method]] <- result
@@ -277,21 +280,57 @@ runDS <- function(sce,
         out <- runCytoGLMM(
           sce = sce_cluster,
           condition = contrast_vars,
+          method = "cytoglmm",
           random_effect = random_effects,
-          num_cores = parallel
+          parallel = parallel
         )
         cluster_results[["CytoGLMM"]] <- out
+      }
+      
+      if ("CytoGLM" %in% ds_methods) {
+        message(sprintf("calculating CytoGLM for cluster %s", curr_cluster_id))
+        # call CytoGLMM
+        out <- runCytoGLMM(
+          sce = sce_cluster,
+          condition = contrast_vars,
+          method = "cytoglm",
+          random_effect = random_effects,
+          parallel = parallel,
+          num_boot = cytoGLMM_num_boot
+        )
+        cluster_results[["CytoGLM"]] <- out
       }
       
       if("logRegression" %in% ds_methods){
         message(sprintf("calculating logstic regression model for cluster %s", curr_cluster_id))
         # call logistic regression
         out <- logistic_regression(
-          sce = sce, 
-          condition = contrast_vars, 
-          random_effect = random_effects
+          sce = sce,
+          condition = contrast_vars,
+          random_effect = random_effects,
+          parallel = parallel
         )
         cluster_results[["logRegression"]] <- out
+      }
+      
+      if("wilcoxon_median" %in% ds_methods){
+        message(sprintf("calculating wilcoxon median test for cluster %s", curr_cluster_id))
+        out <- median_wilcoxon_test(
+          sce = sce, 
+          condition = contrast_vars, 
+          parallel = parallel
+        )
+        cluster_results[["wilcoxon_median"]] <- out
+      }
+      
+      if("kruskal_median" %in% ds_methods){
+        message(sprintf("calculating kruskal median test for cluster %s", curr_cluster_id))
+        out <- median_kruskal_test(
+          sce = sce, 
+          condition = contrast_vars, 
+          parallel = parallel
+        )
+        cluster_results[["kruskal_median"]] <- out
       }
       
       #TODO: cytoglmm
@@ -316,7 +355,7 @@ runDS <- function(sce,
 timeMethod<- function(method, sce, markers_to_test, clustering_to_use, 
                       contrast_vars, random_effects,
                       sceEMD_binsize, sceEMD_nperm, parallel, 
-                      include_weights){
+                      include_weights, cytoGLMM_num_boot){
   # get the cluster_ids for the current meta cluster and iterate over the clusters
   if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
     sce <- CATALYST::filterSCE(sce, CATALYST::marker_classes(sce) %in% markers_to_test)
@@ -391,19 +430,39 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         sce = sce_cluster,
         condition = contrast_vars,
         random_effect = random_effects,
-        num_cores = parallel
+        parallel = parallel,
+        num_boot = cytoGLMM_num_boot
       )
       cluster_results[["CytoGLMM"]] <- out
       
-    }else if("logRegression" %in% ds_methods){
+    }else if("logRegression" == method){
       message(sprintf("calculating logstic regression model for cluster %s", curr_cluster_id))
       # call logistic regression
       out <- logistic_regression(
-        sce = sce, 
-        condition = contrast_vars, 
-        random_effect = random_effects
+        sce = sce,
+        condition = contrast_vars,
+        random_effect = random_effects,
+        parallel = parallel
       )
       cluster_results[["logRegression"]] <- out
+      
+    }else if("wilcoxon_median" == method){
+      message(sprintf("calculating wilcoxon median test for cluster %s", curr_cluster_id))
+      out <- median_wilcoxon_test(
+        sce = sce, 
+        condition = contrast_vars, 
+        parallel = parallel
+      )
+      cluster_results[["wilcoxon_median"]] <- out
+      
+    }else if("kruskal_median" == method){
+      message(sprintf("calculating kruskal median test for cluster %s", curr_cluster_id))
+      out <- median_kruskal_test(
+        sce = sce, 
+        condition = contrast_vars, 
+        parallel = parallel
+      )
+      cluster_results[["kruskal_median"]] <- out
     }
     
     return(data.table::rbindlist(cluster_results, idcol = 'method', use.names = TRUE, fill = TRUE))

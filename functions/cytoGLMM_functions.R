@@ -5,7 +5,7 @@ simulateSCE <- function (n_samples = 16,
                          rho_u = 0.1,
                          sigma_b = 1,
                          sigma_u = 1,
-                         beta_treatment = log(24.7),
+                         beta_case = log(24.7),
                          beta_control = log(22.9),
                          n_true = 3)
 {
@@ -13,15 +13,15 @@ simulateSCE <- function (n_samples = 16,
   n_donors <- n_samples / 2
   donor <- rep(rep(seq_len(n_donors), each = n_cells), 2)
   samples <- rep(seq_len(n_samples), each = n_cells)
-  condition <- c(rep("treatment", length(donor) / 2), rep("control",
+  condition <- c(rep("case", length(donor) / 2), rep("control",
                                                           length(donor) /
                                                             2))
   md <- data.frame(
     sample_id = seq_len(n_samples),
     patient_id = rep(sprintf("p%02d", seq_len(n_donors)), 2),
     condition = factor(c(
-      rep("treatment", n_donors), rep("control", n_donors)
-    ), levels = c("control", "treatment"))
+      rep("case", n_donors), rep("control", n_donors)
+    ), levels = c("control", "case"))
   )
   md$file_name <- sprintf("%s.fcs", md$sample_id)
   
@@ -49,8 +49,8 @@ simulateSCE <- function (n_samples = 16,
   u <- MASS::mvrnorm(n = n_donors, mu = rep(0, n_markers), Sigma_u)
   u <- u[donor,]
   beta <- matrix(beta_control, nrow = nrow(b), ncol = n_markers)
-  beta[, seq_len(n_true)] <- ifelse(condition == "treatment",
-                                    beta_treatment, beta_control)
+  beta[, seq_len(n_true)] <- ifelse(condition == "case",
+                                    beta_case, beta_control)
   log_lambda <- beta + b + u
   lambda <- exp(log_lambda)
   y <- rpois(length(lambda), lambda)
@@ -81,16 +81,21 @@ simulateSCE <- function (n_samples = 16,
 runCytoGLMM <-
   function(sce,
            condition,
+           method = c("cytoglmm", "cytoglm"),
            random_effect = NULL,
            features = SummarizedExperiment::rowData(sce)$marker_name,
            assay_to_use = "exprs",
-           num_cores = 1,
-           num_boot = 100) {
+           sample_id = "sample_id",
+           parallel = FALSE,
+           num_boot = 500) {
     # TODO: how to handle weights?
+    match.arg(method)
+    stopifnot(is.logical(parallel))
+    bppar <- BiocParallel::bpparam()
+    if (!parallel)
+      bppar <- BiocParallel::SerialParam(progressbar = TRUE)
+    num_cores <- ifelse(parallel, bppar[['workers']], 1)
     match.arg(assay_to_use, SummarizedExperiment::assayNames(sce))
-    if (is.logical(num_cores)) {
-      num_cores <- ifelse(num_cores, BiocParallel::bpparam()[['workers']], 1)
-    } else stopifnot(is.integer(num_cores))
     data <-
       as.data.frame(t(SummarizedExperiment::assay(sce, assay_to_use)))
     # features <-
@@ -99,22 +104,29 @@ runCytoGLMM <-
       gsub("[^[:alnum:]]", "", marker)
     })
     colnames(data) <- features
+    match.arg(condition, names(SummarizedExperiment::colData(sce)))
     data$condition <- SummarizedExperiment::colData(sce)[[condition]]
+    if (is.null(random_effect)){
+      match.arg(sample_id, names(SummarizedExperiment::colData(sce)))
+      data$donor <- SummarizedExperiment::colData(sce)[[sample_id]]
+    }
+    else {
+      match.arg(random_effect, names(SummarizedExperiment::colData(sce)))
+      data$donor <- SummarizedExperiment::colData(sce)[[random_effect]]
+    }
+      
     args <-
       list(
         protein_names = features,
         condition = "condition",
         group = "donor",
+        df_samples_subset = data,
         num_cores = num_cores
       )
-    if (!is.null(random_effect)){
-      data$donor <- SummarizedExperiment::colData(sce)[[random_effect]]
-      args$df_samples_subset <- data
+    if (method == "cytoglmm"){
       fit <- do.call(CytoGLMM::cytoglmm, args = args)
-    } else {
+    } else if(method == "cytoglmm") {
       args$num_boot <- num_boot
-      data$donor <- SummarizedExperiment::colData(sce)$sample_id
-      args$df_samples_subset <- data
       fit <- do.call(CytoGLMM::cytoglm, args = args)
     }
     summary_fit <- summary(fit)

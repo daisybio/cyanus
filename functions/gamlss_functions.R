@@ -3,10 +3,15 @@ sceGAMLSS <- function (sce,
                     condition, 
                     random_effect = NULL, 
                     assay_to_use = "exprs",
+                    parallel = FALSE,
                     features = SummarizedExperiment::rowData(sce)$marker_name){
   
   library(gamlss)
   library(gamlss.dist)
+  
+  bppar <- BiocParallel::bpparam()
+  if (!parallel)
+    bppar <- BiocParallel::SerialParam(progressbar = TRUE)
   
   # Controls
   method <- match.arg(method, several.ok = FALSE)
@@ -14,11 +19,32 @@ sceGAMLSS <- function (sce,
   match.arg(condition, names(SummarizedExperiment::colData(sce)))
   features <- match.arg(features, SummarizedExperiment:: rowData(sce)$marker_name, several.ok = TRUE)
   
-  # Data Preparation
-  X <- t(as.data.frame(SummarizedExperiment::assay(sce, assay_to_use)))
-  X <- X[, features]
-  Y <- colData(sce)[[condition]]
+  # Method Choice
+  if (method == "BEZI"){
+    family <- gamlss.dist::BEZI()
+    message("Fitting a zero-inflated beta distribution...")
+  } else if (method == "ZAGA"){
+    family <- gamlss.dist::ZAGA()
+    message("Fitting a zero adjusted Gamma distribution...")
+  } else if (method == "ZAIG"){
+    family <- gamlss.dist::ZAIG()
+    message("Fitting a zero adjusted Inverse Gaussian distribution...")
+  } else stop("invalid family")
   
+  # Data Preparation
+  X <- t(SummarizedExperiment::assay(sce, assay_to_use))
+  X <- X[, features, drop = FALSE]
+  X <- (abs(X) + X) / 2
+  X <-
+    apply(
+      X,
+      MARGIN = 2,
+      FUN = function(x)
+        (x - min(x)) / diff(range(x))
+    )
+  X[which(X == 1)] <- X[which(X == 1)] - 2.225074e-10
+  DF <- as.data.frame(X)
+  DF$Y <- sce[[condition]]
   
   # Weights Incorporation
   # if (weighted){
@@ -30,18 +56,6 @@ sceGAMLSS <- function (sce,
   # }
   
   
-  # Method Choice
-  if (method == "BEZI"){
-    family <- BEZI()
-    message("Fitting a zero-inflated beta distribution...")
-  } else if (method == "ZAGA"){
-    family <- ZAGA()
-    message("Fitting a zero adjusted Gamma distribution...")
-  } else if (method == "ZAIG"){
-    family <- ZAIG()
-    message("Fitting a zero adjusted Inverse Gaussian distribution...")
-  }
-  
   # Random Effects
   if (!is.null(random_effect)){
     for (re in random_effect){
@@ -49,49 +63,31 @@ sceGAMLSS <- function (sce,
     }
     R <- SummarizedExperiment::colData(sce)[random_effect]
     message(paste("...including random effects:", toString(random_effect)))
+    DF <- cbind(DF, R)
   }
   
-  # Iteration over Markers
-  beta = matrix(data = NA, length(features), 2)
-  for (i in seq(length(features))) {
-    
-    message(paste("...fitting marker", colnames(X)[i]))
-    x.prop <- X[, i]
-    x.prop[x.prop < 0] <- 0
-    x.prop <- (x.prop - min(x.prop))/(max(x.prop)-min(x.prop))
-    x.prop[which(x.prop==1)] <- x.prop[which(x.prop==1)] - 2.225074e-10
-    data <- data.frame(
-      exprs = x.prop,
-      condition = Y
-    )
+  # # Iteration over Markers
+  data.table::rbindlist(BiocParallel::bplapply(features, function(marker, DF) {
+    message(paste('fitting marker', marker))
+    pval <- NA
     tryCatch({
-    if (!is.null(random_effect)){ 
-      # with random effect
-      data <- cbind(data, R)
-      random_terms <- list()
-      for (re in random_effect){
-        random_terms[[re]] <- ~ 1
+      if (!is.null(random_effect)){
+        random_terms <- list()
+        for (re in random_effect){
+          random_terms[[re]] <- ~ 1
+        }
+        bereg <- gamlss::gamlss(get(marker) ~ Y + re(random=random_terms), family = family,
+                                trace = FALSE, control = gamlss.control(n.cyc = 200), data = DF, weights = NULL)
       }
-      bereg = gamlss::gamlss(exprs ~ condition + re(random=random_terms), family = family, 
-                             trace = FALSE, control = gamlss.control(n.cyc = 200), data = data, weights = NULL)
-    } else {
-      # without random effect
-      bereg = gamlss::gamlss(exprs ~ condition, family = family, 
-                             trace = FALSE, control = gamlss.control(n.cyc = 200), data = data, weights = NULL)
-    }
-    out = summary(bereg)
-    beta[i, ] = out[2, c(1, 4)]
-    }, error=function(e){
-      message(e)
-      beta[i, ] = c(NA, NA)
-    }
-    )
-  }
-  
-  pvalues = beta[, 2]
-  res <- data.frame(
-    marker_id = colnames(X), 
-    p_val = pvalues 
-  )
-  return (res)
+      else
+        bereg <- gamlss::gamlss(get(marker) ~ Y, family = family,
+                                trace = FALSE, control = gamlss.control(n.cyc = 200), data = DF, weights = NULL)
+      out <- summary(bereg)
+      p_val <-  out[2, 4]
+    }, error=function(e) {
+      message(e$message)
+    })
+    data.table::data.table(marker_id = marker, 
+                           p_val = pval)
+  }, DF, BPPARAM = bppar))
 }
