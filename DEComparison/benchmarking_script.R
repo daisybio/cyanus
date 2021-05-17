@@ -20,17 +20,19 @@ sapply(list.files("functions", full.names = TRUE), source)
 
 # save arguments
 args <- commandArgs(TRUE)
-# args <- c("/nfs/home/students/l.arend/data/covid_spiked/downsampled_files", "/nfs/home/students/ga89koc/hiwi/cytof/DEComparison/first_benchmark", "TRUE", "FALSE")
+# args <- c("/nfs/home/students/l.arend/data/cytoGLMM_simulated/simulated_cytoGLMM_1000_cells.rds", "/nfs/home/students/ga89koc/hiwi/cytof/DEComparison/simulatedCytoGLMM", "condition", "patient_id", "FALSE", "TRUE")
 scePath <-  args[1] #"/nfs/home/students/l.arend/data/covid_spiked/downsampled_files/"
 outputPath <- args[2] # "DEComparison/"
-timed <- as.logical(args[3]) # TRUE
-runParallel <- as.logical(args[4]) # FALSE
+condition <- args[3]
+random_effect <- args[4]
+timed <- as.logical(args[5]) # TRUE
+runParallel <- as.logical(args[6]) # FALSE
 
 # check if scePath is file or directory
 if (file.exists(scePath) && !dir.exists(scePath)){
-  sceFiles <- list(scePath)
+  sceFiles <- scePath
 } else if (dir.exists(scePath)){
-  sceFiles <- list.files(scePath, full.names=TRUE)
+  sceFiles <- list.files(scePath, pattern = , "\\.rds$", full.names=TRUE)
 } else {
   stop("There is no file or directory with the given name!")
 }
@@ -43,7 +45,7 @@ if (!dir.exists(outputPath)){
 # run parallel
 if(runParallel){
   library(BiocParallel)
-  param <- MulticoreParam(workers = 18, progressbar = T)
+  param <- MulticoreParam(workers = 20, progressbar = T)
   register(param)
 }
 
@@ -70,20 +72,24 @@ for (sceFile in sceFiles){
   # run all methods
   results <- runDS(sce,
                    clustering_to_use = "all",
-                   contrast_vars = "base_spike",
+                   contrast_vars = condition,
                    markers_to_test = c("state", "type"),
                    ds_methods = c("diffcyt-DS-limma",
                                   "diffcyt-DS-LMM",
                                   "BEZI",
-                                  #"ZAGA",
+                                  "ZAGA",
                                   # "ZAIG",
+                                  # "hurdleBeta",
                                   "sceEMD",
-                                  #"hurdleBeta",
-                                  "CytoGLMM"
+                                  "CytoGLMM",
+                                  "CytoGLM",
+                                  "logRegression", 
+                                  "wilcoxon_median", 
+                                  "kruskal_median"
                    ),
-                   design_matrix_vars = c("patient_id", "base_spike"),
-                   fixed_effects = "base_spike",
-                   random_effects = "patient_id",
+                   design_matrix_vars = c(random_effect, condition),
+                   fixed_effects = condition,
+                   random_effects = random_effect,
                    parallel = runParallel,
                    sceEMD_nperm = 500,
                    sceEMD_binsize = 0,
@@ -102,7 +108,7 @@ for (sceFile in sceFiles){
   #library(ggplot2)
 
   # if timed, also save the times of the methods
-  if (timed){
+  if (timed) {
     times <- results[["times"]]
     times <- data.table::rbindlist(sapply(times, function(x) as.list(x), simplify = FALSE), idcol = "method")
     objectToSave$times <- times

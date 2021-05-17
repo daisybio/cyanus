@@ -12,7 +12,8 @@ sceGAMLSS <- function (sce,
   bppar <- BiocParallel::bpparam()
   if (!parallel)
     bppar <- BiocParallel::SerialParam(progressbar = TRUE)
-  
+  else 
+    message('running in parallel')
   # Controls
   method <- match.arg(method, several.ok = FALSE)
   match.arg(assay_to_use, SummarizedExperiment::assayNames(sce))
