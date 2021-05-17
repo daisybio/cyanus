@@ -84,7 +84,7 @@ sceGAMLSS <- function (sce,
         bereg <- gamlss::gamlss(get(marker) ~ Y, family = family,
                                 trace = FALSE, control = gamlss.control(n.cyc = 200), data = DF, weights = NULL)
       out <- summary(bereg)
-      p_val <-  out[2, 4]
+      pval <-  out[2, 4]
     }, error=function(e) {
       message(e$message)
     })

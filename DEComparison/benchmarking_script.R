@@ -20,7 +20,7 @@ sapply(list.files("functions", full.names = TRUE), source)
 
 # save arguments
 args <- commandArgs(TRUE)
-# args <- c("/nfs/home/students/l.arend/data/cytoGLMM_simulated/simulated_cytoGLMM_1000_cells.rds", "/nfs/home/students/ga89koc/hiwi/cytof/DEComparison/simulatedCytoGLMM", "condition", "patient_id", "FALSE", "TRUE")
+# args <- c("/home/quirin/Dokumente/Master_Bioinformatik/2sem/sysbiomed/cytof/data/cytoGLMM_simulated/simulated_cytoGLMM_1000_cells.rds", "/home/quirin/Dokumente/Master_Bioinformatik/2sem/sysbiomed/cytof/DEComparison/simulatedCytoGLMM", "condition", "patient_id", "FALSE", "FALSE")
 scePath <-  args[1] #"/nfs/home/students/l.arend/data/covid_spiked/downsampled_files/"
 outputPath <- args[2] # "DEComparison/"
 condition <- args[3]
@@ -60,7 +60,7 @@ for (sceFile in sceFiles){
     add <- "_res.rds"
   }
   outputFile <- paste0(outputPath, "/", fileName, add)
-  if (file.exists(outputFile)) next
+  # if (file.exists(outputFile)) next
   
   #read SCE
   sce <- readRDS(sceFile)
@@ -78,13 +78,13 @@ for (sceFile in sceFiles){
                                   "diffcyt-DS-LMM",
                                   "BEZI",
                                   "ZAGA",
-                                  # "ZAIG",
-                                  # "hurdleBeta",
+                                  "ZAIG",
+                                  "hurdleBeta",
                                   "sceEMD",
                                   "CytoGLMM",
                                   "CytoGLM",
-                                  "logRegression", 
-                                  "wilcoxon_median", 
+                                  "logRegression",
+                                  "wilcoxon_median",
                                   "kruskal_median"
                    ),
                    design_matrix_vars = c(random_effect, condition),
@@ -95,25 +95,27 @@ for (sceFile in sceFiles){
                    sceEMD_binsize = 0,
                    time_methods = timed)
 
-  # save the results of the methods
-  res <- results[["results"]]
+
+  #res[p_adj <= 0.05]
+  #library(ggplot2)
+  objectToSave <- list()
+  
+  # if timed, also save the times of the methods
+  if (timed) {
+    # save the results of the methods
+    res <- results[["results"]]
+    times <- results[["times"]]
+    times <- data.table::rbindlist(sapply(times, function(x) as.list(x), simplify = FALSE), idcol = "method")
+    objectToSave$times <- times
+  } else 
+    res <- results
+
 
   #only possible for max. 4 sets
   #createVennDiagram(res, DS=T, 0.05, columns = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD", "hurdleBeta")
   res <- data.table::rbindlist(sapply(res, data.table::as.data.table, simplify = FALSE), fill = T, idcol="method")
-
-  objectToSave <- list(results = res)
-
-  #res[p_adj <= 0.05]
-  #library(ggplot2)
-
-  # if timed, also save the times of the methods
-  if (timed) {
-    times <- results[["times"]]
-    times <- data.table::rbindlist(sapply(times, function(x) as.list(x), simplify = FALSE), idcol = "method")
-    objectToSave$times <- times
-  }
-
+  objectToSave$results <- res
+  
   # save file
   saveRDS(objectToSave, outputFile)
 

@@ -189,9 +189,9 @@ runDS <- function(sce,
             cytoGLMM_num_boot
           )
       )
-      gc()
       results[[method]] <- result
       timings[[method]] <- t
+      gc()
     }
     return(list(results = results,
                 times = timings))
@@ -211,8 +211,8 @@ runDS <- function(sce,
           include_weights,
           cytoGLMM_num_boot
         )
-      gc()
       results[[method]] <- result
+      gc()
     }
     return(results)
   }

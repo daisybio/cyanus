@@ -7,6 +7,7 @@ median_test <- function(test = c("Wilcoxon, Kruskal_Wallis"),
                         assay_to_use = "exprs", 
                         parallel = FALSE){
   # Controls
+  test <- match.arg(test)
   match.arg(assay_to_use, SummarizedExperiment::assayNames(sce))
   match.arg(condition, names(SummarizedExperiment::colData(sce)))
   features <- match.arg(features, SummarizedExperiment:: rowData(sce)$marker_name, several.ok = TRUE)
