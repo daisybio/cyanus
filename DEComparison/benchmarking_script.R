@@ -9,7 +9,7 @@
 # fourth argument -> if run parallel
 
 
-setwd("..")
+setwd("/nfs/home/students/ga89koc/hiwi/cytof/")
 source("renv/activate.R")
 
 library(fs)
@@ -78,8 +78,8 @@ for (sceFile in sceFiles){
                                   "diffcyt-DS-LMM",
                                   "BEZI",
                                   "ZAGA",
-                                  "ZAIG",
-                                  "hurdleBeta",
+                                  # "ZAIG",
+                                  # "hurdleBeta",
                                   "sceEMD",
                                   "CytoGLMM",
                                   "CytoGLM",

@@ -346,7 +346,6 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
       )
       cluster_results[["kruskal_median"]] <- out
     }
-    browser()
     return(data.table::rbindlist(cluster_results, idcol = 'method', use.names = TRUE, fill = TRUE))
   }, simplify=FALSE)
   other_res <- data.table::rbindlist(res, idcol = 'cluster_id')

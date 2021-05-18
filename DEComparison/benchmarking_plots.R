@@ -2,7 +2,7 @@ library(data.table)
 library(ggplot2)
 
 result_rds <-
-  list.files(path = "DEComparison/first_benchmark/",
+  list.files(path = "DEComparison/downsampled_covid_spike/",
              pattern = "\\.rds$",
              full.names = T)
 times <-
@@ -84,9 +84,9 @@ ggplot(stats_table,
 ggplot(stats_table, aes(
   x = F1,
   y = elapsed,
-  color = method,
-  shape = alpha
-)) +
+  color = as.factor(nr_of_cells),# method,
+  shape = as.factor(nr_of_cells)
+)) + facet_wrap(~ method) +
   geom_jitter(size = 3) +
   xlim(c(0, 1)) +
   theme_bw() + theme(text = element_text(size = 18))

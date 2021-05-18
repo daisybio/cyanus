@@ -1,6 +1,6 @@
 
 
-median_test <- function(test = c("Wilcoxon, Kruskal_Wallis"),
+median_test <- function(test = c("Wilcoxon", "Kruskal_Wallis"),
                         sce,
                         condition,
                         features = SummarizedExperiment::rowData(sce)$marker_name,
@@ -40,7 +40,7 @@ median_test <- function(test = c("Wilcoxon, Kruskal_Wallis"),
       test_result <- wilcox.test(median ~ condition, data=median_data)
     }else if(test == "Kruskal_Wallis"){
       test_result <- kruskal.test(median ~ condition, data=median_data)
-    }
+    } else stop(sprintf('unknown test: found "%s"', test))
     return(
       data.table::data.table(
         marker_id = f,
