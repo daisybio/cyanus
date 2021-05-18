@@ -44,8 +44,6 @@ results <- runDS(sce_TP5,
                    time_methods = FALSE)
 
 
-
-
 sce_TP3 <- filterSCE(sce, TP == "TP3")
 CATALYST::plotPbExprs(sce_TP3,color_by = "platelets")
 CATALYST::plotExprs(sce_TP3, features = "state", color_by = "platelets")
@@ -54,17 +52,23 @@ sce_TP6 <- filterSCE(sce, TP == "TP6")
 CATALYST::plotPbExprs(sce_TP6,color_by = "platelets")
 CATALYST::plotExprs(sce_TP6, features = "state", color_by = "platelets")
 sce_TP6 <- clusterSCE(sce_TP6)
-results_TP6 <- runDS(sce_TP6,
+
+
+library(BiocParallel)
+param <- MulticoreParam(workers = 20, progressbar = T)
+register(param)
+
+results_TP6_emd <- runDS(sce_TP6,
                 clustering_to_use = "all",
                 contrast_vars = "platelets",
                 markers_to_test = c("state", "type"),
-                ds_methods = c("diffcyt-DS-limma", "diffcyt-DS-LMM"
+                ds_methods = c("sceEMD"
                 ),
                 design_matrix_vars = c("patient_id", "platelets"),
                 fixed_effects = "platelets",
                 random_effects = "patient_id",
-                parallel = runParallel,
-                sceEMD_nperm = 500,
+                parallel = TRUE,
+                sceEMD_nperm = 720,
                 sceEMD_binsize = 0,
                 time_methods = FALSE)
 
