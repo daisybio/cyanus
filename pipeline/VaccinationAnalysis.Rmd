@@ -29,15 +29,20 @@ CATALYST::plotPbExprs(sce_TP5,color_by = "platelets")
 CATALYST::plotExprs(sce_TP5, features = "state", color_by = "platelets")
 
 sce_TP5 <- clusterSCE(sce_TP5)
-res <- runDS(sce_TP5, 
-      clustering_to_use ="all", 
-      markers_to_test = "state", 
-      ds_methods = c("diffcyt-DS-LMM"), 
-      contrast_vars = "platelets",
-      fixed_effects = "platelets,",
-      #design_matrix_vars = c("platelets", "patient_id"),
-      random_effects = "patient_id"
-      )
+results <- runDS(sce_TP5,
+                   clustering_to_use = "all",
+                   contrast_vars = "platelets",
+                   markers_to_test = c("state", "type"),
+                   ds_methods = c("diffcyt-DS-limma", "diffcyt-DS-LMM"
+                   ),
+                   design_matrix_vars = c("patient_id", "platelets"),
+                   fixed_effects = "platelets",
+                   random_effects = "patient_id",
+                   parallel = runParallel,
+                   sceEMD_nperm = 500,
+                   sceEMD_binsize = 0,
+                   time_methods = FALSE)
+
 
 
 
@@ -48,6 +53,21 @@ CATALYST::plotExprs(sce_TP3, features = "state", color_by = "platelets")
 sce_TP6 <- filterSCE(sce, TP == "TP6")
 CATALYST::plotPbExprs(sce_TP6,color_by = "platelets")
 CATALYST::plotExprs(sce_TP6, features = "state", color_by = "platelets")
+sce_TP6 <- clusterSCE(sce_TP6)
+results_TP6 <- runDS(sce_TP6,
+                clustering_to_use = "all",
+                contrast_vars = "platelets",
+                markers_to_test = c("state", "type"),
+                ds_methods = c("diffcyt-DS-limma", "diffcyt-DS-LMM"
+                ),
+                design_matrix_vars = c("patient_id", "platelets"),
+                fixed_effects = "platelets",
+                random_effects = "patient_id",
+                parallel = runParallel,
+                sceEMD_nperm = 500,
+                sceEMD_binsize = 0,
+                time_methods = FALSE)
+
 
 ```
 

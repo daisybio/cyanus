@@ -2,7 +2,7 @@ library(CATALYST)
 source("functions/cytoGLMM_functions.R")
 source("functions/prep_functions.R")
 data_dir <- "/nfs/home/students/l.arend/data/cytoGLMM_simulated"
-n <- 20000
+n <- 200000
 set.seed(1234)
 sce <- simulateSCE(
   n_samples = 22,
@@ -10,6 +10,8 @@ sce <- simulateSCE(
   n_markers = 20,
   n_true = 5
 )
+sce <- clusterSCE(sce, features = NULL)
+
 filename <-
   file.path(data_dir, sprintf("simulated_cytoGLMM_%d_cells.rds", n))
 saveRDS(sce, filename)
