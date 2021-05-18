@@ -9,7 +9,7 @@
 # fourth argument -> if run parallel
 
 
-setwd("..")
+setwd("/nfs/home/students/ga89koc/hiwi/cytof/")
 source("renv/activate.R")
 
 library(fs)
@@ -20,17 +20,19 @@ sapply(list.files("functions", full.names = TRUE), source)
 
 # save arguments
 args <- commandArgs(TRUE)
-# args <- c("/nfs/home/students/l.arend/data/covid_spiked/downsampled_files", "/nfs/home/students/ga89koc/hiwi/cytof/DEComparison/first_benchmark", "TRUE", "FALSE")
+# args <- c("/home/quirin/Dokumente/Master_Bioinformatik/2sem/sysbiomed/cytof/data/cytoGLMM_simulated/simulated_cytoGLMM_1000_cells.rds", "/home/quirin/Dokumente/Master_Bioinformatik/2sem/sysbiomed/cytof/DEComparison/simulatedCytoGLMM", "condition", "patient_id", "FALSE", "FALSE")
 scePath <-  args[1] #"/nfs/home/students/l.arend/data/covid_spiked/downsampled_files/"
 outputPath <- args[2] # "DEComparison/"
-timed <- as.logical(args[3]) # TRUE
-runParallel <- as.logical(args[4]) # FALSE
+condition <- args[3]
+random_effect <- args[4]
+timed <- as.logical(args[5]) # TRUE
+runParallel <- as.logical(args[6]) # FALSE
 
 # check if scePath is file or directory
 if (file.exists(scePath) && !dir.exists(scePath)){
-  sceFiles <- list(scePath)
+  sceFiles <- scePath
 } else if (dir.exists(scePath)){
-  sceFiles <- list.files(scePath, full.names=TRUE)
+  sceFiles <- list.files(scePath, pattern = , "\\.rds$", full.names=TRUE)
 } else {
   stop("There is no file or directory with the given name!")
 }
@@ -43,7 +45,7 @@ if (!dir.exists(outputPath)){
 # run parallel
 if(runParallel){
   library(BiocParallel)
-  param <- MulticoreParam(workers = 18, progressbar = T)
+  param <- MulticoreParam(workers = 20, progressbar = T)
   register(param)
 }
 
@@ -58,7 +60,7 @@ for (sceFile in sceFiles){
     add <- "_res.rds"
   }
   outputFile <- paste0(outputPath, "/", fileName, add)
-  if (file.exists(outputFile)) next
+  # if (file.exists(outputFile)) next
   
   #read SCE
   sce <- readRDS(sceFile)
@@ -70,44 +72,50 @@ for (sceFile in sceFiles){
   # run all methods
   results <- runDS(sce,
                    clustering_to_use = "all",
-                   contrast_vars = "base_spike",
+                   contrast_vars = condition,
                    markers_to_test = c("state", "type"),
                    ds_methods = c("diffcyt-DS-limma",
                                   "diffcyt-DS-LMM",
                                   "BEZI",
-                                  #"ZAGA",
+                                  "ZAGA",
                                   # "ZAIG",
+                                  # "hurdleBeta",
                                   "sceEMD",
-                                  #"hurdleBeta",
-                                  "CytoGLMM"
+                                  "CytoGLMM",
+                                  "CytoGLM",
+                                  "logRegression",
+                                  "wilcoxon_median",
+                                  "kruskal_median"
                    ),
-                   design_matrix_vars = c("patient_id", "base_spike"),
-                   fixed_effects = "base_spike",
-                   random_effects = "patient_id",
+                   design_matrix_vars = c(random_effect, condition),
+                   fixed_effects = condition,
+                   random_effects = random_effect,
                    parallel = runParallel,
                    sceEMD_nperm = 500,
                    sceEMD_binsize = 0,
                    time_methods = timed)
 
-  # save the results of the methods
-  res <- results[["results"]]
+
+  #res[p_adj <= 0.05]
+  #library(ggplot2)
+  objectToSave <- list()
+  
+  # if timed, also save the times of the methods
+  if (timed) {
+    # save the results of the methods
+    res <- results[["results"]]
+    times <- results[["times"]]
+    times <- data.table::rbindlist(sapply(times, function(x) as.list(x), simplify = FALSE), idcol = "method")
+    objectToSave$times <- times
+  } else 
+    res <- results
+
 
   #only possible for max. 4 sets
   #createVennDiagram(res, DS=T, 0.05, columns = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD", "hurdleBeta")
   res <- data.table::rbindlist(sapply(res, data.table::as.data.table, simplify = FALSE), fill = T, idcol="method")
-
-  objectToSave <- list(results = res)
-
-  #res[p_adj <= 0.05]
-  #library(ggplot2)
-
-  # if timed, also save the times of the methods
-  if (timed){
-    times <- results[["times"]]
-    times <- data.table::rbindlist(sapply(times, function(x) as.list(x), simplify = FALSE), idcol = "method")
-    objectToSave$times <- times
-  }
-
+  objectToSave$results <- res
+  
   # save file
   saveRDS(objectToSave, outputFile)
 

@@ -125,9 +125,11 @@ runCytoGLMM <-
       )
     if (method == "cytoglmm"){
       fit <- do.call(CytoGLMM::cytoglmm, args = args)
-    } else if(method == "cytoglmm") {
+    } else if (method == "cytoglm") {
       args$num_boot <- num_boot
       fit <- do.call(CytoGLMM::cytoglm, args = args)
+    } else {
+      stop("unknown method")
     }
     summary_fit <- summary(fit)
     return(data.frame(marker_id = summary_fit$protein_name, p_val = summary_fit$pvalues_unadj))

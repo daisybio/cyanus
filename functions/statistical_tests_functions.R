@@ -1,12 +1,13 @@
 
 
-median_test <- function(test = c("Wilcoxon, Kruskal_Wallis"),
+median_test <- function(test = c("Wilcoxon", "Kruskal_Wallis"),
                         sce,
                         condition,
                         features = SummarizedExperiment::rowData(sce)$marker_name,
                         assay_to_use = "exprs", 
                         parallel = FALSE){
   # Controls
+  test <- match.arg(test)
   match.arg(assay_to_use, SummarizedExperiment::assayNames(sce))
   match.arg(condition, names(SummarizedExperiment::colData(sce)))
   features <- match.arg(features, SummarizedExperiment:: rowData(sce)$marker_name, several.ok = TRUE)
@@ -39,7 +40,7 @@ median_test <- function(test = c("Wilcoxon, Kruskal_Wallis"),
       test_result <- wilcox.test(median ~ condition, data=median_data)
     }else if(test == "Kruskal_Wallis"){
       test_result <- kruskal.test(median ~ condition, data=median_data)
-    }
+    } else stop(sprintf('unknown test: found "%s"', test))
     return(
       data.table::data.table(
         marker_id = f,
