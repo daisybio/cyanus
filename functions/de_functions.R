@@ -70,7 +70,7 @@ runDS <- function(sce,
                   contrast_vars,
                   markers_to_test = "state",
                   ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","BEZI", "ZAGA","ZAIG",
-                                 "hurdleBeta", "CytoGLMM", "CytoGLM", "logRegression", "wilcoxon_median", "kruskal_median"),
+                                 "hurdleBeta", "CytoGLMM", "CytoGLM", "logRegression", "wilcoxon_median", "kruskal_median", "t_test"),
                   design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
                   parallel = FALSE, parameters = NULL, sceEMD_nperm = 500, sceEMD_binsize = NULL,
                   include_weights = TRUE, trend_limma = TRUE, blockID = NULL, 
@@ -330,26 +330,40 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
       
     }else if("wilcoxon_median" == method){
       message(sprintf("calculating wilcoxon median test for cluster %s", curr_cluster_id))
-      out <- median_wilcoxon_test(
-        sce = sce, 
-        condition = contrast_vars, 
-        parallel = parallel
-      )
+      out <- median_test(test = "Wilcoxon", 
+                         sce,
+                         condition,
+                         random_effect = random_effects,
+                         features = SummarizedExperiment::rowData(sce)$marker_name,
+                         assay_to_use = "exprs", 
+                         parallel = parallel)
       cluster_results[["wilcoxon_median"]] <- out
       
     }else if("kruskal_median" == method){
       message(sprintf("calculating kruskal median test for cluster %s", curr_cluster_id))
-      out <- median_kruskal_test(
-        sce = sce, 
-        condition = contrast_vars, 
-        parallel = parallel
-      )
+      out <- median_test(test = "Kruskal_Wallis", 
+                         sce,
+                         condition,
+                         random_effect = random_effects,
+                         features = SummarizedExperiment::rowData(sce)$marker_name,
+                         assay_to_use = "exprs", 
+                         parallel = parallel)
       cluster_results[["kruskal_median"]] <- out
+    }else if("t_test" == method){
+      message(sprintf("calculating t-test test for cluster %s", curr_cluster_id))
+      out <- median_test(test = "T_Test", 
+                         sce,
+                         condition,
+                         random_effect = random_effects,
+                         features = SummarizedExperiment::rowData(sce)$marker_name,
+                         assay_to_use = "exprs", 
+                         parallel = parallel)
+      cluster_results[["t_test"]] <- out
     }
-    return(data.table::rbindlist(cluster_results, idcol = 'method', use.names = TRUE, fill = TRUE))
+    return(data.table::rbindlist(cluster_results, use.names = TRUE, fill = TRUE)) #[, variable :=c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.')]
   }, simplify=FALSE)
   other_res <- data.table::rbindlist(res, idcol = 'cluster_id')
-  other_res[, p_adj := p.adjust(p_val, "BH"), by="method"]
+  other_res[, p_adj := p.adjust(p_val, "BH")] #, by="method"
   return(other_res)
 }
 
