@@ -20,7 +20,7 @@ sapply(list.files("functions", full.names = TRUE), source)
 
 # save arguments
 args <- commandArgs(TRUE)
-# args <- c("/home/quirin/Dokumente/Master_Bioinformatik/2sem/sysbiomed/cytof/data/cytoGLMM_simulated/simulated_cytoGLMM_1000_cells.rds", "/home/quirin/Dokumente/Master_Bioinformatik/2sem/sysbiomed/cytof/DEComparison/simulatedCytoGLMM", "condition", "patient_id", "FALSE", "FALSE")
+# args <- c("/nfs/home/students/l.arend/data/cytoGLMM_simulated/simulated_cytoGLMM_5000_cells.rds", "/home/quirin/Dokumente/Master_Bioinformatik/2sem/sysbiomed/cytof/DEComparison/simulatedCytoGLMM", "condition", "patient_id", "FALSE", "FALSE")
 scePath <-  args[1] #"/nfs/home/students/l.arend/data/covid_spiked/downsampled_files/"
 outputPath <- args[2] # "DEComparison/"
 condition <- args[3]

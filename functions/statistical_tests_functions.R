@@ -1,8 +1,9 @@
 
 
-median_test <- function(test = c("Wilcoxon", "Kruskal_Wallis"),
+median_test <- function(test = c("Wilcoxon", "Kruskal_Wallis", "T_Test"),
                         sce,
                         condition,
+                        random_effect = NULL,
                         features = SummarizedExperiment::rowData(sce)$marker_name,
                         assay_to_use = "exprs", 
                         parallel = FALSE){
@@ -10,7 +11,7 @@ median_test <- function(test = c("Wilcoxon", "Kruskal_Wallis"),
   test <- match.arg(test)
   match.arg(assay_to_use, SummarizedExperiment::assayNames(sce))
   match.arg(condition, names(SummarizedExperiment::colData(sce)))
-  features <- match.arg(features, SummarizedExperiment:: rowData(sce)$marker_name, several.ok = TRUE)
+  features <- match.arg(features, SummarizedExperiment::rowData(sce)$marker_name, several.ok = TRUE)
   
   #parallelization
   stopifnot(is.logical(parallel))
@@ -23,23 +24,37 @@ median_test <- function(test = c("Wilcoxon", "Kruskal_Wallis"),
   X <- t(as.data.frame(SummarizedExperiment::assay(sce, assay_to_use)))
   data <- data.table::data.table(X[, features], y = SummarizedExperiment::colData(sce)[[condition]], 
                                  sample_id = SummarizedExperiment::colData(sce)[["sample_id"]])
+  if (!is.null(random_effect)) {
+    match.arg(random_effect, names(SummarizedExperiment::colData(sce)))
+    data$re <- SummarizedExperiment::colData(sce)[[random_effect]]
+  }
   
   p.values <- data.table::rbindlist(BiocParallel::bplapply(features, function(f){
-    medians_control <- data[y == levels(data$y)[1], median(get(f)), by = sample_id]
-    medians_case <- data[y == levels(data$y)[2], median(get(f)), by = sample_id]
-    median_data <- data.table::data.table(
-      sample_id = medians_control$sample_id,
-      median_control = medians_control$V1,
-      median_case = medians_case$V1
-    )
-    median_data <- data.table::melt(median_data, id.vars = "sample_id", 
-                                    variable.name = "condition", 
-                                    value.name = "median")
-    
+    # browser() #TODO: make sure that medians are sorted corresponding to group / random_effect
+    # medians_control <- data[y == levels(data$y)[1], median(get(f)), by = sample_id]
+    # medians_case <- data[y == levels(data$y)[2], median(get(f)), by = sample_id]
+    # median_data <- data.table::data.table(
+    #   sample_id = medians_control$sample_id,
+    #   median_control = medians_control$V1,
+    #   median_case = medians_case$V1
+    # )
+    # median_data <- data.table::melt(median_data, id.vars = "sample_id", 
+    #                                 variable.name = "condition", 
+    #                                 value.name = "median")
+    if (!is.null(random_effect)) {
+      # browser() #TODO: set paired to TRUE
+      median_data <- data[, .(sample_median = median(get(f))), by = .(sample_id, y, re)]
+      paired <- TRUE
+    } else {
+      median_data <- data[, .(sample_median = median(get(f))), by = .(sample_id, y)]
+      paired <- FALSE
+    }
     if(test == "Wilcoxon"){
-      test_result <- wilcox.test(median ~ condition, data=median_data)
+      test_result <- wilcox.test(sample_median ~ y, data=median_data, paired = paired)
     }else if(test == "Kruskal_Wallis"){
-      test_result <- kruskal.test(median ~ condition, data=median_data)
+      test_result <- kruskal.test(sample_median ~ y, data=median_data)
+    } else if (test == "T_Test") {
+      test_result <- t.test(sample_median ~ y, data=median_data, paired = paired)
     } else stop(sprintf('unknown test: found "%s"', test))
     return(
       data.table::data.table(
