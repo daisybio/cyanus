@@ -60,6 +60,13 @@ sce_covid <-
 #sce_covid <- clusterSCE(sce_covid)
 saveRDS(sce_covid, "/nfs/home/students/l.arend/data/covid/sce_transformed.rds")
 
+sce_covid <- readRDS("/nfs/home/students/l.arend/data/covid/sce_transformed.rds")
+sce_covid <- clusterSCE(sce_covid)
+
+
+plotPbExprs(sce_covid, color_by = "platelets", features = NULL)
+
+sce_healthy <- filterSCE(sce_covid, covid == "healthy")
 
 ```
 
