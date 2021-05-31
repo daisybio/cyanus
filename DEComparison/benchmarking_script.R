@@ -9,7 +9,7 @@
 # fourth argument -> if run parallel
 
 
-setwd("/nfs/home/students/ga89koc/hiwi/cytof/")
+setwd("/nfs/home/students/l.arend/cytof")
 source("renv/activate.R")
 
 library(fs)
