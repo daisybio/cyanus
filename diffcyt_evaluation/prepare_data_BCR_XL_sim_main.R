@@ -38,7 +38,7 @@ library(flowCore)
 
 # .fcs files
 
-DIR_BENCHMARK <- "./benchmark_data"
+DIR_BENCHMARK <- "diffcyt_evaluation/benchmark_data"
 
 DIR_RAW_DATA <- file.path(DIR_BENCHMARK, "BCR_XL_sim/raw_data/experiment_15713_files")
 
@@ -90,7 +90,21 @@ patient_IDs
 
 # cell population labels
 labels <- lapply(files_labels_all, read.csv)
+########Make SCE#######
+library(data.table)
+md <- data.table::data.table(
+  file_name = list.files(DIR_RAW_DATA, pattern = "\\.fcs$"), 
+  sample_id = gsub("-", "_", paste0(tstrsplit(names(data), "_", keep = 2)[[1]], rep(seq(1,8), 2))),
+  patient_id = patient_IDs,
+  condition = gsub("-", "_", conditions)
+)
+panel <- readRDS("data/pbmc/panel.rds")
+sce <- prepData(list.files(DIR_RAW_DATA, pattern = "\\.fcs$", full.names = T), panel = panel, md = md)
 
+#add population cluster
+labels <- lapply(labels, as.data.table)
+names(labels) <- md$sample_id
+labels_collapsed <- rbindlist(labels, idcol = "sample_id")
 
 
 # ---------------------
