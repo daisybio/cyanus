@@ -14,7 +14,6 @@ preparePlotData <- function(data_type){
   } else if (data_type == "dual_platelets"){
     path <-  "DEComparison/dual_platelets"
     trues <- c("CD62P", "CD63", "CD107a", "CD154")
-    keep <- 6
   }
   
   result_rds <-
