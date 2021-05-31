@@ -22,7 +22,7 @@ all(panel$fcs_colname %in% colnames(fs))
 md$condition <- factor(md$condition, levels = c("Ref", "BCRXL"))
 md$sample_id <- factor(md$sample_id, 
                        levels = md$sample_id[order(md$condition)])
-
+panel$antigen <- gsub("-", "_", panel$antigen)
 # construct SingleCellExperiment
 sce <- prepData(fs, panel, md, features = panel$fcs_colname)
 

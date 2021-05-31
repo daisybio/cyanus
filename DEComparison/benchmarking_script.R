@@ -27,6 +27,11 @@ condition <- args[3]
 random_effect <- args[4]
 timed <- as.logical(args[5]) # TRUE
 runParallel <- as.logical(args[6]) # FALSE
+if(length(args) == 7){
+  clustering_to_use <- args[7]
+}else{
+  clustering_to_use <- "all"
+}
 
 # check if scePath is file or directory
 if (file.exists(scePath) && !dir.exists(scePath)){
@@ -71,7 +76,7 @@ for (sceFile in sceFiles){
   
   # run all methods
   results <- runDS(sce,
-                   clustering_to_use = "all",
+                   clustering_to_use = clustering_to_use,
                    contrast_vars = condition,
                    markers_to_test = c("state", "type"),
                    ds_methods = c("diffcyt-DS-limma",
