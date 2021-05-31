@@ -23,7 +23,10 @@ transformData <- function (sce,
 }
 
 # DOWNSAMPLE SAMPLES
-downSampleSCE <- function(sce, cells){
+downSampleSCE <- function(sce, cells, per_sample=TRUE) {
+  if (!per_sample) {
+    cells <- floor(cells / nrow(CATALYST::ei(sce)))
+  }
   cs <- split(seq_len(ncol(sce)), sce$sample_id)
   cs <- unlist(lapply(cs, function(u)
     sample(u, min(cells, length(u)))))
