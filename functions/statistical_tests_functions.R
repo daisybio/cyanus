@@ -186,3 +186,36 @@ exprs_t_test <- function(sce,
 }
 
 
+calculate_effect_size <- function(sce,
+                                  condition,
+                                  features = SummarizedExperiment::rowData(sce)$marker_name,
+                                  assay_to_use = "exprs", 
+                                  parallel = FALSE){
+  # Controls
+  match.arg(assay_to_use, SummarizedExperiment::assayNames(sce))
+  match.arg(condition, names(SummarizedExperiment::colData(sce)))
+  features <- match.arg(features, SummarizedExperiment::rowData(sce)$marker_name, several.ok = TRUE)
+  
+  #parallelization
+  stopifnot(is.logical(parallel))
+  
+  bppar <- BiocParallel::bpparam()
+  if (!parallel)
+    bppar <- BiocParallel::SerialParam(progressbar = TRUE)
+  
+  # Data Preparation
+  X <- t(as.data.frame(SummarizedExperiment::assay(sce, assay_to_use)))
+  data <- data.table::data.table(X[, features], y = SummarizedExperiment::colData(sce)[[condition]])
+  #effect sizes
+  effect_sizes <- data.table::rbindlist(BiocParallel::bplapply(features, function(f){
+    meanA <- data[y == levels(data$y)[1], mean(get(f))]
+    meanB <- data[y == levels(data$y)[2], mean(get(f))]
+    std <- data[, sd(get(f))]
+    return(data.table::data.table(
+      marker_id = f,
+      effect_size = abs(meanA - meanB) / std
+    ))
+  }, BPPARAM = bppar))
+  return(effect_sizes)
+}
+
