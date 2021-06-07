@@ -9,7 +9,7 @@
 # fourth argument -> if run parallel
 
 
-setwd("/nfs/home/students/l.arend/cytof")
+setwd("../..")
 source("renv/activate.R")
 
 library(fs)
@@ -90,7 +90,8 @@ for (sceFile in sceFiles){
                                   "CytoGLM",
                                   "logRegression",
                                   "wilcoxon_median",
-                                  "kruskal_median"
+                                  "kruskal_median",
+                                  "t_test"
                    ),
                    design_matrix_vars = c(random_effect, condition),
                    fixed_effects = condition,
