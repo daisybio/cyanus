@@ -25,6 +25,9 @@ scePath <-  args[1] #"/nfs/home/students/l.arend/data/covid_spiked/downsampled_f
 outputPath <- args[2] # "DEComparison/"
 condition <- args[3]
 random_effect <- args[4]
+if(tolower(random_effect) == "null"){
+  random_effect <- NULL
+}
 timed <- as.logical(args[5]) # TRUE
 runParallel <- as.logical(args[6]) # FALSE
 if(length(args) == 7){
