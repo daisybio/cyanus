@@ -117,6 +117,92 @@ preparePlotData <- function(data_type){
   return (stats_table)
 }
 
+plotHeatmaps <- function(data_type, nr_cells_spike=15000){
+  if (data_type == "simulatedCytoGLMM"){
+    path <-  "DEComparison/simulatedCytoGLMM"
+    trues <- c("m01", "m02", "m03", "m04", "m05")
+    keep <- 3
+  } else if (data_type == "downsampled_covid_spike"){
+    path <-  "DEComparison/downsampled_covid_spike"
+    trues <- c("CD62P", "CD63", "CD107a", "CD154")
+    keep <- 6
+  } else if (data_type == "dual_platelets"){
+    path <-  "DEComparison/dual_platelets"
+    trues <- c("CD62P", "CD63", "CD107a", "CD154")
+  } else if(data_type == "pbmc"){
+    path <- "DEComparison/pbmc_benchmarking"
+  }
+  result_rds <-
+    list.files(path = path,
+               pattern = "\\.rds$",
+               full.names = T)
+  results <-
+    data.table::rbindlist(sapply(result_rds, function(rds)
+      readRDS(rds)[["results"]], simplify = FALSE),
+      idcol = "dataset")
+  results[, dataset := basename(dataset)]
+  tmp <- data.frame(method = results$method, marker_id = results$marker_id, p_adj = results$p_adj)
+  if (data_type %in% c("simulatedCytoGLMM", "downsampled_covid_spike")){
+    results[, nr_of_cells := tstrsplit(dataset, "_", keep=keep)]
+    tmp$nr_of_cells <- results$nr_of_cells
+    if(data_type == "downsampled_covid_spike"){
+      results[, alpha := tstrsplit(dataset, "_", keep=4)]
+      tmp$alpha <- results$alpha
+    }
+  }else if(data_type == "pbmc"){
+    tmp$cluster_id <- results$cluster_id
+  }
+  times <-
+    data.table::rbindlist(sapply(result_rds, function(rds)
+      readRDS(rds)[["times"]], simplify = FALSE),
+      idcol = "dataset")
+  times[, dataset := basename(dataset)]
+  
+  # plot results
+  tmp$significant <- results$p_adj < 0.05
+  tmp$p_adj <- NULL
+  tmp <- as.data.table(tmp)
+  tmp$significant <- as.factor(tmp$significant)
+  tmp$class <- tmp$marker_id %in% trues
+  if(data_type %in% c("downsampled_covid_spike", "dual_platelets")){
+    tmp$class[tmp$class == TRUE] <- "state"
+    tmp$class[tmp$class == FALSE] <- "type"
+  }else if(data_type == "simulatedCytoGLMM"){
+    tmp$class[tmp$class == TRUE] <- "differentially expressed"
+    tmp$class[tmp$class == FALSE] <- "not differentially expressed"
+  }
+  
+  
+  if(data_type == "downsampled_covid_spike"){
+    ggplot(tmp, aes(marker_id, method, fill=significant)) + 
+      geom_tile(color="white", size=1) + 
+      ggtitle(sprintf("Downsampled Covid Spike, %d cells per sample", nr_cells_spike)) + 
+      xlab(label="marker") + 
+      facet_grid(alpha~class, scales = "free_x") + 
+      theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))
+  } else if(data_type == "simulatedCytoGLMM"){
+  ggplot(tmp, aes(marker_id, method, fill=significant)) + 
+    geom_tile(color="white", size=1) + 
+    ggtitle("CytoGLMM Simulation") + 
+    xlab(label="marker") + 
+    facet_grid(nr_of_cells~class, scales = "free_x") + 
+    theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))
+  } else if(data_type == "dual_platelets"){
+    ggplot(tmp, aes(marker_id, method, fill=significant)) + 
+      geom_tile(color="white", size=1) + 
+      ggtitle("Dual Platelets") + xlab(label="marker") + 
+      facet_wrap(~class, scales = "free_x") + 
+      theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))
+  } else if(data_type == "pbmc"){
+    tmp$marker_id[tmp$marker_id == "HLADR"] <- "HLA_DR"
+    ggplot(tmp, aes(marker_id, method, fill=significant)) + 
+      geom_tile(color="white", size=1) + 
+      ggtitle("PBMC Ref vs. BCR-XL") + xlab(label="marker") + 
+      facet_wrap(~cluster_id, scales = "free_x") + 
+      theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))
+  }
+}
+
 plot_cells_vs_elapsed <- function(stats_table){
   if ("alpha" %in% stats_table){
     plot <- ggplot(stats_table,
