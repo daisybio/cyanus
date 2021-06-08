@@ -108,6 +108,8 @@ for (sceFile in sceFiles){
   #res[p_adj <= 0.05]
   #library(ggplot2)
   objectToSave <- list()
+  # lets compute and save the effect size:
+  objectToSave$eff <- effectSize(sce, condition, random_effect, clustering_to_use)
   
   # if timed, also save the times of the methods
   if (timed) {
