@@ -5,7 +5,7 @@ spikeInMarkers <- function(pathToSCE = "/nfs/home/students/l.arend/data/covid/sc
                            baselineValue = "B",
                            activatedValue = "A",
                            markersToSpike = c("CD63", "CD62P", "CD107a", "CD154"),
-                           alpha = 0) {
+                           alpha = NULL) {
   library(CATALYST)
   library(data.table)
   sce <- readRDS(pathToSCE)
@@ -94,9 +94,32 @@ spikeInMarkers <- function(pathToSCE = "/nfs/home/students/l.arend/data/covid/sc
       }
       sort(sample(seq_len(got), needed)) + start_of_next_sample_A[i]
     }))
+  
+  if(is.null(alpha)){
+    sce0 <- sceBaseline
+    sce25 <- sceBaseline
+    sce50 <- sceBaseline
+    sce75 <- sceBaseline
+    sce100 <- sceBaseline
+    sceList <- list(sce0, sce25, sce50, sce75, sce100)
+    names(sceList) <- c("0", "0.25", "0.5", "0.75", "1.0")
+  }
+  
+  
   for (marker in markersToSpike) {
     message(paste("Replacing marker", marker, "..."))
-    if(alpha == 0){
+    if(is.null(alpha)){
+      for (alpha2 in names(sceList)){
+        assays(sceList[[alpha2]])$counts[marker, inds_spike] <-
+          5 * sinh(
+            asinh(assays(sceActivated)$counts[marker, indsActivated]/5) - 
+              as.numeric(alpha2) * (
+                asinh(assays(sceActivated)$counts[marker, indsActivated] / 5) - 
+                  asinh(assays(sceList[[alpha2]])$counts[marker, inds_spike] / 5)
+              )
+          )
+      }
+    }else if(alpha == 0){
       assays(sceBaseline)$counts[marker, inds_spike] <-
         assays(sceActivated)$counts[marker, indsActivated]
     }else{
@@ -131,51 +154,32 @@ spikeInMarkers <- function(pathToSCE = "/nfs/home/students/l.arend/data/covid/sc
   setnames(exp_info,
            c("subsetCondition", "baselineVar"),
            c(subsetCondition, baselineVar))
-  
-  metadata(sceBaseline)$experiment_info <- exp_info
-  return(sceBaseline)
+  if(is.null(alpha)){
+    sceList <- lapply(sceList, function(x){
+      metadata(x)$experiment_info <- exp_info
+      return(x)
+    })
+    return(sceList)
+  }else{
+    metadata(sceBaseline)$experiment_info <- exp_info
+    return(sceBaseline)
+  }
 }
 
-sce <- spikeInMarkers(pathToSCE = "/nfs/home/students/l.arend/data/covid/sce_untransformed.rds",
-                      subsetCondition = "covid",
-                      subsetConditionValue = "healthy",
-                      baselineVar = "platelets",
-                      baselineValue = "B",
-                      activatedValue = "A",
-                      markersToSpike = c("CD63", "CD62P", "CD107a", "CD154"), 
-                      alpha = 0)
-sce25 <- spikeInMarkers(pathToSCE = "/nfs/home/students/l.arend/data/covid/sce_untransformed.rds",
-                      subsetCondition = "covid",
-                      subsetConditionValue = "healthy",
-                      baselineVar = "platelets",
-                      baselineValue = "B",
-                      activatedValue = "A",
-                      markersToSpike = c("CD63", "CD62P", "CD107a", "CD154"), 
-                      alpha = 0.25)
-sce50 <- spikeInMarkers(pathToSCE = "/nfs/home/students/l.arend/data/covid/sce_untransformed.rds",
-                      subsetCondition = "covid",
-                      subsetConditionValue = "healthy",
-                      baselineVar = "platelets",
-                      baselineValue = "B",
-                      activatedValue = "A",
-                      markersToSpike = c("CD63", "CD62P", "CD107a", "CD154"), 
-                      alpha = 0.5)
-sce75 <- spikeInMarkers(pathToSCE = "/nfs/home/students/l.arend/data/covid/sce_untransformed.rds",
-                      subsetCondition = "covid",
-                      subsetConditionValue = "healthy",
-                      baselineVar = "platelets",
-                      baselineValue = "B",
-                      activatedValue = "A",
-                      markersToSpike = c("CD63", "CD62P", "CD107a", "CD154"), 
-                      alpha = 0.75)
-sce100 <- spikeInMarkers(pathToSCE = "/nfs/home/students/l.arend/data/covid/sce_untransformed.rds",
-                      subsetCondition = "covid",
-                      subsetConditionValue = "healthy",
-                      baselineVar = "platelets",
-                      baselineValue = "B",
-                      activatedValue = "A",
-                      markersToSpike = c("CD63", "CD62P", "CD107a", "CD154"), 
-                      alpha = 1.0)
+sceList <- spikeInMarkers(pathToSCE = "/nfs/home/students/l.arend/data/covid/sce_untransformed.rds",
+                          subsetCondition = "covid",
+                          subsetConditionValue = "healthy",
+                          baselineVar = "platelets",
+                          baselineValue = "B",
+                          activatedValue = "A",
+                          markersToSpike = c("CD63", "CD62P", "CD107a", "CD154"), 
+                          alpha = NULL)
+
+sce <- sceList[["0"]]
+sce25 <- sceList[["0.25"]]
+sce50 <- sceList[["0.5"]]
+sce75 <- sceList[["0.75"]]
+sce100 <- sceList[["1.0"]]
 #outputFile <- "~/cytof/covid/sce_spiked_full.rds"
 #saveRDS(sce, outputFile)
 
