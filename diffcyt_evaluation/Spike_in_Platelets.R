@@ -210,11 +210,22 @@ saveRDS(sce75, "~/cytof/covid/sce_spiked_clustered_75.rds")
 saveRDS(sce100, "~/cytof/covid/sce_spiked_clustered_100.rds")
 
 ######tests
-sce <- readRDS("~/cytof/covid/sce_spiked_clustered_full.rds")
+scefull <- readRDS("~/cytof/covid/sce_spiked_clustered_full.rds")
 sce25 <- readRDS("~/cytof/covid/sce_spiked_clustered_25.rds")
 sce50 <- readRDS("~/cytof/covid/sce_spiked_clustered_50.rds")
 sce75 <- readRDS("~/cytof/covid/sce_spiked_clustered_75.rds")
 sce100 <- readRDS("~/cytof/covid/sce_spiked_clustered_100.rds")
+
+source("functions/prep_functions.R")
+for(n in c(1000, 2000, 5000, 10000, 15000, 20000)){
+  for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
+    sampling <- tstrsplit(scetmp, "sce", keep=2)[[1]]
+    downsampled_sce <- downSampleSCE(sce=get(scetmp), cells = n, per_sample = T, seed = 1234)
+    saveRDS(downsampled_sce, paste0("~/cytof/covid_spiked/downsampled_files/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
+    #print(paste0("~/cytof/covid_spiked/downsampled_files/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
+  }
+}
+
 
 library(data.table)
 exprsDT <- as.data.table(t(assays(sce)$counts))
