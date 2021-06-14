@@ -230,14 +230,14 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000){
       scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])
   } else if(data_type == "pbmc"){
     tmp$marker_id[tmp$marker_id == "HLADR"] <- "HLA_DR"
-    ggplot(tmp, aes(marker_id, method)) + 
+    ggplot(tmp[!method %in% c('ZAGA', 'BEZI', 'logRegression', 'sceEMD')], aes(marker_id, method)) + 
       geom_tile(aes(fill=significant), color="white", size=1) + 
       ggtitle("PBMC Ref vs. BCR-XL") + xlab(label="marker") + 
       facet_wrap(~cluster_id, scales = "free_x") + 
       theme(text = element_text(size = 13),  axis.text.x = element_text(angle = 45, hjust=1))+
       scale_fill_manual(values = colorBlindBlack8[c(7,3,1)]) +
       ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude)) +
-      ggside::scale_xfill_manual(values=c(colorBlindBlack8[c(8,5,2,6)]))
+      ggside::scale_xfill_manual(values=c(colorBlindBlack8[c(8,5,2,6)]), name='effect size\nmagnitude')
   }
 }
 

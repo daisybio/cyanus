@@ -2,7 +2,7 @@
 #
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --job-name=cytofDE_cytoGLMM
+#SBATCH --job-name=cytoGLMM_add_eff
 #SBATCH --output=%x.%j.txt
 #SBATCH --mem=50G
 
