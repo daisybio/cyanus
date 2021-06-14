@@ -22,6 +22,51 @@
 #createVennDiagram(results, DS = T, 0.05)
 ###################################################################################################
 
+effectSize <- function(sce, condition, group = NULL, k=NULL, use_assay="exprs", use_mean=FALSE) {
+  
+  use_assay <- match.arg(use_assay, SummarizedExperiment::assayNames(sce))
+  CATALYST:::.check_cd_factor(sce, condition)
+  stopifnot(nlevels(sce[[condition]]) == 2)
+  
+  dt <- data.table::as.data.table(t(SummarizedExperiment::assay(sce, 'exprs')))
+  dt$condition <- sce[[condition]]
+  
+  if (!is.null(group)) {
+    CATALYST:::.check_cd_factor(sce, group)
+    dt$group <- sce[[group]]
+  }
+    
+  if (is.null(k)) {
+    return(calculateEffectSize(dt, use_mean))
+  } else {
+    k <- CATALYST:::.check_k(sce, k)
+    c_ids <- CATALYST::cluster_ids(sce, k)
+    return(data.table::rbindlist(sapply(levels(c_ids), function(c_id) calculateEffectSize(dt[c_ids==c_id], use_mean), simplify = FALSE), idcol ='cluster_id'))
+  }
+}
+
+calculateEffectSize <- function(dt, use_mean=FALSE, hedges.correction = TRUE){
+  res <- list()
+  if ('group' %in% names(dt)) {
+    if (use_mean)
+      agg_fun <- mean
+    else 
+      agg_fun <- median
+    dt_melt <- data.table::melt(dt, id.vars=c('condition', 'group'))
+    dt_melt <- dt_melt[, .(value=agg_fun(value)), by=list(condition, variable, group)]
+    # data.table::dcast(dt_melt, variable + group ~ condition)
+    dt_melt[, comb := paste(variable, condition, sep='::')]
+    comp <- split(dt_melt[, sort(unique(comb))], ceiling(seq_along(dt_melt[, sort(unique(comb))])/2))
+    res$grouped <- data.table::as.data.table(rstatix::cohens_d(dt_melt, value ~ comb, comparisons = comp, paired=T, hedges.correction = hedges.correction))[, -'.y.']
+    dt <- dt[, -'group']
+  }
+  dt_melt <- data.table::melt(dt, id.vars='condition')
+  dt_melt[, comb := paste(variable, condition, sep='::')]
+  comp <- split(dt_melt[, sort(unique(comb))], ceiling(seq_along(dt_melt[, sort(unique(comb))])/2))
+  res$overall <- data.table::as.data.table(rstatix::cohens_d(dt_melt, value ~ comb, comparisons = comp))[, -'.y.']
+  return(data.table::rbindlist(res, idcol = 'overall_group'))
+}
+
 runDA <- function(sce, parameters = NULL,
                   da_methods = c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM"),
                   clustering_to_use = "all", normalize = T, trend_edgeR = "none", blockID = NULL, 

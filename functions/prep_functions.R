@@ -23,11 +23,13 @@ transformData <- function (sce,
 }
 
 # DOWNSAMPLE SAMPLES
-downSampleSCE <- function(sce, cells, per_sample=TRUE) {
+downSampleSCE <- function(sce, cells, per_sample=TRUE, seed = NULL) {
   if (!per_sample) {
     cells <- floor(cells / nrow(CATALYST::ei(sce)))
   }
   cs <- split(seq_len(ncol(sce)), sce$sample_id)
+  if (!is.null(seed))
+    set.seed(seed)
   cs <- unlist(lapply(cs, function(u)
     sample(u, min(cells, length(u)))))
   S4Vectors::metadata(sce)$experiment_info$n_cells <- rep(cells, nrow(ei(sce)))

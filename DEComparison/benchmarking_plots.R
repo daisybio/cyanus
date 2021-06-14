@@ -1,8 +1,8 @@
 library(data.table)
 library(ggplot2)
-library(data.table)
 
-preparePlotData <- function(data_type){
+preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covid_spike", "dual_platelets")){
+  data_type <- match.arg(data_type)
   if (data_type == "simulatedCytoGLMM"){
     path <-  "DEComparison/simulatedCytoGLMM"
     trues <- c("m01", "m02", "m03", "m04", "m05")
@@ -24,6 +24,7 @@ preparePlotData <- function(data_type){
     data.table::rbindlist(sapply(result_rds, function(rds)
       readRDS(rds)[["results"]], simplify = FALSE),
       idcol = "dataset")
+  results <- results[, .SD, .SDcols = unique(names(results))]
   results[, dataset := basename(dataset)]
   times <-
     data.table::rbindlist(sapply(result_rds, function(rds)
@@ -31,12 +32,6 @@ preparePlotData <- function(data_type){
       idcol = "dataset")
   times[, dataset := basename(dataset)]
   
-  if (data_type=="downsampled_covid_spike"){
-    times[, alpha := tstrsplit(dataset, "_", keep = 4)]
-    times[, alpha := factor(alpha, levels = c("full", "25", "50", "75", "100"))]
-    results[, alpha := tstrsplit(dataset, "_", keep = 4)]
-    results[, alpha := factor(alpha, levels = c("full", "25", "50", "75", "100"))]
-  }
   
   if (data_type!="dual_platelets"){
     # because dual has no subsampling
@@ -45,6 +40,65 @@ preparePlotData <- function(data_type){
     results[, nr_of_cells := tstrsplit(dataset, "_", keep = keep)]
     results[, nr_of_cells := as.numeric(nr_of_cells)]
     
+    if (data_type=="downsampled_covid_spike"){
+      times[, alpha := tstrsplit(dataset, "_", keep = 4)]
+      times[, alpha := factor(alpha, levels = c("full", "25", "50", "75", "100"))]
+      results[, alpha := tstrsplit(dataset, "_", keep = 4)]
+      results[, alpha := factor(alpha, levels = c("full", "25", "50", "75", "100"))]
+      
+      stats_table <- results[, .(
+        TP = sum(
+          p_adj <= 0.05 &
+            marker_id %in% trues
+          & alpha != 100
+          ,
+          na.rm = T
+        ),
+        FP = sum((p_adj <= 0.05 | is.na(p_adj)) &
+                   !(
+                     marker_id %in% trues
+                   )),
+        TN = sum(p_adj > 0.05 &
+                   !(
+                     marker_id %in% trues
+                   ), na.rm = T),
+        FN = sum(
+          (p_adj > 0.05 | is.na(p_adj)) &
+            marker_id %in% trues 
+          & alpha != 100
+        )
+      ), by = .(method, nr_of_cells, alpha)]
+      
+      # stats_table[, nr_of_cells := factor(nr_of_cells, levels = c(15000, 10000, 5000, 2000, 1000))]
+      
+    } else if (data_type=="simulatedCytoGLMM") {
+      
+      stats_table <- results[, .(
+        TP = sum(
+          p_adj <= 0.05 &
+            marker_id %in% trues
+          # & alpha != 100
+          ,
+          na.rm = T
+        ),
+        FP = sum((p_adj <= 0.05 | is.na(p_adj)) &
+                   !(
+                     marker_id %in% trues
+                   )),
+        TN = sum(p_adj > 0.05 &
+                   !(
+                     marker_id %in% trues
+                   ), na.rm = T),
+        FN = sum(
+          (p_adj > 0.05 | is.na(p_adj)) &
+            marker_id %in% trues
+          # & alpha != 100
+        )
+      ), by = .(method, nr_of_cells)] # , alpha)]
+      
+      
+    }
+  } else if (data_type=="dual_platelets") {
     stats_table <- results[, .(
       TP = sum(
         p_adj <= 0.05 &
@@ -64,34 +118,9 @@ preparePlotData <- function(data_type){
       FN = sum(
         (p_adj > 0.05 | is.na(p_adj)) &
           marker_id %in% trues
-        # & alpha != 100
-      )
-    ), by = .(method, nr_of_cells)] # , alpha)]
-    
-  } else {
-    stats_table <- results[, .(
-      TP = sum(
-        p_adj <= 0.05 &
-          marker_id %in% trues
-        # & alpha != 100
-        ,
-        na.rm = T
-      ),
-      FP = sum((p_adj <= 0.05 | is.na(p_adj)) &
-                 !(
-                   marker_id %in% trues
-                 )),
-      TN = sum(p_adj > 0.05 &
-                 !(
-                   marker_id %in% trues
-                 ), na.rm = T),
-      FN = sum(
-        (p_adj > 0.05 | is.na(p_adj)) &
-          marker_id %in% trues
-        # & alpha != 100
       )
     ), by = .(method)]
-  }
+  } else stop('unknown data_type')
   
   
   stats_table[, sensitivity := TP / (TP + FN)]
@@ -100,21 +129,22 @@ preparePlotData <- function(data_type){
   stats_table[, precision := TP / (TP + FP)]
   stats_table[, F1 := 2 * (sensitivity * precision) / (sensitivity + precision)]
   
-  if (data_type=="downsampled_covid_spike"){
-    stats_table[, nr_of_cells := factor(nr_of_cells, levels = c(15000, 10000, 5000, 2000, 1000))]
-  }
-  
-  if (data_type!="dual_platelets"){
+  if (data_type!="dual_platelets") {
     times$nr_of_cells <- as.numeric(times$nr_of_cells)
     stats_table$nr_of_cells <- as.numeric(stats_table$nr_of_cells)
+    
+    if (data_type=="simulatedCytoGLMM")
     stats_table <-
       merge(stats_table, times[, .(method, nr_of_cells, elapsed)]) # , alpha)])
-  } else {
+    else if (data_type=="downsampled_covid_spike")
+    stats_table <-
+      merge(stats_table, times[, .(method, nr_of_cells, elapsed, alpha)])
+  } else if (data_type=="dual_platelets") {
     stats_table <-
       merge(stats_table, times[, .(method,elapsed)]) # , alpha)])
-  }
+  } else stop('unknown data_type')
   
-  return (stats_table)
+  return(stats_table)
 }
 
 plotHeatmaps <- function(data_type, nr_cells_spike=15000){
@@ -147,7 +177,7 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000){
     tmp$nr_of_cells <- results$nr_of_cells
     if(data_type == "downsampled_covid_spike"){
       results[, alpha := tstrsplit(dataset, "_", keep=4)]
-      tmp$alpha <- results$alpha
+      tmp$alpha <- factor(results$alpha, levels=c('full', '25', '50', '75', '100'))
     }
   }else if(data_type == "pbmc"){
     tmp$cluster_id <- results$cluster_id
@@ -200,17 +230,19 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000){
       scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])
   } else if(data_type == "pbmc"){
     tmp$marker_id[tmp$marker_id == "HLADR"] <- "HLA_DR"
-    ggplot(tmp, aes(marker_id, method, fill=significant)) + 
-      geom_tile(color="white", size=1) + 
+    ggplot(tmp, aes(marker_id, method)) + 
+      geom_tile(aes(fill=significant), color="white", size=1) + 
       ggtitle("PBMC Ref vs. BCR-XL") + xlab(label="marker") + 
       facet_wrap(~cluster_id, scales = "free_x") + 
       theme(text = element_text(size = 13),  axis.text.x = element_text(angle = 45, hjust=1))+
-      scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])
+      scale_fill_manual(values = colorBlindBlack8[c(7,3,1)]) +
+      ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude)) +
+      ggside::scale_xfill_manual(values=c(colorBlindBlack8[c(8,5,2,6)]))
   }
 }
 
 plot_cells_vs_elapsed <- function(stats_table){
-  if ("alpha" %in% stats_table){
+  if ("alpha" %in% names(stats_table)){
     plot <- ggplot(stats_table,
                    aes(
                      x = nr_of_cells,
@@ -219,7 +251,7 @@ plot_cells_vs_elapsed <- function(stats_table){
                      shape = alpha
                    )) +
       geom_jitter(size = 3) +
-      theme_bw() + theme(text = element_text(size = 18))
+      theme_bw() + theme(text = element_text(size = 18), axis.text.x = element_text(angle = 45, hjust = 1))
   } else {
     plot <- ggplot(stats_table,
          aes(
@@ -228,7 +260,7 @@ plot_cells_vs_elapsed <- function(stats_table){
            color = method
          )) +
     geom_jitter(size = 3) +
-    theme_bw() + theme(text = element_text(size = 18))
+    theme_bw() + theme(text = element_text(size = 18), axis.text.x = element_text(angle = 45, hjust = 1))
   }
   return(plot)
 }
@@ -246,12 +278,12 @@ plot_sens_vs_spec <- function(stats_table){
     ylim(c(0.0, 1.0)) +
     xlim(c(0.0, 1.0)) +
     theme_bw() +
-    theme(text = element_text(size = 20))
+    theme(text = element_text(size = 18), axis.text.x = element_text(angle = 45, hjust = 1))
   if ("nr_of_cells" %in% colnames(stats_table)){
-    if ("alpha" %in% colnames(stats_table)){
+    if ("alpha" %in% colnames(stats_table))
       plot <- plot + facet_grid(nr_of_cells~alpha)
-    }
-    plot <- plot + facet_wrap(nr_of_cells)
+    else
+      plot <- plot + facet_wrap(~nr_of_cells)
   }
   return(plot)
 }
@@ -269,20 +301,20 @@ plot_sens_vs_pre <- function(stats_table){
       ylim(c(0.0, 1.0)) +
       xlim(c(0.0, 1.0)) +
       theme_bw() +
-      theme(text = element_text(size = 20))
+      theme(text = element_text(size = 18), axis.text.x = element_text(angle = 45, hjust = 1))
     
     if ("nr_of_cells" %in% colnames(stats_table)){
       if ("alpha" %in% colnames(stats_table)){
         plot <- plot +facet_grid(nr_of_cells ~ alpha)
       } else {
-        plot <- plot +facet_wrap(nr_of_cells)
+        plot <- plot +facet_wrap(~nr_of_cells)
       }
     }
   return(plot)
 }
 
 plot_f1_vs_elapsed <- function(stats_table){
-  if ("nr_of_cells" %in% stats_table){
+  if ("nr_of_cells" %in% names(stats_table)){
     plot <- ggplot(stats_table, aes(
       x = F1,
       y = elapsed,
@@ -291,7 +323,7 @@ plot_f1_vs_elapsed <- function(stats_table){
     )) + facet_wrap(~ method) +
       geom_point(size = 5, alpha = .6) +
       xlim(c(0, 1)) +
-      theme_bw() + theme(text = element_text(size = 18))
+      theme_bw() + theme(text = element_text(size = 18), axis.text.x = element_text(angle = 45, hjust = 1))
   } else {
     plot <- ggplot(stats_table, aes(
       x = F1,
@@ -300,7 +332,7 @@ plot_f1_vs_elapsed <- function(stats_table){
     )) +
       geom_point(size = 5, alpha = .6) +
       xlim(c(0, 1)) +
-      theme_bw() + theme(text = element_text(size = 18))
+      theme_bw() + theme(text = element_text(size = 18), axis.text.x = element_text(angle = 45, hjust = 1))
   }
  
  return(plot)

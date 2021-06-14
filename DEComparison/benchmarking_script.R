@@ -9,7 +9,7 @@
 # fourth argument -> if run parallel
 
 
-setwd("/nfs/home/students/l.arend/cytof")
+setwd("../..")
 source("renv/activate.R")
 
 library(fs)
@@ -20,7 +20,7 @@ sapply(list.files("functions", full.names = TRUE), source)
 
 # save arguments
 args <- commandArgs(TRUE)
-# args <- c("/nfs/home/students/l.arend/data/cytoGLMM_simulated/simulated_cytoGLMM_5000_cells.rds", "/home/quirin/Dokumente/Master_Bioinformatik/2sem/sysbiomed/cytof/DEComparison/simulatedCytoGLMM", "condition", "patient_id", "FALSE", "FALSE")
+#args <- c("/nfs/home/students/l.arend/data/cytoGLMM_simulated", "/nfs/home/students/ga89koc/hiwi/cytof/DEComparison/simulatedCytoGLMM", "condition", "patient_id", "TRUE", "FALSE")
 scePath <-  args[1] #"/nfs/home/students/l.arend/data/covid_spiked/downsampled_files/"
 outputPath <- args[2] # "DEComparison/"
 condition <- args[3]
@@ -58,7 +58,7 @@ if(runParallel){
 }
 
 for (sceFile in sceFiles){
-  
+  message(paste('processing sce', sceFile))
   
   # create output file name
   fileName <- strsplit(path_file(sceFile), ".rds")[[1]]
@@ -68,7 +68,18 @@ for (sceFile in sceFiles){
     add <- "_res.rds"
   }
   outputFile <- paste0(outputPath, "/", fileName, add)
-  # if (file.exists(outputFile)) next
+  if (file.exists(outputFile)) {
+    # try not to compute everything multiple times
+    message('output file found')
+    savedObj <- readRDS(outputFile)
+    if (is.null(savedObj$eff)) {
+      message('adding effect size to output')
+      sce <- readRDS(sceFile)
+      savedObj$eff <- effectSize(sce, condition, random_effect, clustering_to_use)
+      saveRDS(savedObj, outputFile)
+    }
+    next
+  }
   
   #read SCE
   sce <- readRDS(sceFile)
@@ -93,7 +104,8 @@ for (sceFile in sceFiles){
                                   "CytoGLM",
                                   "logRegression",
                                   "wilcoxon_median",
-                                  "kruskal_median"
+                                  "kruskal_median",
+                                  "t_test"
                    ),
                    design_matrix_vars = c(random_effect, condition),
                    fixed_effects = condition,
@@ -107,6 +119,8 @@ for (sceFile in sceFiles){
   #res[p_adj <= 0.05]
   #library(ggplot2)
   objectToSave <- list()
+  # lets compute and save the effect size:
+  objectToSave$eff <- effectSize(sce, condition, random_effect, clustering_to_use)
   
   # if timed, also save the times of the methods
   if (timed) {
