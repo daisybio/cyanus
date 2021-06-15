@@ -4,7 +4,7 @@ plotbox_height <- "48em"
 methods_height <- "40em"
 
 methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
-methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD", "CytoGLMM" = "cytoGLMM", "CytoGLM" = "cytoGLM", "Wilcoxon rank-sum test" = "wilcoxon_median", "Student's t-test" = "t-test")
+methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD", "CytoGLMM" = "CytoGLMM", "CytoGLM" = "CytoGLM", "Wilcoxon rank-sum test" = "wilcoxon_median", "Student's t-test" = "t-test")
 
 
 #resetDEAnalysis <- function(){
@@ -177,8 +177,8 @@ call_DE <- function() {
       if (sceEMD_binsize == 0)
         sceEMD_binsize <- NULL
       emdNperm <- isolate(input$emdNperm)
-    } else if (input$chosenDAMethod == "cytoGLM") {
-      cytoGLM_num_boot <- isolate(input$cytoGLM_num_boot)
+    } else if (input$chosenDAMethod == "CytoGLM") {
+      CytoGLM_num_boot <- isolate(input$CytoGLM_num_boot)
     }
   }
   
@@ -242,7 +242,7 @@ call_DE <- function() {
           random_effects = groupCol,
           sceEMD_nperm = emdNperm, 
           sceEMD_binsize = sceEMD_binsize,
-          cytoGLMM_num_boot = cytoGLM_num_boot,
+          cytoGLMM_num_boot = CytoGLM_num_boot,
           time_methods = FALSE,
           parallel = FALSE
         )
@@ -289,7 +289,7 @@ output$selectionBoxDE <- renderUI({
     # uiOutput("contrastSelection"),
     # uiOutput("modelSelection"),
     uiOutput("emdInput"),
-    uiOutput("cytoGLM_num_boot"),
+    uiOutput("CytoGLM_num_boot"),
     uiOutput("deSubselection"),
     width = 6
   ),
@@ -552,8 +552,8 @@ output$emdNpermInput <- renderUI({
   )
 })
 
-output$cytoGLM_num_boot <- renderUI({
-  req(input$chosenDAMethod == "cytoGLM")
+output$CytoGLM_num_boot <- renderUI({
+  req(input$chosenDAMethod == "CytoGLM")
   div(
     numericInput(
       "cytoNBoot",
@@ -801,7 +801,7 @@ output$formulaSelection <- renderUI({
 # if diffcyt should be exectued on selected markers (markers_to_test)
 output$markerToTestSelection <- renderUI({
   req(input$chosenDAMethod)
-  if (input$chosenDAMethod %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM", "sceEMD", "cytoGLMM", "cytoGLM", "wilcoxon_median", "t_test")) {
+  if (input$chosenDAMethod %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM", "sceEMD", "CytoGLMM", "CytoGLM", "wilcoxon_median", "t_test")) {
     div(
       selectInput(
         "DEMarkerToTest",
@@ -975,12 +975,13 @@ output$visDiffExp <- renderUI({
       value = 0.05,
       step = 0.05
     ),
-    numericInput(
-      "lfcThreshold",
-      label = "Log2FC Threshold",
-      value = 1,
-      step = 0.5
-    ),
+    # TODO: add the possibilty to alter Fold Change
+    # numericInput(
+    #   "lfcThreshold",
+    #   label = "Log2FC Threshold",
+    #   value = 1,
+    #   step = 0.5
+    # ),
     selectizeInput(
       "heatmapSortBy",
       "Sort by:",
@@ -1223,7 +1224,7 @@ observeEvent(input$diffExpButton,{
 observeEvent(input$visExpButton,{
   visMethod <- isolate(input$deVisMethod)
   fdrThreshold <- isolate(input$fdrThreshold)
-  lfcThreshold <- isolate(input$lfcThreshold)
+  # lfcThreshold <- isolate(input$lfcThreshold)
   heatmapSortBy <- isolate(input$heatmapSortBy)
   heatmapNormalize <- isolate(input$heatmapNormalize)
   deCluster <- isolate(input$deCluster)
@@ -1271,12 +1272,11 @@ observeEvent(input$visExpButton,{
     #  out <- rowData(out$res)
     #out$p_val[is.na(out$p_val)] <- 1
     #out$p_adj[is.na(out$p_adj)] <- 1
-    browser()
     reactiveVals$diffHeatmapPlot <- plotDiffHeatmapCustom(
       x=x,
       y=out, 
       fdr=as.numeric(fdrThreshold), 
-      lfc=as.numeric(lfcThreshold), 
+      # lfc=as.numeric(lfcThreshold), 
       sort_by = heatmapSortBy, 
       normalize=as.logical(heatmapNormalize ),
       all = TRUE,
