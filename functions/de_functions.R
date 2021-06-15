@@ -126,6 +126,8 @@ runDS <- function(sce,
   ##for parameters:
   ###either: first call prepDiffExp by yourself and give runDA the result as list of parameters
   ###or: specify contrast_vars + design_matrix_vars/fixed_effects+random_effects and we make it for you
+  if (is.null(trend_limma)) trend_limma <- FALSE
+  if (is.null(include_weights)) include_weights <- FALSE
   stopifnot(is.logical(include_weights), is.logical(trend_limma))
   CATALYST:::.check_sce(sce, TRUE)
   k <- CATALYST:::.check_k(sce, clustering_to_use)
@@ -408,6 +410,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
     return(data.table::rbindlist(cluster_results, use.names = TRUE, fill = TRUE)) #[, variable :=c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.')]
   }, simplify=FALSE)
   other_res <- data.table::rbindlist(res, idcol = 'cluster_id')
+  other_res[, cluster_id:=as.factor(cluster_id)]
   other_res[, p_adj := p.adjust(p_val, "BH")] #, by="method"
   return(other_res)
 }
