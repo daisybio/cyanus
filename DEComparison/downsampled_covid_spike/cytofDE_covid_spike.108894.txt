@@ -1,0 +1,398 @@
+Loading required package: SingleCellExperiment
+Loading required package: SummarizedExperiment
+Loading required package: MatrixGenerics
+Loading required package: matrixStats
+
+Attaching package: ‘MatrixGenerics’
+
+The following objects are masked from ‘package:matrixStats’:
+
+    colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,
+    colCounts, colCummaxs, colCummins, colCumprods, colCumsums,
+    colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,
+    colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,
+    colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,
+    colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,
+    colWeightedMeans, colWeightedMedians, colWeightedSds,
+    colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,
+    rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,
+    rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,
+    rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,
+    rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,
+    rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,
+    rowWeightedMads, rowWeightedMeans, rowWeightedMedians,
+    rowWeightedSds, rowWeightedVars
+
+Loading required package: GenomicRanges
+Loading required package: stats4
+Loading required package: BiocGenerics
+Loading required package: parallel
+
+Attaching package: ‘BiocGenerics’
+
+The following objects are masked from ‘package:parallel’:
+
+    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+    clusterExport, clusterMap, parApply, parCapply, parLapply,
+    parLapplyLB, parRapply, parSapply, parSapplyLB
+
+The following object is masked from ‘package:fs’:
+
+    path
+
+The following objects are masked from ‘package:stats’:
+
+    IQR, mad, sd, var, xtabs
+
+The following objects are masked from ‘package:base’:
+
+    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
+    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
+    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
+    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
+    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
+    union, unique, unsplit, which.max, which.min
+
+Loading required package: S4Vectors
+
+Attaching package: ‘S4Vectors’
+
+The following object is masked from ‘package:base’:
+
+    expand.grid
+
+Loading required package: IRanges
+Loading required package: GenomeInfoDb
+Loading required package: Biobase
+Welcome to Bioconductor
+
+    Vignettes contain introductory material; view with
+    'browseVignettes()'. To cite Bioconductor, see
+    'citation("Biobase")', and for packages 'citation("pkgname")'.
+
+
+Attaching package: ‘Biobase’
+
+The following object is masked from ‘package:MatrixGenerics’:
+
+    rowMedians
+
+The following objects are masked from ‘package:matrixStats’:
+
+    anyMissing, rowMedians
+
+Registered S3 methods overwritten by 'lme4':
+  method                          from
+  cooks.distance.influence.merMod car 
+  influence.merMod                car 
+  dfbeta.influence.merMod         car 
+  dfbetas.influence.merMod        car 
+
+Attaching package: ‘diffcyt’
+
+The following object is masked _by_ ‘.GlobalEnv’:
+
+    transformData
+
+Loading required package: Matrix
+
+Attaching package: ‘Matrix’
+
+The following object is masked from ‘package:S4Vectors’:
+
+    expand
+
+Loading required package: DRR
+Loading required package: kernlab
+
+Attaching package: ‘kernlab’
+
+The following object is masked from ‘package:ggplot2’:
+
+    alpha
+
+The following object is masked from ‘package:BiocGenerics’:
+
+    type
+
+Loading required package: CVST
+
+Attaching package: ‘dimRed’
+
+The following object is masked from ‘package:SummarizedExperiment’:
+
+    as.data.frame
+
+The following object is masked from ‘package:GenomicRanges’:
+
+    as.data.frame
+
+The following object is masked from ‘package:GenomeInfoDb’:
+
+    as.data.frame
+
+The following object is masked from ‘package:IRanges’:
+
+    as.data.frame
+
+The following object is masked from ‘package:S4Vectors’:
+
+    as.data.frame
+
+The following object is masked from ‘package:BiocGenerics’:
+
+    as.data.frame
+
+The following object is masked from ‘package:stats’:
+
+    embed
+
+The following object is masked from ‘package:base’:
+
+    as.data.frame
+
+Loading required package: dplyr
+
+Attaching package: ‘dplyr’
+
+The following object is masked from ‘package:Biobase’:
+
+    combine
+
+The following objects are masked from ‘package:GenomicRanges’:
+
+    intersect, setdiff, union
+
+The following object is masked from ‘package:GenomeInfoDb’:
+
+    intersect
+
+The following objects are masked from ‘package:IRanges’:
+
+    collapse, desc, intersect, setdiff, slice, union
+
+The following objects are masked from ‘package:S4Vectors’:
+
+    first, intersect, rename, setdiff, setequal, union
+
+The following objects are masked from ‘package:BiocGenerics’:
+
+    combine, intersect, setdiff, union
+
+The following object is masked from ‘package:matrixStats’:
+
+    count
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+Loading required package: grid
+        functions/cluster_functions.R functions/cytoGLMM_functions.R
+value   ?                             ?                             
+visible FALSE                         FALSE                         
+        functions/de_functions.R functions/diffcyt_functions.R
+value   ?                        ?                            
+visible FALSE                    FALSE                        
+        functions/gamlss_functions.R functions/hurdleBeta.R
+value   ?                            ?                     
+visible FALSE                        FALSE                 
+        functions/log_regr_functions.R functions/prep_functions.R
+value   ?                              ?                         
+visible FALSE                          FALSE                     
+        functions/sceEMD.R functions/start_functions.R
+value   ?                  ?                          
+visible FALSE              FALSE                      
+        functions/statistical_tests_functions.R functions/venn_functions.R
+value   ?                                       ?                         
+visible FALSE                                   FALSE                     
+        functions/vis_functions.R
+value   ?                        
+visible FALSE                    
+processing sce /nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_100_ds_full.rds
+Calculating results for diffcyt-DS-limma ...
+Making specific parameters for: diffcyt-DS-limma include in design matrix: patient_id , contrast: base_spikeMaking specific parameters for: diffcyt-DS-limma include in design matrix: base_spike , contrast: base_spike
+      [,1]
+ [1,]    0
+ [2,]    0
+ [3,]    0
+ [4,]    0
+ [5,]    0
+ [6,]    0
+ [7,]    0
+ [8,]    0
+ [9,]    0
+[10,]    0
+[11,]    0
+[12,]    1
+using SingleCellExperiment object from CATALYST as input
+using cluster IDs from clustering stored in column 'all' of 'cluster_codes' data frame in 'metadata' of SingleCellExperiment object from CATALYST
+calculating features...
+calculating DS tests using method 'diffcyt-DS-limma'...
+Calculating results for diffcyt-DS-LMM ...
+Making specific parameters for: diffcyt-DS-LMM fixed effects: base_spike , random effects: patient_id , contrast: base_spike
+     [,1]
+[1,]    0
+[2,]    1
+using SingleCellExperiment object from CATALYST as input
+using cluster IDs from clustering stored in column 'all' of 'cluster_codes' data frame in 'metadata' of SingleCellExperiment object from CATALYST
+calculating features...
+calculating DS tests using method 'diffcyt-DS-LMM'...
+Error in asMethod(object) : not a positive definite matrix
+In addition: Warning messages:
+1: Zero sample variances detected, have been offset away from zero 
+2: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.0240614 (tol = 0.002, component 1)
+3: In vcov.merMod(model) :
+  Computed variance-covariance matrix problem: not a positive definite matrix;
+returning NA matrix
+Error in asMethod(object) : not a positive definite matrix
+In addition: Warning messages:
+1: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.0577154 (tol = 0.002, component 1)
+2: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.031831 (tol = 0.002, component 1)
+3: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.0052221 (tol = 0.002, component 1)
+4: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.256497 (tol = 0.002, component 1)
+5: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.00988082 (tol = 0.002, component 1)
+6: In vcov.merMod(model) :
+  Computed variance-covariance matrix problem: not a positive definite matrix;
+returning NA matrix
+Error in asMethod(object) : not a positive definite matrix
+In addition: Warning messages:
+1: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.0488064 (tol = 0.002, component 1)
+2: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.0648269 (tol = 0.002, component 1)
+3: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.00361909 (tol = 0.002, component 1)
+4: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.230818 (tol = 0.002, component 1)
+5: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.093751 (tol = 0.002, component 1)
+6: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+  Model failed to converge with max|grad| = 0.0110866 (tol = 0.002, component 1)
+7: In vcov.merMod(model) :
+  Computed variance-covariance matrix problem: not a positive definite matrix;
+returning NA matrix
+Error in asMethod(object) : not a positive definite matrix
+In addition: Warning message:
+In vcov.merMod(model) :
+  Computed variance-covariance matrix problem: not a positive definite matrix;
+returning NA matrix
+Error in asMethod(object) : not a positive definite matrix
+In addition: Warning message:
+In vcov.merMod(model) :
+  Computed variance-covariance matrix problem: not a positive definite matrix;
+returning NA matrix
+calculating BEZI for cluster all
+Loading required package: splines
+Loading required package: gamlss.data
+
+Attaching package: ‘gamlss.data’
+
+The following object is masked from ‘package:datasets’:
+
+    sleep
+
+Loading required package: gamlss.dist
+Loading required package: MASS
+
+Attaching package: ‘MASS’
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+Loading required package: nlme
+
+Attaching package: ‘nlme’
+
+The following object is masked from ‘package:dplyr’:
+
+    collapse
+
+The following object is masked from ‘package:dimRed’:
+
+    getData
+
+The following object is masked from ‘package:IRanges’:
+
+    collapse
+
+ **********   GAMLSS Version 5.2-0  ********** 
+For more on GAMLSS look at https://www.gamlss.com/
+Type gamlssNews() to see new features/changes/bug fixes.
+
+
+Attaching package: ‘gamlss’
+
+The following object is masked from ‘package:CVST’:
+
+    CV
+
+Fitting a zero-inflated beta distribution...
+...including random effects: patient_id
+  |                                                                              |                                                                      |   0%fitting marker CD41
+GAMLSS-RS iteration 1: Global Deviance = -3827506 
+GAMLSS-RS iteration 2: Global Deviance = -6496947 
+GAMLSS-RS iteration 3: Global Deviance = -6567489 
+GAMLSS-RS iteration 4: Global Deviance = -6567615 
+GAMLSS-RS iteration 5: Global Deviance = -6567615 
+GAMLSS-RS iteration 6: Global Deviance = -6567615 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -0.8484893  0.0003422 -2479.484   <2e-16 ***
+Yspike      -0.0006018  0.0005118    -1.176     0.24    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 2.8315665  0.0006785    4173   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -5.543140   0.007971  -695.4   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99795
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  6 
+ 
+Global Deviance:     -6567615 
+            AIC:     -6567587 
+            SBC:     -6567402 
+******************************************************************
+  |                                                                              |===                                                                   |   5%fitting marker CD40
