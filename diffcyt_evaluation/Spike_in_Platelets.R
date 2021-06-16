@@ -203,18 +203,18 @@ sce50 <- clusterSCE(sce50)
 sce75 <- clusterSCE(sce75)
 sce100 <- clusterSCE(sce100)
 
-saveRDS(sce, "~/cytof/covid/sce_spiked_clustered_full.rds")
-saveRDS(sce25, "~/cytof/covid/sce_spiked_clustered_25.rds")
-saveRDS(sce50, "~/cytof/covid/sce_spiked_clustered_50.rds")
-saveRDS(sce75, "~/cytof/covid/sce_spiked_clustered_75.rds")
-saveRDS(sce100, "~/cytof/covid/sce_spiked_clustered_100.rds")
+saveRDS(sce, "~/cytof/covid/sce_spiked_clustered_full_ds_full.rds")
+saveRDS(sce25, "~/cytof/covid/sce_spiked_clustered_25_ds_full.rds")
+saveRDS(sce50, "~/cytof/covid/sce_spiked_clustered_50_ds_full.rds")
+saveRDS(sce75, "~/cytof/covid/sce_spiked_clustered_75_ds_full.rds")
+saveRDS(sce100, "~/cytof/covid/sce_spiked_clustered_100_ds_full.rds")
 
 ######tests
-scefull <- readRDS("~/cytof/covid/sce_spiked_clustered_full.rds")
-sce25 <- readRDS("~/cytof/covid/sce_spiked_clustered_25.rds")
-sce50 <- readRDS("~/cytof/covid/sce_spiked_clustered_50.rds")
-sce75 <- readRDS("~/cytof/covid/sce_spiked_clustered_75.rds")
-sce100 <- readRDS("~/cytof/covid/sce_spiked_clustered_100.rds")
+scefull <- readRDS("~/cytof/covid/sce_spiked_clustered_full_ds_full.rds")
+sce25 <- readRDS("~/cytof/covid/sce_spiked_clustered_25_ds_full.rds")
+sce50 <- readRDS("~/cytof/covid/sce_spiked_clustered_50_ds_full.rds")
+sce75 <- readRDS("~/cytof/covid/sce_spiked_clustered_75_ds_full.rds")
+sce100 <- readRDS("~/cytof/covid/sce_spiked_clustered_100_ds_full.rds")
 
 source("functions/prep_functions.R")
 for(n in c(1000, 2000, 5000, 10000, 15000, 20000)){
@@ -225,92 +225,58 @@ for(n in c(1000, 2000, 5000, 10000, 15000, 20000)){
     #print(paste0("~/cytof/covid_spiked/downsampled_files/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
   }
 }
+colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+spike_in_sces <- lapply(list.files("~/cytof/covid_spiked/downsampled_files", full.names = T), readRDS)
+names(spike_in_sces) <- tstrsplit(list.files("~/cytof/covid_spiked/downsampled_files"), ".rds", keep=1)[[1]]
+countsDT <- lapply(spike_in_sces, function(x){as.data.table(t(assays(x)$exprs))})
+countsDT <- rbindlist(countsDT, idcol = "filename")
+coldataDT <- lapply(spike_in_sces, function(x){as.data.table(colData(x))[, c("patient_id", "base_spike")]})
+coldataDT <- rbindlist(coldataDT, idcol = "filename")
+countsDT <- cbind(coldataDT[, c("patient_id", "base_spike")], countsDT)
+countsDT[, c("alpha", "n_cells") := tstrsplit(filename, "_", keep = c(4,6))]
 
+statemarkerDT <- countsDT[, c("CD62P", "CD63", "CD154", "CD107a", "patient_id", "base_spike", "alpha", "n_cells")]
+statemarkerDT <- data.table::melt(statemarkerDT, id.vars = c("patient_id","base_spike", "alpha", "n_cells"), variable.name = "marker", value.name = "expression")
+meanDT <- statemarkerDT[, mean(expression), by = c("marker", "patient_id", "base_spike", "alpha", "n_cells")]
+colnames(meanDT) <- c("marker", "patient", "base_spike", "alpha", "n_cells", "mean")
+meanDT[, alpha := factor(alpha, levels = c("full", "25", "50", "75", "100"))]
+meanDT[, base_spike := factor(base_spike, levels = c("spike", "base"))]
+meanDT[, n_cells := factor(n_cells, levels = c(1000, 2000, 5000, 10000, 15000, 20000))]
 
-library(data.table)
-exprsDT <- as.data.table(t(assays(sce)$counts))
-coldataDT <- as.data.table(colData(sce))[, c("patient_id", "base_spike")]
-exprsDT <- cbind(exprsDT, coldataDT)
-CD63_means <- exprsDT[, mean(CD63), by = .(patient_id, base_spike)]
-colnames(CD63_means) <- c("patient_id", "base_spike", "mean_full")
-CD62P_means <- exprsDT[, mean(CD62P), by = .(patient_id, base_spike)]
-colnames(CD62P_means) <- c("patient_id", "base_spike", "mean_full")
-CD107a_means <- exprsDT[, mean(CD107a), by = .(patient_id, base_spike)]
-colnames(CD107a_means) <- c("patient_id", "base_spike", "mean_full")
-CD154_means <- exprsDT[, mean(CD154), by = .(patient_id, base_spike)] 
-colnames(CD154_means) <- c("patient_id", "base_spike", "mean_full")
-CD63_means[, sd_full := exprsDT[, sd(CD63), by = .(patient_id, base_spike)]$V1]
-CD62P_means[, sd_full := exprsDT[, sd(CD62P), by = .(patient_id, base_spike)]$V1]
-CD107a_means[, sd_full := exprsDT[, sd(CD107a), by = .(patient_id, base_spike)]$V1]
-CD154_means[, sd_full := exprsDT[, sd(CD154), by = .(patient_id, base_spike)]$V1]
-
-
-exprsDT <- as.data.table(t(assays(sce25)$counts))
-coldataDT <- as.data.table(colData(sce25))[, c("patient_id", "base_spike")]
-exprsDT <- cbind(exprsDT, coldataDT)
-CD63_means[, mean_25 := exprsDT[, mean(CD63), by = .(patient_id, base_spike)]$V1]
-CD62P_means[, mean_25 := exprsDT[, mean(CD62P), by = .(patient_id, base_spike)]$V1]
-CD107a_means[, mean_25 := exprsDT[, mean(CD107a), by = .(patient_id, base_spike)]$V1]
-CD154_means[, mean_25 := exprsDT[, mean(CD154), by = .(patient_id, base_spike)]$V1]
-CD63_means[, sd_25 := exprsDT[, sd(CD63), by = .(patient_id, base_spike)]$V1]
-CD62P_means[, sd_25 := exprsDT[, sd(CD62P), by = .(patient_id, base_spike)]$V1]
-CD107a_means[, sd_25 := exprsDT[, sd(CD107a), by = .(patient_id, base_spike)]$V1]
-CD154_means[, sd_25 := exprsDT[, sd(CD154), by = .(patient_id, base_spike)]$V1]
-
-exprsDT <- as.data.table(t(assays(sce50)$counts))
-coldataDT <- as.data.table(colData(sce50))[, c("patient_id", "base_spike")]
-exprsDT <- cbind(exprsDT, coldataDT)
-CD63_means[, mean_50 := exprsDT[, mean(CD63), by = .(patient_id, base_spike)]$V1]
-CD62P_means[, mean_50 := exprsDT[, mean(CD62P), by = .(patient_id, base_spike)]$V1]
-CD107a_means[, mean_50 := exprsDT[, mean(CD107a), by = .(patient_id, base_spike)]$V1]
-CD154_means[, mean_50 := exprsDT[, mean(CD154), by = .(patient_id, base_spike)]$V1]
-CD63_means[, sd_50 := exprsDT[, sd(CD63), by = .(patient_id, base_spike)]$V1]
-CD62P_means[, sd_50 := exprsDT[, sd(CD62P), by = .(patient_id, base_spike)]$V1]
-CD107a_means[, sd_50 := exprsDT[, sd(CD107a), by = .(patient_id, base_spike)]$V1]
-CD154_means[, sd_50 := exprsDT[, sd(CD154), by = .(patient_id, base_spike)]$V1]
-
-exprsDT <- as.data.table(t(assays(sce75)$counts))
-coldataDT <- as.data.table(colData(sce75))[, c("patient_id", "base_spike")]
-exprsDT <- cbind(exprsDT, coldataDT)
-CD63_means[, mean_75 := exprsDT[, mean(CD63), by = .(patient_id, base_spike)]$V1]
-CD62P_means[, mean_75 := exprsDT[, mean(CD62P), by = .(patient_id, base_spike)]$V1]
-CD107a_means[, mean_75 := exprsDT[, mean(CD107a), by = .(patient_id, base_spike)]$V1]
-CD154_means[, mean_75 := exprsDT[, mean(CD154), by = .(patient_id, base_spike)]$V1]
-CD63_means[, sd_75 := exprsDT[, sd(CD63), by = .(patient_id, base_spike)]$V1]
-CD62P_means[, sd_75 := exprsDT[, sd(CD62P), by = .(patient_id, base_spike)]$V1]
-CD107a_means[, sd_75 := exprsDT[, sd(CD107a), by = .(patient_id, base_spike)]$V1]
-CD154_means[, sd_75 := exprsDT[, sd(CD154), by = .(patient_id, base_spike)]$V1]
-
-exprsDT <- as.data.table(t(assays(sce100)$counts))
-coldataDT <- as.data.table(colData(sce100))[, c("patient_id", "base_spike")]
-exprsDT <- cbind(exprsDT, coldataDT)
-CD63_means[, mean_100 := exprsDT[, mean(CD63), by = .(patient_id, base_spike)]$V1]
-CD62P_means[, mean_100 := exprsDT[, mean(CD62P), by = .(patient_id, base_spike)]$V1]
-CD107a_means[, mean_100 := exprsDT[, mean(CD107a), by = .(patient_id, base_spike)]$V1]
-CD154_means[, mean_100 := exprsDT[, mean(CD154), by = .(patient_id, base_spike)]$V1]
-CD63_means[, sd_100 := exprsDT[, sd(CD63), by = .(patient_id, base_spike)]$V1]
-CD62P_means[, sd_100 := exprsDT[, sd(CD62P), by = .(patient_id, base_spike)]$V1]
-CD107a_means[, sd_100 := exprsDT[, sd(CD107a), by = .(patient_id, base_spike)]$V1]
-CD154_means[, sd_100 := exprsDT[, sd(CD154), by = .(patient_id, base_spike)]$V1]
-
-all_stats <- rbindlist(list("CD63" = CD63_means, 
-                            "CD62P" = CD62P_means, 
-                            "CD107a" = CD107a_means, 
-                            "CD154" = CD154_means), idcol = "marker")
-
-all_stats <- melt(all_stats, id.vars = c("marker", "patient_id", "base_spike"), 
-                  value.name = "value", variable.name="variable")
-all_stats[, model := tstrsplit(variable, "_", keep=2)]
-all_stats[, model := factor(model, levels = c("full", "25", "50", "75", "100"))]
-all_stats[, mean_sd := tstrsplit(variable, "_", keep=1)]
-all_stats[, mean_sd := as.factor(mean_sd)]
-all_stats[, variable := NULL]
-library(ggplot2)
-ggplot(all_stats, aes(x = model, y = value, fill = base_spike))+
+ggplot(meanDT, aes(x=alpha, y = mean, fill = base_spike))+
   geom_boxplot()+
+  facet_wrap( ~ marker, scales = "free")+
+  scale_fill_manual(values = colorBlindBlack8[c(3,8)], name = "Condition")+
   theme_bw()+
-  facet_wrap(mean_sd ~ marker, scales = "free")+
-  scale_fill_manual(values = c("indianred1", "lightblue1"))
+  theme(text = element_text(size=20))+
+  labs(x = "100 x Alpha",y = "Mean Expression")
+
+cytoGLMMS <- lapply(list.files("/nfs/home/students/l.arend/data/cytoGLMM_simulated/", full.names = T, pattern=".rds"), readRDS)
+names(cytoGLMMS) <- tstrsplit(list.files("/nfs/home/students/l.arend/data/cytoGLMM_simulated/", pattern=".rds"), ".rds", keep=1)[[1]]
+
+exprsDT <- lapply(cytoGLMMS, function(x){as.data.table(t(assays(x)$exprs))})
+exprsDT <- rbindlist(exprsDT, idcol = "filename")
+exprsDT[, n_cells := tstrsplit(filename, "_", keep=3)]
+exprsDT[, c("patient_id", "condition") := rbindlist(lapply(cytoGLMMS, function(x){as.data.table(colData(x))[, c("patient_id", "condition")]}))]
+exprsDT_long <- melt(exprsDT, id.vars = c("patient_id", "condition","n_cells", "filename"), variable.name = "marker", value.name = "expression")
+exprs_means <- exprsDT_long[, median(expression), by = c("marker", "condition", "n_cells", "patient_id")]
+colnames(exprs_means) <- c("marker", "condition","n_cells", "patient_id", "median")
+exprs_means[, n_cells := factor(n_cells, levels = c("1000", "2000", "5000", "10000", "15000", "200000"))]
+
+exprs_medians_200000 <- exprsDT_long[n_cells == "200000", median(expression), by = c("marker", "condition")]
+colnames(exprs_medians_200000) <- c("antigen", "condition", "expression")
+
+plotDiffHeatmap()
+
+library(CATALYST)
+library(ggplot2)
+g <- plotExprs(cytoGLMMS$simulated_cytoGLMM_200000_cells, features = c("m01", "m02", "m03", "m04", "m05", "m06", "m07", "m08", "m09"), color_by = "condition")
+g <- g +
+  geom_vline(data=exprs_medians_200000[antigen %in% c("m01", "m02", "m03", "m04", "m05", "m06", "m07", "m08", "m09")], aes(xintercept = expression, col = condition))+
+  scale_color_manual(values = colorBlindBlack8[c(3,8)], name = "Condition:\nExpression\nand Medians")+
+  theme(text = element_text(size=20))
+g
 
 source("functions/de_functions.R")
 source("functions/sceEMD.R")
@@ -388,4 +354,5 @@ allResults[["sce100"]]$cytoGLMM <- makeDF(cytoModelSCE100)
 createVennDiagram(allResults[["sce100"]], DS=T, 0.05)
 
 
-
+##dual
+dualSCE <- readRDS("../l.arend/data/platelets_dual/sce_dual.rds")
