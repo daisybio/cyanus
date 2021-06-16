@@ -2986,3 +2986,14 @@ Global Deviance:     1189004
             SBC:     1189217 
 ******************************************************************
   |                                                                              |================================================                      |  68%fitting marker CD154
+GAMLSS-RS iteration 1: Global Deviance = 2450856 
+GAMLSS-RS iteration 2: Global Deviance = 1290091 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |===================================================                   |  73%fitting marker CD3
+GAMLSS-RS iteration 1: Global Deviance = 2740202 
+GAMLSS-RS iteration 2: Global Deviance = 2028926 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |======================================================                |  77%fitting marker CD9
+GAMLSS-RS iteration 1: Global Deviance = -8936086 
