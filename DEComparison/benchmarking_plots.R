@@ -156,6 +156,9 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000){
     path <-  "DEComparison/downsampled_covid_spike"
     trues <- c("CD62P", "CD63", "CD107a", "CD154")
     keep <- 6
+  } else if (data_type == "dual_platelets"){
+    path <-  "DEComparison/dual_platelets"
+    trues <- c("CD62P", "CD63", "CD107a", "CD154")
   } else if(data_type == "pbmc"){
     path <- "DEComparison/pbmc_benchmarking"
   }
@@ -224,6 +227,15 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000){
       facet_grid(nr_of_cells~class, scales = "free_x") + 
       theme(text = element_text(size = 10),  axis.text.x = element_text(angle = 45, hjust=1))+
       scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])
+  } else if(data_type == "dual_platelets"){
+    ggplot(tmp, aes(marker_id, method, fill=significant)) + 
+      geom_tile(color="white", size=1) + 
+      ggtitle("Dual Platelets, random effect") + xlab(label="marker") + 
+      facet_wrap(~class, scales = "free_x") + 
+      theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
+      scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])+
+      ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude)) +
+      ggside::scale_xfill_manual(values=c(colorBlindBlack8[c(8,5,2,6)]), name='effect size\nmagnitude')
   } else if(data_type == "pbmc"){
     tmp$marker_id[tmp$marker_id == "HLADR"] <- "HLA_DR"
     ggplot(tmp, aes(marker_id, method)) + 
