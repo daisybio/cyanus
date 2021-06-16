@@ -3,12 +3,20 @@ library(CATALYST)
 
 sce_dual <- readRDS("/nfs/home/students/l.arend/data/platelets_dual/sce_dual.rds")
 
-boxplot <- plotPbExprs(sce_dual, features = c("CD62P", "CD63", "CD154", "CD107a"), color_by = "platelets", ncol=1) + theme(
+colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+
+boxplot <- plotPbExprs(sce_dual, features = c("CD62P", "CD63", "CD154", "CD107a"), color_by = "platelets", ncol=4) + 
+  xlab("") +
+  ylab("Median Expression") +
+  labs(color="Platelets") +
+  theme(
   panel.grid = element_blank(), 
   strip.background = element_blank(),
-  strip.text = element_text(face = "bold", size=12),
-  axis.text = element_text(color = "black", size=10), 
-  axis.title = element_text(color = "black", size=12), legend.text = element_text(size=10), legend.title=element_text(size=12)) + scale_color_manual(values =colorBlindBlack8[c(3,8)])
+  strip.text = element_text(face = "bold", size=16),
+  axis.text = element_text(color = "black", size=14), 
+  axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) + scale_color_manual(values =colorBlindBlack8[c(3,8)])
 
 # exprs function from catalyst
 # subset features to use
@@ -32,33 +40,35 @@ exprs <- ggplot(gg_df, fill = NULL,
        aes_string(
          x = value, y = "..ndensity..",
          col = color_by, group = "sample_id")) + 
-  facet_wrap(~ antigen, scales = "free_x", ncol=1) +
+  facet_wrap(~ antigen, scales = "free_x", ncol=4) +
   geom_density() + 
-  ylab("normalized density") +
+  ylab("Normalized density") +
+  xlab("Expression") +
   theme_classic() + theme(
     panel.grid = element_blank(), 
     strip.background = element_blank(),
-    strip.text = element_text(face = "bold", size=12),
-    axis.text = element_text(color = "black", size=10), 
-    axis.title = element_text(color = "black", size=12), legend.text = element_text(size=10), legend.title=element_text(size=12)) +  scale_color_manual(values =colorBlindBlack8[c(3,8)])
+    strip.text = element_text(face = "bold", size=16),
+    axis.text = element_text(color = "black", size=14), 
+    axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) +  scale_color_manual(values =colorBlindBlack8[c(3,8)])
 
 library(ggpubr)
-ggarrange(boxplot, exprs, ncol=2,
+ggarrange(boxplot, exprs, ncol=1,
           labels=c('A', 'B'),
-          font.label=list(size=16),
+          font.label=list(size=18),
           legend = "right",
           common.legend = T)
 
 
-
 path_no_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed_no_random.rds"
-path_with_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed_random.rds"   #with random effects
+path_with_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed.rds"   #with random effects
 
 results_r <- readRDS(path_with_r)[["results"]]
 results_no_r <- readRDS(path_no_r)[["results"]]
 
 times_r <- readRDS(path_with_r)[["times"]]
 times_no_r <- readRDS(path_no_r)[["times"]]
+
+eff_r <- readRDS(path_with_r)[["eff"]]
 
 # plot results
 tmp <- data.frame(method = results_r$method, marker_id = results_r$marker_id, p_adj = results_r$p_adj)
@@ -72,12 +82,22 @@ tmp$class[tmp$class == FALSE] <- "type"
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-with_random_effect <- ggplot(tmp, aes(marker_id, method, fill=significant)) + 
-  geom_tile(color="white", size=1) + 
+
+# add marker_id column and class column
+marker_classes <- tmp[,c("marker_id", "class")]
+marker_classes <- unique(marker_classes)
+eff_r$marker_id <- sapply(strsplit(eff_r$group2,'::'), "[", 1)
+eff_r <- merge(eff_r, marker_classes, by ="marker_id")
+
+
+with_random_effect <- ggplot(tmp, aes(marker_id, method)) + 
+  geom_tile(aes(fill=significant),color="white", size=1) + 
   ggtitle("") + xlab(label="marker") + 
   facet_wrap(~class, scales = "free_x") + 
   theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
-  scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])
+  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent") + 
+  ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
+  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
 
 # plot heatmap
 tmp <- data.frame(method = results_no_r$method, marker_id = results_no_r$marker_id, p_adj = results_no_r$p_adj)
@@ -91,14 +111,18 @@ tmp$class[tmp$class == FALSE] <- "type"
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-no_random_effect <- ggplot(tmp, aes(marker_id, method, fill=significant)) + 
-  geom_tile(color="white", size=1) + 
+
+no_random_effect <- ggplot(tmp, aes(marker_id, method)) + 
+  geom_tile(aes(fill=significant), color="white", size=1) + 
   ggtitle("") + xlab(label="marker") + 
   facet_wrap(~class, scales = "free_x") + 
   theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
-  scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])
+  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent") + 
+  ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
+  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
 
 
+library(ggpubr)
 ggarrange(with_random_effect, no_random_effect, nrow=2,
           labels=c('A Random Effect', 'B No Random Effect'),
           font.label=list(size=16),
