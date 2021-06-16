@@ -77,7 +77,7 @@ simulateSCE <- function (n_samples = 16,
   sce
 }
 
-
+#TODO: add covariates
 runCytoGLMM <-
   function(sce,
            condition,
