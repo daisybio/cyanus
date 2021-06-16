@@ -147,7 +147,7 @@ preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covi
   return(stats_table)
 }
 
-plotHeatmaps <- function(data_type, nr_cells_spike=15000){
+plotHeatmaps <- function(data_type, nr_cells_spike=15000, random=TRUE){
   if (data_type == "simulatedCytoGLMM"){
     path <-  "DEComparison/simulatedCytoGLMM"
     trues <- c("m01", "m02", "m03", "m04", "m05")
@@ -157,20 +157,44 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000){
     trues <- c("CD62P", "CD63", "CD107a", "CD154")
     keep <- 6
   } else if (data_type == "dual_platelets"){
-    path <-  "DEComparison/dual_platelets"
+    if(random == FALSE){
+      path <- "DEComparison/dual_platelets/sce_dual_res_timed.rds"
+    }else{
+      path <- "DEComparison/dual_platelets/sce_dual_res_timed_no_random.rds"
+    }
     trues <- c("CD62P", "CD63", "CD107a", "CD154")
   } else if(data_type == "pbmc"){
     path <- "DEComparison/pbmc_benchmarking"
   }
-  result_rds <-
-    list.files(path = path,
-               pattern = "\\.rds$",
-               full.names = T)
-  results <-
-    data.table::rbindlist(sapply(result_rds, function(rds)
-      readRDS(rds)[["results"]], simplify = FALSE),
-      idcol = "dataset")
-  results[, dataset := basename(dataset)]
+  if (data_type == "dual_platelets"){
+    results_rds <- readRDS(path)
+    results <- results_rds[["results"]]
+    times <- results_rds[["times"]]
+    eff <- results_rds[["eff"]]
+    eff$marker_id <- sapply(strsplit(eff$group2,'::'), "[", 1)
+    eff <- merge(eff, marker_classes, by ="marker_id")
+  }
+  else{
+    result_rds <-
+      list.files(path = path,
+                 pattern = "\\.rds$",
+                 full.names = T)
+    results <-
+      data.table::rbindlist(sapply(result_rds, function(rds)
+        readRDS(rds)[["results"]], simplify = FALSE),
+        idcol = "dataset")
+    results[, dataset := basename(dataset)]
+    times <-
+      data.table::rbindlist(sapply(result_rds, function(rds)
+        readRDS(rds)[["times"]], simplify = FALSE),
+        idcol = "dataset")
+    times[, dataset := basename(dataset)]
+    eff <-
+      data.table::rbindlist(sapply(result_rds, function(rds)
+        readRDS(rds)[["eff"]], simplify = FALSE),
+        idcol = "dataset")
+    eff[, dataset := basename(dataset)]
+  }
   tmp <- data.frame(method = results$method, marker_id = results$marker_id, p_adj = results$p_adj)
   if (data_type %in% c("simulatedCytoGLMM", "downsampled_covid_spike")){
     results[, nr_of_cells := tstrsplit(dataset, "_", keep=keep)]
@@ -182,17 +206,6 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000){
   }else if(data_type == "pbmc"){
     tmp$cluster_id <- results$cluster_id
   }
-  times <-
-    data.table::rbindlist(sapply(result_rds, function(rds)
-      readRDS(rds)[["times"]], simplify = FALSE),
-      idcol = "dataset")
-  times[, dataset := basename(dataset)]
-  
-  eff <-
-    data.table::rbindlist(sapply(result_rds, function(rds)
-      readRDS(rds)[["eff"]], simplify = FALSE),
-      idcol = "dataset")
-  eff[, dataset := basename(dataset)]
   
   # plot results
   tmp$significant <- results$p_adj < 0.05
@@ -200,7 +213,7 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000){
   tmp <- as.data.table(tmp)
   tmp$significant <- as.factor(tmp$significant)
   tmp$class <- tmp$marker_id %in% trues
-  if(data_type %in% c("downsampled_covid_spike")){
+  if(data_type %in% c("downsampled_covid_spike", "dual_platelets")){
     tmp$class[tmp$class == TRUE] <- "state"
     tmp$class[tmp$class == FALSE] <- "type"
   }else if(data_type == "simulatedCytoGLMM"){
@@ -210,7 +223,7 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000){
   colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
   
-  
+  tmp <- as.data.table(tmp)
   if(data_type == "downsampled_covid_spike"){
     ggplot(tmp[nr_of_cells == nr_cells_spike], aes(marker_id, method, fill=significant)) + 
       geom_tile(color="white", size=1) + 
@@ -228,14 +241,14 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000){
       theme(text = element_text(size = 10),  axis.text.x = element_text(angle = 45, hjust=1))+
       scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])
   } else if(data_type == "dual_platelets"){
-    ggplot(tmp, aes(marker_id, method, fill=significant)) + 
-      geom_tile(color="white", size=1) + 
-      ggtitle("Dual Platelets, random effect") + xlab(label="marker") + 
+    ggplot(tmp, aes(marker_id, method)) + 
+      geom_tile(aes(fill=significant),color="white", size=1) + 
+      ggtitle("") + xlab(label="marker") + 
       facet_wrap(~class, scales = "free_x") + 
       theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
-      scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])+
-      ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude)) +
-      ggside::scale_xfill_manual(values=c(colorBlindBlack8[c(8,5,2,6)]), name='effect size\nmagnitude')
+      scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent") + 
+      ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
+      ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
   } else if(data_type == "pbmc"){
     tmp$marker_id[tmp$marker_id == "HLADR"] <- "HLA_DR"
     ggplot(tmp, aes(marker_id, method)) + 
