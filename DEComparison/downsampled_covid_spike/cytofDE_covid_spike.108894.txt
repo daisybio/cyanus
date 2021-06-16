@@ -396,3 +396,2593 @@ Global Deviance:     -6567615
             SBC:     -6567402 
 ******************************************************************
   |                                                                              |===                                                                   |   5%fitting marker CD40
+GAMLSS-RS iteration 1: Global Deviance = 1958738 
+GAMLSS-RS iteration 2: Global Deviance = 915090.7 
+GAMLSS-RS iteration 3: Global Deviance = -68127.24 
+GAMLSS-RS iteration 4: Global Deviance = -877811.5 
+GAMLSS-RS iteration 5: Global Deviance = -1225958 
+GAMLSS-RS iteration 6: Global Deviance = -1276243 
+GAMLSS-RS iteration 7: Global Deviance = -1278941 
+GAMLSS-RS iteration 8: Global Deviance = -1279033 
+GAMLSS-RS iteration 9: Global Deviance = -1279035 
+GAMLSS-RS iteration 10: Global Deviance = -1279035 
+GAMLSS-RS iteration 11: Global Deviance = -1279035 
+GAMLSS-RS iteration 12: Global Deviance = -1279035 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -2.8249545  0.0006301 -4483.435   <2e-16 ***
+Yspike       0.0018294  0.0009520     1.922   0.0546 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.747319   0.001041    3598   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 0.409349   0.001014   403.6   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.9856
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  12 
+ 
+Global Deviance:     -1279035 
+            AIC:     -1279007 
+            SBC:     -1278823 
+******************************************************************
+  |                                                                              |======                                                                |   9%fitting marker CD42b
+GAMLSS-RS iteration 1: Global Deviance = -6323645 
+GAMLSS-RS iteration 2: Global Deviance = -10315900 
+GAMLSS-RS iteration 3: Global Deviance = -10348815 
+GAMLSS-RS iteration 4: Global Deviance = -10348818 
+GAMLSS-RS iteration 5: Global Deviance = -10348818 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -6.460e-01  2.004e-04 -3223.414   <2e-16 ***
+Yspike      -6.757e-05  2.992e-04    -0.226    0.821    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.8802032  0.0006945    5587   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -7.37788    0.01988  -371.1   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99173
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  5 
+ 
+Global Deviance:     -10348818 
+            AIC:     -10348790 
+            SBC:     -10348605 
+******************************************************************
+  |                                                                              |==========                                                            |  14%fitting marker CD31
+GAMLSS-RS iteration 1: Global Deviance = -4076814 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |=============                                                         |  18%fitting marker CD61
+GAMLSS-RS iteration 1: Global Deviance = -4976856 
+GAMLSS-RS iteration 2: Global Deviance = -7292406 
+GAMLSS-RS iteration 3: Global Deviance = -7310745 
+GAMLSS-RS iteration 4: Global Deviance = -7310750 
+GAMLSS-RS iteration 5: Global Deviance = -7310750 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -0.6181017  0.0002944 -2099.279   <2e-16 ***
+Yspike      -0.0004548  0.0004396    -1.035    0.301    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.0802684  0.0006845    4500   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -8.84998    0.04149  -213.3   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99405
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  5 
+ 
+Global Deviance:     -7310750 
+            AIC:     -7310722 
+            SBC:     -7310537 
+******************************************************************
+  |                                                                              |================                                                      |  23%fitting marker PAR1
+GAMLSS-RS iteration 1: Global Deviance = -2437874 
+GAMLSS-RS iteration 2: Global Deviance = -5814416 
+GAMLSS-RS iteration 3: Global Deviance = -7114748 
+GAMLSS-RS iteration 4: Global Deviance = -7239374 
+GAMLSS-RS iteration 5: Global Deviance = -7242328 
+GAMLSS-RS iteration 6: Global Deviance = -7242367 
+GAMLSS-RS iteration 7: Global Deviance = -7242368 
+GAMLSS-RS iteration 8: Global Deviance = -7242368 
+GAMLSS-RS iteration 9: Global Deviance = -7242368 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.7814899  0.0004191 -4250.804   <2e-16 ***
+Yspike       0.0003910  0.0006245     0.626    0.531    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 2.9277588  0.0006845    4277   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -2.697812   0.002043   -1321   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99858
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  9 
+ 
+Global Deviance:     -7242368 
+            AIC:     -7242340 
+            SBC:     -7242155 
+******************************************************************
+  |                                                                              |===================                                                   |  27%fitting marker CD63
+GAMLSS-RS iteration 1: Global Deviance = 291358.5 
+GAMLSS-RS iteration 2: Global Deviance = -1678664 
+GAMLSS-RS iteration 3: Global Deviance = -3183565 
+GAMLSS-RS iteration 4: Global Deviance = -3881937 
+GAMLSS-RS iteration 5: Global Deviance = -4002131 
+GAMLSS-RS iteration 6: Global Deviance = -4009880 
+GAMLSS-RS iteration 7: Global Deviance = -4010181 
+GAMLSS-RS iteration 8: Global Deviance = -4010191 
+GAMLSS-RS iteration 9: Global Deviance = -4010192 
+GAMLSS-RS iteration 10: Global Deviance = -4010192 
+GAMLSS-RS iteration 11: Global Deviance = -4010192 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -2.4088300  0.0005240 -4597.228   <2e-16 ***
+Yspike      -0.0005495  0.0007903    -0.695    0.487    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.1982115  0.0007898    4049   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.758726   0.001066  -711.9   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.98626
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  11 
+ 
+Global Deviance:     -4010192 
+            AIC:     -4010164 
+            SBC:     -4009979 
+******************************************************************
+  |                                                                              |======================                                                |  32%fitting marker CD107a
+GAMLSS-RS iteration 1: Global Deviance = 2103433 
+GAMLSS-RS iteration 2: Global Deviance = 1539081 
+GAMLSS-RS iteration 3: Global Deviance = 989380.4 
+GAMLSS-RS iteration 4: Global Deviance = 459580.1 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |=========================                                             |  36%fitting marker CD36
+GAMLSS-RS iteration 1: Global Deviance = -4119745 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |=============================                                         |  41%fitting marker CD45
+GAMLSS-RS iteration 1: Global Deviance = -435853.3 
+GAMLSS-RS iteration 2: Global Deviance = -2992610 
+GAMLSS-RS iteration 3: Global Deviance = -4505560 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |================================                                      |  45%fitting marker PAC1
+GAMLSS-RS iteration 1: Global Deviance = -8972972 
+GAMLSS-RS iteration 2: Global Deviance = -9972098 
+GAMLSS-RS iteration 3: Global Deviance = -9972223 
+GAMLSS-RS iteration 4: Global Deviance = -9972223 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  0.1613928  0.0001930 836.170   <2e-16 ***
+Yspike      -0.0002205  0.0002867  -0.769    0.442    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.8758084  0.0006952    5575   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -9.11669    0.04741  -192.3   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99855
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  4 
+ 
+Global Deviance:     -9972223 
+            AIC:     -9972195 
+            SBC:     -9972010 
+******************************************************************
+  |                                                                              |===================================                                   |  50%fitting marker CD29
+GAMLSS-RS iteration 1: Global Deviance = -8425196 
+GAMLSS-RS iteration 2: Global Deviance = -8734671 
+GAMLSS-RS iteration 3: Global Deviance = -8734676 
+GAMLSS-RS iteration 4: Global Deviance = -8734676 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  0.0361486  0.0002225 162.499   <2e-16 ***
+Yspike      -0.0002728  0.0003307  -0.825    0.409    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.5733931  0.0006928    5158   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -9.21089    0.04969  -185.4   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.01279
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  4 
+ 
+Global Deviance:     -8734676 
+            AIC:     -8734648 
+            SBC:     -8734463 
+******************************************************************
+  |                                                                              |======================================                                |  55%fitting marker CD62P
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |=========================================                             |  59%fitting marker CD69
+GAMLSS-RS iteration 1: Global Deviance = -3379050 
+GAMLSS-RS iteration 2: Global Deviance = -6017606 
+GAMLSS-RS iteration 3: Global Deviance = -6099152 
+GAMLSS-RS iteration 4: Global Deviance = -6099341 
+GAMLSS-RS iteration 5: Global Deviance = -6099341 
+GAMLSS-RS iteration 6: Global Deviance = -6099341 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -0.9325006  0.0003601 -2589.710   <2e-16 ***
+Yspike      -0.0000814  0.0005353    -0.152    0.879    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 2.7586240  0.0006785    4066   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -4.601225   0.005007  -918.9   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99753
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  6 
+ 
+Global Deviance:     -6099341 
+            AIC:     -6099313 
+            SBC:     -6099128 
+******************************************************************
+  |                                                                              |=============================================                         |  64%fitting marker CD141
+GAMLSS-RS iteration 1: Global Deviance = 2541891 
+GAMLSS-RS iteration 2: Global Deviance = 1971981 
+GAMLSS-RS iteration 3: Global Deviance = 1477814 
+GAMLSS-RS iteration 4: Global Deviance = 1226888 
+GAMLSS-RS iteration 5: Global Deviance = 1190420 
+GAMLSS-RS iteration 6: Global Deviance = 1189032 
+GAMLSS-RS iteration 7: Global Deviance = 1189005 
+GAMLSS-RS iteration 8: Global Deviance = 1189004 
+GAMLSS-RS iteration 9: Global Deviance = 1189004 
+GAMLSS-RS iteration 10: Global Deviance = 1189004 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -2.4153680  0.0008758 -2758.051   <2e-16 ***
+Yspike      -0.0003358  0.0013152    -0.255    0.798    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.636164   0.001606    2264   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 1.571371   0.001316    1194   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.00358
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  10 
+ 
+Global Deviance:     1189004 
+            AIC:     1189032 
+            SBC:     1189217 
+******************************************************************
+  |                                                                              |================================================                      |  68%fitting marker CD154
+GAMLSS-RS iteration 1: Global Deviance = 2703738 
+GAMLSS-RS iteration 2: Global Deviance = 2002985 
+GAMLSS-RS iteration 3: Global Deviance = 1391191 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |===================================================                   |  73%fitting marker CD3
+GAMLSS-RS iteration 1: Global Deviance = 2740202 
+GAMLSS-RS iteration 2: Global Deviance = 2028926 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |======================================================                |  77%fitting marker CD9
+GAMLSS-RS iteration 1: Global Deviance = -8936086 
+GAMLSS-RS iteration 2: Global Deviance = -9430894 
+GAMLSS-RS iteration 3: Global Deviance = -9430910 
+GAMLSS-RS iteration 4: Global Deviance = -9430910 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  0.0488189  0.0002047 238.501   <2e-16 ***
+Yspike      -0.0001139  0.0003042  -0.374    0.708    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.7472383  0.0006943    5397   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -9.30670    0.05213  -178.5   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.9939
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  4 
+ 
+Global Deviance:     -9430910 
+            AIC:     -9430882 
+            SBC:     -9430697 
+******************************************************************
+  |                                                                              |=========================================================             |  82%fitting marker PEAR
+GAMLSS-RS iteration 1: Global Deviance = -3379565 
+GAMLSS-RS iteration 2: Global Deviance = -7582575 
+GAMLSS-RS iteration 3: Global Deviance = -8889009 
+GAMLSS-RS iteration 4: Global Deviance = -8950878 
+GAMLSS-RS iteration 5: Global Deviance = -8951406 
+GAMLSS-RS iteration 6: Global Deviance = -8951408 
+GAMLSS-RS iteration 7: Global Deviance = -8951408 
+GAMLSS-RS iteration 8: Global Deviance = -8951408 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.6252367  0.0003544 -4585.509  < 2e-16 ***
+Yspike      -0.0018067  0.0005250    -3.441 0.000579 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.1779743  0.0006814    4664   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -3.809922   0.003412   -1117   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.98727
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  8 
+ 
+Global Deviance:     -8951408 
+            AIC:     -8951380 
+            SBC:     -8951195 
+******************************************************************
+  |                                                                              |============================================================          |  86%fitting marker GPVI
+GAMLSS-RS iteration 1: Global Deviance = -6639873 
+GAMLSS-RS iteration 2: Global Deviance = -8984776 
+GAMLSS-RS iteration 3: Global Deviance = -8989790 
+GAMLSS-RS iteration 4: Global Deviance = -8989790 
+GAMLSS-RS iteration 5: Global Deviance = -8989790 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -4.964e-01  2.222e-04 -2233.689   <2e-16 ***
+Yspike       3.491e-05  3.298e-04     0.106    0.916    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.6367613  0.0006941    5240   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -5.519591   0.007878  -700.6   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.01415
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  5 
+ 
+Global Deviance:     -8989790 
+            AIC:     -8989762 
+            SBC:     -8989577 
+******************************************************************
+  |                                                                              |================================================================      |  91%fitting marker CD47
+GAMLSS-RS iteration 1: Global Deviance = -3563568 
+GAMLSS-RS iteration 2: Global Deviance = -7383138 
+GAMLSS-RS iteration 3: Global Deviance = -7666152 
+GAMLSS-RS iteration 4: Global Deviance = -7667601 
+GAMLSS-RS iteration 5: Global Deviance = -7667603 
+GAMLSS-RS iteration 6: Global Deviance = -7667603 
+GAMLSS-RS iteration 7: Global Deviance = -7667603 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.1148861  0.0003240 -3440.644   <2e-16 ***
+Yspike      -0.0006297  0.0004833    -1.303    0.193    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.0676514  0.0006828    4492   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -4.614678   0.005041  -915.5   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.98751
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  7 
+ 
+Global Deviance:     -7667603 
+            AIC:     -7667575 
+            SBC:     -7667390 
+******************************************************************
+  |                                                                              |===================================================================   |  95%fitting marker CD42a
+GAMLSS-RS iteration 1: Global Deviance = -8326042 
+GAMLSS-RS iteration 2: Global Deviance = -10224311 
+GAMLSS-RS iteration 3: Global Deviance = -10225456 
+GAMLSS-RS iteration 4: Global Deviance = -10225456 
+GAMLSS-RS iteration 5: Global Deviance = -10225456 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error  t value Pr(>|t|)    
+(Intercept) -3.542e-01  1.902e-04 -1861.73   <2e-16 ***
+Yspike      -3.695e-05  2.832e-04    -0.13    0.896    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.9194051  0.0006953    5637   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -9.57645    0.05966  -160.5   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99752
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  5 
+ 
+Global Deviance:     -10225456 
+            AIC:     -10225428 
+            SBC:     -10225243 
+******************************************************************
+  |                                                                              |======================================================================| 100%
+
+calculating ZAGA for cluster all
+Fitting a zero adjusted Gamma distribution...
+...including random effects: patient_id
+  |                                                                              |                                                                      |   0%fitting marker CD41
+GAMLSS-RS iteration 1: Global Deviance = -6136181 
+GAMLSS-RS iteration 2: Global Deviance = -6136181 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.2133792  0.0002632 -4610.291   <2e-16 ***
+Yspike      -0.0004008  0.0003914    -1.024    0.306    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.9379609  0.0003433   -2732   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -5.543140   0.007971  -695.4   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.00023
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -6136181 
+            AIC:     -6136153 
+            SBC:     -6135968 
+******************************************************************
+  |                                                                              |===                                                                   |   5%fitting marker CD40
+GAMLSS-RS iteration 1: Global Deviance = -1198312 
+GAMLSS-RS iteration 2: Global Deviance = -1198312 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -2.8891321  0.0006865 -4208.220   <2e-16 ***
+Yspike       0.0024885  0.0010286     2.419   0.0155 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.4305787  0.0005216  -825.5   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 0.409349   0.001014   403.6   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99469
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -1198312 
+            AIC:     -1198284 
+            SBC:     -1198099 
+******************************************************************
+  |                                                                              |======                                                                |   9%fitting marker CD42b
+GAMLSS-RS iteration 1: Global Deviance = -10216559 
+GAMLSS-RS iteration 2: Global Deviance = -10216559 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.071e+00  1.354e-04 -7906.759   <2e-16 ***
+Yspike      -2.897e-05  2.014e-04    -0.144    0.886    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.601000   0.000349   -4587   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -7.37788    0.01988  -371.1   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.01063
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -10216559 
+            AIC:     -10216530 
+            SBC:     -10216345 
+******************************************************************
+  |                                                                              |==========                                                            |  14%fitting marker CD31
+GAMLSS-RS iteration 1: Global Deviance = -7852038 
+GAMLSS-RS iteration 2: Global Deviance = -7852038 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.3218542  0.0002332 -5669.369   <2e-16 ***
+Yspike      -0.0001263  0.0003467    -0.364    0.716    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.0596282  0.0003453   -3069   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -5.338758   0.007203  -741.2   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.00097
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -7852038 
+            AIC:     -7852010 
+            SBC:     -7851825 
+******************************************************************
+  |                                                                              |=============                                                         |  18%fitting marker CD61
+GAMLSS-RS iteration 1: Global Deviance = -6946816 
+GAMLSS-RS iteration 2: Global Deviance = -6946816 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error  t value Pr(>|t|)    
+(Intercept) -1.0580976  0.0002047 -5169.10   <2e-16 ***
+Yspike      -0.0002951  0.0003044    -0.97    0.332    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.187591   0.000346   -3433   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -8.84998    0.04149  -213.3   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.98971
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -6946816 
+            AIC:     -6946788 
+            SBC:     -6946603 
+******************************************************************
+  |                                                                              |================                                                      |  23%fitting marker PAR1
+GAMLSS-RS iteration 1: Global Deviance = -7063544 
+GAMLSS-RS iteration 2: Global Deviance = -7063544 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.9329350  0.0004017 -4811.589   <2e-16 ***
+Yspike       0.0003667  0.0005972     0.614    0.539    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.5461211  0.0003445   -1585   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -2.697812   0.002043   -1321   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99314
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -7063544 
+            AIC:     -7063516 
+            SBC:     -7063331 
+******************************************************************
+  |                                                                              |===================                                                   |  27%fitting marker CD63
+GAMLSS-RS iteration 1: Global Deviance = -3922511 
+GAMLSS-RS iteration 2: Global Deviance = -3922511 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -2.4978797  0.0005574 -4481.452   <2e-16 ***
+Yspike      -0.0007327  0.0008338    -0.879     0.38    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.3729510  0.0003966  -940.5   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.758726   0.001066  -711.9   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  8.217482
+      Residual Deg. of Freedom:  4052614 
+                      at cycle:  2 
+ 
+Global Deviance:     -3922511 
+            AIC:     -3922495 
+            SBC:     -3922386 
+******************************************************************
+  |                                                                              |======================                                                |  32%fitting marker CD107a
+GAMLSS-RS iteration 1: Global Deviance = 74536.71 
+GAMLSS-RS iteration 2: Global Deviance = 74536.71 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -3.1021921  0.0008871 -3497.151   <2e-16 ***
+Yspike      -0.0019249  0.0013387    -1.438     0.15    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.4279763  0.0006759  -633.2   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 1.166290   0.001167   999.2   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99519
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     74536.71 
+            AIC:     74564.7 
+            SBC:     74749.65 
+******************************************************************
+  |                                                                              |=========================                                             |  36%fitting marker CD36
+GAMLSS-RS iteration 1: Global Deviance = -6229393 
+GAMLSS-RS iteration 2: Global Deviance = -6229393 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.1376579  0.0002309 -4926.141   <2e-16 ***
+Yspike      -0.0003577  0.0003433    -1.042    0.297    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.0721266  0.0003463   -3096   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -4.626356   0.005069  -912.6   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.00262
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -6229393 
+            AIC:     -6229365 
+            SBC:     -6229180 
+******************************************************************
+  |                                                                              |=============================                                         |  41%fitting marker CD45
+GAMLSS-RS iteration 1: Global Deviance = -4791273 
+GAMLSS-RS iteration 2: Global Deviance = -4791273 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -2.217e+00  4.878e-04 -4545.609   <2e-16 ***
+Yspike       8.234e-05  7.280e-04     0.113     0.91    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.4316747  0.0003699   -1167   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.347458   0.001228   -1098   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99726
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -4791273 
+            AIC:     -4791245 
+            SBC:     -4791060 
+******************************************************************
+  |                                                                              |================================                                      |  45%fitting marker PAC1
+GAMLSS-RS iteration 1: Global Deviance = -9906650 
+GAMLSS-RS iteration 2: Global Deviance = -9906650 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -6.210e-01  8.945e-05 -6942.461   <2e-16 ***
+Yspike      -1.145e-04  1.330e-04    -0.861    0.389    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -2.0154351  0.0003502   -5755   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -9.11669    0.04741  -192.3   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.98132
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -9906650 
+            AIC:     -9906622 
+            SBC:     -9906437 
+******************************************************************
+  |                                                                              |===================================                                   |  50%fitting marker CD29
+GAMLSS-RS iteration 1: Global Deviance = -8714501 
+GAMLSS-RS iteration 2: Global Deviance = -8714501 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -0.6786604  0.0001101 -6162.505   <2e-16 ***
+Yspike      -0.0001338  0.0001638    -0.817    0.414    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.8074806  0.0003497   -5169   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -9.21089    0.04969  -185.4   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.02624
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -8714501 
+            AIC:     -8714473 
+            SBC:     -8714288 
+******************************************************************
+  |                                                                              |======================================                                |  55%fitting marker CD62P
+GAMLSS-RS iteration 1: Global Deviance = -1962360 
+GAMLSS-RS iteration 2: Global Deviance = -1962360 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error  t value Pr(>|t|)    
+(Intercept) -1.9924170  0.0006010 -3314.95   <2e-16 ***
+Yspike      -0.0006371  0.0008970    -0.71    0.478    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.2476144  0.0003703  -668.7   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.128151   0.001156  -976.1   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.24338
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -1962360 
+            AIC:     -1962332 
+            SBC:     -1962143 
+******************************************************************
+  |                                                                              |=========================================                             |  59%fitting marker CD69
+GAMLSS-RS iteration 1: Global Deviance = -5737398 
+GAMLSS-RS iteration 2: Global Deviance = -5737398 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.2604583  0.0002831 -4451.557   <2e-16 ***
+Yspike      -0.0002213  0.0004209    -0.526    0.599    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.8682887  0.0003431   -2530   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -4.601225   0.005007  -918.9   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.02441
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -5737398 
+            AIC:     -5737370 
+            SBC:     -5737184 
+******************************************************************
+  |                                                                              |=============================================                         |  64%fitting marker CD141
+GAMLSS-RS iteration 1: Global Deviance = 1259350 
+GAMLSS-RS iteration 2: Global Deviance = 1259350 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error  t value Pr(>|t|)    
+(Intercept) -2.513e+00  9.295e-04 -2704.07   <2e-16 ***
+Yspike      -4.182e-05  1.388e-03    -0.03    0.976    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.5507841  0.0008044  -684.7   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 1.571371   0.001316    1194   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.01286
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     1259350 
+            AIC:     1259378 
+            SBC:     1259563 
+******************************************************************
+  |                                                                              |================================================                      |  68%fitting marker CD154
+GAMLSS-RS iteration 1: Global Deviance = 1068411 
+GAMLSS-RS iteration 2: Global Deviance = 1068411 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -2.5730192  0.0008552 -3008.690   <2e-16 ***
+Yspike       0.0013580  0.0012837     1.058     0.29    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.4987902  0.0007018  -710.8   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 1.244204   0.001192    1044   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.62614
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     1068411 
+            AIC:     1068438 
+            SBC:     1068618 
+******************************************************************
+  |                                                                              |===================================================                   |  73%fitting marker CD3
+GAMLSS-RS iteration 1: Global Deviance = 1135919 
+GAMLSS-RS iteration 2: Global Deviance = 1135919 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -2.5279939  0.0008425 -3000.735   <2e-16 ***
+Yspike       0.0004419  0.0012659     0.349    0.727    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.5228119  0.0007104  -735.9   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   1.2695     0.0012    1058   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.993
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     1135919 
+            AIC:     1135947 
+            SBC:     1136132 
+******************************************************************
+  |                                                                              |======================================================                |  77%fitting marker CD9
+GAMLSS-RS iteration 1: Global Deviance = -9415003 
+GAMLSS-RS iteration 2: Global Deviance = -9415003 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error  t value Pr(>|t|)    
+(Intercept) -6.735e-01  1.003e-04 -6712.13   <2e-16 ***
+Yspike      -6.721e-05  1.492e-04    -0.45    0.652    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.90058    0.00035   -5431   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -9.30670    0.05213  -178.5   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99133
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -9415003 
+            AIC:     -9414975 
+            SBC:     -9414790 
+******************************************************************
+  |                                                                              |=========================================================             |  82%fitting marker PEAR
+GAMLSS-RS iteration 1: Global Deviance = -8751864 
+GAMLSS-RS iteration 2: Global Deviance = -8751864 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.8016795  0.0003214 -5605.316   <2e-16 ***
+Yspike      -0.0012763  0.0004774    -2.674   0.0075 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.7482392  0.0003427   -2183   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -3.809922   0.003412   -1117   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.9974
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -8751864 
+            AIC:     -8751836 
+            SBC:     -8751651 
+******************************************************************
+  |                                                                              |============================================================          |  86%fitting marker GPVI
+GAMLSS-RS iteration 1: Global Deviance = -8640809 
+GAMLSS-RS iteration 2: Global Deviance = -8640809 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -9.709e-01  1.459e-04 -6656.039   <2e-16 ***
+Yspike      -2.302e-06  2.168e-04    -0.011    0.992    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.5286224  0.0003492   -4377   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -5.519591   0.007878  -700.6   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99993
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -8640809 
+            AIC:     -8640781 
+            SBC:     -8640596 
+******************************************************************
+  |                                                                              |================================================================      |  91%fitting marker CD47
+GAMLSS-RS iteration 1: Global Deviance = -7430966 
+GAMLSS-RS iteration 2: Global Deviance = -7430966 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.4035361  0.0002627 -5342.994   <2e-16 ***
+Yspike      -0.0003879  0.0003899    -0.995     0.32    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.9444267  0.0003444   -2742   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -4.614678   0.005041  -915.5   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  4.663718
+      Residual Deg. of Freedom:  4052617 
+                      at cycle:  2 
+ 
+Global Deviance:     -7430966 
+            AIC:     -7430957 
+            SBC:     -7430895 
+******************************************************************
+  |                                                                              |===================================================================   |  95%fitting marker CD42a
+GAMLSS-RS iteration 1: Global Deviance = -10238805 
+GAMLSS-RS iteration 2: Global Deviance = -10238805 
+******************************************************************
+Family:  c("ZAGA", "Zero Adjusted GA") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  log
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -8.879e-01  1.126e-04 -7888.470   <2e-16 ***
+Yspike      -3.311e-05  1.674e-04    -0.198    0.843    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.7856060  0.0003496   -5107   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -9.57645    0.05966  -160.5   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.01422
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  2 
+ 
+Global Deviance:     -10238805 
+            AIC:     -10238777 
+            SBC:     -10238592 
+******************************************************************
+  |                                                                              |======================================================================| 100%
+
+calculating sceEMD for cluster all
+  |                                                                              |                                                                      |   0%  |                                                                              |                                                                      |   1%  |                                                                              |=                                                                     |   1%  |                                                                              |=                                                                     |   2%  |                                                                              |==                                                                    |   2%  |                                                                              |==                                                                    |   3%  |                                                                              |===                                                                   |   4%  |                                                                              |===                                                                   |   5%  |                                                                              |====                                                                  |   5%  |                                                                              |====                                                                  |   6%  |                                                                              |=====                                                                 |   7%  |                                                                              |=====                                                                 |   8%  |                                                                              |======                                                                |   8%  |                                                                              |======                                                                |   9%  |                                                                              |=======                                                               |   9%  |                                                                              |=======                                                               |  10%  |                                                                              |=======                                                               |  11%  |                                                                              |========                                                              |  11%  |                                                                              |========                                                              |  12%  |                                                                              |=========                                                             |  12%  |                                                                              |=========                                                             |  13%  |                                                                              |==========                                                            |  14%  |                                                                              |==========                                                            |  15%  |                                                                              |===========                                                           |  15%  |                                                                              |===========                                                           |  16%  |                                                                              |============                                                          |  17%  |                                                                              |============                                                          |  18%  |                                                                              |=============                                                         |  18%  |                                                                              |=============                                                         |  19%  |                                                                              |==============                                                        |  19%  |                                                                              |==============                                                        |  20%  |                                                                              |==============                                                        |  21%  |                                                                              |===============                                                       |  21%  |                                                                              |===============                                                       |  22%  |                                                                              |================                                                      |  22%  |                                                                              |================                                                      |  23%  |                                                                              |=================                                                     |  24%  |                                                                              |=================                                                     |  25%  |                                                                              |==================                                                    |  25%  |                                                                              |==================                                                    |  26%  |                                                                              |===================                                                   |  27%  |                                                                              |===================                                                   |  28%  |                                                                              |====================                                                  |  28%  |                                                                              |====================                                                  |  29%  |                                                                              |=====================                                                 |  29%  |                                                                              |=====================                                                 |  30%  |                                                                              |=====================                                                 |  31%  |                                                                              |======================                                                |  31%  |                                                                              |======================                                                |  32%  |                                                                              |=======================                                               |  32%  |                                                                              |=======================                                               |  33%  |                                                                              |========================                                              |  34%  |                                                                              |========================                                              |  35%  |                                                                              |=========================                                             |  35%  |                                                                              |=========================                                             |  36%  |                                                                              |==========================                                            |  37%  |                                                                              |==========================                                            |  38%  |                                                                              |===========================                                           |  38%  |                                                                              |===========================                                           |  39%  |                                                                              |============================                                          |  39%  |                                                                              |============================                                          |  40%  |                                                                              |============================                                          |  41%  |                                                                              |=============================                                         |  41%  |                                                                              |=============================                                         |  42%  |                                                                              |==============================                                        |  42%  |                                                                              |==============================                                        |  43%  |                                                                              |===============================                                       |  44%  |                                                                              |===============================                                       |  45%  |                                                                              |================================                                      |  45%  |                                                                              |================================                                      |  46%  |                                                                              |=================================                                     |  47%  |                                                                              |=================================                                     |  48%  |                                                                              |==================================                                    |  48%  |                                                                              |==================================                                    |  49%  |                                                                              |===================================                                   |  49%  |                                                                              |===================================                                   |  50%  |                                                                              |===================================                                   |  51%  |                                                                              |====================================                                  |  51%  |                                                                              |====================================                                  |  52%  |                                                                              |=====================================                                 |  52%  |                                                                              |=====================================                                 |  53%  |                                                                              |======================================                                |  54%  |                                                                              |======================================                                |  55%  |                                                                              |=======================================                               |  55%  |                                                                              |=======================================                               |  56%  |                                                                              |========================================                              |  57%  |                                                                              |========================================                              |  58%  |                                                                              |=========================================                             |  58%  |                                                                              |=========================================                             |  59%  |                                                                              |==========================================                            |  59%  |                                                                              |==========================================                            |  60%  |                                                                              |==========================================                            |  61%  |                                                                              |===========================================                           |  61%  |                                                                              |===========================================                           |  62%  |                                                                              |============================================                          |  62%  |                                                                              |============================================                          |  63%  |                                                                              |=============================================                         |  64%  |                                                                              |=============================================                         |  65%  |                                                                              |==============================================                        |  65%  |                                                                              |==============================================                        |  66%  |                                                                              |===============================================                       |  67%  |                                                                              |===============================================                       |  68%  |                                                                              |================================================                      |  68%  |                                                                              |================================================                      |  69%  |                                                                              |=================================================                     |  69%  |                                                                              |=================================================                     |  70%  |                                                                              |=================================================                     |  71%  |                                                                              |==================================================                    |  71%  |                                                                              |==================================================                    |  72%  |                                                                              |===================================================                   |  72%  |                                                                              |===================================================                   |  73%  |                                                                              |====================================================                  |  74%  |                                                                              |====================================================                  |  75%  |                                                                              |=====================================================                 |  75%  |                                                                              |=====================================================                 |  76%  |                                                                              |======================================================                |  77%  |                                                                              |======================================================                |  78%  |                                                                              |=======================================================               |  78%  |                                                                              |=======================================================               |  79%  |                                                                              |========================================================              |  79%  |                                                                              |========================================================              |  80%  |                                                                              |========================================================              |  81%  |                                                                              |=========================================================             |  81%  |                                                                              |=========================================================             |  82%  |                                                                              |==========================================================            |  82%  |                                                                              |==========================================================            |  83%  |                                                                              |===========================================================           |  84%  |                                                                              |===========================================================           |  85%  |                                                                              |============================================================          |  85%  |                                                                              |============================================================          |  86%  |                                                                              |=============================================================         |  87%  |                                                                              |=============================================================         |  88%  |                                                                              |==============================================================        |  88%  |                                                                              |==============================================================        |  89%  |                                                                              |===============================================================       |  89%  |                                                                              |===============================================================       |  90%  |                                                                              |===============================================================       |  91%  |                                                                              |================================================================      |  91%  |                                                                              |================================================================      |  92%  |                                                                              |=================================================================     |  92%  |                                                                              |=================================================================     |  93%  |                                                                              |==================================================================    |  94%  |                                                                              |==================================================================    |  95%  |                                                                              |===================================================================   |  95%  |                                                                              |===================================================================   |  96%  |                                                                              |====================================================================  |  97%  |                                                                              |====================================================================  |  98%  |                                                                              |===================================================================== |  98%  |                                                                              |===================================================================== |  99%  |                                                                              |======================================================================|  99%  |                                                                              |======================================================================| 100%
+
+calculating CytoGLMM for cluster all
+calculating CytoGLM for cluster all
+calculating logstic regression model for cluster all
+...including random effects: patient_id
+  |                                                                              |                                                                      |   0%  |                                                                              |===                                                                   |   5%  |                                                                              |======                                                                |   9%  |                                                                              |==========                                                            |  14%  |                                                                              |=============                                                         |  18%  |                                                                              |================                                                      |  23%  |                                                                              |===================                                                   |  27%  |                                                                              |======================                                                |  32%  |                                                                              |=========================                                             |  36%  |                                                                              |=============================                                         |  41%  |                                                                              |================================                                      |  45%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================                                |  55%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  64%  |                                                                              |================================================                      |  68%  |                                                                              |===================================================                   |  73%  |                                                                              |======================================================                |  77%  |                                                                              |=========================================================             |  82%  |                                                                              |============================================================          |  86%  |                                                                              |================================================================      |  91%  |                                                                              |===================================================================   |  95%  |                                                                              |======================================================================| 100%
+
+calculating wilcoxon median test for cluster all
+  |                                                                              |                                                                      |   0%  |                                                                              |===                                                                   |   5%  |                                                                              |======                                                                |   9%  |                                                                              |==========                                                            |  14%  |                                                                              |=============                                                         |  18%  |                                                                              |================                                                      |  23%  |                                                                              |===================                                                   |  27%  |                                                                              |======================                                                |  32%  |                                                                              |=========================                                             |  36%  |                                                                              |=============================                                         |  41%  |                                                                              |================================                                      |  45%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================                                |  55%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  64%  |                                                                              |================================================                      |  68%  |                                                                              |===================================================                   |  73%  |                                                                              |======================================================                |  77%  |                                                                              |=========================================================             |  82%  |                                                                              |============================================================          |  86%  |                                                                              |================================================================      |  91%  |                                                                              |===================================================================   |  95%  |                                                                              |======================================================================| 100%
+
+calculating kruskal median test for cluster all
+  |                                                                              |                                                                      |   0%  |                                                                              |===                                                                   |   5%  |                                                                              |======                                                                |   9%  |                                                                              |==========                                                            |  14%  |                                                                              |=============                                                         |  18%  |                                                                              |================                                                      |  23%  |                                                                              |===================                                                   |  27%  |                                                                              |======================                                                |  32%  |                                                                              |=========================                                             |  36%  |                                                                              |=============================                                         |  41%  |                                                                              |================================                                      |  45%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================                                |  55%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  64%  |                                                                              |================================================                      |  68%  |                                                                              |===================================================                   |  73%  |                                                                              |======================================================                |  77%  |                                                                              |=========================================================             |  82%  |                                                                              |============================================================          |  86%  |                                                                              |================================================================      |  91%  |                                                                              |===================================================================   |  95%  |                                                                              |======================================================================| 100%
+
+calculating t-test test for cluster all
+  |                                                                              |                                                                      |   0%  |                                                                              |===                                                                   |   5%  |                                                                              |======                                                                |   9%  |                                                                              |==========                                                            |  14%  |                                                                              |=============                                                         |  18%  |                                                                              |================                                                      |  23%  |                                                                              |===================                                                   |  27%  |                                                                              |======================                                                |  32%  |                                                                              |=========================                                             |  36%  |                                                                              |=============================                                         |  41%  |                                                                              |================================                                      |  45%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================                                |  55%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  64%  |                                                                              |================================================                      |  68%  |                                                                              |===================================================                   |  73%  |                                                                              |======================================================                |  77%  |                                                                              |=========================================================             |  82%  |                                                                              |============================================================          |  86%  |                                                                              |================================================================      |  91%  |                                                                              |===================================================================   |  95%  |                                                                              |======================================================================| 100%
+
+processing sce /nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_25_ds_full.rds
+Calculating results for diffcyt-DS-limma ...
+Making specific parameters for: diffcyt-DS-limma include in design matrix: patient_id , contrast: base_spikeMaking specific parameters for: diffcyt-DS-limma include in design matrix: base_spike , contrast: base_spike
+      [,1]
+ [1,]    0
+ [2,]    0
+ [3,]    0
+ [4,]    0
+ [5,]    0
+ [6,]    0
+ [7,]    0
+ [8,]    0
+ [9,]    0
+[10,]    0
+[11,]    0
+[12,]    1
+using SingleCellExperiment object from CATALYST as input
+using cluster IDs from clustering stored in column 'all' of 'cluster_codes' data frame in 'metadata' of SingleCellExperiment object from CATALYST
+calculating features...
+calculating DS tests using method 'diffcyt-DS-limma'...
+Calculating results for diffcyt-DS-LMM ...
+Making specific parameters for: diffcyt-DS-LMM fixed effects: base_spike , random effects: patient_id , contrast: base_spike
+     [,1]
+[1,]    0
+[2,]    1
+using SingleCellExperiment object from CATALYST as input
+using cluster IDs from clustering stored in column 'all' of 'cluster_codes' data frame in 'metadata' of SingleCellExperiment object from CATALYST
+calculating features...
+calculating DS tests using method 'diffcyt-DS-LMM'...
+Error in asMethod(object) : not a positive definite matrix
+In addition: There were 50 or more warnings (use warnings() to see the first 50)
+Error in asMethod(object) : not a positive definite matrix
+In addition: There were 13 warnings (use warnings() to see them)
+Error in asMethod(object) : not a positive definite matrix
+In addition: Warning message:
+In vcov.merMod(model) :
+  Computed variance-covariance matrix problem: not a positive definite matrix;
+returning NA matrix
+calculating BEZI for cluster all
+Fitting a zero-inflated beta distribution...
+...including random effects: patient_id
+  |                                                                              |                                                                      |   0%fitting marker CD41
+GAMLSS-RS iteration 1: Global Deviance = -3827506 
+GAMLSS-RS iteration 2: Global Deviance = -6496947 
+GAMLSS-RS iteration 3: Global Deviance = -6567489 
+GAMLSS-RS iteration 4: Global Deviance = -6567615 
+GAMLSS-RS iteration 5: Global Deviance = -6567615 
+GAMLSS-RS iteration 6: Global Deviance = -6567615 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -0.8484893  0.0003422 -2479.484   <2e-16 ***
+Yspike      -0.0006018  0.0005118    -1.176     0.24    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 2.8315665  0.0006785    4173   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -5.543140   0.007971  -695.4   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99795
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  6 
+ 
+Global Deviance:     -6567615 
+            AIC:     -6567587 
+            SBC:     -6567402 
+******************************************************************
+  |                                                                              |===                                                                   |   5%fitting marker CD40
+GAMLSS-RS iteration 1: Global Deviance = 1958738 
+GAMLSS-RS iteration 2: Global Deviance = 915090.7 
+GAMLSS-RS iteration 3: Global Deviance = -68127.24 
+GAMLSS-RS iteration 4: Global Deviance = -877811.5 
+GAMLSS-RS iteration 5: Global Deviance = -1225958 
+GAMLSS-RS iteration 6: Global Deviance = -1276243 
+GAMLSS-RS iteration 7: Global Deviance = -1278941 
+GAMLSS-RS iteration 8: Global Deviance = -1279033 
+GAMLSS-RS iteration 9: Global Deviance = -1279035 
+GAMLSS-RS iteration 10: Global Deviance = -1279035 
+GAMLSS-RS iteration 11: Global Deviance = -1279035 
+GAMLSS-RS iteration 12: Global Deviance = -1279035 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -2.8249545  0.0006301 -4483.435   <2e-16 ***
+Yspike       0.0018294  0.0009520     1.922   0.0546 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.747319   0.001041    3598   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 0.409349   0.001014   403.6   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.9856
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  12 
+ 
+Global Deviance:     -1279035 
+            AIC:     -1279007 
+            SBC:     -1278823 
+******************************************************************
+  |                                                                              |======                                                                |   9%fitting marker CD42b
+GAMLSS-RS iteration 1: Global Deviance = -6323645 
+GAMLSS-RS iteration 2: Global Deviance = -10315900 
+GAMLSS-RS iteration 3: Global Deviance = -10348815 
+GAMLSS-RS iteration 4: Global Deviance = -10348818 
+GAMLSS-RS iteration 5: Global Deviance = -10348818 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -6.460e-01  2.004e-04 -3223.414   <2e-16 ***
+Yspike      -6.757e-05  2.992e-04    -0.226    0.821    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.8802032  0.0006945    5587   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -7.37788    0.01988  -371.1   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99173
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  5 
+ 
+Global Deviance:     -10348818 
+            AIC:     -10348790 
+            SBC:     -10348605 
+******************************************************************
+  |                                                                              |==========                                                            |  14%fitting marker CD31
+GAMLSS-RS iteration 1: Global Deviance = -4076814 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |=============                                                         |  18%fitting marker CD61
+GAMLSS-RS iteration 1: Global Deviance = -4976856 
+GAMLSS-RS iteration 2: Global Deviance = -7292406 
+GAMLSS-RS iteration 3: Global Deviance = -7310745 
+GAMLSS-RS iteration 4: Global Deviance = -7310750 
+GAMLSS-RS iteration 5: Global Deviance = -7310750 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -0.6181017  0.0002944 -2099.279   <2e-16 ***
+Yspike      -0.0004548  0.0004396    -1.035    0.301    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.0802684  0.0006845    4500   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -8.84998    0.04149  -213.3   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99405
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  5 
+ 
+Global Deviance:     -7310750 
+            AIC:     -7310722 
+            SBC:     -7310537 
+******************************************************************
+  |                                                                              |================                                                      |  23%fitting marker PAR1
+GAMLSS-RS iteration 1: Global Deviance = -2437874 
+GAMLSS-RS iteration 2: Global Deviance = -5814416 
+GAMLSS-RS iteration 3: Global Deviance = -7114748 
+GAMLSS-RS iteration 4: Global Deviance = -7239374 
+GAMLSS-RS iteration 5: Global Deviance = -7242328 
+GAMLSS-RS iteration 6: Global Deviance = -7242367 
+GAMLSS-RS iteration 7: Global Deviance = -7242368 
+GAMLSS-RS iteration 8: Global Deviance = -7242368 
+GAMLSS-RS iteration 9: Global Deviance = -7242368 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -1.7814899  0.0004191 -4250.804   <2e-16 ***
+Yspike       0.0003910  0.0006245     0.626    0.531    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 2.9277588  0.0006845    4277   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -2.697812   0.002043   -1321   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99858
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  9 
+ 
+Global Deviance:     -7242368 
+            AIC:     -7242340 
+            SBC:     -7242155 
+******************************************************************
+  |                                                                              |===================                                                   |  27%fitting marker CD63
+GAMLSS-RS iteration 1: Global Deviance = -458557.8 
+GAMLSS-RS iteration 2: Global Deviance = -3017501 
+GAMLSS-RS iteration 3: Global Deviance = -4174660 
+GAMLSS-RS iteration 4: Global Deviance = -4367475 
+GAMLSS-RS iteration 5: Global Deviance = -4378129 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |======================                                                |  32%fitting marker CD107a
+GAMLSS-RS iteration 1: Global Deviance = 1533493 
+GAMLSS-RS iteration 2: Global Deviance = 403491.7 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |=========================                                             |  36%fitting marker CD36
+GAMLSS-RS iteration 1: Global Deviance = -4119745 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |=============================                                         |  41%fitting marker CD45
+GAMLSS-RS iteration 1: Global Deviance = -435853.3 
+GAMLSS-RS iteration 2: Global Deviance = -2992610 
+GAMLSS-RS iteration 3: Global Deviance = -4505560 
+nlminb problem, convergence error code = 1
+  message = false convergence (8)
+  |                                                                              |================================                                      |  45%fitting marker PAC1
+GAMLSS-RS iteration 1: Global Deviance = -8972972 
+GAMLSS-RS iteration 2: Global Deviance = -9972098 
+GAMLSS-RS iteration 3: Global Deviance = -9972223 
+GAMLSS-RS iteration 4: Global Deviance = -9972223 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  0.1613928  0.0001930 836.170   <2e-16 ***
+Yspike      -0.0002205  0.0002867  -0.769    0.442    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.8758084  0.0006952    5575   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -9.11669    0.04741  -192.3   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99855
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  4 
+ 
+Global Deviance:     -9972223 
+            AIC:     -9972195 
+            SBC:     -9972010 
+******************************************************************
+  |                                                                              |===================================                                   |  50%fitting marker CD29
+GAMLSS-RS iteration 1: Global Deviance = -8425196 
+GAMLSS-RS iteration 2: Global Deviance = -8734671 
+GAMLSS-RS iteration 3: Global Deviance = -8734676 
+GAMLSS-RS iteration 4: Global Deviance = -8734676 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  0.0361486  0.0002225 162.499   <2e-16 ***
+Yspike      -0.0002728  0.0003307  -0.825    0.409    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.5733931  0.0006928    5158   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -9.21089    0.04969  -185.4   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.01279
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  4 
+ 
+Global Deviance:     -8734676 
+            AIC:     -8734648 
+            SBC:     -8734463 
+******************************************************************
+  |                                                                              |======================================                                |  55%fitting marker CD62P
+GAMLSS-RS iteration 1: Global Deviance = 250824.6 
+GAMLSS-RS iteration 2: Global Deviance = -1679963 
+GAMLSS-RS iteration 3: Global Deviance = -1847274 
+GAMLSS-RS iteration 4: Global Deviance = -1850488 
+GAMLSS-RS iteration 5: Global Deviance = -1850520 
+GAMLSS-RS iteration 6: Global Deviance = -1850520 
+GAMLSS-RS iteration 7: Global Deviance = -1850520 
+GAMLSS-RS iteration 8: Global Deviance = -1850520 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.6765335  0.0005777   -2902   <2e-16 ***
+Yspike       1.2603253  0.0007368    1710   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 2.2950137  0.0007024    3268   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.864049   0.001457   -1279   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.04218
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  8 
+ 
+Global Deviance:     -1850520 
+            AIC:     -1850492 
+            SBC:     -1850306 
+******************************************************************
+  |                                                                              |=========================================                             |  59%fitting marker CD69
+GAMLSS-RS iteration 1: Global Deviance = -3379050 
+GAMLSS-RS iteration 2: Global Deviance = -6017606 
+GAMLSS-RS iteration 3: Global Deviance = -6099152 
+GAMLSS-RS iteration 4: Global Deviance = -6099341 
+GAMLSS-RS iteration 5: Global Deviance = -6099341 
+GAMLSS-RS iteration 6: Global Deviance = -6099341 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -0.9325006  0.0003601 -2589.710   <2e-16 ***
+Yspike      -0.0000814  0.0005353    -0.152    0.879    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 2.7586240  0.0006785    4066   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -4.601225   0.005007  -918.9   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  13.99753
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  6 
+ 
+Global Deviance:     -6099341 
+            AIC:     -6099313 
+            SBC:     -6099128 
+******************************************************************
+  |                                                                              |=============================================                         |  64%fitting marker CD141
+GAMLSS-RS iteration 1: Global Deviance = 2541891 
+GAMLSS-RS iteration 2: Global Deviance = 1971981 
+GAMLSS-RS iteration 3: Global Deviance = 1477814 
+GAMLSS-RS iteration 4: Global Deviance = 1226888 
+GAMLSS-RS iteration 5: Global Deviance = 1190420 
+GAMLSS-RS iteration 6: Global Deviance = 1189032 
+GAMLSS-RS iteration 7: Global Deviance = 1189005 
+GAMLSS-RS iteration 8: Global Deviance = 1189004 
+GAMLSS-RS iteration 9: Global Deviance = 1189004 
+GAMLSS-RS iteration 10: Global Deviance = 1189004 
+******************************************************************
+Family:  c("BEZI", "Zero Inflated Beta") 
+
+Call:  gamlss::gamlss(formula = get(marker) ~ Y + re(random = random_terms),  
+    family = family, data = DF, weights = NULL, control = gamlss.control(n.cyc = 200),  
+    trace = FALSE) 
+
+Fitting method: RS() 
+
+------------------------------------------------------------------
+Mu link function:  logit
+Mu Coefficients:
+              Estimate Std. Error   t value Pr(>|t|)    
+(Intercept) -2.4153680  0.0008758 -2758.051   <2e-16 ***
+Yspike      -0.0003358  0.0013152    -0.255    0.798    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Sigma link function:  log
+Sigma Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 3.636164   0.001606    2264   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+Nu link function:  logit 
+Nu Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 1.571371   0.001316    1194   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+------------------------------------------------------------------
+NOTE: Additive smoothing terms exist in the formulas: 
+ i) Std. Error for smoothers are for the linear effect only. 
+ii) Std. Error for the linear terms may not be reliable. 
+------------------------------------------------------------------
+No. of observations in the fit:  4052622 
+Degrees of Freedom for the fit:  14.00358
+      Residual Deg. of Freedom:  4052608 
+                      at cycle:  10 
+ 
+Global Deviance:     1189004 
+            AIC:     1189032 
+            SBC:     1189217 
+******************************************************************
+  |                                                                              |================================================                      |  68%fitting marker CD154
