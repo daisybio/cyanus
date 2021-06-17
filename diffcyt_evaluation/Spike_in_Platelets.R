@@ -210,19 +210,22 @@ saveRDS(sce75, "~/cytof/covid/sce_spiked_clustered_75_ds_full.rds")
 saveRDS(sce100, "~/cytof/covid/sce_spiked_clustered_100_ds_full.rds")
 
 ######tests
-scefull <- readRDS("~/cytof/covid/sce_spiked_clustered_full_ds_full.rds")
-sce25 <- readRDS("~/cytof/covid/sce_spiked_clustered_25_ds_full.rds")
-sce50 <- readRDS("~/cytof/covid/sce_spiked_clustered_50_ds_full.rds")
-sce75 <- readRDS("~/cytof/covid/sce_spiked_clustered_75_ds_full.rds")
-sce100 <- readRDS("~/cytof/covid/sce_spiked_clustered_100_ds_full.rds")
+scefull <- readRDS("/nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_full_ds_full.rds")
+sce25 <- readRDS("/nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_25_ds_full.rds")
+sce50 <- readRDS("/nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_50_ds_full.rds")
+sce75 <- readRDS("/nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_75_ds_full.rds")
+sce100 <- readRDS("/nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_100_ds_full.rds")
 
 source("functions/prep_functions.R")
-for(n in c(1000, 2000, 5000, 10000, 15000, 20000)){
-  for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
+for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
+  last_sce <- get(scetmp)
+  for (n in rev(c(1000, 2000, 5000, 10000, 15000, 20000))) {
     sampling <- tstrsplit(scetmp, "sce", keep=2)[[1]]
-    downsampled_sce <- downSampleSCE(sce=get(scetmp), cells = n, per_sample = T, seed = 1234)
-    saveRDS(downsampled_sce, paste0("~/cytof/covid_spiked/downsampled_files/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
+    print(CATALYST::ei(last_sce))
+    downsampled_sce <- downSampleSCE(sce=last_sce, cells = n, per_sample = T, seed = 1234)
+    saveRDS(downsampled_sce, paste0("~/hiwi/cytof/extdata/covid_spiked/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
     #print(paste0("~/cytof/covid_spiked/downsampled_files/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
+    last_sce <- downsampled_sce
   }
 }
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 

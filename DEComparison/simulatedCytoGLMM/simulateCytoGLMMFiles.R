@@ -1,7 +1,7 @@
 library(CATALYST)
 source("functions/cytoGLMM_functions.R")
 source("functions/prep_functions.R")
-data_dir <- "/nfs/home/students/l.arend/data/cytoGLMM_simulated"
+data_dir <- "/nfs/home/students/ga89koc/hiwi/cytof/extdata/cytoGLMM_simulated"
 n <- 200000
 set.seed(1234)
 sce <- simulateSCE(
@@ -10,15 +10,18 @@ sce <- simulateSCE(
   n_markers = 20,
   n_true = 5
 )
-sce <- clusterSCE(sce, features = NULL)
+sce <- addClusterAll(sce)
 
 filename <-
   file.path(data_dir, sprintf("simulated_cytoGLMM_%d_cells.rds", n))
-saveRDS(sce, filename)
+if (!file.exists(filename))
+  saveRDS(sce, filename)
 
-for (n in c(1000, 2000, 5000, 10000, 15000)) {
-  sce_down <- downSampleSCE(sce, n)
+last_sce <- sce
+for (n in rev(c(1000, 2000, 5000, 10000, 15000, 20000))) {
+  sce_down <- downSampleSCE(last_sce, n)
   filename <-
     file.path(data_dir, sprintf("simulated_cytoGLMM_%d_cells.rds", n))
   saveRDS(sce_down, filename)
+  last_sce <- sce_down
 }

@@ -2,7 +2,7 @@
 #
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --job-name=addEff
+#SBATCH --job-name=pbmc_bencmarking_cytof
 #SBATCH --output=%x.%j.txt
 #SBATCH --mem=20G
 
