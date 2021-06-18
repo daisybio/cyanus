@@ -221,16 +221,11 @@ for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
   last_sce <- get(scetmp)
   for (n in rev(c(1000, 2000, 5000, 10000, 15000, 20000))) {
     sampling <- tstrsplit(scetmp, "sce", keep=2)[[1]]
-<<<<<<< HEAD
     print(CATALYST::ei(last_sce))
     downsampled_sce <- downSampleSCE(sce=last_sce, cells = n, per_sample = T, seed = 1234)
     saveRDS(downsampled_sce, paste0("~/hiwi/cytof/extdata/covid_spiked/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
     #print(paste0("~/cytof/covid_spiked/downsampled_files/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
     last_sce <- downsampled_sce
-=======
-    downsampled_sce <- downSampleSCE(sce=get(scetmp), cells = n, per_sample = T, seed = 1234)
-    saveRDS(downsampled_sce, paste0("~/cytof/covid_spiked/downsampled_files/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
->>>>>>> master
   }
 }
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
