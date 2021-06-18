@@ -140,7 +140,24 @@ ggplot(times, aes(x = reorder(method,elapsed), y = elapsed, fill = random_effect
   geom_bar(size = 3, stat = "identity", position="dodge") + labs(fill="Random Effect") + ylab("elapsed (in sec.)") + scale_fill_manual(values =colorBlindBlack8[c(2,4)]) +
   theme_bw() + theme(text = element_text(size = 18), axis.text.x = element_text(angle = 45, hjust=1)) + xlab(label="method")
 
+#plot negligibe marker expressions
+exprsDual <- assay(sce_dual, "exprs")
+exprsDual <- exprsDual[c("CD61", "CD47", "CD9", "CD31"), ]
+colnames(exprsDual) <- colData(sce_dual)$sample_id
+exprsDualDT <- as.data.table(exprsDual)
+exprsDualDT$marker <- rownames(exprsDual)
+exprsDualDT <- melt(exprsDualDT, id.vars = "marker", variable.name = "patient_id", value.name = "expression")
+exprsDualDT$platelets <- substr(exprsDualDT$patient_id, 8,8)
+exprsDualDT$patient_id <- substr(exprsDualDT$patient_id, 1,7)
 
 
+ggplot(exprsDualDT, aes(x = expression, color = platelets))+
+  geom_density()+
+  facet_grid(patient_id ~ marker)+
+  scale_color_manual(values = colorBlindBlack8[c(3,8)], name = "Activated\n/Baseline")+
+  theme_bw() + 
+  theme(text = element_text(size=20))+ 
+  labs(x="Expression", y = "Density")
 
+  
 

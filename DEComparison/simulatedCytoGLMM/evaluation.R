@@ -68,5 +68,29 @@ ggplot(tmp, aes(marker_id, method)) +
   ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
   ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent", drop=FALSE)
 
+# plot expressions cytoGLMM
+cytoGLMMS <- lapply(list.files("/nfs/home/students/l.arend/data/cytoGLMM_simulated/", full.names = T, pattern=".rds"), readRDS)
+names(cytoGLMMS) <- tstrsplit(list.files("/nfs/home/students/l.arend/data/cytoGLMM_simulated/", pattern=".rds"), ".rds", keep=1)[[1]]
 
+exprsDT <- lapply(cytoGLMMS, function(x){as.data.table(t(assays(x)$exprs))})
+exprsDT <- rbindlist(exprsDT, idcol = "filename")
+exprsDT[, n_cells := tstrsplit(filename, "_", keep=3)]
+exprsDT[, c("patient_id", "condition") := rbindlist(lapply(cytoGLMMS, function(x){as.data.table(colData(x))[, c("patient_id", "condition")]}))]
+exprsDT_long <- melt(exprsDT, id.vars = c("patient_id", "condition","n_cells", "filename"), variable.name = "marker", value.name = "expression")
+exprs_means <- exprsDT_long[, median(expression), by = c("marker", "condition", "n_cells", "patient_id")]
+colnames(exprs_means) <- c("marker", "condition","n_cells", "patient_id", "median")
+exprs_means[, n_cells := factor(n_cells, levels = c("1000", "2000", "5000", "10000", "15000", "200000"))]
+
+exprs_medians_200000 <- exprsDT_long[n_cells == "200000", median(expression), by = c("marker", "condition")]
+colnames(exprs_medians_200000) <- c("antigen", "condition", "expression")
+
+library(CATALYST)
+library(ggplot2)
+g <- plotExprs(cytoGLMMS$simulated_cytoGLMM_200000_cells, features = c("m01", "m02", "m03", "m04", "m05", "m06", "m07", "m08", "m09"), color_by = "condition")
+g <- g +
+  geom_vline(data=exprs_medians_200000[antigen %in% c("m01", "m02", "m03", "m04", "m05", "m06", "m07", "m08", "m09")], aes(xintercept = expression, col = condition))+
+  scale_color_manual(values = colorBlindBlack8[c(3,8)], name = "Condition:\nExpression\nand Medians", labels = c("Control", "Case"))+
+  theme(text = element_text(size=20))+
+  labs(x="Expression", y = "Normalized Density")
+g
 
