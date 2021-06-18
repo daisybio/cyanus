@@ -53,10 +53,10 @@ eff$marker_id <- sapply(strsplit(eff$group2,'::'), "[", 1)
 tmp$marker_id[tmp$marker_id == "HLADR"] <- "HLA_DR"
 heat <- ggplot(tmp, aes(marker_id, method)) + 
   geom_tile(aes(fill=significant), color="white", size=1) + 
-  ggtitle("PBMC Ref vs. BCR-XL") + xlab(label="Marker") + ylab('Method') + 
+  ggtitle("") + xlab(label="Marker") + ylab('Method') + 
   facet_wrap(~cluster_id, scales = "free_x") + 
-  theme(text = element_text(size = 20),  axis.text.x = element_text(angle = 90, vjust=.5))+
-  scale_fill_manual(values = colorBlindBlack8[c(7,3,1)]) +
-  ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude)) +
-  ggside::scale_xfill_manual(values=c(colorBlindBlack8[c(8,5,2,6)]), name='effect size\nmagnitude')
+  theme(text = element_text(size = 18),  axis.text.x = element_text(angle = 90, vjust=.5))+
+  scale_fill_manual(values = colorBlindBlack8[c(7,3,1)], name="Significant") +
+  ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude),  color="white", size=0.2) +
+  ggside::scale_xfill_manual(values=c(colorBlindBlack8[c(8,5,2,6)]), name='Effect size\nMagnitude')
 ggsave(heat, filename = 'DEComparison/pbmc_benchmarking/pbmc_heatmap.png', width = 17, height = 16)

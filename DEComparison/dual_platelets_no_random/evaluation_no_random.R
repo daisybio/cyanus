@@ -59,7 +59,7 @@ ggarrange(boxplot, exprs, ncol=1,
           common.legend = T)
 
 
-path_no_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed_no_random.rds"
+path_no_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets_no_random/sce_dual_res_timed.rds"
 path_with_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed.rds"   #with random effects
 
 results_r <- readRDS(path_with_r)[["results"]]
@@ -77,8 +77,8 @@ tmp$p_adj <- NULL
 tmp <- as.data.table(tmp)
 tmp$significant <- as.factor(tmp$significant)
 tmp$class <- tmp$marker_id %in% c("CD62P", "CD63", "CD154", "CD107a")
-tmp$class[tmp$class == TRUE] <- "state"
-tmp$class[tmp$class == FALSE] <- "type"
+tmp$class[tmp$class == TRUE] <- "State"
+tmp$class[tmp$class == FALSE] <- "Type"
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
@@ -92,12 +92,12 @@ eff_r <- merge(eff_r, marker_classes, by ="marker_id")
 
 with_random_effect <- ggplot(tmp, aes(marker_id, method)) + 
   geom_tile(aes(fill=significant),color="white", size=1) + 
-  ggtitle("") + xlab(label="marker") + 
+  ggtitle("") + xlab(label="Marker") + ylab("Method") +
   facet_wrap(~class, scales = "free_x") + 
   theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
-  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent") + 
+  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent", name="Significant") + 
   ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
-  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
+  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='Effect size\nMagnitude', na.value="transparent")
 
 # plot heatmap
 tmp <- data.frame(method = results_no_r$method, marker_id = results_no_r$marker_id, p_adj = results_no_r$p_adj)
@@ -106,20 +106,20 @@ tmp$p_adj <- NULL
 tmp <- as.data.table(tmp)
 tmp$significant <- as.factor(tmp$significant)
 tmp$class <- tmp$marker_id %in% c("CD62P", "CD63", "CD154", "CD107a")
-tmp$class[tmp$class == TRUE] <- "state"
-tmp$class[tmp$class == FALSE] <- "type"
+tmp$class[tmp$class == TRUE] <- "State"
+tmp$class[tmp$class == FALSE] <- "Type"
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 
 no_random_effect <- ggplot(tmp, aes(marker_id, method)) + 
   geom_tile(aes(fill=significant), color="white", size=1) + 
-  ggtitle("") + xlab(label="marker") + 
+  ggtitle("") + xlab(label="Marker") + ylab("Method") +
   facet_wrap(~class, scales = "free_x") + 
   theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
-  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent") + 
+  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent", name="Significant") + 
   ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
-  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
+  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='Effect size\nMagnitude', na.value="transparent")
 
 
 library(ggpubr)

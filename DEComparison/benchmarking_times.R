@@ -26,7 +26,7 @@ cytoglmm_times$random_effect <- "yes"
 sce_dual <- readRDS("~/data/platelets_dual/sce_dual.rds")
 nr_of_cells <- sum(ei(sce_dual)$n_cells)
 
-path_no_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed_no_random.rds"
+path_no_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets_no_random/sce_dual_res_timed.rds"
 path_with_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed.rds"   #with random effects
 
 dual_random_times <- readRDS(path_with_r)[["times"]]
@@ -75,6 +75,7 @@ times$size[times$size==TRUE] <- "Small Dataset"
 times$size[times$size==FALSE] <- "Big Dataset"
 times$size <- factor(times$size, levels=c("Small Dataset", "Big Dataset"))
 times$elapsed <- times$elapsed / 60
+
 ggplot(times,
                aes(
                  x = nr_of_cells,
@@ -82,11 +83,11 @@ ggplot(times,
                  color = method,
                  shape = dataset,
   )) + 
-  scale_shape_manual(values=1:times[, data.table::uniqueN(method)]) +
+  scale_shape_manual(values=1:times[, data.table::uniqueN(method)], name="Dataset") +
   facet_wrap(~size, scales="free") +
-  geom_point(size = 4, stroke=1.5) + xlab("number of cells") + ylab("elapsed (in min.)") +
+  geom_point(size = 4, stroke=1.5) + xlab("Number of Cells") + ylab("Elapsed (in min.)") +
   theme_bw() + theme(text = element_text(size = 16), axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_color_manual(values = safe_colorblind_palette)
+  scale_color_manual(values = safe_colorblind_palette, name="Method")
 
 
         

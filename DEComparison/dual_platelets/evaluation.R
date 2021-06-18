@@ -59,7 +59,7 @@ ggarrange(boxplot, exprs, ncol=1,
           common.legend = T)
 
 
-path_no_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed_no_random.rds"
+path_no_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets_no_random/sce_dual_res_timed.rds"
 path_with_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed.rds"   #with random effects
 
 results_r <- readRDS(path_with_r)[["results"]]
