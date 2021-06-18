@@ -3,42 +3,44 @@ library(diffcyt)
 plotbox_height <- "48em"
 methods_height <- "40em"
 
+methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
+methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD", "CytoGLMM" = "CytoGLMM", "CytoGLM" = "CytoGLM", "Wilcoxon rank-sum test" = "wilcoxon_median", "Student's t-test" = "t-test")
+
+
 #resetDEAnalysis <- function(){
 #  reactiveVals$exclusionList <- NULL
 #  reactiveVals$subselectionMap <- NULL
 #}
 
-# ---------------------------------------------------------------------------------
 # Main function: 
-# checks which methods is selected and executes the diffcyt function accordingly
-# ---------------------------------------------------------------------------------
+# checks which methods is selected and executes the runDS function accordingly
  
 call_DE <- function() {
-  # ------------------------------------------
-  # read/initialize input
-  # ------------------------------------------
+  
+  # read/initialize input   ------------------------------------------
+
   method <- isolate(input$chosenDAMethod)
   methodType <- isolate(reactiveVals$methodType)
   sce <- isolate(reactiveVals$sce)
   ei <- ei(sce)
-  if (method == "sceEMD") {
-    contrastVars <- input$emdCond
-  } else{
-    contrastVars <- isolate(input$contrastVars)
-  }
-  nr_samples <- nlevels(sample_ids(sce))
+  condition <- isolate(input$conditionIn)
+  groupCol <- isolate(input$groupCol)
+  if (groupCol == "") groupCol <- NULL
+  
   clustering_to_use <- isolate(input$deCluster)
-  design_matrix <- NULL
-  fixed_effects <- NULL
-  random_effects <- NULL
+  nr_samples <- nlevels(sample_ids(sce))
+  
+  addTerms <- isolate(input$addTerms)
+  
   normalize <- NULL
   featuresIn <- NULL
+  includeWeights <- NULL
+  sceEMD_nperm <- NULL
+  sceEMD_binsize <- NULL
+  CytoGLM_num_boot <- NULL
   trend_edgeR <- NULL
   trend_limma <- NULL
   blockID <- NULL
-  includeWeights <- NULL
-  binSize <- NULL
-  nperm <- NULL
   
   #check if subselection is valid, set subselection:
   if (is.null(input$deSubselection)) {
@@ -63,7 +65,7 @@ call_DE <- function() {
           sce,
           subselection,
           isolate(reactiveVals$subselectionMap),
-          contrastVars,
+          condition,
           reactiveVals$exclusionList,
           method
         )
@@ -79,15 +81,16 @@ call_DE <- function() {
     reactiveVals$exclusionList <- returned[["exclusionList"]]
     remove(returned)
   }
-  # ------------------------------------------
-  # error handling, make parameters
-  # ------------------------------------------
+  
+  # error handling, make parameters ------------------------------------------
+  
   parameters <- list()
-  if (method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DS-limma")) {
-    design_matrix <- isolate(input$colsDesign)
+  
+  if (method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom")) {
+    design_matrix <- c(groupCol, condition, addTerms)
     parameters[[method]] <- prepDiffExp(
       sce = sce,
-      contrastVars = contrastVars,
+      contrastVars = condition,
       colsDesign = design_matrix,
       method = method
     )
@@ -118,23 +121,23 @@ call_DE <- function() {
       )
       return(NULL)
     }
-    if (method == "diffcyt-DS-limma" &&
-        input$blockID_limma %in% design_matrix) {
-      showNotification(
-        "Please don't put your blocking variable in the design matrix. See our tooltip for more information",
-        type = "error"
-      )
-      return(NULL)
-    }
+    # if (method == "diffcyt-DS-limma" &&
+    #     input$blockID_limma %in% design_matrix) {
+    #   showNotification(
+    #     "Please don't put your blocking variable in the design matrix. See our tooltip for more information",
+    #     type = "error"
+    #   )
+    #   return(NULL)
+    # }
     
-  } else if (method %in% c("diffcyt-DS-LMM", "diffcyt-DA-GLMM")) {
-    fixed_effects = isolate(input$colsFixed)
-    random_effects = isolate(input$colsRandom)
+  } else if (method %in% c("diffcyt-DA-GLMM")) {
+    fixed_effects = c(condition, addTerms)
+    random_effects = groupCol
     parameters[[method]] <- prepDiffExp(
       sce = sce,
-      contrastVars = contrastVars,
-      colsFixed = input$colsFixed,
-      colsRandom = input$colsRandom,
+      contrastVars = condition,
+      colsFixed = fixed_effects,
+      colsRandom = random_effects,
       method = method
     )
     if (nrow(parameters[[method]][["contrast"]]) >= nr_samples) {
@@ -146,11 +149,10 @@ call_DE <- function() {
     }
   }
   
-  # ------------------------------------------
-  # set method dependent parameters
-  # ------------------------------------------
+  # set method dependent parameters ------------------------------------------
   
-  if (method %in% c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM")) {
+  
+  if (method %in% methodsDA) {
     normalize <- ifelse(input$normalizeDE == "Yes", TRUE, FALSE)
   } 
   if (method == "diffcyt-DA-edgeR") {
@@ -162,30 +164,32 @@ call_DE <- function() {
              input$blockID_limma != "") {
     blockID <- metadata(sce)$experiment_info[[input$blockID_limma]]
   }
-  if (method == "diffcyt-DS-limma") {
-    trend_limma <- ifelse(input$trend_limma == "Yes", TRUE, FALSE)
-  }
-  if (method %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
+  if (method %in% methodsDS) {
     featuresIn <- isolate(input$DEFeaturesIn)
-    includeWeights <- isolate(input$weightsSelection)
-    includeWeights <- ifelse(includeWeights == "Yes", TRUE, FALSE)
-  } else if (input$chosenDAMethod == "sceEMD") {
-    featuresIn <- isolate(input$DEFeaturesIn)
-    binSize <- isolate(input$emdBinwidth)
-    nperm <- isolate(input$emdNperm)
+    if (method == "diffcyt-DS-limma") {
+      trend_limma <- ifelse(input$trend_limma == "Yes", TRUE, FALSE)
+    }
+    if (method %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
+      includeWeights <- isolate(input$weightsSelection)
+      includeWeights <- ifelse(includeWeights == "Yes", TRUE, FALSE)
+    } else if (input$chosenDAMethod == "sceEMD") {
+      sceEMD_binsize <- isolate(input$emdBinwidth)
+      if (sceEMD_binsize == 0)
+        sceEMD_binsize <- NULL
+      emdNperm <- isolate(input$emdNperm)
+    } else if (input$chosenDAMethod == "CytoGLM") {
+      CytoGLM_num_boot <- isolate(input$CytoGLM_num_boot)
+    }
   }
   
-  # ------------------------------------------
-  # make info data table
-  # ------------------------------------------
+  # make info data table ------------------------------------------
   
   reactiveVals$methodsInfo[[method]] <- data.frame(
     analysis_type = isolate(input$da_ds),
     method = method,
-    designmatrix = toString(design_matrix),
-    fixed_effects = toString(fixed_effects),
-    random_effects = toString(random_effects),
-    conditions = toString(contrastVars),
+    condition = condition,
+    grouping_columns = toString(groupCol),
+    additional_fixed_effects = toString(addTerms),
     clustering = toString(clustering_to_use),
     normalize = toString(normalize),
     filter = toString(subselection),
@@ -193,77 +197,70 @@ call_DE <- function() {
     trend_edgeR = toString(trend_edgeR),
     trend_limma = toString(trend_limma),
     block_id = toString(blockID),
-    weights = toString(includeWeights),
-    binSize = toString(binSize),
-    nperm = toString(nperm)
+    include_weights = toString(includeWeights),
+    sceEMD_binsize = toString(sceEMD_binsize),
+    sceEMD_nperm = toString(sceEMD_nperm),
+    CytoGLM_num_boot = toString(CytoGLM_num_boot)
   )
   
-  # ------------------------------------------
-  # MAIN: run method
-  # ------------------------------------------
-  
-  if (method == "sceEMD") {
-    if (binSize == 0)
-      binSize <- NULL
-    
+  # MAIN: run method ------------------------------------------
+
     showNotification(
       ui =
-        HTML("<div id='emdProgress'><b>EMD Progress:</b><div>"),
+        HTML("<div id='deProgress'><b>DE Progress:</b><div>"),
       duration = NULL,
-      id = "emdProgressNote"
+      id = "progressNote"
     )
     
     withCallingHandlers({
       #extra args: sceEMD_condition, binSize, nperm
-      results <- runDS(
-        sce = sce,
-        ds_methods = method,
-        clustering_to_use = clustering_to_use,
-        markers_to_test = featuresIn,
-        contrast_vars = contrastVars,
-        sceEMD_binsize = binSize,
-        sceEMD_nperm = nperm
-      )
-      out <- results[[method]]
+      if (methodType == "DA") {
+        results <- runDA(
+          sce = sce, 
+          da_methods = method,
+          parameters = parameters,
+          clustering_to_use = clustering_to_use, 
+          normalize = normalize, 
+          trend_edgeR = trend_edgeR, 
+          blockID = blockID
+        )
+        out <- results[[method]]
+      } else {
+        #extra args: parameters, blockID, trend_limma, markersToTest, includeWeights
+        results <- runDS(
+          sce = sce,
+          ds_methods = method,
+          clustering_to_use = clustering_to_use,
+          contrast_vars = condition,
+          markers_to_test = featuresIn,
+          parameters = parameters,
+          blockID = blockID,
+          trend_limma = trend_limma,
+          include_weights = includeWeights,
+          design_matrix_vars = c(condition, addTerms, groupCol), 
+          fixed_effects = c(condition, addTerms), 
+          random_effects = groupCol,
+          sceEMD_nperm = emdNperm, 
+          sceEMD_binsize = sceEMD_binsize,
+          cytoGLMM_num_boot = CytoGLM_num_boot,
+          time_methods = FALSE,
+          parallel = FALSE
+        )
+        out <- results[[method]]
+      }
     },
     message = function(m) {
-      shinyjs::html(id = "emdProgress",
+      shinyjs::html(id = "deProgress",
                     html = sprintf("<br>%s", HTML(m$message)),
                     add = TRUE)
     })
     
-  } else if (methodType == "DA") {
-    results <- runDA(
-      sce = sce, 
-      parameters = parameters,
-      da_methods = method,
-      clustering_to_use = clustering_to_use, 
-      normalize = normalize, 
-      trend_edgeR = trend_edgeR, 
-      blockID = blockID
-    )
-    out <- results[[method]]
-  } else{
-    #extra args: parameters, blockID, trend_limma, markersToTest, includeWeights
-    results <- runDS(
-      sce = sce,
-      ds_methods = method,
-      clustering_to_use = clustering_to_use,
-      parameters = parameters,
-      blockID = blockID,
-      trend_limma = trend_limma,
-      markers_to_test = featuresIn,
-      includeWeights = includeWeights
-    )
-    out <- results[[method]]
-  }
-  removeNotification("emdProgressNote")
+  
+  removeNotification("progressNote")
   return(out)
 }
 
-# ---------------------------------------------------------------------------------
-# Renderer
-# ---------------------------------------------------------------------------------
+# Renderer ----
 
 output$selectionBoxDE <- renderUI({
   shinydashboard::box(
@@ -286,9 +283,13 @@ output$selectionBoxDE <- renderUI({
       )
     ),
     uiOutput("deMethodSelection"),
-    uiOutput("modelSelection"),
-    uiOutput("contrastSelection"),
+    uiOutput("conditionSelection"),
+    uiOutput("groupSelection"),
+    uiOutput("additionalTermsSelection"),
+    # uiOutput("contrastSelection"),
+    # uiOutput("modelSelection"),
     uiOutput("emdInput"),
+    uiOutput("CytoGLM_num_boot"),
     uiOutput("deSubselection"),
     width = 6
   ),
@@ -316,8 +317,6 @@ output$selectionBoxDE <- renderUI({
 
 # displays available methods and selection of DA or DS
 output$deMethodSelection <- renderUI({
-   methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
-   methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD")
    if(input$da_ds == "Differential Cluster Abundance"){
      choices <- methodsDA
      reactiveVals$methodType <- "DA"
@@ -340,6 +339,92 @@ output$deMethodSelection <- renderUI({
    )
 })
 
+output$conditionSelection <- renderUI({
+  sceEI <- CATALYST::ei(reactiveVals$sce)
+  condChoices <- which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2))
+  if (length(condChoices) == 0) {
+    showNotification("No condition with exactly two levels found. Unfortunately we currently only support comparisons between two conditions. You might want to subset your data.", duration = NULL, type = "error")
+    return(NULL)
+  }
+  condChoices <- names(condChoices)
+  list(div(
+    selectizeInput(
+      "conditionIn",
+      choices = condChoices,
+      label = span(
+        "What condition do you want to analyse?",
+        icon("question-circle"),
+        id = "conditionInQ"
+      )
+    ),
+    bsPopover(
+      id = "conditionInQ",
+      title = "Condition for DE analysis",
+      content = HTML("Here, you specify the comparison of interest.<br><b>Currently only conditions with two levels are supported.</b>")
+    )))
+})
+
+output$groupSelection <- renderUI({
+  all_methods <- c(methodsDA, methodsDS)
+  req(input$conditionIn, input$chosenDAMethod %in% all_methods[all_methods != 'sceEMD'])
+  sceEI <- data.table::as.data.table(CATALYST::ei(reactiveVals$sce))
+  groupCol <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id")]
+  groupCol <- groupCol[sapply(groupCol, function(x) sceEI[, .(e2 = data.table::uniqueN(get(input$conditionIn)) == 2),, by=get(x)][, all(e2)])]
+  names(groupCol) <- groupCol
+  groupCol <- c('unpaired samples' = '', groupCol)
+  div(
+    pickerInput(
+      "groupCol",
+      choices = groupCol,
+      label = span(
+        "Do you have paired samples? Which column identifies the group e.g. patient_id?",
+        icon("question-circle"),
+        id = "groupColQ"
+      ),
+      options = list(
+        `actions-box` = TRUE,
+        size = 4,
+        `selected-text-format` = "count > 3",
+        "dropup-auto" = FALSE
+      ),
+      multiple = FALSE
+    ),
+    bsPopover(
+      id = "groupColQ",
+      title = "TODO",
+      content = "TODO: explain paired data"
+    )
+  )
+})
+output$additionalTermsSelection <- renderUI({
+  req(input$chosenDAMethod, startsWith(input$chosenDAMethod, 'diffcyt')) # this means this is a linear model and additional terms are allowed
+  addTerms <- names(ei(reactiveVals$sce))
+  addTerms <- addTerms[!addTerms %in% c("n_cells", "sample_id", input$conditionIn, input$groupCol)]
+  div(
+    pickerInput(
+      "addTerms",
+      choices = addTerms,
+      label = span(
+        "Additional fixed terms to include in the Model",
+        icon("question-circle"),
+        id = "addTermsQ"
+      ),
+      options = list(
+        `actions-box` = TRUE,
+        size = 4,
+        `selected-text-format` = "count > 3",
+        "dropup-auto" = FALSE
+      ),
+      multiple = TRUE
+    ),
+    bsPopover(
+      id = "addTermsQ",
+      title = "Additional terms to include in the Model",
+      content = "Since you have specified a method using a linear model, you can include additional terms that might have an effect on expression other than the condition, such as batches."
+    )
+  )
+})
+
 # selection of weights for analysis
 output$weightSelection <- renderUI({
   req(input$chosenDAMethod)
@@ -352,7 +437,7 @@ output$weightSelection <- renderUI({
         inline = T
       ),
       bsPopover(
-        id = "weigthSelectQ",
+        id = "weightSelectQ",
         title = "Whether to include precision weights within each model (across samples).",
         content = "These represent the relative uncertainty in calculating each median value. The cell counts of each sample are incorporated in the analysis.",
         placement = "top"
@@ -388,154 +473,39 @@ output$normalizeSelection <- renderUI({
       bsPopover(
         id = "normalizeDEQ",
         title = "Composition Effects",
-        content = "Whether to include optional normalization factors to adjust for composition effects. Only relevant for Differential Cluster Abundance methods."
+        content = "Whether to include optional normalization factors to adjust for composition effects. Only relevant for Differential Cluster Abundance methods.",
+        placement = "top"
       )
     )
   }
-})
-
-# checks whether designMatrix or formula box must be visualized
-output$modelSelection <- renderUI({
-  req(input$chosenDAMethod, input$chosenDAMethod != "sceEMD")
-  if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DS-limma","diffcyt-DA-voom")){
-    uiOutput("designMatrixSelection")
-  } else {
-    uiOutput("formulaSelection")
-  }
-})
-
-# if method using a design matrix is selected -> cols_design must be specified
-output$designMatrixSelection <- renderUI({
-  colsDesign <- colnames(metadata(reactiveVals$sce)$experiment_info)
-  colsDesign <- colsDesign[!colsDesign %in% c("n_cells", "sample_id")]
-  div(
-    pickerInput(
-      "colsDesign",
-      choices = colsDesign,
-      selected = colsDesign[1],
-      label = span(
-        "Which columns to include in the design matrix?",
-        icon("question-circle"),
-        id = "deDesignMatrix"
-      ),
-      options = list(
-        `actions-box` = TRUE,
-        size = 4,
-        `selected-text-format` = "count > 3",
-        "dropup-auto" = FALSE
-      ),
-      multiple = TRUE
-    ),
-    bsPopover(
-      id = "deDesignMatrix",
-      title = "Design matrix for model fitting",
-      content = "The selected columns will be included in the design matrix specifying the models to be fitted. A design matrix includes all variables that are relevant/interesting for your analysis because the linear model will be built using these variables. That means that you MUST include the condition you want to analyze here."
-    )
-  )
-})
-
-# if method using a formula is selected -> cols_fixed and cols_random must be specified
-output$formulaSelection <- renderUI({
-  cols <- colnames(metadata(reactiveVals$sce)$experiment_info)
-  cols <- cols[!cols %in% c("n_cells", "sample_id")]
-  div(
-    pickerInput(
-      "colsFixed",
-      choices = cols,
-      selected = cols[1],
-      label = span(
-        "Which fixed effect terms to include in the model formula",
-        icon("question-circle"),
-        id = "deFormulaFix"
-      ),
-      options = list(
-        `actions-box` = TRUE,
-        size = 4,
-        `selected-text-format` = "count > 3",
-        "dropup-auto" = FALSE
-      ),
-      multiple = TRUE
-    ),
-    bsPopover(
-      id = "deFormulaFix",
-      title = "Fixed effect terms for the model formula",
-      content = "Fixed effects are variables that we expect will have an effect on the dependent/response variable: they’re what you call explanatory variables in a standard linear regression. You MUST include the condition variable here. "),
-    pickerInput(
-      "colsRandom",
-      choices = cols,
-      selected = cols[2],
-      label = span(
-        "Which random intercept terms to include in the model formula",
-        icon("question-circle"),
-        id = "deFormulaRandom"
-      ),
-      options = list(
-        `actions-box` = TRUE,
-        size = 4,
-        `selected-text-format` = "count > 3",
-        "dropup-auto" = FALSE
-      ),            
-      multiple = TRUE
-    ),
-    bsPopover(
-      id = "deFormulaRandom",
-      title = "Random intercept terms for the model formula",
-      content = "Random effects are usually grouping factors for which we are trying to control. Note that the golden rule is that you generally want your random effect to have at least five levels. For example if you are analysing a condition (A vs. B) on samples (patient1_A, patient1_B) belonging to the same patient (patient1), you can include patient_id as random effect."),
-  )
-})
-
-output$contrastSelection <- renderUI({
-  req(input$chosenDAMethod, input$chosenDAMethod != "sceEMD")
-  if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR", "diffcyt-DS-limma", "diffcyt-DA-voom")) {
-    choices <- input$colsDesign
-  } else {
-    choices <- input$colsFixed
-  }
-  div(
-    selectInput(
-      "contrastVars",
-      choices = choices,
-      selected = choices[1],
-      label = span(
-        "What condition do you want to analyse?",
-        icon("question-circle"),
-        id = "deContrastQ"
-      ),
-      multiple = F
-    ),
-    bsPopover(
-      id = "deContrastQ",
-      title = "Contrast Matrix Design",
-      content = "Here, you specify the comparison of interest. The p-values will be calculated on the basis of this variable, i.e. it will be tested whether the coefficient of this parameter in the model is equal to zero. "
-    )
-  )
 })
 
 output$emdInput <- renderUI({
   req(input$chosenDAMethod == "sceEMD")
   sceEI <- ei(reactiveVals$sce)
-  condChoices <- which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2))
-  if (length(condChoices) == 0){
-    showNotification("No condition with exactly two levels found. EMD is not applicable, please select another method.", duration = NULL, type = "error")
-    return(NULL)
-    }
-  condChoices <- names(condChoices)
-  list(div(
-    selectizeInput(
-      "emdCond",
-      choices = condChoices,
-      label = span(
-        "What condition do you want to analyse?",
-        icon("question-circle"),
-        id = "emdCondQ"
-      )
-    ),
-  bsPopover(
-    id = "emdCondQ",
-    title = "Condition for EMD analysis",
-    content = HTML("Here, you specify the comparison of interest, i.e. the group on which to split the expression distributions.<br><b>Currently only conditions with two levels are supported.</b>")
-  )
-  ),
+  # condChoices <- which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2))
+  # if (length(condChoices) == 0){
+  #   showNotification("No condition with exactly two levels found. EMD is not applicable, please select another method.", duration = NULL, type = "error")
+  #   return(NULL)
+  # }
+  # condChoices <- names(condChoices)
+  list(
+  #   div(
+  #   selectizeInput(
+  #     "emdCond",
+  #     choices = condChoices,
+  #     label = span(
+  #       "What condition do you want to analyse?",
+  #       icon("question-circle"),
+  #       id = "emdCondQ"
+  #     )
+  #   ),
+  # bsPopover(
+  #   id = "emdCondQ",
+  #   title = "Condition for EMD analysis",
+  #   content = HTML("Here, you specify the comparison of interest, i.e. the group on which to split the expression distributions.<br><b>Currently only conditions with two levels are supported.</b>")
+  # )
+  # ),
   uiOutput("emdNpermInput"),
   div(
     numericInput(
@@ -559,8 +529,8 @@ output$emdInput <- renderUI({
 })
 
 output$emdNpermInput <- renderUI({
-  req(input$emdCond)
-  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$emdCond]]))
+  req(input$conditionIn)
+  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$conditionIn]]))
   div(
     numericInput(
       "emdNperm",
@@ -569,15 +539,38 @@ output$emdNpermInput <- renderUI({
         icon("question-circle"),
         id = "emdNpermQ"
       ),
-      value = min(100, maxPerm),
+      value = min(500, maxPerm),
       min = 0,
       max = maxPerm,
-      step = 10
+      step = 100
     ),
     bsPopover(
       id = "emdNpermQ",
       title = "Number of permutations for p-value estimation",
-      content = HTML("Note that meaningful results require many permutations. For an unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br><b>This value must not exceed the factorial of the number of samples.</b>")
+      content = HTML("Note that meaningful results require many permutations. E.g. for an unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br><b>This value must not exceed the factorial of the number of samples.</b>")
+    )
+  )
+})
+
+output$CytoGLM_num_boot <- renderUI({
+  req(input$chosenDAMethod == "CytoGLM")
+  div(
+    numericInput(
+      "cytoNBoot",
+      label = span(
+        "Number of bootstrap samples",
+        icon("question-circle"),
+        id = "cytoNBootQ"
+      ),
+      value = 1000,
+      min = 0,
+      max = 10000,
+      step = 100
+    ),
+    bsPopover(
+      id = "cytoNBootQ",
+      title = "Number of bootstrap samples",
+      content = HTML('CytoGLM uses bootstrapping with replacement to preserve the cluster structure in donors. For more information refer to <a href="https://doi.org/10.1186/s12859-021-04067-x" target="_blank">Seiler et al.</a>')
     )
   )
 })
@@ -688,10 +681,127 @@ output$extraFeatures <- renderUI({
   }
 })
 
+output$contrastSelection <- renderUI({
+  req(input$chosenDAMethod, input$chosenDAMethod != "sceEMD")
+  if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR", "diffcyt-DS-limma", "diffcyt-DA-voom")) {
+    choices <- input$colsDesign
+  } else {
+    choices <- input$colsFixed
+  }
+  div(
+    selectInput(
+      "contrastVars",
+      choices = choices,
+      selected = choices[1],
+      label = span(
+        "What condition do you want to analyse?",
+        icon("question-circle"),
+        id = "deContrastQ"
+      ),
+      multiple = F
+    ),
+    bsPopover(
+      id = "deContrastQ",
+      title = "Contrast Matrix Design",
+      content = "Here, you specify the comparison of interest. The p-values will be calculated on the basis of this variable, i.e. it will be tested whether the coefficient of this parameter in the model is equal to zero. "
+    )
+  )
+})
+
+# checks whether designMatrix or formula box must be visualized
+output$modelSelection <- renderUI({
+  req(input$chosenDAMethod, input$chosenDAMethod != "sceEMD")
+  if (input$chosenDAMethod %in% c("diffcyt-DA-edgeR","diffcyt-DS-limma","diffcyt-DA-voom")){
+    uiOutput("designMatrixSelection")
+  } else {
+    uiOutput("formulaSelection")
+  }
+})
+
+# if method using a design matrix is selected -> cols_design must be specified
+output$designMatrixSelection <- renderUI({
+  colsDesign <- colnames(metadata(reactiveVals$sce)$experiment_info)
+  colsDesign <- colsDesign[!colsDesign %in% c("n_cells", "sample_id")]
+  div(
+    pickerInput(
+      "colsDesign",
+      choices = colsDesign,
+      selected = colsDesign[1],
+      label = span(
+        "Which columns to include in the design matrix?",
+        icon("question-circle"),
+        id = "deDesignMatrix"
+      ),
+      options = list(
+        `actions-box` = TRUE,
+        size = 4,
+        `selected-text-format` = "count > 3",
+        "dropup-auto" = FALSE
+      ),
+      multiple = TRUE
+    ),
+    bsPopover(
+      id = "deDesignMatrix",
+      title = "Design matrix for model fitting",
+      content = "The selected columns will be included in the design matrix specifying the models to be fitted. A design matrix includes all variables that are relevant/interesting for your analysis because the linear model will be built using these variables. That means that you MUST include the condition you want to analyze here."
+    )
+  )
+})
+
+# if method using a formula is selected -> cols_fixed and cols_random must be specified
+output$formulaSelection <- renderUI({
+  cols <- colnames(metadata(reactiveVals$sce)$experiment_info)
+  cols <- cols[!cols %in% c("n_cells", "sample_id")]
+  div(
+    pickerInput(
+      "colsFixed",
+      choices = cols,
+      selected = cols[1],
+      label = span(
+        "Which fixed effect terms to include in the model formula",
+        icon("question-circle"),
+        id = "deFormulaFix"
+      ),
+      options = list(
+        `actions-box` = TRUE,
+        size = 4,
+        `selected-text-format` = "count > 3",
+        "dropup-auto" = FALSE
+      ),
+      multiple = TRUE
+    ),
+    bsPopover(
+      id = "deFormulaFix",
+      title = "Fixed effect terms for the model formula",
+      content = "Fixed effects are variables that we expect will have an effect on the dependent/response variable: they’re what you call explanatory variables in a standard linear regression. You MUST include the condition variable here. "),
+    pickerInput(
+      "colsRandom",
+      choices = cols,
+      selected = cols[2],
+      label = span(
+        "Which random intercept terms to include in the model formula",
+        icon("question-circle"),
+        id = "deFormulaRandom"
+      ),
+      options = list(
+        `actions-box` = TRUE,
+        size = 4,
+        `selected-text-format` = "count > 3",
+        "dropup-auto" = FALSE
+      ),            
+      multiple = TRUE
+    ),
+    bsPopover(
+      id = "deFormulaRandom",
+      title = "Random intercept terms for the model formula",
+      content = "Random effects are usually grouping factors for which we are trying to control. Note that the golden rule is that you generally want your random effect to have at least five levels. For example if you are analysing a condition (A vs. B) on samples (patient1_A, patient1_B) belonging to the same patient (patient1), you can include patient_id as random effect."),
+  )
+})
+
 # if diffcyt should be exectued on selected markers (markers_to_test)
 output$markerToTestSelection <- renderUI({
   req(input$chosenDAMethod)
-  if (input$chosenDAMethod %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM", "sceEMD")) {
+  if (input$chosenDAMethod %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM", "sceEMD", "CytoGLMM", "CytoGLM", "wilcoxon_median", "t_test")) {
     div(
       selectInput(
         "DEMarkerToTest",
@@ -865,12 +975,13 @@ output$visDiffExp <- renderUI({
       value = 0.05,
       step = 0.05
     ),
-    numericInput(
-      "lfcThreshold",
-      label = "Log2FC Threshold",
-      value = 1,
-      step = 0.5
-    ),
+    # TODO: add the possibilty to alter Fold Change
+    # numericInput(
+    #   "lfcThreshold",
+    #   label = "Log2FC Threshold",
+    #   value = 1,
+    #   step = 0.5
+    # ),
     selectizeInput(
       "heatmapSortBy",
       "Sort by:",
@@ -1033,9 +1144,7 @@ output$downloadPlotPbExprs <- downloadHandler(
 )
 
 
-# ---------------------------------------------------------------------------------
-# Observer
-# ---------------------------------------------------------------------------------
+# Observer-----
 
 observe({
   if (reactiveVals$current_tab==6){
@@ -1115,7 +1224,7 @@ observeEvent(input$diffExpButton,{
 observeEvent(input$visExpButton,{
   visMethod <- isolate(input$deVisMethod)
   fdrThreshold <- isolate(input$fdrThreshold)
-  lfcThreshold <- isolate(input$lfcThreshold)
+  # lfcThreshold <- isolate(input$lfcThreshold)
   heatmapSortBy <- isolate(input$heatmapSortBy)
   heatmapNormalize <- isolate(input$heatmapNormalize)
   deCluster <- isolate(input$deCluster)
@@ -1140,8 +1249,6 @@ observeEvent(input$visExpButton,{
   
   # Render Heatmap Plot
   output$heatmapDEPlot <- renderPlot({
-    methodsDA <- c("diffcyt-DA-edgeR","diffcyt-DA-voom","diffcyt-DA-GLMM")
-    methodsDS <- c("diffcyt-DS-limma","diffcyt-DS-LMM", "sceEMD")
     subselection <- isolate(reactiveVals$methodsInfo[[visMethod]]$filter)
     sce <- isolate(reactiveVals$sce)
     if(subselection != "No"){
@@ -1165,12 +1272,11 @@ observeEvent(input$visExpButton,{
     #  out <- rowData(out$res)
     #out$p_val[is.na(out$p_val)] <- 1
     #out$p_adj[is.na(out$p_adj)] <- 1
-    
     reactiveVals$diffHeatmapPlot <- plotDiffHeatmapCustom(
       x=x,
       y=out, 
       fdr=as.numeric(fdrThreshold), 
-      lfc=as.numeric(lfcThreshold), 
+      # lfc=as.numeric(lfcThreshold), 
       sort_by = heatmapSortBy, 
       normalize=as.logical(heatmapNormalize ),
       all = TRUE,
