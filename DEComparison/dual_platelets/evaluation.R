@@ -16,7 +16,7 @@ boxplot <- plotPbExprs(sce_dual, features = c("CD62P", "CD63", "CD154", "CD107a"
   strip.background = element_blank(),
   strip.text = element_text(face = "bold", size=16),
   axis.text = element_text(color = "black", size=14), 
-  axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) + scale_color_manual(values =colorBlindBlack8[c(3,8)])
+  axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) + scale_color_manual(values =colorBlindBlack8[c(3,8)], name="Activated/\nBaseline")
 
 # exprs function from catalyst
 # subset features to use
@@ -42,14 +42,14 @@ exprs <- ggplot(gg_df, fill = NULL,
          col = color_by, group = "sample_id")) + 
   facet_wrap(~ antigen, scales = "free_x", ncol=4) +
   geom_density() + 
-  ylab("Normalized density") +
+  ylab("Normalized Density") +
   xlab("Expression") +
   theme_classic() + theme(
     panel.grid = element_blank(), 
     strip.background = element_blank(),
     strip.text = element_text(face = "bold", size=16),
     axis.text = element_text(color = "black", size=14), 
-    axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) +  scale_color_manual(values =colorBlindBlack8[c(3,8)])
+    axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) +  scale_color_manual(values =colorBlindBlack8[c(3,8)], name="Activated/\nBaseline")
 
 library(ggpubr)
 ggarrange(boxplot, exprs, ncol=1,

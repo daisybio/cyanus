@@ -32,8 +32,8 @@ tmp$p_adj <- NULL
 tmp <- as.data.table(tmp)
 tmp$significant <- as.factor(tmp$significant)
 tmp$class <- tmp$marker_id %in% trues
-tmp$class[tmp$class == TRUE] <- "differentially expressed"
-tmp$class[tmp$class == FALSE] <- "not differentially expressed"
+tmp$class[tmp$class == TRUE] <- "Differentially Expressed"
+tmp$class[tmp$class == FALSE] <- "Not Differentially Expressed"
 
 
 eff <-
@@ -60,13 +60,14 @@ eff <- merge(eff,marker_classes, by="marker_id")
 ggplot(tmp, aes(marker_id, method)) + 
   geom_tile(aes(fill=significant), color="white", size=1) + 
   ggtitle("") + 
-  xlab(label="marker") + 
+  xlab(label="Marker") + 
+  ylab("Method") +
   #facet_wrap(~class, scales = "free_x") + 
   facet_grid(nr_of_cells~class, scales = "free_x") +
-  theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
-  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent") + 
+  theme(text = element_text(size = 14),  axis.text.x = element_text(angle = 45, hjust=1))+
+  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent", name="Significant") + 
   ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
-  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent", drop=FALSE)
+  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='Effect Size\nMagnitude', na.value="transparent", drop=FALSE)
 
 
 
