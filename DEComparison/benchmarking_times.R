@@ -56,11 +56,15 @@ pbmc_times$nr_of_cells <- nr_of_cells
 
 
 # Simulated Covid-Spike
+sce_covid_spike <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_full_ds_full.rds")
+nr_cells_full <- sum(ei(sce_covid_spike)$n_cells)
+
 nr_of_samples<- 22
 covid_times <- getTimes("DEComparison/downsampled_covid_spike")
 covid_times$nr_of_cells <- sapply(strsplit(covid_times$dataset,'_'), "[", 6)
+covid_times$nr_of_cells[covid_times$nr_of_cells == "full" ] <- nr_cells_full
 covid_times$nr_of_cells <- as.numeric(covid_times$nr_of_cells)
-covid_times$nr_of_cells <- covid_times$nr_of_cells * nr_of_samples
+covid_times$nr_of_cells[covid_times$nr_of_cells != nr_cells_full] <- covid_times$nr_of_cells[covid_times$nr_of_cells != nr_cells_full] * nr_of_samples
 covid_times$dataset <- "covid_spiked"
 covid_times$random_effect <- "yes"
 

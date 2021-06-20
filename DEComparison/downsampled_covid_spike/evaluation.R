@@ -7,4 +7,9 @@ plot_cells_vs_elapsed(stats_table)
 plot_sens_vs_pre(stats_table)
 plot_sens_vs_spec(stats_table)
 plot_f1_vs_elapsed(stats_table)
-plotHeatmaps('downsampled_covid_spike')
+
+
+
+plotHeatmaps('downsampled_covid_spike', nr_cells_spike = "full")
+
+plotHeatmaps('downsampled_covid_spike', nr_cells_spike = "20000")

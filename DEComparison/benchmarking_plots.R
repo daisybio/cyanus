@@ -214,8 +214,8 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000, random=TRUE){
   tmp$significant <- as.factor(tmp$significant)
   tmp$class <- tmp$marker_id %in% trues
   if(data_type %in% c("downsampled_covid_spike", "dual_platelets")){
-    tmp$class[tmp$class == TRUE] <- "state"
-    tmp$class[tmp$class == FALSE] <- "type"
+    tmp$class[tmp$class == TRUE] <- "State"
+    tmp$class[tmp$class == FALSE] <- "Type"
   }else if(data_type == "simulatedCytoGLMM"){
     tmp$class[tmp$class == TRUE] <- "differentially expressed"
     tmp$class[tmp$class == FALSE] <- "not differentially expressed"
@@ -225,13 +225,14 @@ plotHeatmaps <- function(data_type, nr_cells_spike=15000, random=TRUE){
   
   tmp <- as.data.table(tmp)
   if(data_type == "downsampled_covid_spike"){
-    ggplot(tmp[nr_of_cells == nr_cells_spike], aes(marker_id, method, fill=significant)) + 
-      geom_tile(color="white", size=1) + 
-      ggtitle(sprintf("Downsampled Covid Spike, %d cells per sample", nr_cells_spike)) + 
-      xlab(label="marker") + 
-      facet_grid(alpha~class, scales = "free_x") + 
-      theme(text = element_text(size = 13),  axis.text.x = element_text(angle = 45, hjust=1))+
-      scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])
+      ggplot(tmp[nr_of_cells == nr_cells_spike], aes(marker_id, method, fill=significant)) + 
+        geom_tile(color="white", size=1) + 
+        ggtitle(paste0("Nr_of_cells:", nr_cells_spike)) + 
+        xlab(label="Marker") + 
+        ylab("Method") + 
+        facet_grid(alpha~class, scales = "free_x") + 
+        theme(text = element_text(size = 13),  axis.text.x = element_text(angle = 45, hjust=1))+
+        scale_fill_manual(values = colorBlindBlack8[c(7,3,1)], name="Significant")
   } else if(data_type == "simulatedCytoGLMM"){
     ggplot(tmp, aes(marker_id, method, fill=significant)) + 
       geom_tile(color="white", size=1) + 
