@@ -67,6 +67,11 @@ covid_times$nr_of_cells <- as.numeric(covid_times$nr_of_cells)
 covid_times$nr_of_cells[covid_times$nr_of_cells != nr_cells_full] <- covid_times$nr_of_cells[covid_times$nr_of_cells != nr_cells_full] * nr_of_samples
 covid_times$dataset <- "covid_spiked"
 covid_times$random_effect <- "yes"
+covid_times$nr_of_cells <- as.factor(covid_times$nr_of_cells)
+
+tmp <- covid_times[nr_of_cells == nr_cells_full]
+tmp$elapsed <- tmp$elapsed / 60
+ggplot(tmp, aes(x=reorder(method, elapsed, FUN = median), y=elapsed)) + geom_boxplot() + xlab("Method") + ylab("Elapsed (in min.)") + theme_bw() + theme(text = element_text(size=16), axis.text.x = element_text(angle = 45, hjust = 1))
 
 
 # Plot

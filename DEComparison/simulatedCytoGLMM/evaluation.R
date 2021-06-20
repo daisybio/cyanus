@@ -7,7 +7,6 @@ plot_cells_vs_elapsed(stats_table)
 plot_sens_vs_pre(stats_table)
 plot_sens_vs_spec(stats_table)
 plot_f1_vs_elapsed(stats_table)
-plotHeatmaps('simulatedCytoGLMM')
 
 
 # Plot Heatmap for Paper
@@ -28,6 +27,7 @@ results[, nr_of_cells := tstrsplit(dataset, "_", keep=keep)]
 tmp <- data.frame(method = results$method, marker_id = results$marker_id, p_adj = results$p_adj, nr_of_cells = results$nr_of_cells)
 tmp$significant <- results$p_adj < 0.05
 tmp$nr_of_cells <- results$nr_of_cells
+tmp$nr_of_cells <- factor(tmp$nr_of_cells, levels=c("1000", "2000", "5000", "10000", "15000", "20000", "200000"))
 tmp$p_adj <- NULL
 tmp <- as.data.table(tmp)
 tmp$significant <- as.factor(tmp$significant)
@@ -42,6 +42,7 @@ eff <-
     idcol = "dataset")
 eff[, dataset := basename(dataset)]
 eff$nr_of_cells <- sapply(strsplit(eff$dataset,'_'), "[", 3)
+eff$nr_of_cells <- factor(eff$nr_of_cells, levels=c("1000", "2000", "5000", "10000", "15000","20000", "200000"))
 eff$marker_id <- sapply(strsplit(eff$group1,'::'), "[", 1)
 
 
@@ -64,10 +65,12 @@ ggplot(tmp, aes(marker_id, method)) +
   ylab("Method") +
   #facet_wrap(~class, scales = "free_x") + 
   facet_grid(nr_of_cells~class, scales = "free_x") +
-  theme(text = element_text(size = 14),  axis.text.x = element_text(angle = 45, hjust=1))+
+  theme(text = element_text(size = 14),  axis.text.x = element_text(angle = 90, hjust=1))+
   scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent", name="Significant") + 
   ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
   ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='Effect Size\nMagnitude', na.value="transparent", drop=FALSE)
+
+
 
 # plot expressions cytoGLMM
 cytoGLMMS <- lapply(list.files("/nfs/home/students/l.arend/data/cytoGLMM_simulated/", full.names = T, pattern=".rds"), readRDS)

@@ -147,121 +147,169 @@ preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covi
   return(stats_table)
 }
 
-plotHeatmaps <- function(data_type, nr_cells_spike=15000, random=TRUE){
-  if (data_type == "simulatedCytoGLMM"){
-    path <-  "DEComparison/simulatedCytoGLMM"
-    trues <- c("m01", "m02", "m03", "m04", "m05")
-    keep <- 3
-  } else if (data_type == "downsampled_covid_spike"){
-    path <-  "DEComparison/downsampled_covid_spike"
-    trues <- c("CD62P", "CD63", "CD107a", "CD154")
-    keep <- 6
-  } else if (data_type == "dual_platelets"){
-    if(random == FALSE){
-      path <- "DEComparison/dual_platelets/sce_dual_res_timed.rds"
-    }else{
-      path <- "DEComparison/dual_platelets/sce_dual_res_timed_no_random.rds"
-    }
-    trues <- c("CD62P", "CD63", "CD107a", "CD154")
-  } else if(data_type == "pbmc"){
-    path <- "DEComparison/pbmc_benchmarking"
-  }
-  if (data_type == "dual_platelets"){
-    results_rds <- readRDS(path)
-    results <- results_rds[["results"]]
-    times <- results_rds[["times"]]
-    eff <- results_rds[["eff"]]
-    eff$marker_id <- sapply(strsplit(eff$group2,'::'), "[", 1)
-    eff <- merge(eff, marker_classes, by ="marker_id")
-  }
-  else{
-    result_rds <-
-      list.files(path = path,
-                 pattern = "\\.rds$",
-                 full.names = T)
-    results <-
-      data.table::rbindlist(sapply(result_rds, function(rds)
-        readRDS(rds)[["results"]], simplify = FALSE),
-        idcol = "dataset")
-    results[, dataset := basename(dataset)]
-    times <-
-      data.table::rbindlist(sapply(result_rds, function(rds)
-        readRDS(rds)[["times"]], simplify = FALSE),
-        idcol = "dataset")
-    times[, dataset := basename(dataset)]
-    eff <-
-      data.table::rbindlist(sapply(result_rds, function(rds)
-        readRDS(rds)[["eff"]], simplify = FALSE),
-        idcol = "dataset")
-    eff[, dataset := basename(dataset)]
-  }
-  tmp <- data.frame(method = results$method, marker_id = results$marker_id, p_adj = results$p_adj)
-  if (data_type %in% c("simulatedCytoGLMM", "downsampled_covid_spike")){
-    results[, nr_of_cells := tstrsplit(dataset, "_", keep=keep)]
-    tmp$nr_of_cells <- results$nr_of_cells
-    if(data_type == "downsampled_covid_spike"){
-      results[, alpha := tstrsplit(dataset, "_", keep=4)]
-      tmp$alpha <- factor(results$alpha, levels=c('full', '25', '50', '75', '100'))
-    }
-  }else if(data_type == "pbmc"){
-    tmp$cluster_id <- results$cluster_id
-  }
-  
-  # plot results
-  tmp$significant <- results$p_adj < 0.05
-  tmp$p_adj <- NULL
-  tmp <- as.data.table(tmp)
-  tmp$significant <- as.factor(tmp$significant)
-  tmp$class <- tmp$marker_id %in% trues
-  if(data_type %in% c("downsampled_covid_spike", "dual_platelets")){
-    tmp$class[tmp$class == TRUE] <- "State"
-    tmp$class[tmp$class == FALSE] <- "Type"
-  }else if(data_type == "simulatedCytoGLMM"){
-    tmp$class[tmp$class == TRUE] <- "differentially expressed"
-    tmp$class[tmp$class == FALSE] <- "not differentially expressed"
-  }
-  colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
-                         "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-  
-  tmp <- as.data.table(tmp)
-  if(data_type == "downsampled_covid_spike"){
-      ggplot(tmp[nr_of_cells == nr_cells_spike], aes(marker_id, method, fill=significant)) + 
-        geom_tile(color="white", size=1) + 
-        ggtitle(paste0("Nr_of_cells:", nr_cells_spike)) + 
-        xlab(label="Marker") + 
-        ylab("Method") + 
-        facet_grid(alpha~class, scales = "free_x") + 
-        theme(text = element_text(size = 13),  axis.text.x = element_text(angle = 45, hjust=1))+
-        scale_fill_manual(values = colorBlindBlack8[c(7,3,1)], name="Significant")
-  } else if(data_type == "simulatedCytoGLMM"){
-    ggplot(tmp, aes(marker_id, method, fill=significant)) + 
-      geom_tile(color="white", size=1) + 
-      ggtitle("CytoGLMM Simulation") + 
-      xlab(label="marker") + 
-      facet_grid(nr_of_cells~class, scales = "free_x") + 
-      theme(text = element_text(size = 10),  axis.text.x = element_text(angle = 45, hjust=1))+
-      scale_fill_manual(values = colorBlindBlack8[c(7,3,1)])
-  } else if(data_type == "dual_platelets"){
-    ggplot(tmp, aes(marker_id, method)) + 
-      geom_tile(aes(fill=significant),color="white", size=1) + 
-      ggtitle("") + xlab(label="marker") + 
-      facet_wrap(~class, scales = "free_x") + 
-      theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
-      scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent") + 
-      ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
-      ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
-  } else if(data_type == "pbmc"){
-    tmp$marker_id[tmp$marker_id == "HLADR"] <- "HLA_DR"
-    ggplot(tmp, aes(marker_id, method)) + 
-      geom_tile(aes(fill=significant), color="white", size=1) + 
-      ggtitle("PBMC Ref vs. BCR-XL") + xlab(label="marker") + 
-      facet_wrap(~cluster_id, scales = "free_x") + 
-      theme(text = element_text(size = 13),  axis.text.x = element_text(angle = 45, hjust=1))+
-      scale_fill_manual(values = colorBlindBlack8[c(7,3,1)]) +
-      ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude)) +
-      ggside::scale_xfill_manual(values=c(colorBlindBlack8[c(8,5,2,6)]), name='effect size\nmagnitude')
-  }
-}
+# plotHeatmaps <- function(data_type, nr_cells_spike=15000, random=TRUE){
+#   if (data_type == "simulatedCytoGLMM"){
+#     path <-  "DEComparison/simulatedCytoGLMM"
+#     trues <- c("m01", "m02", "m03", "m04", "m05")
+#     keep <- 3
+#   } else if (data_type == "downsampled_covid_spike"){
+#     path <-  "DEComparison/downsampled_covid_spike"
+#     trues <- c("CD62P", "CD63", "CD107a", "CD154")
+#     keep <- 6
+#   } else if (data_type == "dual_platelets"){
+#     if(random == FALSE){
+#       path <- "DEComparison/dual_platelets/sce_dual_res_timed.rds"
+#     }else{
+#       path <- "DEComparison/dual_platelets/sce_dual_res_timed_no_random.rds"
+#     }
+#     trues <- c("CD62P", "CD63", "CD107a", "CD154")
+#   } else if(data_type == "pbmc"){
+#     path <- "DEComparison/pbmc_benchmarking"
+#   }
+#   if (data_type == "dual_platelets"){
+#     results_rds <- readRDS(path)
+#     results <- results_rds[["results"]]
+#     times <- results_rds[["times"]]
+#     eff <- results_rds[["eff"]]
+#     eff$marker_id <- sapply(strsplit(eff$group2,'::'), "[", 1)
+#     marker_classes <- tmp[,c("marker_id", "class")]
+#     marker_classes <- unique(marker_classes)
+#     eff <- merge(eff, marker_classes, by ="marker_id")
+#   }
+#   else{
+#     result_rds <-
+#       list.files(path = path,
+#                  pattern = "\\.rds$",
+#                  full.names = T)
+#     results <-
+#       data.table::rbindlist(sapply(result_rds, function(rds)
+#         readRDS(rds)[["results"]], simplify = FALSE),
+#         idcol = "dataset")
+#     results[, dataset := basename(dataset)]
+#     times <-
+#       data.table::rbindlist(sapply(result_rds, function(rds)
+#         readRDS(rds)[["times"]], simplify = FALSE),
+#         idcol = "dataset")
+#     times[, dataset := basename(dataset)]
+#     eff <-
+#       data.table::rbindlist(sapply(result_rds, function(rds)
+#         readRDS(rds)[["eff"]], simplify = FALSE),
+#         idcol = "dataset")
+#     eff[, dataset := basename(dataset)]
+#   }
+#   tmp <- data.frame(method = results$method, marker_id = results$marker_id, p_adj = results$p_adj)
+#   if (data_type %in% c("simulatedCytoGLMM", "downsampled_covid_spike")){
+#     results[, nr_of_cells := tstrsplit(dataset, "_", keep=keep)]
+#     tmp$nr_of_cells <- results$nr_of_cells
+#     if(data_type == "downsampled_covid_spike"){
+#       results[, alpha := tstrsplit(dataset, "_", keep=4)]
+#       tmp$alpha <- factor(results$alpha, levels=c('full', '25', '50', '75', '100'))
+#     }
+#   }else if(data_type == "pbmc"){
+#     tmp$cluster_id <- results$cluster_id
+#   }
+#   
+#   # plot results
+#   tmp$significant <- results$p_adj < 0.05
+#   tmp$p_adj <- NULL
+#   tmp <- as.data.table(tmp)
+#   tmp$significant <- as.factor(tmp$significant)
+#   tmp$class <- tmp$marker_id %in% trues
+#   if(data_type %in% c("downsampled_covid_spike", "dual_platelets")){
+#     tmp$class[tmp$class == TRUE] <- "State"
+#     tmp$class[tmp$class == FALSE] <- "Type"
+#     if (data_type %in% c("downsampled_covid_spike")){
+#       tmp$nr_of_cells[tmp$nr_of_cells == "full"] <- paste("full (4052622)")
+#       tmp$nr_of_cells <- factor(tmp$nr_of_cells, levels=c("1000", "2000", "5000", "10000", "15000", "20000", "full (4052622)"))
+#       eff[, nr_of_cells := tstrsplit(dataset, "_", keep=keep)]
+#       eff$nr_of_cells[eff$nr_of_cells == "full"] <- paste("full (4052622)")
+#       eff$nr_of_cells <- factor(eff$nr_of_cells, levels=c("1000", "2000", "5000", "10000", "15000", "20000", "full (4052622)"))
+#       eff[, marker_id:= tstrsplit(group1, "::", keep=1)]
+#       eff[, alpha:=tstrsplit(dataset, "_", keep=4)]
+#       eff$alpha <- factor(eff$alpha, levels=c('full', '25', '50', '75', '100'))
+#       marker_classes <- tmp[,c("marker_id", "class")]
+#       marker_classes <- unique(marker_classes)
+#       eff <- merge(eff,marker_classes, by="marker_id")
+#     }
+#   }else if(data_type == "simulatedCytoGLMM"){
+#     tmp$class[tmp$class == TRUE] <- "Differentially Expressed"
+#     tmp$class[tmp$class == FALSE] <- "Not Differentially Expressed"
+#   }
+#   colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+#                          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+# 
+#   tmp <- as.data.table(tmp)
+#   if(data_type == "downsampled_covid_spike"){
+#     # ggplot(tmp[class == "Type"], aes(marker_id, method)) +
+#     #   geom_tile(aes(fill = significant), color = "white", size = 1) +
+#     #   ggtitle("") +
+#     #   xlab(label = " Type Markers") +
+#     #   ylab("Method") +
+#     #   facet_grid(alpha ~ nr_of_cells, scales = "free_x") +
+#     #   theme(text = element_text(size = 13),
+#     #         axis.text.x = element_text(angle = 90, hjust = 1)) +
+#     #   scale_fill_manual(values = colorBlindBlack8[c(7, 3, 1)],
+#     #                     name = "Significant",
+#     #                     na.value = "transparent") +
+#     #   ggside::geom_xsidetile(
+#     #     data = eff[class == "Type"],
+#     #     aes(y = overall_group, xfill = magnitude),
+#     #     color = "white",
+#     #     size = 0.2
+#     #   ) +
+#     #   ggside::scale_xfill_manual(values = colorBlindBlack8[c(8, 5, 2, 6)],
+#     #                              name = 'Effect Size\nMagnitude',
+#     #                              na.value = "transparent")
+#     ggplot(tmp[nr_of_cells == "full (4052622)"], aes(marker_id, method)) +
+#       geom_tile(aes(fill = significant), color = "white", size = 1) +
+#       ggtitle("") +
+#       xlab(label = " Type Markers") +
+#       ylab("Method") +
+#       facet_grid(alpha ~ class, scales = "free_x") +
+#       theme(text = element_text(size = 13),
+#             axis.text.x = element_text(angle = 90, hjust = 1)) +
+#       scale_fill_manual(values = colorBlindBlack8[c(7, 3, 1)],
+#                         name = "Significant",
+#                         na.value = "transparent") +
+#       ggside::geom_xsidetile(
+#         data = eff[nr_of_cells == "full (4052622)"],
+#         aes(y = overall_group, xfill = magnitude),
+#         color = "white",
+#         size = 0.2
+#       ) +
+#       ggside::scale_xfill_manual(values = colorBlindBlack8[c(8, 5, 2, 6)],
+#                                  name = 'Effect Size\nMagnitude',
+#                                  na.value = "transparent")
+# 
+#   } else if(data_type == "simulatedCytoGLMM"){
+#     ggplot(tmp, aes(marker_id, method, fill=significant)) + 
+#       geom_tile(color="white", size=1) + 
+#       ggtitle("CytoGLMM Simulation") + 
+#       xlab(label="marker") + 
+#       facet_grid(nr_of_cells~class, scales = "free_x") + 
+#       theme(text = element_text(size = 10),  axis.text.x = element_text(angle = 45, hjust=1))+
+#       scale_fill_manual(values = colorBlindBlack8[c(7,3,1)], na.value="transparent")
+#   } else if(data_type == "dual_platelets"){
+#     ggplot(tmp, aes(marker_id, method)) + 
+#       geom_tile(aes(fill=significant),color="white", size=1) + 
+#       ggtitle("") + xlab(label="marker") + 
+#       facet_wrap(~class, scales = "free_x") + 
+#       theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
+#       scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent") + 
+#       ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
+#       ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
+#   } else if(data_type == "pbmc"){
+#     tmp$marker_id[tmp$marker_id == "HLADR"] <- "HLA_DR"
+#     ggplot(tmp, aes(marker_id, method)) + 
+#       geom_tile(aes(fill=significant), color="white", size=1) + 
+#       ggtitle("PBMC Ref vs. BCR-XL") + xlab(label="marker") + 
+#       facet_wrap(~cluster_id, scales = "free_x") + 
+#       theme(text = element_text(size = 13),  axis.text.x = element_text(angle = 45, hjust=1))+
+#       scale_fill_manual(values = colorBlindBlack8[c(7,3,1)]) +
+#       ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude)) +
+#       ggside::scale_xfill_manual(values=c(colorBlindBlack8[c(8,5,2,6)]), name='effect size\nmagnitude')
+#   }
+# }
 
 plot_cells_vs_elapsed <- function(stats_table){
   if ("alpha" %in% names(stats_table)){
