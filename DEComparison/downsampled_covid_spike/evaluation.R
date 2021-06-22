@@ -8,6 +8,30 @@ plot_sens_vs_pre(stats_table)
 plot_sens_vs_spec(stats_table)
 plot_f1_vs_elapsed(stats_table)
 
+# inspection of downsampling for CD154
+
+library(CATALYST)
+library(data.table)
+library(ggplot2)
+full_sce_paths <- list.files('/localscratch/quirinmanz/cytof_data/covid_spiked', pattern = '\\_full.rds$', full.names = TRUE)
+names(full_sce_paths) <- sapply(strsplit(full_sce_paths, split = '_', fixed = T), `[`, 6)
+sces_full <- rbindlist(lapply(full_sce_paths, function(x) {
+  x <- readRDS(x)
+  dt <- cbind(as.data.table(t(assay(x, 'exprs'))), as.data.frame(colData(x)))
+  dt_melt <- melt(dt, measure.vars = rownames(x))
+}), idcol = 'dataset')
+
+# 'CD63', 'CD62P', 'CD107a', 
+CD154_medians <- sces_full[variable %in% c('CD154')][, .(`CD154 Median Marker Expression` = median(value)), by=.(dataset, patient_id, base_spike)]
+CD154_medians[, Alpha:=factor(dataset, levels=c('full', '25', '50', '75', '100'))]
+cd154_median_plot <- ggplot(CD154_medians, aes(x=Alpha, y=`CD154 Median Marker Expression`, color=base_spike)) +
+  geom_point(size=4) +
+  facet_wrap(~patient_id, scales='free') +
+  scale_fill_discrete(name = "Condition") +
+  theme_bw() +
+  theme(text= element_text(size=20))
+ggsave('DEComparison/downsampled_covid_spike/cd154_median_plot.pdf', cd154_median_plot)
+
 
 # HEATMAP
 
