@@ -67,19 +67,19 @@ colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
 
 
 # only one marker class
-ggplot(as.data.table(tmp[class == "Type"]), aes(marker_id, method)) +
+ggplot(as.data.table(tmp[class == "State"]), aes(marker_id, method)) +
   geom_tile(aes(fill = significant), color = "white", size = 1) +
   ggtitle("") +
-  xlab(label = " Type Markers") +
+  xlab(label = " State Markers") +
   ylab("Method") +
   facet_grid(alpha ~ nr_of_cells, scales = "free_x") +
   theme(text = element_text(size = 13),
-        axis.text.x = element_text(angle = 90, hjust = 1)) +
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   scale_fill_manual(values = colorBlindBlack8[c(7, 3, 1)],
                     name = "Significant",
                     na.value = "transparent") +
   ggside::geom_xsidetile(
-    data = eff[class == "Type"],
+    data = eff[class == "State"],
     aes(y = overall_group, xfill = magnitude),
     color = "white",
     size = 0.2
@@ -96,7 +96,7 @@ ggplot(tmp[nr_of_cells == "full (4052622)"], aes(marker_id, method)) +
   ylab("Method") +
   facet_grid(alpha ~ class, scales = "free_x") +
   theme(text = element_text(size = 14),
-        axis.text.x = element_text(angle = 90, hjust = 1)) +
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) +
   scale_fill_manual(values = colorBlindBlack8[c(7, 3, 1)],
                     name = "Significant",
                     na.value = "transparent") +
