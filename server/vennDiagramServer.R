@@ -131,6 +131,7 @@ runMethods <- function(){
           trend_edgeR = edgeRTrend, 
           blockID = blockIDVoom
     )
+
     return(resultVenn)
     
   }else{
@@ -215,13 +216,19 @@ runMethods <- function(){
         contrast_vars = contrast,
         sceEMD_binsize = binSize,
         sceEMD_nperm = nperm
+        
       )
+      resultVenn[["effect_size"]] <- effectSize(sce = sce, 
+                                                condition = contrast, 
+                                                group = colsRandomDS, k=clusters, 
+                                                use_assay="exprs", use_mean=FALSE)
     },
     message = function(m) {
       shinyjs::html(id = "emdProgress",
                     html = sprintf("<br>%s", HTML(m$message)),
                     add = TRUE)
     })
+    
     removeNotification("emdProgressNote")
     return(resultVenn)
   }
@@ -791,12 +798,17 @@ observeEvent(input$diffExpButtonVenn, {
         firstCol <- c("marker_id", "cluster_id")
       }
       library(data.table)
-      
-      listDT <- lapply(resultVenn, function(x) {
+      listDT <- lapply(resultVenn[names(resultVenn) != "effect_size"], function(x) {
         vec <- c(firstCol, "p_val", "p_adj")
         as.data.table(x)[, ..vec]
       })
       allResultsDT <- rbindlist(listDT, idcol = "method")
+      if(!"diffcyt-DA-edgeR" %in% names(resultVenn)){
+        eff_r <- resultVenn[["effect_size"]]
+        eff_r[, marker_id := sapply(strsplit(eff_r$group2,'::'), "[", 1)]
+        allResultsDT <- merge(allResultsDT, eff_r[, c("cluster_id", "marker_id", "overall_group","effsize", "magnitude")], by = c("cluster_id", "marker_id"))
+        colnames(allResultsDT) <- c("cluster_id", "marker_id", "method", "p_val", "p_adj", "overall_group","cohens_d", "magnitude")
+      }
       reactiveVals$lastAllResults <- allResultsDT
       
       shinydashboard::box(

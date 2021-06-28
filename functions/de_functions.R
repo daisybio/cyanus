@@ -35,7 +35,7 @@ effectSize <- function(sce, condition, group = NULL, k=NULL, use_assay="exprs", 
     CATALYST:::.check_cd_factor(sce, group)
     dt$group <- sce[[group]]
   }
-    
+  message("Calculating Effect Sizes....")  
   if (is.null(k)) {
     return(calculateEffectSize(dt, use_mean))
   } else {
