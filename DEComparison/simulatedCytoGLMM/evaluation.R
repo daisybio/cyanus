@@ -51,10 +51,10 @@ colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 # for paper only 200000 cells
-#tmp <- tmp[tmp$nr_of_cells=="200000",]
+tmp <- tmp[tmp$nr_of_cells=="200000",]
 marker_classes <- tmp[,c("marker_id", "class")]
 marker_classes <- unique(marker_classes)
-#eff <- eff[eff$nr_of_cells=="200000",]
+eff <- eff[eff$nr_of_cells=="200000",]
 eff <- eff[,c("overall_group", "magnitude", "marker_id", "nr_of_cells")]
 eff <- merge(eff,marker_classes, by="marker_id")
 
@@ -63,9 +63,9 @@ ggplot(tmp, aes(marker_id, method)) +
   ggtitle("") + 
   xlab(label="Marker") + 
   ylab("Method") +
-  #facet_wrap(~class, scales = "free_x") + 
-  facet_grid(nr_of_cells~class, scales = "free_x") +
-  theme(text = element_text(size = 14),  axis.text.x = element_text(angle = 90, hjust=1))+
+  facet_wrap(~class, scales = "free_x") + 
+  #facet_grid(nr_of_cells~class, scales = "free_x") +
+  theme(text = element_text(size = 14),  axis.text.x = element_text(angle = 90, vjust=0.5))+
   scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent", name="Significant") + 
   ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
   ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='Effect Size\nMagnitude', na.value="transparent", drop=FALSE)
