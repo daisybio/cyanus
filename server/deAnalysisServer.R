@@ -10,6 +10,7 @@ methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "s
 #resetDEAnalysis <- function(){
 #  reactiveVals$exclusionList <- NULL
 #  reactiveVals$subselectionMap <- NULL
+#  reactiveVals$eff_r <- NULL
 #}
 
 # Main function: 
@@ -225,6 +226,7 @@ call_DE <- function() {
           blockID = blockID
         )
         out <- results[[method]]
+        reactiveVals$eff_r <- NULL
       } else {
         #extra args: parameters, blockID, trend_limma, markersToTest, includeWeights
         results <- runDS(
@@ -247,6 +249,13 @@ call_DE <- function() {
           parallel = FALSE
         )
         out <- results[[method]]
+        reactiveVals$eff_r <- effectSize(sce = sce, 
+                              condition = condition,
+                              group = groupCol, 
+                              k=clustering_to_use, 
+                              use_assay="exprs", 
+                              use_mean=FALSE)
+        
       }
     },
     message = function(m) {
@@ -1268,6 +1277,7 @@ observeEvent(input$visExpButton,{
     }
     
     out <- runs[[visMethod]]
+    eff_r <- isolate(reactiveVals$eff_r)
     #if (visMethod != "sceEMD")
     #  out <- rowData(out$res)
     #out$p_val[is.na(out$p_val)] <- 1
@@ -1281,6 +1291,7 @@ observeEvent(input$visExpButton,{
       normalize=as.logical(heatmapNormalize ),
       all = TRUE,
       top_n = as.numeric(topN),
+      eff_r = eff_r
     )
     reactiveVals$diffHeatmapPlot
   })
