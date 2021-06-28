@@ -110,4 +110,55 @@ ggplot(tmp[nr_of_cells == "full (4052622)"], aes(marker_id, method)) +
                              name = 'Effect Size\nMagnitude',
                              na.value = "transparent")
 
-  
+library(data.table)
+###take a closer look at these effect sizes
+all_inputs <- lapply(list.files("/nfs/home/students/jbernett/cytof/covid_spiked/downsampled_files/", pattern=".rds", full.names = T), readRDS)
+names(all_inputs) <- list.files("/nfs/home/students/jbernett/cytof/covid_spiked/downsampled_files/", pattern=".rds")
+full_spiked <- lapply(list.files("/nfs/home/students/jbernett/cytof/covid/", pattern=".rds", full.names = T), readRDS)
+names(full_spiked) <- list.files("/nfs/home/students/jbernett/cytof/covid/", pattern=".rds")
+big_list <- c(all_inputs, full_spiked)
+
+exprsDT <- lapply(big_list, function(x){as.data.table(t(assays(x)$exprs))})
+exprsDT <- rbindlist(exprsDT, idcol = "filename")
+exprsDT[, n_cells := tstrsplit(filename, "_", keep=6)]
+exprsDT[, alpha := tstrsplit(filename, "_", keep=4)]
+exprsDT[, c("patient_id", "base_spike") := rbindlist(lapply(big_list, function(x){
+  as.data.table(colData(x))[, c("patient_id", "base_spike")]
+  }))]
+exprsDT_long <- melt(exprsDT, id.vars = c("filename","patient_id", "base_spike","n_cells", "alpha"), variable.name = "antigen", value.name = "expression")
+exprs_medians <- exprsDT_long[, median(expression), by = c("antigen", "base_spike", "n_cells", "alpha", "patient_id")]
+colnames(exprs_medians) <- c("antigen", "base_spike","n_cells", "alpha", "patient_id", "expression")
+exprs_medians[, n_cells := factor(tstrsplit(n_cells, ".rds", keep=1), levels = c("1000", "2000", "5000", "10000", "15000", "20000", "full"))]
+
+#exprs_medians_200000 <- exprsDT_long[n_cells == "200000", median(expression), by = c("marker", "condition")]
+#colnames(exprs_medians_200000) <- c("antigen", "condition", "expression")
+
+library(CATALYST)
+library(ggplot2)
+#state
+g <- plotExprs(big_list$sce_spiked_clustered_full_ds_full.rds, features = "state", color_by = "base_spike")
+g <- g +
+  geom_vline(data=exprs_means[antigen %in% c("CD63", "CD62P", "CD154", "CD107a", "PAC1")], aes(xintercept = expression, col = base_spike))+
+  scale_color_manual(values = colorBlindBlack8[c(3,8)], name = "Condition:\nExpression\nand Medians", labels = c("Base", "Spike"))+
+  labs(x="Expression", y = "Normalized Density")+
+  facet_grid(patient_id ~ antigen)
+g
+#type
+g <- plotExprs(big_list$sce_spiked_clustered_full_ds_full.rds, features = "type", color_by = "base_spike")
+g <- g +
+  geom_vline(data=exprs_means[!antigen %in% c("CD63", "CD62P", "CD154", "CD107a", "PAC1", "CD40", "CD45", "CD141", "CD3")], aes(xintercept = expression, col = base_spike))+
+  scale_color_manual(values = colorBlindBlack8[c(3,8)], name = "Condition:\nExpression\nand Medians", labels = c("Base", "Spike"))+
+  labs(x="Expression", y = "Normalized Density")+
+  facet_grid(patient_id ~ antigen)
+g
+
+#state
+g <- plotExprs(big_list$sce_spiked_clustered_25_ds_full.rds, features = "state", color_by = "base_spike")
+g <- g +
+  geom_vline(data=exprs_means[antigen %in% c("CD63", "CD62P", "CD154", "CD107a", "PAC1")], aes(xintercept = expression, col = base_spike))+
+  scale_color_manual(values = colorBlindBlack8[c(3,8)], name = "Condition:\nExpression\nand Medians", labels = c("Base", "Spike"))+
+  labs(x="Expression", y = "Normalized Density")+
+  facet_grid(patient_id ~ antigen)
+g
+
+
