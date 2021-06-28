@@ -1052,8 +1052,8 @@ output$deExprsCluster <- renderUI({
                       "deBoxK",
                       "Clusters",
                       names(cluster_codes(reactiveVals$sce)),
-                      multiple = F,
-                      selected = "meta9"
+                      multiple = F
+                      # selected = "meta9" #TODO: take first 
                     )),
                     selectizeInput("deBoxFeatures",
                                    "Markers:",
@@ -1129,7 +1129,7 @@ output$pbExprsPlotDownload <- renderUI({
   downloadButton("downloadPlotPbExprs", "Download Plot")
 })
 
-# function for downloading MDS plot
+# function for downloading MDS plot 
 output$downloadPlotPbExprs <- downloadHandler(
   filename = function(){
     paste0("Pb_Exprs_plot", ".pdf")
