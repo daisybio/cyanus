@@ -74,7 +74,7 @@ vennBody <- function(){
           shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px"))
           ),
         id = "vennDiagramsBox",
-        title= "Venn Diagram",
+        title= "Result Comparison",
         width = 12
       )
     ),

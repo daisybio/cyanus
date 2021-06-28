@@ -741,29 +741,14 @@ output$downloadVennButton <- downloadHandler(
 
 output$downloadTableVenn <- renderUI({
   req(reactiveVals$lastAllResults)
-  req(reactiveVals$lastAllResultsSign)
   fluidRow(
     div(
       downloadButton("downloadTableVennAll", "Download All Results"),
-      style = "float:right;"
-    ),
-    div(
-      downloadButton("downloadTableSign", "Download Venn Diagram Results"),
       style = "float:right;"
     )
   )
 })
 
-output$downloadTableSign <- downloadHandler(
-  filename = "VennDiagramResults.csv",
-  content = function(file) {
-    waiter_show(id = "app",html = tagList(spinner$logo, 
-                                          HTML("<br>Downloading...")), 
-                color=spinner$color)
-    write.csv(reactiveVals$lastAllResultsSign, file, row.names = FALSE)
-    waiter_hide(id="app")
-  }
-)
 
 output$downloadTableVennAll <- downloadHandler(
   filename = "AllResults.csv",
@@ -794,7 +779,7 @@ observeEvent(input$diffExpButtonVenn, {
     })
     output$vennDiagrams <- renderPlot({
       ds_bool <- isolate(reactiveVals$ds_bool)
-      venn <- createVennDiagram(resultVenn, ds_bool, isolate(input$fdrThresholdVenn))
+      venn <- createVennHeatmap(resultVenn, ds_bool, isolate(input$fdrThresholdVenn))
       reactiveVals$lastVenn <- venn
       venn
     })
@@ -814,42 +799,15 @@ observeEvent(input$diffExpButtonVenn, {
       allResultsDT <- rbindlist(listDT, idcol = "method")
       reactiveVals$lastAllResults <- allResultsDT
       
-      fdrThreshold <- isolate(input$fdrThresholdVenn)
-      allResultsSign <- allResultsDT[p_adj < fdrThreshold]
-      if("diffcyt-DA-edgeR" %in% names(resultVenn)){
-        allResultsSign <- dcast(allResultsSign, cluster_id ~ method, value.var = "p_adj")
-      }else{
-        allResultsSign <- dcast(allResultsSign, marker_id + cluster_id ~ method, value.var = "p_adj")
-      }
-      allResultsSign <- allResultsSign[rev(order(allResultsSign[, Reduce(`+`, lapply(.SD,function(x) !is.na(x)))]))]
-      reactiveVals$lastAllResultsSign <- allResultsSign
-      
-      shinydashboard::tabBox(
-        shiny::tabPanel(
-          renderDataTable(
-            DT::datatable(
-              allResultsSign,
-              rownames = F,
-              options = list(pageLength = 10, searching = FALSE, 
-                             columnDefs = list(list( targets = "_all", 
-                                                     render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}"))))
-            )
-          ),
-          value = "resultsIntersections",
-          title = "Venn Diagram Results"
-        ),
-        shiny::tabPanel(
-          renderDataTable(
-            DT::datatable(
-              allResultsDT,
-              rownames = F,
-              options = list(pageLength = 10, searching = FALSE, 
-                             columnDefs = list(list( targets = "_all", 
-                                                     render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}"))))
-            )
-          ),
-          value = "resultsAllVenn",
-          title = "All results"
+      shinydashboard::box(
+        renderDataTable(
+          DT::datatable(
+            allResultsDT,
+            rownames = F,
+            options = list(pageLength = 10, searching = FALSE, 
+                           columnDefs = list(list( targets = "_all", 
+                                                   render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}"))))
+          )
         ),
         id = "vennResultsTable",
         title = "Results",

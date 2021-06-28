@@ -67,6 +67,7 @@ observeEvent(input$startClustering, {
   )
 })
 
+
 observeEvent(input$featuresIn,
              {
                if (input$useFeaturesIn == "Marker by Class")
