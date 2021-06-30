@@ -226,7 +226,7 @@ call_DE <- function() {
           blockID = blockID
         )
         out <- results[[method]]
-        reactiveVals$eff_r <- NULL
+        reactiveVals$eff_r[[method]] <- NULL
       } else {
         #extra args: parameters, blockID, trend_limma, markersToTest, includeWeights
         results <- runDS(
@@ -249,7 +249,7 @@ call_DE <- function() {
           parallel = FALSE
         )
         out <- results[[method]]
-        reactiveVals$eff_r <- effectSize(sce = sce, 
+        reactiveVals$eff_r[[method]] <- effectSize(sce = sce, 
                               condition = condition,
                               group = groupCol, 
                               k=clustering_to_use, 
@@ -1277,7 +1277,7 @@ observeEvent(input$visExpButton,{
     }
     
     out <- runs[[visMethod]]
-    eff_r <- isolate(reactiveVals$eff_r)
+    eff_r <- isolate(reactiveVals$eff_r[[visMethod]])
     #if (visMethod != "sceEMD")
     #  out <- rowData(out$res)
     #out$p_val[is.na(out$p_val)] <- 1
