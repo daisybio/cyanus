@@ -160,7 +160,7 @@ runMethods <- function(){
       sceEMD_binsize <- isolate(input$emdBinwidthComp)
       if (sceEMD_binsize == 0)
         sceEMD_binsize <- NULL
-      emdNperm <- isolate(input$emdNperm)
+      emdNperm <- isolate(input$emdNpermComp)
     }
     if ("CytoGLM" %in% methods) {
       CytoGLM_num_boot <- isolate(input$CytoGLM_num_bootComp)
@@ -214,13 +214,10 @@ runMethods <- function(){
     )
 
     withCallingHandlers({
-      #TODO: include weights
-      #TODO: check sceEMD error
-      browser()
       
       resultVenn <- runDS(
         sce = sce,
-        ds_methods = ,
+        ds_methods = methods,
         clustering_to_use = clusters,
         contrast_vars = condition,
         markers_to_test = markersToTest,
@@ -791,7 +788,7 @@ output$extraFeaturesVenn <- renderUI({
       
     )
   }else{
-    req('limma' %in% input$chosenDAMethodComp)
+    req('diffcyt-DS-limma' %in% input$chosenDAMethodComp)
     cols <- colnames(metadata(reactiveVals$sce)$experiment_info)
     cols <- cols[!cols %in% c("n_cells", "sample_id")]
     div(
@@ -931,7 +928,6 @@ output$downloadTableVennAll <- downloadHandler(
 
 observeEvent(input$diffExpButtonVenn, {
   req(input$da_dsVenn)
-  browser()
   if (input$da_dsVenn == "Differential Marker Expression" & is.null(isolate(input$chosenDAMethodComp))) {
     showNotification("No method selected. Try again.", type = "error")
     return(NULL)
@@ -968,7 +964,7 @@ observeEvent(input$diffExpButtonVenn, {
       if(ds_bool){
         eff_r <- resultVenn[["effect_size"]]
         eff_r[, marker_id := sapply(strsplit(eff_r$group2,'::'), "[", 1)]
-        allResultsDT <- merge(allResultsDT, eff_r[, c("cluster_id", "marker_id", "overall_group","effsize", "magnitude")], by = c("cluster_id", "marker_id"))
+        allResultsDT <- merge(allResultsDT, eff_r[, c("cluster_id", "marker_id", "overall_group","effsize", "magnitude")], by = c("cluster_id", "marker_id"), all.x=TRUE, all.y=FALSE, allow.cartesian=TRUE)
         colnames(allResultsDT) <- c("cluster_id", "marker_id", "method", "p_val", "p_adj", "overall_group","cohens_d", "magnitude")
       }
       reactiveVals$lastAllResults <- allResultsDT
