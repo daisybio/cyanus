@@ -2,6 +2,7 @@ runCatalystDR <-
   function(sce, 
            dr_chosen = c("UMAP", "TSNE", "PCA", "MDS", "DiffusionMap", "Isomap"),
            cells_chosen = NULL,
+           seed = 42,
            feature_chosen = "type",
            assay_chosen = "exprs",
            scale = T,
@@ -14,6 +15,7 @@ runCatalystDR <-
       scale <- F
     }
     if (dr_chosen == "Isomap") {
+      set.seed(seed)
       sce <- runIsomap(
         sce,
         cells = cells_chosen,
@@ -25,6 +27,7 @@ runCatalystDR <-
       )
       
     } else{
+      set.seed(seed)
       sce <- CATALYST::runDR(
         x = sce,
         dr = dr_chosen,
