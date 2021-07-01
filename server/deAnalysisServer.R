@@ -180,6 +180,9 @@ call_DE <- function() {
       emdNperm <- isolate(input$emdNperm)
     } else if (input$chosenDAMethod == "CytoGLM") {
       CytoGLM_num_boot <- isolate(input$CytoGLM_num_boot)
+    }else if(method == "CytoGLMM" & is.null(groupCol)){
+      shiny::showNotification("Results of CytoGLMM are not meaningful when no grouping variable like patient ID is selected.", 
+                              type = "warning", duration = 10)
     }
   }
   
@@ -249,13 +252,8 @@ call_DE <- function() {
           parallel = FALSE
         )
         out <- results[[method]]
-        reactiveVals$eff_r[[method]] <- effectSize(sce = sce, 
-                              condition = condition,
-                              group = groupCol, 
-                              k=clustering_to_use, 
-                              use_assay="exprs", 
-                              use_mean=FALSE)
-        
+        #the effect sizes do not have to be computed multiple times
+        reactiveVals$eff_r[[method]] <- findEffectSize(sce, condition, groupCol, clustering_to_use)
       }
     },
     message = function(m) {
@@ -267,6 +265,33 @@ call_DE <- function() {
   
   removeNotification("progressNote")
   return(out)
+}
+
+findEffectSize <- function(sce, condition, groupCol, clustering_to_use){
+  #the effect sizes do not have to be computed multiple times
+  found_effect_size <- FALSE
+  if(!is.null(reactiveVals$eff_r)){
+    for(method in names(reactiveVals$eff_r)){
+      eff_size <- reactiveVals$eff_r[[method]]
+      if(is.null(groupCol) & !("grouped" %in% eff_size$overall_group)){
+        found_effect_size <- TRUE
+        return(eff_size)
+      }else if(!is.null(groupCol) & "grouped" %in% eff_size$overall_group){
+        if(reactiveVals$methodsInfo[[method]]$grouping_columns == groupCol){
+          found_effect_size <- TRUE
+          return(eff_size)
+        }
+      }
+    }
+  }
+  if(is.null(reactiveVals$eff_r) | !found_effect_size){
+    return(effectSize(sce = sce,
+                      condition = condition,
+                      group = groupCol, k=clustering_to_use, 
+                      use_assay="exprs", use_mean=FALSE)
+           )
+  }
+  
 }
 
 # Renderer ----
