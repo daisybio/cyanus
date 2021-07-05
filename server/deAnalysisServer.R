@@ -1,17 +1,23 @@
 library(diffcyt)
 
+resetDE <- function(){
+  reactiveVals$methodType <- NULL
+  reactiveVals$exclusionList <- NULL
+  reactiveVals$subselectionMap <- NULL
+  reactiveVals$methodsInfo <- NULL
+  reactiveVals$eff_r <- NULL
+  reactiveVals$DEruns <- NULL
+  reactiveVals$pbExprsPlot <- NULL
+  reactiveVals$diffHeatmapPlot <- NULL
+  reactiveVals$topTable <- NULL
+}
+
 plotbox_height <- "48em"
 methods_height <- "40em"
 
 methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
 methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD", "CytoGLMM" = "CytoGLMM", "CytoGLM" = "CytoGLM", "Wilcoxon rank-sum test" = "wilcoxon_median", "Student's t-test" = "t_test")
 
-
-#resetDEAnalysis <- function(){
-#  reactiveVals$exclusionList <- NULL
-#  reactiveVals$subselectionMap <- NULL
-#  reactiveVals$eff_r <- NULL
-#}
 
 # Main function: 
 # checks which methods is selected and executes the runDS function accordingly
@@ -482,6 +488,7 @@ output$weightSelection <- renderUI({
 
 # box with cluster populations you want to compare
 output$clusterSelection <- renderUI({
+  req(reactiveVals$methodType)
   clusters <- rev(names(cluster_codes(reactiveVals$sce)))
   if(reactiveVals$methodType == "DA"){
     clusters <- clusters[!clusters %in% c("all")]
@@ -610,7 +617,7 @@ output$CytoGLM_num_boot <- renderUI({
 })
 
 output$deSubselection <- renderUI({
-  choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
+  choices <- colnames(metadata(reactiveVals$sce)$experiment_info)
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
 
   map <- unlist(sapply(choices, function(x){

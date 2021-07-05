@@ -1,5 +1,11 @@
 library(ggvenn)
 
+resetDEComparison <- function(){
+  reactiveVals$ds_bool <- NULL
+  reactiveVals$lastVenn <- NULL
+  reactiveVals$lastAllResults <- NULL
+}
+
 # --------------------------------------------------------------
 # Main function: -------------------
 # parses inputs and runs all methods by calling runDA / runDS

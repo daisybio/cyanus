@@ -57,6 +57,9 @@ observeEvent(input$exampleData, {
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
   resetVisualization()
+  resetClustering()
+  resetDE()
+  resetDEComparison()
   waiter_show(id = "app",html = tagList(spinner$logo, 
                              HTML("<br>Loading Data...<br>Please be patient")), 
               color=spinner$color)
