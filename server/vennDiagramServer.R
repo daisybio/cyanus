@@ -20,6 +20,7 @@ runMethods <- function(){
   # }
   condition <- isolate(input$conditionInComp)
   group <- isolate(input$groupColComp)
+  if(group == "") group <- NULL
   addTerms <- isolate(input$addTermsComp)
   clusters <- isolate(input$deClusterVenn)
   
@@ -165,6 +166,10 @@ runMethods <- function(){
     if ("CytoGLM" %in% methods) {
       CytoGLM_num_boot <- isolate(input$CytoGLM_num_bootComp)
     }
+    if("CytoGLMM" %in% methods & is.null(group)){
+      shiny::showNotification("Results of CytoGLMM are not meaningful when no grouping variable like patient ID is selected.", 
+                              type = "warning", duration = 10)
+    }
     
     # parameters[["diffcyt-DS-limma"]] <- prepDiffExp(
     #   sce = sce, 
@@ -214,7 +219,6 @@ runMethods <- function(){
     )
 
     withCallingHandlers({
-      
       resultVenn <- runDS(
         sce = sce,
         ds_methods = methods,
@@ -234,10 +238,9 @@ runMethods <- function(){
         time_methods = FALSE,
         parallel = FALSE
       )
-      resultVenn[["effect_size"]] <- effectSize(sce = sce, 
-                                                condition = condition, 
-                                                group = group, k=clusters, 
-                                                use_assay="exprs", use_mean=FALSE)
+      #the effect sizes do not have to be computed multiple times
+      reactiveVals$eff_r[["comparison"]] <- findEffectSize(sce, condition, group, clusters)
+      resultVenn[["effect_size"]] <- reactiveVals$eff_r[["comparison"]]
     },
     message = function(m) {
       shinyjs::html(id = "emdProgress",

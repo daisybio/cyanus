@@ -455,7 +455,8 @@ plotPreprocessing <- function(sce) {
       style = "position: relative; height: 500px;"
       )
     ),
-    column(11, shinycssloaders::withSpinner(
+    column(11, div(HTML("Plot of the smoothed expression densities. <b style='color:#FF3358';>Attention:</b> This may take some time")),
+      shinycssloaders::withSpinner(
       plotOutput("exprsPlot", width = "100%", height = "500px")
     )),
     div(

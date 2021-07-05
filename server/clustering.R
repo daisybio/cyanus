@@ -460,7 +460,7 @@ output$clusteringOutput <- renderUI({
             ),
             style = "position: relative; z-index: 99; float: left;"
           ),
-          div("Smoothed densities of marker intensities by cluster.", style = "text-align: center;vertical-align: middle;"),
+          div(HTML("Smoothed densities of marker intensities by cluster. <b style='color:#FF3358';>Attention:</b> This may take some time"), style = "text-align: center;vertical-align: middle;"),
           div(uiOutput("clusterDensitiyDownload"),
               style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
