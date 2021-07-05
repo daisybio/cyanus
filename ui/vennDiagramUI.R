@@ -21,18 +21,16 @@ vennBody <- function(){
           "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential Cluster Abundance:</b> Differential analysis of cell population abundance regarding the clusters. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential Marker Expression:</b> Differential analysis of the marker expression in each cell population (i.e. cluster or overall)."
         )
       ),
-      uiOutput("deMethodSelectionComp"),
       uiOutput("contrastSelectionVenn"),
       uiOutput("DSVenn"),
       uiOutput("conditionSelectionComp"),
       uiOutput("groupSelectionComp"),
       uiOutput("additionalTermsSelectionComp"),
-      # uiOutput("contrastSelection"),
-      # uiOutput("modelSelection"),
       uiOutput("emdInputComp"),
       uiOutput("CytoGLM_num_bootComp"),
       uiOutput("deSubselectionComp"),
-      width = 6
+      width = 6,
+      id="column1_comparison"
     ),
     column(
       uiOutput("clusterSelectionVenn"),
@@ -41,7 +39,8 @@ vennBody <- function(){
       uiOutput("normalizeSelectionVenn"),
       uiOutput("weightSelectionVenn"),
       uiOutput("fdrVenn"),
-      width = 6),
+      width = 6,
+      id="column2_comparison"),
     div(
       bsButton(
         "diffExpButtonVenn",
