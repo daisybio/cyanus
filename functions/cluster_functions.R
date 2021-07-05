@@ -243,12 +243,13 @@ plotStarsCustom <-
     # return(list(star_legend = star_legend_plot, background_legend = background_legend_plot, tree = tree_plot))
   }
 
-plotMarkerCustom <- function (sce, marker, facet_by = "NA", assayType = "exprs", view = "MST", main = NULL, colorPalette = grDevices::colorRampPalette(c("#00007F", 
+plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "", subselection=NULL, assayType = "exprs", view = "MST", main = NULL, colorPalette = grDevices::colorRampPalette(c("#00007F", 
                                                                                                                            "blue", "#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", 
                                                                                                                            "red", "#7F0000")), backgroundValues = NULL, backgroundColor = function(n) {
                                                                                                                              grDevices::rainbow(n, alpha = 0.3)
                                                                                                                            }, backgroundBreaks = NULL, backgroundLim = NULL) 
 {
+
   switch(view, MST = {
     layout <- S4Vectors::metadata(sce)$SOM_MST$l
     lty <- 1
@@ -269,19 +270,40 @@ plotMarkerCustom <- function (sce, marker, facet_by = "NA", assayType = "exprs",
   oldpar <- graphics::par(no.readonly = TRUE)
   if (is.null(main)) 
     main <- marker
+  if (!is.null(subselection))
+    main <- paste0(main, ", ", subselection)
   if (is.null(marker)) {
     igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, 
                         vertex.size = S4Vectors::metadata(sce)$SOM_MST$size, vertex.label = NA, 
                         edge.lty = lty)
   }
   else {
-    if (facet_by == "NA") {
-      igraph::V(S4Vectors::metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[as.numeric(cut(S4Vectors::metadata(sce)$SOM_medianValues[, 
+    if (facet_by == "") {
+      if (subselection_col == "") {
+        igraph::V(S4Vectors::metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[as.numeric(cut(S4Vectors::metadata(sce)$SOM_medianValues[, 
                                                                                                                       marker], breaks = 100))]
-      igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = S4Vectors::metadata(sce)$SOM_MST$size, 
-                          vertex.label = NA, main = main, edge.lty = lty, 
-                          mark.groups = background$groups, mark.col = background$col[background$values], 
-                          mark.border = background$col[background$values])
+        igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = S4Vectors::metadata(sce)$SOM_MST$size, 
+                            vertex.label = NA, main = main, edge.lty = lty, 
+                            mark.groups = background$groups, mark.col = background$col[background$values], 
+                            mark.border = background$col[background$values])
+      } else {
+        sce_filtered <- CATALYST::filterSCE(sce, get(subselection_col) == subselection)
+        median_cond <- data.table::data.table(t(SummarizedExperiment::assay(sce_filtered, assayType)))
+        median_cond[, cluster_id := sce_filtered$cluster_id]
+        median_cond <- median_cond[, .(my_marker = median(get(marker))), by = cluster_id]
+        missing_clusters <- median_cond[, setdiff(levels(cluster_id), cluster_id)]
+        if (length(missing_clusters) != 0)
+          median_cond <- rbind(median_cond, data.table::data.table(cluster_id = missing_clusters, my_marker= NA))
+        data.table::setkey(median_cond, cluster_id)
+        lev <- median_cond[, my_marker]
+        yval <- seq(min(lev, na.rm = T), max(lev, na.rm = T), by = (max(lev, na.rm = T) - min(lev, na.rm = T))/length(colorPalette(100)))
+
+        igraph::V(S4Vectors::metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[findInterval(median_cond[, my_marker], yval)]
+        igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = S4Vectors::metadata(sce)$SOM_MST$size,
+                            vertex.label = NA, main = main, edge.lty = lty, 
+                            mark.groups = background$groups, mark.col = background$col[background$values],
+                            mark.border = background$col[background$values])
+      }
       
       graphics::par(fig = c(0, 0.2, 0, 1), mar = c(0, 0, 0, 
                                                    0), new = TRUE)
@@ -292,14 +314,20 @@ plotMarkerCustom <- function (sce, marker, facet_by = "NA", assayType = "exprs",
       
       cond_levels <- levels(CATALYST::ei(sce)[[facet_by]])
       both_cond <- data.table::rbindlist(sapply(cond_levels, function(cond){
-        sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name == marker), get(facet_by) == cond)
+        if (subselection_col != "") 
+          sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name == marker), get(facet_by) == cond, get(subselection_col) == subselection)
+        else 
+          sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name == marker), get(facet_by) == cond)
         median_cond <- data.table::data.table(t(SummarizedExperiment::assay(sce_filtered, assayType)))
         median_cond[, cluster_id := sce_filtered$cluster_id]
         median_cond <- median_cond[, .(my_marker = median(get(marker))), by = cluster_id]
+        missing_clusters <- median_cond[, setdiff(levels(cluster_id), cluster_id)]
+        if (length(missing_clusters) != 0)
+        median_cond <- rbind(median_cond, data.table::data.table(cluster_id = missing_clusters, my_marker= NA))
         data.table::setkey(median_cond, cluster_id)
       }, simplify = FALSE), idcol = "condition")
       lev <- both_cond[, my_marker]
-      yval <- seq(min(lev), max(lev), by = (max(lev) - min(lev))/length(colorPalette(100)))
+      yval <- seq(min(lev, na.rm = T), max(lev, na.rm = T), by = (max(lev, na.rm = T) - min(lev, na.rm = T))/length(colorPalette(100)))
       for (cond in cond_levels) {
         igraph::V(S4Vectors::metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[findInterval(both_cond[condition == cond, my_marker], yval)]
         if (cond != cond_levels[1]) main <- NULL
@@ -314,7 +342,7 @@ plotMarkerCustom <- function (sce, marker, facet_by = "NA", assayType = "exprs",
       graphics::par(fig = c(0, 0.2, 0, 1), mar = c(0, 0, 0, 
                                                    0), new = TRUE)
       
-      FlowSOM:::legendContinuous(colorPalette(100), both_cond[, my_marker])
+      FlowSOM:::legendContinuous(colorPalette(100), both_cond[!is.na(my_marker), my_marker])
     }
     if (!is.null(backgroundValues)) {
       graphics::par(fig = c(0.8, 1, 0, 1), mar = c(0, 0, 0, 
