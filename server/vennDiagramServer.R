@@ -1,5 +1,13 @@
 library(ggvenn)
 
+resetDEComparison <- function(){
+  shinyjs::reset("column1_comparison")
+  shinyjs::reset("column2_comparison")
+  reactiveVals$ds_bool <- NULL
+  reactiveVals$lastVenn <- NULL
+  reactiveVals$lastAllResults <- NULL
+}
+
 # --------------------------------------------------------------
 # Main function: -------------------
 # parses inputs and runs all methods by calling runDA / runDS
@@ -346,7 +354,8 @@ output$DAVenn <- renderUI({
       id = "deFormulaRandomVenn",
       title = "Random intercept terms for the model formula",
       content = "GLMM works with fixed and random effects: Depending on the experimental design, this may include group IDs (e.g. groups for differential testing) or block IDs (e.g. patient IDs in a paired design)."
-    )
+    ),
+    id="DA_Venn_div"
   )
 })
 
@@ -369,7 +378,8 @@ output$DSVenn <- renderUI({
     id = "deMethodsCompQ",
     title = "Available Methods",
     content = "Depending on what you want to analyse, there are different methods available. Please see their documentation in the DE tab for further explanation."
-  )
+  ),
+  id = "DS_Venn_div"
   )
 })
 

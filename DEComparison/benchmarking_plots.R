@@ -38,6 +38,11 @@ preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covi
     times[, nr_of_cells := tstrsplit(dataset, "_", keep = keep)]
     times[, nr_of_cells := as.numeric(nr_of_cells)]
     results[, nr_of_cells := tstrsplit(dataset, "_", keep = keep)]
+    if (data_type == "downsampled_covid_spike"){
+      sce_covid_spike <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_full_ds_full.rds")
+      nr_cells_full <- sum(ei(sce_covid_spike)$n_cells)
+      results$nr_of_cells[results$nr_of_cells == "full"] <- nr_cells_full
+    }
     results[, nr_of_cells := as.numeric(nr_of_cells)]
     
     if (data_type=="downsampled_covid_spike"){
@@ -46,27 +51,19 @@ preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covi
       results[, alpha := tstrsplit(dataset, "_", keep = 4)]
       results[, alpha := factor(alpha, levels = c("full", "25", "50", "75", "100"))]
       
+      
+      
       stats_table <- results[, .(
-        TP = sum(
-          p_adj <= 0.05 &
-            marker_id %in% trues
-          & alpha != 100
-          ,
-          na.rm = T
-        ),
+        TP = sum(p_adj <= 0.05 &
+                   marker_id %in% trues
+                 & alpha != 100,na.rm = T),
         FP = sum((p_adj <= 0.05 | is.na(p_adj)) &
-                   !(
-                     marker_id %in% trues
-                   )),
+                   !(marker_id %in% trues)),
         TN = sum(p_adj > 0.05 &
-                   !(
-                     marker_id %in% trues
-                   ), na.rm = T),
-        FN = sum(
-          (p_adj > 0.05 | is.na(p_adj)) &
-            marker_id %in% trues 
-          & alpha != 100
-        )
+                   !(marker_id %in% trues), na.rm = T),
+        FN = sum((p_adj > 0.05 | is.na(p_adj)) &
+                   marker_id %in% trues
+                 & alpha != 100)
       ), by = .(method, nr_of_cells, alpha)]
       
       # stats_table[, nr_of_cells := factor(nr_of_cells, levels = c(15000, 10000, 5000, 2000, 1000))]

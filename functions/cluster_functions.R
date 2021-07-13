@@ -85,7 +85,7 @@ PlotBackgroundLegendCustom <- function (backgroundValues, background, main = "Ba
 
 plotStarsCustom <-
   function (sce,
-            markers = CATALYST:::.get_features(sce, "type"),
+            markers = SummarizedExperiment::rowData(sce)$marker_name[SummarizedExperiment::rowData(sce)$used_for_clustering],
             view = "MST",
             colorPalette = grDevices::colorRampPalette(
               c(
@@ -488,7 +488,7 @@ plotAbundancesCustom <-
 plotClusterExprsCustom <-
   function (x,
             k,
-            features = "type",
+            features = SummarizedExperiment::rowData(x)$marker_name[SummarizedExperiment::rowData(x)$used_for_clustering],
             assay = "exprs")
   {
     CATALYST:::.check_sce(x, TRUE)

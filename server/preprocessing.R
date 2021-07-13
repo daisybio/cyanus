@@ -1,5 +1,9 @@
 # Preprocessing Server
 
+resetPreprocessing <- function(){
+  reactiveVals$preprocessingShowed <- FALSE
+}
+
 # marker, sample, patient selection -> if markers, patients, samples are selected -> prepValButton can be clicked
 observeEvent({
   input$patientSelection

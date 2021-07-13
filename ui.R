@@ -14,7 +14,7 @@ jscode <- "shinyjs.closewindow = function() { window.close(); }"
 sapply(list.files("ui", full.names = TRUE), source, environment())
 
 header <-
-  dashboardHeader(title = "CyTOF Pipeline", uiOutput("dashboard"))
+  dashboardHeader(title = span(img(src="cyanus_shiny_logo.png", height="50px")), uiOutput("dashboard"))
 
 sidebar <- dashboardSidebar(useShinyjs(),
                             extendShinyjs(text = jscode, functions = c("closewindow")),
@@ -22,7 +22,7 @@ sidebar <- dashboardSidebar(useShinyjs(),
                               tags$style(".inactiveLink {
                             pointer-events: none;
                            cursor: default;
-                           }")
+                           }"),
                             ),
                             uiOutput("sidebar"),
                             collapsed = TRUE)
@@ -38,15 +38,16 @@ body <-
       right: 50px; /*48% from the right*/
     }"
     ),
-    tags$head(tags$style(HTML('
+    tags$head(
+    tags$style(HTML('
         /* logo */
         .skin-blue .main-header .logo {
-                              background-color: #6495ed;
+                              background-color: #ffffff;
                               }
 
         /* logo when hovered */
         .skin-blue .main-header .logo:hover {
-                              background-color: #6495ed;
+                              background-color: #ffffff;
                               }
 
         /* navbar (rest of the header) */
@@ -85,15 +86,27 @@ body <-
     div(
       id = "loading",
       fluidRow(box(
-        div ("CyTOF is an uprising method for discovering biomarkers of the immune system. 
-                              Its advantage over Flow Cytometry is that it labels the antibodies with metal 
-                              isotopes instead of fluorophores, allowing it to analyse more markers in a single 
-                              run while needing fewer cells."),
-        div ("Consequently, CyTOF experiments are becoming a powerful tool to find 
-                              immune marker expression differences between different conditions. In order 
-                              to facilitate the analysis of CyTOF data for biologists and physicians, 
-                              a clear, understandable and user-friendly pipeline is needed."),
-        title = h1("Welcome to the CyTOF Pipeline"),
+        div ("Recently, high-dimensional time-of-flight mass cytometry (CyTOF) 
+                               has emerged with the ability to identify more than 40 parameters simultaneously.
+                               Traditional flow cytometry would require multiple tubes with different 
+                               antibody panels to cover the same number of markers. Consequently, 
+                               CyTOF experiments are becoming a powerful tool to unveil new cell subtypes, 
+                               functions, and biomarkers in many fields, e.g. the discovery of disease-associated 
+                               immunologic changes in cancer."),
+        div ("In order to facilitate the analysis of CyTOF data for biologists and physicians, 
+                               a clear, understandable and user-friendly pipeline is needed."),
+        div("Here, we integrated the methods from the CATALYST package for preprocessing, 
+                             visualization and clustering. For differential abundance detection, we included the 
+                             diffcyt methods diffcyt-DA-edgeR, diffcyt-DA-voom and diffcyt-DA-GLMM."),
+        div("However, many experiments aim to detect differential states
+                             within cell populations between samples in different conditions. 
+                             For this, we integrated the published methods diffcyt-DS-limma, 
+                             diffcyt-DS-LMM, CytoGLMM and CytoGLM. Additionally, we performed a comprehensive analysis
+                             of these existing methods and novel approaches published in …. 
+                             Since the Wilcoxon rank-sum test and the t-test on sample medians, as well as
+                             our novel method sceEMD performed well, we made them available in this interface as well."),
+        div(img(src="cyanus_shiny_logo.png", height="150px", style="float:right; padding:20px;")),
+        title = h1("Welcome to CYANUS: CYtof ANalysis Using Shiny"),
         width = 12
       ))
     ),
@@ -131,4 +144,4 @@ body <-
     ))
 )
 
-ui <- tags$div(id = "app", dashboardPage(header, sidebar, body))
+ui <- tags$div(id = "app", dashboardPage(header, sidebar, body, title = "CYANUS"))
