@@ -96,6 +96,24 @@ observeEvent(input$loadData, {
 
   }else
     stop("Which tab is selected?")
+  
+  # set negative values to zero
+  if (length(which(assays(reactiveVals$sce)$counts < 0)) > 0){
+    assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- 0
+    if ("exprs" %in% assayNames(reactiveVals$sce)){
+      assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- 0
+    }
+    showNotification(
+      HTML(
+        "<b>Negative values found.</b><br>
+      Negative values were found in the data and now set to 0."
+      ),
+      duration = 10,
+      type = "message"
+    )
+  }
+
+  
   start_tab <- which(tab_ids == "start")
   if (isolate(reactiveVals$max_tab > start_tab))
     reactiveVals$max_tab <- start_tab
