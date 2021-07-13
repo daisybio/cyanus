@@ -35,7 +35,7 @@ preprocessingBody <- function() {
       id = "cofactor"
     ),
     height = marker_sample_height,
-    width = 6
+    width = 4
   )
   
   cofactorPopover <-
@@ -43,9 +43,31 @@ preprocessingBody <- function() {
               title = "Cofactor of the inverse hyperbolic sine transformation",
               content = "Recommended values for the cofactor parameter are 5 for mass cytometry (CyTOF) or 150 for fluorescence flow cytometry. Click on the Start Transformation button to do the arcsinh transformation.")
   
+  downsamplingBoxPreprocessing <- shinydashboard::box(
+    uiOutput("downsamplingBoxPreprocessing"),
+    div(
+      bsButton(
+        "downsamplingButtonPreprocessing",
+        "Perform Downsampling",
+        icon = icon("filter"),
+        style = "warning"
+      ),
+      style = "float: right;"
+    ),
+    title = span("Downsampling", icon("question-circle"), id="dsPrepPopover"),
+    height = marker_sample_height,
+    width = 4
+  )
+  
+  dsPrepPopover <- bsPopover(
+    id="dsPrepPopover",
+    title = "Downsample your data",
+    content = "If you have a big dataset and do not want to wait too long for your analyses, you can perform a downsampling on your dataset."
+  )
+  
   # box with markers, samples and patients (all markers, patients, samples selected by default)
   selectingBox <- shinydashboard::box(
-    uiOutput("markersBox"),
+    #uiOutput("markersBox"),
     uiOutput("patientsBox"),
     uiOutput("samplesBox"),
     div(
@@ -67,12 +89,12 @@ preprocessingBody <- function() {
       style = "float: right;"
     ),
     title = span(
-      "Selecting Markers, Samples, and Patients",
+      "Selecting Samples and Patients",
       icon("question-circle"),
       id = "selecting"
     ),
     height = marker_sample_height,
-    width = 6
+    width = 4
   )
   
   selectingPopover <- bsPopover(id = "selecting",
@@ -162,6 +184,8 @@ preprocessingBody <- function() {
     fluidRow(
       transformationBox,
       cofactorPopover,
+      downsamplingBoxPreprocessing,
+      dsPrepPopover,
       selectingBox,
       selectingPopover
     ),
