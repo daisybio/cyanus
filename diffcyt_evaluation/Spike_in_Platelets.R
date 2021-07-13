@@ -210,11 +210,11 @@ saveRDS(sce75, "~/cytof/covid/sce_spiked_clustered_75_ds_full.rds")
 saveRDS(sce100, "~/cytof/covid/sce_spiked_clustered_100_ds_full.rds")
 
 ######tests
-scefull <- readRDS("/nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_full_ds_full.rds")
-sce25 <- readRDS("/nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_25_ds_full.rds")
-sce50 <- readRDS("/nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_50_ds_full.rds")
-sce75 <- readRDS("/nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_75_ds_full.rds")
-sce100 <- readRDS("/nfs/home/students/jbernett/cytof/covid/sce_spiked_clustered_100_ds_full.rds")
+scefull <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_full_ds_full.rds")
+sce25 <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_25_ds_full.rds")
+sce50 <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_50_ds_full.rds")
+sce75 <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_75_ds_full.rds")
+sce100 <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_100_ds_full.rds")
 
 source("functions/prep_functions.R")
 for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
@@ -230,8 +230,8 @@ for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
 }
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-spike_in_sces <- lapply(list.files("~/cytof/covid_spiked/downsampled_files", full.names = T), readRDS)
-names(spike_in_sces) <- tstrsplit(list.files("~/cytof/covid_spiked/downsampled_files"), ".rds", keep=1)[[1]]
+spike_in_sces <- lapply(list.files("/nfs/home/students/jbernett/cytof/covid_spiked/downsampled_files", full.names = T), readRDS)
+names(spike_in_sces) <- tstrsplit(list.files("/nfs/home/students/jbernett/cytof/covid_spiked/downsampled_files"), ".rds", keep=1)[[1]]
 countsDT <- lapply(spike_in_sces, function(x){as.data.table(t(assays(x)$exprs))})
 countsDT <- rbindlist(countsDT, idcol = "filename")
 coldataDT <- lapply(spike_in_sces, function(x){as.data.table(colData(x))[, c("patient_id", "base_spike")]})
@@ -247,13 +247,17 @@ meanDT[, alpha := factor(alpha, levels = c("full", "25", "50", "75", "100"))]
 meanDT[, base_spike := factor(base_spike, levels = c("spike", "base"))]
 meanDT[, n_cells := factor(n_cells, levels = c(1000, 2000, 5000, 10000, 15000, 20000))]
 
-ggplot(meanDT, aes(x=alpha, y = mean, fill = base_spike))+
+spike <- ggplot(meanDT, aes(x=alpha, y = mean, fill = base_spike))+
   geom_boxplot()+
   facet_wrap( ~ marker, scales = "free")+
-  scale_fill_manual(values = colorBlindBlack8[c(3,8)], name = "Condition")+
-  theme_bw()+
-  theme(text = element_text(size=20))+
-  labs(x = "100 x Alpha",y = "Mean Expression")
+  scale_fill_manual(values = colorBlindBlack8[c(3,8)], name = "Condition", labels = c("Spike", "Base"))+
+  theme_bw() +
+  theme(
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold", size=16),
+    axis.text = element_text(color = "black", size=14), 
+    axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) +
+  labs(x = expression(alpha*" x 100"),y = "Mean Expression")
 
 
 source("functions/de_functions.R")
