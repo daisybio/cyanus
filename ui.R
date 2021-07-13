@@ -14,7 +14,7 @@ jscode <- "shinyjs.closewindow = function() { window.close(); }"
 sapply(list.files("ui", full.names = TRUE), source, environment())
 
 header <-
-  dashboardHeader(title = "CyTOF Pipeline", uiOutput("dashboard"))
+  dashboardHeader(title = "CYANUS", uiOutput("dashboard"))
 
 sidebar <- dashboardSidebar(useShinyjs(),
                             extendShinyjs(text = jscode, functions = c("closewindow")),
