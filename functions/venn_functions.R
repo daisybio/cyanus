@@ -6,6 +6,43 @@ library(dimRed)
 library(RANN)
 library(ggvenn)
 
+#create tile heatmap of all methods that were performed in runDA / runDS
+
+createVennHeatmap <- function(res, DS = T, fdr_threshold = 0.05, columns = NULL){
+  colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+                         "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+  results <-
+    data.table::rbindlist(sapply(res[names(res) != "effect_size"], as.data.table),
+      idcol = "method", fill = TRUE)
+  if(DS){
+    eff_r <- res[["effect_size"]]
+    results[, feature := paste0(marker_id, "(", cluster_id, ")")]
+    eff_r[, marker_id := sapply(strsplit(eff_r$group2,'::'), "[", 1)]
+    eff_r[, feature := paste0(marker_id, "(", cluster_id, ")")]
+    eff_r <- eff_r[feature %in% results$feature]
+    label <- "Marker (Cluster)"
+  }else{
+    results[, feature := cluster_id]
+    label <- "Cluster ID"
+  }
+  results[, significant := p_adj < fdr_threshold]
+  g <- ggplot(results, aes(feature, method))+ 
+    geom_tile(aes(fill = significant), color = "white", size = 1)+
+    xlab(label = label) +
+    ylab("Method") +
+    theme(text = element_text(size = 14),
+          axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+    scale_fill_manual(values = colorBlindBlack8[c(7, 3, 1)],
+                      name = "Significant",
+                      na.value = "transparent")
+  if(DS){
+    g <- g+
+      ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
+      ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
+  }
+  return(g)
+}
+
 # create venn diagram of all methods that were performed in runDA / runDS
 createVennDiagram <- function(res, DS = T, fdr_threshold = 0.05, columns = NULL) {
   input_venn <- list()

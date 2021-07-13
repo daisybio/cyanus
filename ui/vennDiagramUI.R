@@ -21,9 +21,17 @@ vennBody <- function(){
           "Before doing this, you should have done clustering, preferrably by type. <br> <b>Differential Cluster Abundance:</b> Differential analysis of cell population abundance regarding the clusters. Compares the proportions of cell types across experimental condition and aims to highlight populations that are present at different ratios. <br> <b>Differential Marker Expression:</b> Differential analysis of the marker expression in each cell population (i.e. cluster or overall)."
         )
       ),
-      uiOutput("modelSelectionVenn"),
+      uiOutput("deMethodSelectionComp"),
       uiOutput("contrastSelectionVenn"),
-      uiOutput("deSubselectionVenn"),
+      uiOutput("DSVenn"),
+      uiOutput("conditionSelectionComp"),
+      uiOutput("groupSelectionComp"),
+      uiOutput("additionalTermsSelectionComp"),
+      # uiOutput("contrastSelection"),
+      # uiOutput("modelSelection"),
+      uiOutput("emdInputComp"),
+      uiOutput("CytoGLM_num_bootComp"),
+      uiOutput("deSubselectionComp"),
       width = 6
     ),
     column(
@@ -74,7 +82,7 @@ vennBody <- function(){
           shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px"))
           ),
         id = "vennDiagramsBox",
-        title= "Venn Diagram",
+        title= "Result Comparison",
         width = 12
       )
     ),

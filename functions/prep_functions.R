@@ -229,7 +229,7 @@ check_args_plotDiffHeatmapCustom <- function(u){
 
 
 
-plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc = 1, all = FALSE, 
+plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc = 1, all = FALSE, eff_r = NULL,
                                    sort_by = c("padj", "lfc", "none"), y_cols = list(padj = "p_adj", 
                                                                                      lfc = "logFC", target = "marker_id"), assay = "exprs", 
                                    fun = c("median", "mean", "sum"), normalize = TRUE, col_anno = TRUE, 
@@ -321,12 +321,58 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
       lfc_anno <- NULL
       anno_cols <- list()
     }
+    
     names(fdr_pal) <- levels(s)
     anno_cols$significant <- fdr_pal
-    right_anno <- ComplexHeatmap::rowAnnotation(logFC = lfc_anno, significant = s, na_col = "deeppink1",
-                                                foo = ComplexHeatmap::row_anno_text(scales::scientific(top$padj, 2), gp = grid::gpar(fontsize = 8)), 
-                                                col = anno_cols, gp = grid::gpar(col = "white"), show_annotation_name = FALSE, 
-                                                simple_anno_size = grid::unit(4, "mm"))
+    if(!is.null(eff_r)){
+      colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+                             "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+      eff_r[, target := sapply(strsplit(eff_r$group2,'::'), "[", 1)]
+      eff_r_overall <- eff_r[overall_group == "overall", c("cluster_id", "target", "magnitude")]
+      colnames(eff_r_overall) <- c("cluster_id", "target", "magnitude_overall")
+      eff_r_grouped <- eff_r[overall_group == "grouped", c("cluster_id", "target", "magnitude")]
+      colnames(eff_r_grouped) <- c("cluster_id", "target", "magnitude_grouped")
+      top <- merge(top, eff_r_overall[, c("cluster_id", "target", "magnitude_overall")], by = c("cluster_id", "target"))
+      eff_r_anno <- factor(top$magnitude_overall, levels = c("negligible", "small", "moderate", "large"))
+      eff_pal <- colorBlindBlack8[c(8,5,2,6)]
+      names(eff_pal) <- levels(eff_r$magnitude)
+      anno_cols$overall <- eff_pal
+      if(nrow(eff_r_grouped) != 0){
+        top <- merge(top, eff_r_grouped[, c("cluster_id", "target", "magnitude_grouped")], by = c("cluster_id", "target"))
+        eff_r_anno_grouped <- factor(top$magnitude_grouped, levels = c("negligible", "small", "moderate", "large"))
+        anno_cols$grouped <- eff_pal
+        right_anno <- ComplexHeatmap::rowAnnotation(overall = eff_r_anno, 
+                                                    grouped = eff_r_anno_grouped,significant = s, na_col = "deeppink1",
+                                                    foo = ComplexHeatmap::row_anno_text(scales::scientific(top$padj, 2), gp = grid::gpar(fontsize = 8)), 
+                                                    col = anno_cols, gp = grid::gpar(col = "white"), show_annotation_name = TRUE, 
+                                                    simple_anno_size = grid::unit(4, "mm"), 
+                                                    annotation_legend_param = list(
+                                                      overall = list(
+                                                        title = "overall\neffect size"
+                                                      ),
+                                                      grouped = list(
+                                                        title = "grouped\neffect size"
+                                                      )
+                                                    ))
+      }else{
+        right_anno <- ComplexHeatmap::rowAnnotation(overall = eff_r_anno, significant = s, na_col = "deeppink1",
+                                                    foo = ComplexHeatmap::row_anno_text(scales::scientific(top$padj, 2), gp = grid::gpar(fontsize = 8)), 
+                                                    col = anno_cols, gp = grid::gpar(col = "white"), show_annotation_name = TRUE, 
+                                                    simple_anno_size = grid::unit(4, "mm"),
+                                                    annotation_legend_param = list(
+                                                      overall = list(
+                                                        title = "overall\neffect size"
+                                                      )
+                                                    ))
+      }
+    }else{
+
+      right_anno <- ComplexHeatmap::rowAnnotation(logFC = lfc_anno, significant = s, na_col = "deeppink1",
+                                                  foo = ComplexHeatmap::row_anno_text(scales::scientific(top$padj, 2), gp = grid::gpar(fontsize = 8)), 
+                                                  col = anno_cols, gp = grid::gpar(col = "white"), show_annotation_name = TRUE, 
+                                                  simple_anno_size = grid::unit(4, "mm"))
+    }
+    
   }
   else right_anno <- NULL
   switch(type, da = {
@@ -349,6 +395,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
     }, numeric(1)), k = top$cluster_id, g = top$target))
     rownames(z) <- sprintf("%s(%s)", top$target, top$cluster_id)
     if (normalize) z <- CATALYST:::.z_normalize(z)
+   
     ComplexHeatmap::Heatmap(matrix = z, name = paste0("z-normalized\n"[normalize], 
                                                       "expression"), col = hm_pal, cluster_rows = FALSE, 
                             cluster_columns = FALSE, top_annotation = top_anno, 

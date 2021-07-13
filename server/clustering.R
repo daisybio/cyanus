@@ -67,6 +67,7 @@ observeEvent(input$startClustering, {
   )
 })
 
+
 observeEvent(input$featuresIn,
              {
                if (input$useFeaturesIn == "Marker by Class")
@@ -376,7 +377,10 @@ output$clusteringOutput <- renderUI({
   sceEI <- ei(reactiveVals$sce)
   starMarkerFacets <- names(which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2)))
   names(starMarkerFacets) <- starMarkerFacets
-  starMarkerFacets <- c("No Facetting" = NA, starMarkerFacets)
+  starMarkerFacets <- c("No Facetting" = "", starMarkerFacets)
+  
+  starMarkerSubselection <- colnames(sceEI)
+  starMarkerSubselection <- c("No Subselection" = "", starMarkerSubselection[!starMarkerSubselection %in% c('n_cells', 'sample_id')])
   
   shinydashboard::box(
     fluidRow(
@@ -456,7 +460,7 @@ output$clusteringOutput <- renderUI({
             ),
             style = "position: relative; z-index: 99; float: left;"
           ),
-          div("Smoothed densities of marker intensities by cluster.", style = "text-align: center;vertical-align: middle;"),
+          div(HTML("Smoothed densities of marker intensities by cluster. <b style='color:#FF3358';>Attention:</b> This may take some time"), style = "text-align: center;vertical-align: middle;"),
           div(uiOutput("clusterDensitiyDownload"),
               style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
@@ -499,6 +503,12 @@ output$clusteringOutput <- renderUI({
                 label = "Facet By",
                 choices = starMarkerFacets
               ),
+              selectInput(
+                "plotStarMarkerSubselection",
+                label = "Subselection By",
+                choices = starMarkerSubselection
+              ),
+              uiOutput("plotStarMarkerSubselectionChoicesBox"),
               circle = TRUE,
               status = "info",
               icon = icon("gear"),
@@ -508,7 +518,8 @@ output$clusteringOutput <- renderUI({
             style = "position: relative; z-index: 99; float: left;"
           ),
           div(
-            "Tree, where each node (cluster) is coloured depending on its median value for the given marker.",
+            HTML("Tree, where each node (cluster) is coloured depending on its median value for the given marker.
+            <br>If you use subselection, be aware that the MST and the node sizes were computed on the whole dataset."),
             style = "text-align: center;vertical-align: middle;"
           ),
           div(uiOutput("clusterStarMarkerDownload"),
@@ -527,6 +538,18 @@ output$clusteringOutput <- renderUI({
     width = 12,
     collapsible = TRUE,
     collapsed = TRUE
+  )
+})
+
+output$plotStarMarkerSubselectionChoicesBox <- renderUI({
+  req(input$plotStarMarkerSubselection, input$plotStarMarkerSubselection != "")
+  
+  choices <- levels(ei(reactiveVals$sce)[[input$plotStarMarkerSubselection]])
+  
+  selectInput(
+    "plotStarMarkerSubselectionChoices",
+    label = "Subselection",
+    choices = choices
   )
 })
 
@@ -572,6 +595,8 @@ output$clusterStarMarkerPlot <- renderPlot({
       reactiveVals$sce,
       input$plotStarMarkerFeatureIn,
       facet_by = input$plotStarMarkerFacets,
+      subselection_col = isolate(input$plotStarMarkerSubselection),
+      subselection = input$plotStarMarkerSubselectionChoices,
       assayType = names(metadata(reactiveVals$sce)$clusterRun$assayType),
       backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]]
     )
@@ -630,12 +655,16 @@ output$downloadPlotStar <- downloadHandler(
 )
 
 output$downloadPlotMarkerStar <- downloadHandler(
-  filename = sprintf("Star_Charts_%s.pdf", input$plotStarMarkerFeatureIn),
+  filename = function() {sprintf("Star_Charts_%s.pdf", input$plotStarMarkerFeatureIn)},
   content = function(file) {
     waiter_show(id = "app",html = tagList(spinner$logo, 
                                           HTML("<br>Downloading...")), 
                 color=spinner$color)
-    pdf(file, width = 12, height = 8)
+    if (input$plotStarMarkerFacets != "")
+      my_width = 16
+    else 
+      my_width = 12
+    pdf(file, width = my_width, height = 8)
     print(reactiveVals$starMarkerCluster)
     dev.off()
     waiter_hide(id= "app")

@@ -100,9 +100,11 @@ runCytoGLMM <-
       as.data.frame(t(SummarizedExperiment::assay(sce, assay_to_use)))
     # features <-
     #   match.arg(features, SummarizedExperiment::rowData(sce)$marker_name, several.ok = TRUE)
+    old_names <- features
     features <- sapply(features, function(marker) {
       gsub("[^[:alnum:]]", "", marker)
     })
+    names(old_names) <- features
     colnames(data) <- features
     match.arg(condition, names(SummarizedExperiment::colData(sce)))
     data$condition <- SummarizedExperiment::colData(sce)[[condition]]
@@ -132,5 +134,5 @@ runCytoGLMM <-
       stop("unknown method")
     }
     summary_fit <- summary(fit)
-    return(data.frame(marker_id = summary_fit$protein_name, p_val = summary_fit$pvalues_unadj))
+    return(data.frame(marker_id = old_names[summary_fit$protein_name], p_val = summary_fit$pvalues_unadj))
   }

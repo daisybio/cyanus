@@ -109,6 +109,7 @@ observeEvent(input$runDRButton, {
   }
   
   nrCells <- isolate(input$nrCellsRun)
+  seed <- isolate(input$seedSubsamplingDR)
   features <- isolate(reactiveVals$featuresDR)
   assay <- isolate(input$assayRunSelected)
   scale <- isolate(input$scaleRun)
@@ -119,15 +120,18 @@ observeEvent(input$runDRButton, {
     features = toString(features),
     counts = assay,
     cells = nrCells,
+    seed = seed,
     scale = scale,
     k = toString(k),
     dimensions = nrDims
   )
   if(!reactiveVals$stopVis){
+    set.seed(seed)
     reactiveVals$sce <- runCatalystDR(
       sce = reactiveVals$sce,
       dr_chosen = method,
       cells_chosen = nrCells,
+      seed = seed,
       feature_chosen = features,
       assay_chosen = assay,
       scale = scale,
@@ -355,6 +359,23 @@ output$runDRparBox <- renderUI({
         id = "cellQ",
         title = "Speed up your computations",
         content = "Specify the maximal number of cells per sample to use for dimension reduction, e.g. 100. Then, from each sample 100 cells are randomly taken in order to compute the dimensionality reduction. If you specify values higher than the number of cells in one sample, all cells from these samples will be taken. For the bigger samples, the number you specified will be taken."
+      ),
+      numericInput(
+        "seedSubsamplingDR",
+        label = span(
+            "Set a seed for your subsampling so that your results are reproducible",
+          icon("question-circle"),
+          id = "seedsubsamplingDRQ"
+        ),
+        value = 42,
+        min = 1,
+        max = 10000,
+        step = 1
+      ),
+      bsPopover(
+        id = "seedsubsamplingDRQ",
+        title = "Seed for Subsampling",
+        content = "Set a seed for your subsampling so that your results are reproducible. If you run different methods with the same seed, the same cells will be used for the dimensionality reduction."
       ),
       radioButtons(
         inputId = "scaleRun",

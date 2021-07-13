@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.0.0",
+    "Version": "4.0.5",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -2223,10 +2223,10 @@
     },
     "waiter": {
       "Package": "waiter",
-      "Version": "0.2.0",
+      "Version": "0.2.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "58bd688fb765cf778b633df0e2502003"
+      "Hash": "fa38293709d399fff7c861798970dd28"
     },
     "waldo": {
       "Package": "waldo",

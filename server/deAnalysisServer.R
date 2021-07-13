@@ -4,12 +4,13 @@ plotbox_height <- "48em"
 methods_height <- "40em"
 
 methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
-methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD", "CytoGLMM" = "CytoGLMM", "CytoGLM" = "CytoGLM", "Wilcoxon rank-sum test" = "wilcoxon_median", "Student's t-test" = "t-test")
+methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD", "CytoGLMM" = "CytoGLMM", "CytoGLM" = "CytoGLM", "Wilcoxon rank-sum test" = "wilcoxon_median", "Student's t-test" = "t_test")
 
 
 #resetDEAnalysis <- function(){
 #  reactiveVals$exclusionList <- NULL
 #  reactiveVals$subselectionMap <- NULL
+#  reactiveVals$eff_r <- NULL
 #}
 
 # Main function: 
@@ -179,6 +180,9 @@ call_DE <- function() {
       emdNperm <- isolate(input$emdNperm)
     } else if (input$chosenDAMethod == "CytoGLM") {
       CytoGLM_num_boot <- isolate(input$CytoGLM_num_boot)
+    }else if(method == "CytoGLMM" & is.null(groupCol)){
+      shiny::showNotification("Results of CytoGLMM are not meaningful when no grouping variable like patient ID is selected.", 
+                              type = "warning", duration = 10)
     }
   }
   
@@ -225,6 +229,7 @@ call_DE <- function() {
           blockID = blockID
         )
         out <- results[[method]]
+        reactiveVals$eff_r[[method]] <- NULL
       } else {
         #extra args: parameters, blockID, trend_limma, markersToTest, includeWeights
         results <- runDS(
@@ -247,6 +252,8 @@ call_DE <- function() {
           parallel = FALSE
         )
         out <- results[[method]]
+        #the effect sizes do not have to be computed multiple times
+        reactiveVals$eff_r[[method]] <- findEffectSize(sce, condition, groupCol, clustering_to_use)
       }
     },
     message = function(m) {
@@ -258,6 +265,33 @@ call_DE <- function() {
   
   removeNotification("progressNote")
   return(out)
+}
+
+findEffectSize <- function(sce, condition, groupCol, clustering_to_use){
+  #the effect sizes do not have to be computed multiple times
+  found_effect_size <- FALSE
+  if(!is.null(reactiveVals$eff_r)){
+    for(method in names(reactiveVals$eff_r)){
+      eff_size <- reactiveVals$eff_r[[method]]
+      if(is.null(groupCol) & !("grouped" %in% eff_size$overall_group)){
+        found_effect_size <- TRUE
+        return(eff_size)
+      }else if(!is.null(groupCol) & "grouped" %in% eff_size$overall_group){
+        if(reactiveVals$methodsInfo[[method]]$grouping_columns == groupCol){
+          found_effect_size <- TRUE
+          return(eff_size)
+        }
+      }
+    }
+  }
+  if(is.null(reactiveVals$eff_r) | !found_effect_size){
+    return(effectSize(sce = sce,
+                      condition = condition,
+                      group = groupCol, k=clustering_to_use, 
+                      use_assay="exprs", use_mean=FALSE)
+           )
+  }
+  
 }
 
 # Renderer ----
@@ -1052,8 +1086,8 @@ output$deExprsCluster <- renderUI({
                       "deBoxK",
                       "Clusters",
                       names(cluster_codes(reactiveVals$sce)),
-                      multiple = F,
-                      selected = "meta9"
+                      multiple = F
+                      # selected = "meta9" #TODO: take first 
                     )),
                     selectizeInput("deBoxFeatures",
                                    "Markers:",
@@ -1129,7 +1163,7 @@ output$pbExprsPlotDownload <- renderUI({
   downloadButton("downloadPlotPbExprs", "Download Plot")
 })
 
-# function for downloading MDS plot
+# function for downloading MDS plot 
 output$downloadPlotPbExprs <- downloadHandler(
   filename = function(){
     paste0("Pb_Exprs_plot", ".pdf")
@@ -1268,6 +1302,7 @@ observeEvent(input$visExpButton,{
     }
     
     out <- runs[[visMethod]]
+    eff_r <- isolate(reactiveVals$eff_r[[visMethod]])
     #if (visMethod != "sceEMD")
     #  out <- rowData(out$res)
     #out$p_val[is.na(out$p_val)] <- 1
@@ -1281,6 +1316,7 @@ observeEvent(input$visExpButton,{
       normalize=as.logical(heatmapNormalize ),
       all = TRUE,
       top_n = as.numeric(topN),
+      eff_r = eff_r
     )
     reactiveVals$diffHeatmapPlot
   })
