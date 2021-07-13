@@ -31,6 +31,39 @@ observe({
   }
 })
 
+
+#render subsampling
+output$downsamplingBoxPreprocessing <- renderUI({
+  req(reactiveVals$sce)
+  smallest_n <- min(CATALYST::ei(reactiveVals$sce)$n_cells)
+  sum_n <- sum(CATALYST::ei(reactiveVals$sce)$n_cells)
+  div(
+  numericInput(
+    "downsamplingNumber",
+    label=sprintf("How many cells? (Lowest #cells/sample: %s)", smallest_n),
+    value=ifelse(smallest_n > 20000, 20000, smallest_n),
+    min=1000,
+    max=sum_n,
+    step=1000
+  ),
+  radioButtons(
+    "downsampling_per_sample",
+    label = "Per sample?",
+    choices = c("Yes", "No"),
+    inline = TRUE
+  ),
+  numericInput(
+    "downsamplingSeed",
+    label = "Set Seed",
+    value = 1234,
+    min=1,
+    max=100000,
+    step=1
+  )
+  )
+})
+
+
 # render markers box
 output$markersBox <- renderUI({
   pickerInput(
@@ -146,16 +179,41 @@ observeEvent(input$prepSelectionButton, {
     duration = 10,
     type = "warning")
   }
-  markers <- isolate(input$markerSelection)
+  #markers <- isolate(input$markerSelection)
   samples <- isolate(input$sampleSelection)
   patients <- isolate(input$patientSelection)
-  sce <- filterSCE(reactiveVals$sce,sample_id %in% samples)
+  reactiveVals$sce <- filterSCE(reactiveVals$sce,sample_id %in% samples)
   if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
-    sce <- filterSCE(sce,patient_id %in% patients)
+    reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% patients)
   }
   
-  sce <- sce[rownames(sce) %in% markers, ]
-  plotPreprocessing(sce)
+  #reactiveVals$sce <- reactiveVals$sce[rownames(reactiveVals$sce) %in% markers, ]
+  plotPreprocessing(reactiveVals$sce)
+  waiter_hide(id = "app")
+})
+
+observeEvent(input$downsamplingButtonPreprocessing, {
+  waiter_show(id = "app",html = tagList(spinner$logo, 
+                                        HTML("<br>Running Downsampling...<br>Please be patient")), 
+              color=spinner$color)
+  if(input$downsampling_per_sample == "Yes"){
+    per_sample=TRUE
+  }else{
+    per_sample=FALSE
+  }
+  smallest_n <- min(CATALYST::ei(reactiveVals$sce)$n_cells)
+  sum_n <- sum(CATALYST::ei(reactiveVals$sce)$n_cells)
+  if(per_sample & isolate(input$downsamplingNumber) > smallest_n){
+    showNotification("You selected a number of cells that is higher than your smallest sample!", type = "error")
+  }else if(!per_sample & isolate(input$downsamplingNumber) > sum_n){
+    showNotification("You selected a number of cells that is higher than your overall dataset size!", type = "error")
+  }else{
+  reactiveVals$sce <- downSampleSCE(sce=reactiveVals$sce, 
+                                    cells=isolate(input$downsamplingNumber),
+                                    per_sample=per_sample, 
+                                    seed=isolate(input$downsamplingSeed))
+  }
+  plotPreprocessing(reactiveVals$sce)
   waiter_hide(id = "app")
 })
 
