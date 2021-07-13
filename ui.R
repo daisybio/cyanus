@@ -14,7 +14,7 @@ jscode <- "shinyjs.closewindow = function() { window.close(); }"
 sapply(list.files("ui", full.names = TRUE), source, environment())
 
 header <-
-  dashboardHeader(title = "CyTOF Pipeline", uiOutput("dashboard"))
+  dashboardHeader(title = "CYANUS", uiOutput("dashboard"))
 
 sidebar <- dashboardSidebar(useShinyjs(),
                             extendShinyjs(text = jscode, functions = c("closewindow")),
@@ -38,6 +38,47 @@ body <-
       right: 50px; /*48% from the right*/
     }"
     ),
+    tags$head(tags$style(HTML('
+        /* logo */
+        .skin-blue .main-header .logo {
+                              background-color: #6495ed;
+                              }
+
+        /* logo when hovered */
+        .skin-blue .main-header .logo:hover {
+                              background-color: #6495ed;
+                              }
+
+        /* navbar (rest of the header) */
+        .skin-blue .main-header .navbar {
+                              background-color: #92b4f2;
+                              }        
+
+        /* main sidebar */
+        .skin-blue .main-sidebar {
+                              background-color: #92b4f2;
+                              }
+
+        /* active selected tab in the sidebarmenu */
+        .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
+                              background-color: #3676e8;
+                              }
+
+        /* other links in the sidebarmenu */
+        .skin-blue .main-sidebar .sidebar .sidebar-menu a{
+                              background-color: #6495ed;
+                              color: #fffff;
+                              }
+
+        /* other links in the sidebarmenu when hovered */
+         .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
+                              background-color: #6495ed;
+                              }
+        /* toggle button when hovered  */                    
+         .skin-blue .main-header .navbar .sidebar-toggle:hover{
+                              background-color: #6495ed;
+                              }
+                              '))),
     waiter_show_on_load(html = tagList(spin_square_circle(), 
                                        HTML("<br>Loading App...")), 
                         color="rgb(0, 102, 204, .5)"),
@@ -52,7 +93,7 @@ body <-
                               immune marker expression differences between different conditions. In order 
                               to facilitate the analysis of CyTOF data for biologists and physicians, 
                               a clear, understandable and user-friendly pipeline is needed."),
-        title = h1("Welcome to the CyTOF Pipeline"),
+        title = h1("Welcome to CYANUS: CYtof ANalysis Using Shiny"),
         width = 12
       ))
     ),
@@ -89,7 +130,5 @@ body <-
       )
     ))
 )
-   
-
 
 ui <- tags$div(id = "app", dashboardPage(header, sidebar, body))

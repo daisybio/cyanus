@@ -1,3 +1,15 @@
+
+resetClustering <- function(){
+  reactiveVals$clusterFeatureNames <- NULL
+  reactiveVals$mergingFrame <- NULL
+  reactiveVals$starMarkerCluster <- NULL
+  reactiveVals$starCluster <- NULL
+  reactiveVals$abundanceCluster <- NULL
+  reactiveVals$exprsCluster <- NULL
+  reactiveVals$heatmapCluster <- NULL
+}
+
+
 ### Observer ----
 observeEvent(input$startClustering, {
   updateButton(session,
@@ -17,7 +29,6 @@ observeEvent(input$startClustering, {
     duration = NULL,
     id = "clusteringProgressNote"
   )
-  
   tryCatch({
     withCallingHandlers({
       reactiveVals$sce <-
@@ -37,7 +48,7 @@ observeEvent(input$startClustering, {
     })
   },
   error = function(e){
-    showNotification(HTML(sprintf("Loading the data failed with the following message:<br>
+    showNotification(HTML(sprintf("Clustering failed with the following message:<br>
                                     <b>%s</b>", e$message)), duration = NULL, type = "error")
   })
   
@@ -68,7 +79,8 @@ observeEvent(input$startClustering, {
 })
 
 
-observeEvent(input$featuresIn,
+observeEvent({input$featuresIn
+  reactiveVals$sce},
              {
                if (input$useFeaturesIn == "Marker by Class")
                  reactiveVals$clusterFeatureNames <-
@@ -584,6 +596,7 @@ output$clusterHeatmapDownload <- renderUI({
 })
 
 output$clusterStarPlot <- renderPlot({
+  req(SummarizedExperiment::rowData(reactiveVals$sce)$used_for_clustering)
   reactiveVals$starCluster <-
     plotStarsCustom(reactiveVals$sce, backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]])
   reactiveVals$starCluster
