@@ -14,7 +14,7 @@ jscode <- "shinyjs.closewindow = function() { window.close(); }"
 sapply(list.files("ui", full.names = TRUE), source, environment())
 
 header <-
-  dashboardHeader(title = span(img(src="cyanus_shiny_logo.png", height="50px")), uiOutput("dashboard"))
+  dashboardHeader(title = span(img(src="logo_title.png", height="50px")), uiOutput("dashboard"))
 
 sidebar <- dashboardSidebar(useShinyjs(),
                             extendShinyjs(text = jscode, functions = c("closewindow")),
@@ -96,16 +96,16 @@ body <-
         div ("In order to facilitate the analysis of CyTOF data for biologists and physicians, 
                                a clear, understandable and user-friendly pipeline is needed."),
         div("Here, we integrated the methods from the CATALYST package for preprocessing, 
-                             visualization and clustering. For differential abundance detection, we included the 
+                             visualization, and clustering. For differential abundance detection, we included the 
                              diffcyt methods diffcyt-DA-edgeR, diffcyt-DA-voom and diffcyt-DA-GLMM."),
         div("However, many experiments aim to detect differential states
                              within cell populations between samples in different conditions. 
                              For this, we integrated the published methods diffcyt-DS-limma, 
-                             diffcyt-DS-LMM, CytoGLMM and CytoGLM. Additionally, we performed a comprehensive analysis
+                             diffcyt-DS-LMM, CytoGLMM, and CytoGLM. Additionally, we performed a comprehensive analysis
                              of these existing methods and novel approaches published in …. 
                              Since the Wilcoxon rank-sum test and the t-test on sample medians, as well as
                              our novel method sceEMD performed well, we made them available in this interface as well."),
-        div(img(src="cyanus_shiny_logo.png", height="150px", style="float:right; padding:20px;")),
+        div(img(src="cyanus_logo.png", height="150px", style="float:right; padding:20px;")),
         title = h1("Welcome to CYANUS: CYtof ANalysis Using Shiny"),
         width = 12
       ))
