@@ -8,6 +8,6 @@ welcomeBody <- tabItem(tabName = "welcome",
                               immune marker expression differences between different conditions. In order 
                               to facilitate the analysis of CyTOF data for biologists and physicians, 
                               a clear, understandable and user-friendly pipeline is needed."),
-                         title = h1("Welcome to the CYANUS - a CYtof ANalysis Using Shiny"),
+                         title = h1("Welcome to CYANUS: CYtof ANalysis Using Shiny"),
                          width = 12
                        )))
