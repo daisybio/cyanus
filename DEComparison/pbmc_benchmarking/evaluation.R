@@ -51,6 +51,15 @@ colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
 eff$marker_id <- sapply(strsplit(eff$group2,'::'), "[", 1)
 
 tmp$marker_id[tmp$marker_id == "HLADR"] <- "HLA_DR"
+
+# rename and order methods
+tmp[tmp == "t_test"] <- "t-test"
+tmp[tmp == "wilcoxon_median"] <- "Wilcoxon test"
+tmp[tmp == "kruskal_median"] <- "Kruskal-Wallis test"
+
+tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "sceEMD")))
+
+
 heat <- ggplot(tmp, aes(marker_id, method)) + 
   geom_tile(aes(fill=significant), color="white", size=1) + 
   ggtitle("") + xlab(label="Marker") + ylab('Method') + 

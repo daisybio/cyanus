@@ -7,16 +7,44 @@ colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73",
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 
-boxplot <- plotPbExprs(sce_dual, features = c("CD62P", "CD63", "CD154", "CD107a"), color_by = "platelets", ncol=4) + 
+#boxplot
+#features <- c("CD62P", "CD63", "CD154", "CD107a")
+features <- NULL
+color_by = "platelets"
+ncol <- 4
+shape_by <- NULL
+fun <- "median"
+assay <- "exprs"
+x <- sce_dual[CATALYST:::.get_features(sce_dual, features), ]
+by <- "sample_id"
+ms <- CATALYST:::.agg(x, by, fun, assay)
+df <- melt(ms, varnames = c("antigen", by[length(by)]))
+i <- match(df$sample_id, x$sample_id)
+j <- setdiff(names(colData(x)), c(names(df), "cluster_id"))
+df <- cbind(df, colData(x)[i, j])
+ncs <- table(as.list(colData(x)[by]))
+ncs <- rep(c(t(ncs)), each = nrow(x))
+df <- df[ncs > 0, , drop = FALSE]
+
+df$antigen <- as.character(df$antigen)
+df[df == "PAC1"] <- "GPIIbIIIa"
+df$antigen <- as.factor(df$antigen)
+
+boxplot <- ggplot(df, aes(x=platelets, y = value, fill = platelets))+
+  geom_boxplot(width = 0.8, outlier.color = NA) +
+  geom_point(alpha = 0.8, show.legend = FALSE, position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0)) +
+  facet_wrap( ~ antigen, scales = "free", ncol=ncol) +
+  scale_fill_manual(values =colorBlindBlack8[c(3,8)], name="Condition", labels=c("Activated", "Baseline")) + 
   xlab("") +
   ylab("Median Expression") +
   labs(color="Platelets") +
+  theme_bw() + 
   theme(
-  panel.grid = element_blank(), 
-  strip.background = element_blank(),
-  strip.text = element_text(face = "bold", size=16),
-  axis.text = element_text(color = "black", size=14), 
-  axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) + scale_color_manual(values =colorBlindBlack8[c(3,8)], name="Activated/\nBaseline")
+    strip.background = element_blank(),
+    strip.text = element_text(face = "bold", size=16),
+    axis.text = element_text(color = "black", size=14), 
+    axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16))
+
 
 # exprs function from catalyst
 # subset features to use
@@ -41,7 +69,7 @@ exprs <- ggplot(gg_df, fill = NULL,
          x = value, y = "..ndensity..",
          col = color_by, group = "sample_id")) + 
   facet_wrap(~ antigen, scales = "free_x", ncol=4) +
-  geom_density() + 
+  geom_density() +
   ylab("Normalized Density") +
   xlab("Expression") +
   theme_classic() + theme(
@@ -49,14 +77,25 @@ exprs <- ggplot(gg_df, fill = NULL,
     strip.background = element_blank(),
     strip.text = element_text(face = "bold", size=16),
     axis.text = element_text(color = "black", size=14), 
-    axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) +  scale_color_manual(values =colorBlindBlack8[c(3,8)], name="Activated/\nBaseline")
+    axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) +  scale_color_manual(values =colorBlindBlack8[c(3,8)], name="Condition", labels=c("Activated", "Baseline"))
 
-library(ggpubr)
-ggarrange(boxplot, exprs, ncol=1,
-          labels=c('A', 'B'),
-          font.label=list(size=18),
-          legend = "right",
-          common.legend = T)
+#library(ggpubr)
+#ggarrange(boxplot, exprs, g, ncol=2, nrow=2,
+#          labels=c('A', 'B', "C"),
+#          font.label=list(size=18),
+#          legend = "right",
+#          common.legend = F)
+
+
+library("cowplot")
+ggdraw() + 
+  draw_plot(g, 0, 0.5, 1, 0.5) + 
+  draw_plot(spike, 0, 0, 0.4, 0.5) +
+  draw_plot(boxplot, 0.43, 0.25, 0.57, 0.25) + 
+  draw_plot(exprs, 0.43, 0, 0.57, 0.25) + 
+  draw_plot_label(c("A", "B", "C", "D"), c(0,0,0.4,0.4), c(1,0.5,0.5,0.25), size=20)
+ggsave("/nfs/home/students/l.arend/data_plot.png", width=1610, height=1000, dpi=300, limitsize=FALSE)
+
 
 
 path_no_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets_no_random/sce_dual_res_timed.rds"
@@ -77,27 +116,39 @@ tmp$p_adj <- NULL
 tmp <- as.data.table(tmp)
 tmp$significant <- as.factor(tmp$significant)
 tmp$class <- tmp$marker_id %in% c("CD62P", "CD63", "CD154", "CD107a")
-tmp$class[tmp$class == TRUE] <- "state"
-tmp$class[tmp$class == FALSE] <- "type"
+tmp$class[tmp$class == TRUE] <- "State"
+tmp$class[tmp$class == FALSE] <- "Type"
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
+
+tmp$marker_id <- as.character(tmp$marker_id)
+tmp[tmp == "PAC1"] <- "GPIIbIIIa"
+tmp$marker_id <- as.factor(tmp$marker_id)
 
 # add marker_id column and class column
 marker_classes <- tmp[,c("marker_id", "class")]
 marker_classes <- unique(marker_classes)
 eff_r$marker_id <- sapply(strsplit(eff_r$group2,'::'), "[", 1)
-eff_r <- merge(eff_r, marker_classes, by ="marker_id")
+eff_r[eff_r == "PAC1"] <- "GPIIb/IIIa"
 
+eff_r <- merge(eff_r, marker_classes, by =c("marker_id"))
+
+# rename and order methods
+tmp[tmp == "t_test"] <- "t-test"
+tmp[tmp == "wilcoxon_median"] <- "Wilcoxon test"
+tmp[tmp == "kruskal_median"] <- "Kruskal-Wallis test"
+
+tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "sceEMD")))
 
 with_random_effect <- ggplot(tmp, aes(marker_id, method)) + 
   geom_tile(aes(fill=significant),color="white", size=1) + 
-  ggtitle("") + xlab(label="marker") + 
+  ggtitle("") + xlab(label="Marker") + ylab("Method") +
   facet_wrap(~class, scales = "free_x") + 
-  theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
-  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent") + 
+  theme(text = element_text(size = 18),  axis.text.x = element_text(angle = 90, vjust=0.5))+
+  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent", name="Significant") + 
   ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
-  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
+  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='Effect size\nMagnitude', na.value="transparent")
 
 # plot heatmap
 tmp <- data.frame(method = results_no_r$method, marker_id = results_no_r$marker_id, p_adj = results_no_r$p_adj)
@@ -106,26 +157,36 @@ tmp$p_adj <- NULL
 tmp <- as.data.table(tmp)
 tmp$significant <- as.factor(tmp$significant)
 tmp$class <- tmp$marker_id %in% c("CD62P", "CD63", "CD154", "CD107a")
-tmp$class[tmp$class == TRUE] <- "state"
-tmp$class[tmp$class == FALSE] <- "type"
+tmp$class[tmp$class == TRUE] <- "State"
+tmp$class[tmp$class == FALSE] <- "Type"
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
+tmp$marker_id <- as.character(tmp$marker_id)
+tmp[tmp == "PAC1"] <- "GPIIbIIIa"
+tmp$marker_id <- as.factor(tmp$marker_id)
+
+# rename and order methods
+tmp[tmp == "t_test"] <- "t-test"
+tmp[tmp == "wilcoxon_median"] <- "Wilcoxon test"
+tmp[tmp == "kruskal_median"] <- "Kruskal-Wallis test"
+
+tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "sceEMD")))
 
 no_random_effect <- ggplot(tmp, aes(marker_id, method)) + 
   geom_tile(aes(fill=significant), color="white", size=1) + 
-  ggtitle("") + xlab(label="marker") + 
+  ggtitle("") + xlab(label="Marker") + ylab("Method") +
   facet_wrap(~class, scales = "free_x") + 
-  theme(text = element_text(size = 16),  axis.text.x = element_text(angle = 45, hjust=1))+
-  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent") + 
+  theme(text = element_text(size = 18),  axis.text.x = element_text(angle = 90, vjust=0.5))+
+  scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent", name="Significant") + 
   ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
-  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
+  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='Effect size\nMagnitude', na.value="transparent")
 
 
 library(ggpubr)
 ggarrange(with_random_effect, no_random_effect, nrow=2,
-          labels=c('A Random Effect', 'B No Random Effect'),
-          font.label=list(size=16),
+          labels=c(' A Paired Analysis', 'B Unpaired Analysis'),
+          font.label=list(size=18),
           legend = "right",
           common.legend = T)
 
@@ -154,10 +215,16 @@ exprsDualDT$patient_id <- substr(exprsDualDT$patient_id, 1,7)
 ggplot(exprsDualDT, aes(x = expression, color = platelets))+
   geom_density()+
   facet_grid(patient_id ~ marker)+
-  scale_color_manual(values = colorBlindBlack8[c(3,8)], name = "Activated\n/Baseline")+
+  scale_color_manual(values = colorBlindBlack8[c(3,8)], name = "Condition", labels=c("Activated", "Baseline"))+
   theme_bw() + 
-  theme(text = element_text(size=20))+ 
-  labs(x="Expression", y = "Density")
+  labs(x="Expression", y = "Density") +
+  theme(
+    #strip.background = element_blank(),
+    strip.text = element_text(size=16),
+    axis.text = element_text(color = "black", size=14), 
+    axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16))
+
 
   
+
 
