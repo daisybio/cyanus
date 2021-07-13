@@ -440,7 +440,7 @@ output$groupSelection <- renderUI({
   )
 })
 output$additionalTermsSelection <- renderUI({
-  req(input$chosenDAMethod, startsWith(input$chosenDAMethod, 'diffcyt')) # this means this is a linear model and additional terms are allowed
+  req(input$chosenDAMethod, startsWith(input$chosenDAMethod, 'diffcyt'))#TODO cytoglm(m) # this means this is a linear model and additional terms are allowed
   addTerms <- names(ei(reactiveVals$sce))
   addTerms <- addTerms[!addTerms %in% c("n_cells", "sample_id", input$conditionIn, input$groupCol)]
   div(
