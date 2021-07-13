@@ -38,6 +38,47 @@ body <-
       right: 50px; /*48% from the right*/
     }"
     ),
+    tags$head(tags$style(HTML('
+        /* logo */
+        .skin-blue .main-header .logo {
+                              background-color: #6495ed;
+                              }
+
+        /* logo when hovered */
+        .skin-blue .main-header .logo:hover {
+                              background-color: #6495ed;
+                              }
+
+        /* navbar (rest of the header) */
+        .skin-blue .main-header .navbar {
+                              background-color: #92b4f2;
+                              }        
+
+        /* main sidebar */
+        .skin-blue .main-sidebar {
+                              background-color: #92b4f2;
+                              }
+
+        /* active selected tab in the sidebarmenu */
+        .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
+                              background-color: #3676e8;
+                              }
+
+        /* other links in the sidebarmenu */
+        .skin-blue .main-sidebar .sidebar .sidebar-menu a{
+                              background-color: #6495ed;
+                              color: #fffff;
+                              }
+
+        /* other links in the sidebarmenu when hovered */
+         .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
+                              background-color: #6495ed;
+                              }
+        /* toggle button when hovered  */                    
+         .skin-blue .main-header .navbar .sidebar-toggle:hover{
+                              background-color: #6495ed;
+                              }
+                              '))),
     waiter_show_on_load(html = tagList(spin_square_circle(), 
                                        HTML("<br>Loading App...")), 
                         color="rgb(0, 102, 204, .5)"),
@@ -89,7 +130,5 @@ body <-
       )
     ))
 )
-   
-
 
 ui <- tags$div(id = "app", dashboardPage(header, sidebar, body))
