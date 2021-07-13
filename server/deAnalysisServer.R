@@ -1079,16 +1079,9 @@ output$deExprsCluster <- renderUI({
                     tags$h3("Plot Options"),
                     selectizeInput("deBoxFacet",
                                    "Facet by:",
-                                   c("antigen", "cluster_id"), 
-                                   multiple = F, 
-                                   selected = "antigen"),
-                    hidden(selectizeInput(
-                      "deBoxK",
-                      "Clusters",
-                      names(cluster_codes(reactiveVals$sce)),
-                      multiple = F
-                      # selected = "meta9" #TODO: take first 
-                    )),
+                                   c("marker", "cluster_id"), 
+                                   multiple = F),
+                    uiOutput("deBoxK"),
                     selectizeInput("deBoxFeatures",
                                    "Markers:",
                                    markers, 
@@ -1096,8 +1089,8 @@ output$deExprsCluster <- renderUI({
                                    multiple = F),
                     selectizeInput(
                       "deBoxColor",
-                      "Color by:",
-                      c(names(colData(reactiveVals$sce)), names(cluster_codes(reactiveVals$sce))),
+                      "Color and Group by:",
+                      c(names(colData(reactiveVals$sce))),# names(cluster_codes(reactiveVals$sce))),
                       selected = factors[1],
                       multiple = F
                     ),
@@ -1132,13 +1125,25 @@ output$deExprsCluster <- renderUI({
   )
 })
 
+output$deBoxK <- renderUI({
+  req(input$deBoxFacet == "cluster_id")
+  selectizeInput(
+    "deBoxK",
+    "Clusters",
+    rev(names(cluster_codes(reactiveVals$sce))),
+    multiple = F
+    # selected = "meta9" #TODO: take first 
+  )
+})
+
 output$clusterDEPlot <- renderPlot({
-  if(input$deBoxK == "all"){
-    k <- NULL
-    facet_by <- NULL
-  }else{
+  req(input$deBoxFacet)
+  facet_by <- input$deBoxFacet
+  if (facet_by == "marker"){
+    facet_by <- "antigen"
+    k <- 'all'
+  } else {
     k <- input$deBoxK
-    facet_by <- input$deBoxFacet
   }
   sce <- isolate(reactiveVals$sce)
   if(input$deBoxSubselect != "No"){
@@ -1172,7 +1177,12 @@ output$downloadPlotPbExprs <- downloadHandler(
     waiter_show(id = "app",html = tagList(spinner$logo, 
                                           HTML("<br>Downloading...")), 
                 color=spinner$color)
-    ggsave(file, plot =reactiveVals$pbExprsPlot, width=10, height=12)
+    my_height <- 3
+    my_width <- 2.5
+    facet_info <- reactiveVals$pbExprsPlot %>% ggplot2::ggplot_build() %>% magrittr::extract2('layout') %>% magrittr::extract2('layout')
+    nr_row <- max(facet_info$ROW)
+    nr_col <- max(facet_info$COL)
+    ggsave(file, plot = reactiveVals$pbExprsPlot, width=my_width*nr_col, height=my_height*nr_row)
     waiter_hide(id="app")
   }
 )
@@ -1188,14 +1198,6 @@ observe({
     shinyjs::show("selectionBoxDE")
     req(reactiveVals$DEruns)
     shinyjs::show("DEVisualization")
-  }
-})
-
-observeEvent(input$deBoxFacet, {
-  if(input$deBoxFacet == "cluster_id"){
-    shinyjs::show("deBoxK")
-  }else{
-    shinyjs::hide("deBoxK")
   }
 })
 
