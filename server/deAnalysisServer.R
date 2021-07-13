@@ -2,7 +2,9 @@ library(diffcyt)
 
 resetDE <- function(){
   shinyjs::reset("selectionBoxDE")
-  reactiveVals$methodType <- NULL
+  shinyjs::reset("da_ds")
+  shinyjs::reset("conditionIn")
+  #reactiveVals$methodType <- NULL
   reactiveVals$exclusionList <- NULL
   reactiveVals$subselectionMap <- NULL
   reactiveVals$methodsInfo <- NULL
