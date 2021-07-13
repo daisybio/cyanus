@@ -56,6 +56,7 @@ observeEvent(input$exampleData, {
 
 observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Loading...", disabled = TRUE)
+  resetPreprocessing()
   resetVisualization()
   resetClustering()
   resetDE()
