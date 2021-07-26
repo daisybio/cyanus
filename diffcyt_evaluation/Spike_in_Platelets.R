@@ -261,7 +261,7 @@ spike <- ggplot(meanDT, aes(x=alpha, y = mean, fill = base_spike))+
 
 
 source("functions/de_functions.R")
-source("functions/sceEMD.R")
+source("functions/cyEMD.R")
 allResults <- list()
 i <- 1
 names <- c("sce", "sce25", "sce50", "sce75", "sce100")
@@ -271,11 +271,11 @@ register(param)
 for(sceObj in list(sce, sce25, sce50, sce75, sce100)){
   print(i)
   results <- runDS(sceObj, 
-                   ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD"), 
+                   ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","CyEMD"), 
                    clustering_to_use = "all", contrast_vars = "base_spike", 
                    design_matrix_vars = c("patient_id", "base_spike"), fixed_effects = "base_spike", 
                    random_effects = "patient_id", markers_to_test = c("type", "state"), 
-                   sceEMD_condition = "base_spike", binSize = 0, nperm = 500, parallel=T)
+                   cyEMD_condition = "base_spike", binSize = 0, nperm = 500, parallel=T)
   allResults[[ names[i] ]] <- results
   i <- i + 1
 }

@@ -1,7 +1,7 @@
-#the EMD functions are in sceEMD.R
+#the EMD functions are in cyEMD.R
 
 #################################### EXAMPLE #################################################### 
-#source: cluster_functions, de_functions, venn_functions, sceEMD
+#source: cluster_functions, de_functions, venn_functions, cyEMD
 #sce <- clusterSCE(sce)
 #DA: 
 #results <- 
@@ -14,11 +14,11 @@
 #createVennDiagram(results, DS = F, 0.05)
 #DS:
 #results <- runDS(sce, 
-#                 ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD"), 
+#                 ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","CyEMD"), 
 #                 clustering_to_use = "all", contrast_vars = "activated_baseline", 
 #                 design_matrix_vars = c("patient_id", "activated_baseline"), fixed_effects = "activated_baseline", 
 #                 random_effects = "patient_id", markers_to_test = "state", 
-#                 sceEMD_condition = "activated_baseline", binSize = 0, nperm = 100)
+#                 cyEMD_condition = "activated_baseline", binSize = 0, nperm = 100)
 #createVennDiagram(results, DS = T, 0.05)
 ###################################################################################################
 
@@ -114,10 +114,10 @@ runDS <- function(sce,
                   clustering_to_use,
                   contrast_vars,
                   markers_to_test = "state",
-                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD","BEZI", "ZAGA","ZAIG",
+                  ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","CyEMD","BEZI", "ZAGA","ZAIG",
                                  "hurdleBeta", "CytoGLMM", "CytoGLM", "logRegression", "wilcoxon_median", "kruskal_median", "t_test"),
                   design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
-                  parallel = FALSE, parameters = NULL, sceEMD_nperm = 500, sceEMD_binsize = NULL,
+                  parallel = FALSE, parameters = NULL, cyEMD_nperm = 500, cyEMD_binsize = NULL,
                   include_weights = TRUE, trend_limma = TRUE, blockID = NULL, 
                   cytoGLMM_num_boot = 500, time_methods = FALSE) {
 
@@ -229,8 +229,8 @@ runDS <- function(sce,
             clustering_to_use,
             contrast_vars,
             random_effects,
-            sceEMD_binsize,
-            sceEMD_nperm,
+            cyEMD_binsize,
+            cyEMD_nperm,
             parallel,
             include_weights,
             cytoGLMM_num_boot,
@@ -253,8 +253,8 @@ runDS <- function(sce,
           clustering_to_use,
           contrast_vars,
           random_effects,
-          sceEMD_binsize,
-          sceEMD_nperm,
+          cyEMD_binsize,
+          cyEMD_nperm,
           parallel,
           include_weights,
           cytoGLMM_num_boot,
@@ -270,7 +270,7 @@ runDS <- function(sce,
 
 timeMethod<- function(method, sce, markers_to_test, clustering_to_use, 
                       contrast_vars, random_effects,
-                      sceEMD_binsize, sceEMD_nperm, parallel, 
+                      cyEMD_binsize, cyEMD_nperm, parallel, 
                       include_weights, cytoGLMM_num_boot, cytoGLMM_additional_covariates){
   # get the cluster_ids for the current meta cluster and iterate over the clusters
   if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
@@ -283,17 +283,17 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
     cluster_results <- list()
     #subset sce to the desired cluster_id
     sce_cluster <- CATALYST::filterSCE(sce, cluster_id == curr_cluster_id, k = clustering_to_use)
-    if("sceEMD" == method){
-      message(sprintf("calculating sceEMD for cluster %s", curr_cluster_id))
+    if("CyEMD" == method){
+      message(sprintf("calculating CyEMD for cluster %s", curr_cluster_id))
       out <-
-        sceEMD(
+        cyEMD(
           sce = sce_cluster,
           condition = contrast_vars,
-          binSize = sceEMD_binsize,
-          nperm = sceEMD_nperm,
+          binSize = cyEMD_binsize,
+          nperm = cyEMD_nperm,
           parallel = parallel
         )
-      cluster_results[["sceEMD"]] <- out
+      cluster_results[["CyEMD"]] <- out
       
     } else if ("BEZI" == method){
       message(sprintf("calculating BEZI for cluster %s", curr_cluster_id))
@@ -548,7 +548,7 @@ doConditionSubselection <- function(sce, subselected_categories, mappedCategorie
 }
 
 runDS_old <- function(sce, condition, random_effect = NULL, 
-                  ds_methods = c("diffcyt-DS-limma", "diffcyt-DS-LMM", "sceEMD","SigEMD", "DEsingle"), 
+                  ds_methods = c("diffcyt-DS-limma", "diffcyt-DS-LMM", "CyEMD","SigEMD", "DEsingle"), 
                   k = "all", parallel = TRUE, features = c("type","state"), ...) {
   ds_methods <- match.arg(ds_methods, several.ok = TRUE)
   features <- match.arg(features, several.ok = TRUE)

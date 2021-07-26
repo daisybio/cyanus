@@ -20,7 +20,7 @@ plotbox_height <- "48em"
 methods_height <- "48em"
 
 methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
-methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD", "CytoGLMM" = "CytoGLMM", "CytoGLM" = "CytoGLM", "Wilcoxon rank-sum test" = "wilcoxon_median", "Student's t-test" = "t_test")
+methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "CyEMD" = "CyEMD", "CytoGLMM" = "CytoGLMM", "CytoGLM" = "CytoGLM", "Wilcoxon rank-sum test" = "wilcoxon_median", "Student's t-test" = "t_test")
 
 
 # Main function: 
@@ -46,8 +46,8 @@ call_DE <- function() {
   normalize <- NULL
   featuresIn <- NULL
   includeWeights <- NULL
-  sceEMD_nperm <- NULL
-  sceEMD_binsize <- NULL
+  cyEMD_nperm <- NULL
+  cyEMD_binsize <- NULL
   CytoGLM_num_boot <- NULL
   trend_edgeR <- NULL
   trend_limma <- NULL
@@ -201,10 +201,10 @@ call_DE <- function() {
     if (method %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM")) {
       includeWeights <- isolate(input$weightsSelection)
       includeWeights <- ifelse(includeWeights == "Yes", TRUE, FALSE)
-    } else if (input$chosenDAMethod == "sceEMD") {
-      sceEMD_binsize <- isolate(input$emdBinwidth)
-      if (sceEMD_binsize == 0)
-        sceEMD_binsize <- NULL
+    } else if (input$chosenDAMethod == "CyEMD") {
+      cyEMD_binsize <- isolate(input$emdBinwidth)
+      if (cyEMD_binsize == 0)
+        cyEMD_binsize <- NULL
       emdNperm <- isolate(input$emdNperm)
     } else if (input$chosenDAMethod == "CytoGLM") {
       CytoGLM_num_boot <- isolate(input$CytoGLM_num_boot)
@@ -230,8 +230,8 @@ call_DE <- function() {
     trend_limma = toString(trend_limma),
     block_id = toString(blockID),
     include_weights = toString(includeWeights),
-    sceEMD_binsize = toString(sceEMD_binsize),
-    sceEMD_nperm = toString(sceEMD_nperm),
+    cyEMD_binsize = toString(cyEMD_binsize),
+    cyEMD_nperm = toString(cyEMD_nperm),
     CytoGLM_num_boot = toString(CytoGLM_num_boot)
   )
   
@@ -245,7 +245,7 @@ call_DE <- function() {
     )
     
     withCallingHandlers({
-      #extra args: sceEMD_condition, binSize, nperm
+      #extra args: cyEMD_condition, binSize, nperm
       if (methodType == "DA") {
         results <- runDA(
           sce = sce, 
@@ -273,8 +273,8 @@ call_DE <- function() {
           design_matrix_vars = c(condition, addTerms, groupCol), 
           fixed_effects = c(condition, addTerms), 
           random_effects = groupCol,
-          sceEMD_nperm = emdNperm, 
-          sceEMD_binsize = sceEMD_binsize,
+          cyEMD_nperm = emdNperm, 
+          cyEMD_binsize = cyEMD_binsize,
           cytoGLMM_num_boot = CytoGLM_num_boot,
           time_methods = FALSE,
           parallel = FALSE
@@ -428,7 +428,7 @@ output$conditionSelection <- renderUI({
 
 output$groupSelection <- renderUI({
   all_methods <- c(methodsDA, methodsDS)
-  req(input$conditionIn, input$chosenDAMethod %in% all_methods[all_methods != 'sceEMD'])
+  req(input$conditionIn, input$chosenDAMethod %in% all_methods[all_methods != 'CyEMD'])
   sceEI <- data.table::as.data.table(CATALYST::ei(reactiveVals$sce))
   groupCol <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id")]
   groupCol <- groupCol[sapply(groupCol, function(x) sceEI[, .(e2 = data.table::uniqueN(get(input$conditionIn)) == 2),, by=get(x)][, all(e2)])]
@@ -544,7 +544,7 @@ output$normalizeSelection <- renderUI({
 })
 
 output$emdInput <- renderUI({
-  req(input$chosenDAMethod == "sceEMD")
+  req(input$chosenDAMethod == "CyEMD")
   sceEI <- ei(reactiveVals$sce)
   list(
   uiOutput("emdNpermInput"),
@@ -775,7 +775,7 @@ output$extraFeatures <- renderUI({
 # if diffcyt should be exectued on selected markers (markers_to_test)
 output$markerToTestSelection <- renderUI({
   req(input$chosenDAMethod)
-  if (input$chosenDAMethod %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM", "sceEMD", "CytoGLMM", "CytoGLM", "wilcoxon_median", "t_test")) {
+  if (input$chosenDAMethod %in% c("diffcyt-DS-limma", "diffcyt-DS-LMM", "CyEMD", "CytoGLMM", "CytoGLM", "wilcoxon_median", "t_test")) {
     div(
       selectInput(
         "DEMarkerToTest",

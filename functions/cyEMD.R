@@ -45,7 +45,7 @@ rowwiseEMD <- function(mat, condition, binSize = NULL) {
   out_dt
 }
 
-sceEMD <- function(sce, condition, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
+cyEMD <- function(sce, condition, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
   # suppressPackageStartupMessages(library(data.table))
   bppar <- BiocParallel::bpparam()
   
