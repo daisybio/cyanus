@@ -201,21 +201,32 @@ observeEvent(input$downsamplingButtonPreprocessing, {
   }else{
     per_sample=FALSE
   }
-  smallest_n <- min(CATALYST::ei(reactiveVals$sce)$n_cells)
-  sum_n <- sum(CATALYST::ei(reactiveVals$sce)$n_cells)
-  if(per_sample & isolate(input$downsamplingNumber) > smallest_n){
-    showNotification("You selected a number of cells that is higher than your smallest sample!", type = "error")
-  }else if(!per_sample & isolate(input$downsamplingNumber) > sum_n){
-    showNotification("You selected a number of cells that is higher than your overall dataset size!", type = "error")
-  }else{
-  reactiveVals$sce <- downSampleSCE(sce=reactiveVals$sce, 
-                                    cells=isolate(input$downsamplingNumber),
-                                    per_sample=per_sample, 
-                                    seed=isolate(input$downsamplingSeed))
+  sce <- isolate(reactiveVals$sce)
+  sce <- performDownsampling(sce, per_sample, isolate(input$downsamplingNumber), isolate(input$downsamplingSeed))
+  if(!is.null(sce)){
+    reactiveVals$sce <- sce
   }
   plotPreprocessing(reactiveVals$sce)
   waiter_hide(id = "app")
 })
+
+performDownsampling <- function(sce, per_sample, downsamplingNumber, downsamplingSeed) {
+  smallest_n <- min(CATALYST::ei(sce)$n_cells)
+  sum_n <- sum(CATALYST::ei(sce)$n_cells)
+  if(per_sample & downsamplingNumber > smallest_n){
+    showNotification("You selected a number of cells that is higher than your smallest sample!", type = "error")
+    return(NULL)
+  }else if(!per_sample & downsamplingNumber > sum_n){
+    showNotification("You selected a number of cells that is higher than your overall dataset size!", type = "error")
+    return(NULL)
+  }else{
+    sce <- downSampleSCE(sce=sce, 
+                        cells=downsamplingNumber,
+                        per_sample=per_sample, 
+                        seed=downsamplingSeed)
+    return(sce)
+  }
+}
 
 # if filtering button is clicked -> selection is applied to sce
 observeEvent(input$filterSelectionButton,{
