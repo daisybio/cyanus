@@ -10,6 +10,7 @@ Systematic Evaluation of Existing and Novel Approaches for Differential Expressi
 * [CYANUS Shiny App](#cyanus-shiny-app)
 * [Cite](#cite)
 * [Contact](#contact)
+* [Licenses](#licenses)
 
 
 ## Dataset Simulation
@@ -68,5 +69,8 @@ TODO
 
 ## Contact
 If you have difficulties using CYANUS, please open an issue. If issues on the simulation of data or evaluation of methods arise, you can either open an issue or contact the authors of the paper.
+
+## Licenses
+
 
 
