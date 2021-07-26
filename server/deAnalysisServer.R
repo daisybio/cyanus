@@ -192,7 +192,7 @@ call_DE <- function() {
       CytoGLM_num_boot <- isolate(input$CytoGLM_num_boot)
     }else if(method == "CytoGLMM" & is.null(groupCol)){
       shiny::showNotification("Results of CytoGLMM are not meaningful when no grouping variable like patient ID is selected.", 
-                              type = "warning", duration = 10)
+                              type = "warning", duration = NULL)
     }
   }
   
@@ -440,7 +440,7 @@ output$groupSelection <- renderUI({
   )
 })
 output$additionalTermsSelection <- renderUI({
-  req(input$chosenDAMethod, startsWith(input$chosenDAMethod, 'diffcyt'))#TODO cytoglm(m) # this means this is a linear model and additional terms are allowed
+  req(input$chosenDAMethod, (startsWith(input$chosenDAMethod, 'diffcyt')||startsWith(input$chosenDAMethod, 'CytoGLM')) )#TODO cytoglm(m) # this means this is a linear model and additional terms are allowed
   addTerms <- names(ei(reactiveVals$sce))
   addTerms <- addTerms[!addTerms %in% c("n_cells", "sample_id", input$conditionIn, input$groupCol)]
   div(
@@ -592,7 +592,7 @@ output$CytoGLM_num_boot <- renderUI({
     bsPopover(
       id = "cytoNBootQ",
       title = "Number of bootstrap samples",
-      content = HTML('CytoGLM uses bootstrapping with replacement to preserve the cluster structure in donors. For more information refer to <a href="https://doi.org/10.1186/s12859-021-04067-x" target="_blank">Seiler et al.</a>')
+      content = HTML('CytoGLM uses bootstrapping with replacement to preserve the cluster structure in donors. For more information refer to <a href="https://doi.org/10.1186/s12859-021-04067-x" target="_blank">Seiler et al.</a><br><b>Setting this number very high has a great influence on runtime.</b>')
     )
   )
 })
@@ -749,7 +749,7 @@ output$DEFeatureSelection <- renderUI({
     stop("by name or by class?")
   shinyWidgets::pickerInput(
     inputId = "DEFeaturesIn",
-    label = "Features to use for differential analysis",
+    label = "Features to use for differential expression analysis",
     choices = choices,
     selected = selected,
     multiple = TRUE,

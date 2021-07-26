@@ -32,10 +32,10 @@ runMethods <- function(){
   addTerms <- isolate(input$addTermsComp)
   clusters <- isolate(input$deClusterVenn)
   
-  if(is.null(input$deSubselectionVenn)){
+  if(is.null(input$deSubselectionComp)){
     subselection <- "No"
   }else{
-    subselection <- isolate(input$deSubselectionVenn)
+    subselection <- isolate(input$deSubselectionComp)
   }
   
   if (subselection != "No") {
@@ -176,7 +176,7 @@ runMethods <- function(){
     }
     if("CytoGLMM" %in% methods & is.null(group)){
       shiny::showNotification("Results of CytoGLMM are not meaningful when no grouping variable like patient ID is selected.", 
-                              type = "warning", duration = 10)
+                              type = "warning", duration = NULL)
     }
     
     # parameters[["diffcyt-DS-limma"]] <- prepDiffExp(
@@ -443,8 +443,9 @@ output$groupSelectionComp <- renderUI({
   )
 })
 output$additionalTermsSelectionComp <- renderUI({
-  if (input$da_dsVenn == "Differential Marker Expression")
-    req(input$chosenDAMethodComp, any(startsWith(input$chosenDAMethodComp, 'diffcyt'))) # this means this is a linear model and additional terms are allowed
+  if (input$da_dsVenn == "Differential Marker Expression"){
+    req(input$chosenDAMethodComp, any(startsWith(input$chosenDAMethodComp, 'diffcyt') | startsWith(input$chosenDAMethodComp, 'CytoGLM'))) # this means this is a linear model and additional terms are allowed
+  }
   addTerms <- names(ei(reactiveVals$sce))
   addTerms <- addTerms[!addTerms %in% c("n_cells", "sample_id", input$conditionInComp, input$groupColComp)]
   div(
@@ -503,7 +504,7 @@ output$emdInputComp <- renderUI({
       numericInput(
         "emdBinwidthComp",
         label = span(
-          "Bin width for comparing histograms",
+          "sceEMD: Bin width for comparing histograms",
           icon("question-circle"),
           id = "emdBinwidthQComp"
         ),
@@ -527,7 +528,7 @@ output$emdNpermInputComp <- renderUI({
     numericInput(
       "emdNpermComp",
       label = span(
-        "Number of permutations for p-value estimation",
+        "sceEMD: Number of permutations for p-value estimation",
         icon("question-circle"),
         id = "emdNpermQComp"
       ),
@@ -550,7 +551,7 @@ output$CytoGLM_num_bootComp <- renderUI({
     numericInput(
       "cytoNBootComp",
       label = span(
-        "Number of bootstrap samples",
+        "CytoGLM: Number of bootstrap samples",
         icon("question-circle"),
         id = "cytoNBootQComp"
       ),
@@ -562,7 +563,7 @@ output$CytoGLM_num_bootComp <- renderUI({
     bsPopover(
       id = "cytoNBootQComp",
       title = "Number of bootstrap samples",
-      content = HTML('CytoGLM uses bootstrapping with replacement to preserve the cluster structure in donors. For more information refer to <a href="https://doi.org/10.1186/s12859-021-04067-x" target="_blank">Seiler et al.</a>')
+      content = HTML('CytoGLM uses bootstrapping with replacement to preserve the cluster structure in donors. For more information refer to <a href="https://doi.org/10.1186/s12859-021-04067-x" target="_blank">Seiler et al.</a><br><b>Setting this number very high has a great influence on runtime.</b>')
     )
   )
 })
@@ -670,7 +671,7 @@ output$emdInputVenn <- renderUI({
   )
 })
 
-output$deSubselectionVenn <- renderUI({
+output$deSubselectionComp <- renderUI({
   choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
   
@@ -681,7 +682,7 @@ output$deSubselectionVenn <- renderUI({
   names(choices) <- paste("only", choices)
   div(
     checkboxGroupInput(
-      inputId = "deSubselectionVenn",
+      inputId = "deSubselectionComp",
       label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectVennQ"),
       choices = choices, 
       inline = T
