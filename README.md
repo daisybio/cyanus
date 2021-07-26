@@ -2,13 +2,15 @@
 
 User-friendly R Shiny App Analyzing Cytometry Data
 
-The public web interace is available at \url{https://exbio.wzw.tum.de/cyanus/}.
+The public web interace is available at https://exbio.wzw.tum.de/cyanus/.
 
 ## Table of Contents
-* [CYANUS Shiny App](#cyanus)
-* [A Systematic Comparison of Differential Analysis Methods for CyTOF Data](#paper)
-  + [Dataset Simulation](#dataset)
-  + [Methods Evaluation](#methods)
+* [CYANUS Shiny App](#cyanus-shiny-app)
+* [A Systematic Comparison of Differential Analysis Methods for CyTOF Data](#a-systematic-comparison-of-differential-analysis-methods-for-cytof-data)
+  + [Dataset Simulation](#dataset-simulation)
+  + [Methods Evaluation](#methods-evaluation)
+* [Cite](#cite)
+* [Contact](#contact)
 
 ## CYANUS Shiny App
 
@@ -57,5 +59,11 @@ TODO
 
 ### Methods Evaluation
 TODO
+
+## Cite
+TODO
+
+## Contact
+If you have difficulties using CYANUS, please open an issue. If issues on the simulation of data or evaluation of methods arise, you can either open an issue or contact the authors of the paper.
 
 
