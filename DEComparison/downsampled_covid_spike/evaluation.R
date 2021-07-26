@@ -164,13 +164,26 @@ tmp[tmp == "t_test"] <- "t-test"
 tmp[tmp == "wilcoxon_median"] <- "Wilcoxon test"
 tmp[tmp == "kruskal_median"] <- "Kruskal-Wallis test"
 
-tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "sceEMD")))
+tmp$method[tmp$method == "sceEMD"] <- "CyEMD"
+tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "CyEMD")))
+
+tmp$significant <- as.character(tmp$significant)
+tmp$significant[tmp$significant == TRUE] <- "Yes"
+tmp$significant[tmp$significant == FALSE] <- "No"
+
+eff$magnitude <- as.character(eff$magnitude)
+eff$magnitude[eff$magnitude == "small"] <- "Small"
+eff$magnitude[eff$magnitude == "negligible"] <- "Negligible"
+eff$magnitude[eff$magnitude == "large"] <- "Large"
+eff$magnitude[eff$magnitude == "moderate"] <- "Moderate"
+eff$magnitude <- factor(eff$magnitude, levels=c("Negligible", "Small", "Moderate", "Large"))
+
 
 # only one marker class
-ggplot(as.data.table(tmp[class == "State"]), aes(marker_id, method)) +
+ggplot(as.data.table(tmp[class == "Type"]), aes(marker_id, method)) +
   geom_tile(aes(fill = significant), color = "white", size = 0.5) +
   ggtitle("") +
-  xlab(label = " State Markers") +
+  xlab(label = " Type Markers") +
   ylab("Method") +
   facet_grid(nr_of_cells ~ alpha, scales = "free", labeller = labeller(nr_of_cells = n_cells.label, alpha=alpha.label)) +
   theme(text = element_text(size = 13),
@@ -179,12 +192,12 @@ ggplot(as.data.table(tmp[class == "State"]), aes(marker_id, method)) +
                     name = "Significant",
                     na.value = "transparent") +
   ggside::geom_xsidetile(
-    data = eff[class == "State"],
+    data = eff[class == "Type"],
     aes(y = overall_group, xfill = magnitude),
     color = "white"
   ) +
-  ggside::scale_xfill_manual(values = colorBlindBlack8[c(8, 5, 2, 6)],
-                             name = 'Effect Size\nMagnitude',
+  ggside::scale_xfill_manual(values = colorBlindBlack8[c(8, 5, 4, 6)],
+                             name = "Cohen’s d\nEffect size\nMagnitude",
                              na.value = "transparent")
 
 # For one specific nr of cells
