@@ -13,11 +13,11 @@ Systematic Evaluation of Existing and Novel Approaches for Differential Expressi
 
 
 ## Dataset Simulation
-TODO
+The PBMC dataset, the simulated CytoGLMM dataset (and its downsampled versions) and the semi-simulated COVID-19 dataset (and its downsampled versions) can be reproduced using the scripts in DataGeneration. The dual antiplatelet therapy dataset is available upon request from Melissa.Klug@tum.de.
 
 
 ## Methods Evaluation
-The evaluation of the methods on the different datasets can be found in the DEComparison directory. Each dataset itself has a subdirectory containing the benchmarking scripts for running the methods, the resulting .rds objects and an evaluation.R script.
+The evaluation of the methods on the different datasets can be found in the DEComparison directory. Each dataset has a subdirectory containing the benchmarking scripts for running the methods, the resulting .rds objects and an evaluation.R script. Using the evaluation scripts, the plots from the paper can be reproduced.
 
 
 ## CYANUS Shiny App
@@ -26,8 +26,9 @@ User-friendly R Shiny App Analyzing Cytometry Data
 
 The public web interace is available at https://exbio.wzw.tum.de/cyanus/.
 
+The source code can be found in ui/, server/, functions/, server.R and ui.R. 
 
-The docker image for our shiny app is publicly available at [Docker
+Additionally, a docker image for our shiny app is publicly available at [Docker
 Hub](https://hub.docker.com/repository/docker/quirinmanz/cytof_pipeline).
 First, make sure docker is installed on your machine. Then run
 
@@ -61,8 +62,6 @@ In that case, you have to restore the project library using
 # install.packages('renv')
 renv::restore()
 ```
-
-TODO
 
 ## Cite
 TODO
