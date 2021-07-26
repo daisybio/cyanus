@@ -83,6 +83,7 @@ runCytoGLMM <-
            condition,
            method = c("cytoglmm", "cytoglm"),
            random_effect = NULL,
+           additional_covariates = NULL,
            features = SummarizedExperiment::rowData(sce)$marker_name,
            assay_to_use = "exprs",
            sample_id = "sample_id",
@@ -110,21 +111,30 @@ runCytoGLMM <-
     data$condition <- SummarizedExperiment::colData(sce)[[condition]]
     if (is.null(random_effect)){
       match.arg(sample_id, names(SummarizedExperiment::colData(sce)))
-      data$donor <- SummarizedExperiment::colData(sce)[[sample_id]]
+      data$group <- SummarizedExperiment::colData(sce)[[sample_id]]
     }
     else {
       match.arg(random_effect, names(SummarizedExperiment::colData(sce)))
-      data$donor <- SummarizedExperiment::colData(sce)[[random_effect]]
+      data$group <- SummarizedExperiment::colData(sce)[[random_effect]]
     }
       
     args <-
       list(
         protein_names = features,
         condition = "condition",
-        group = "donor",
+        group = "group",
         df_samples_subset = data,
         num_cores = num_cores
       )
+    
+    if (!is.null(additional_covariates)) {
+      additional_covariates <- 
+        match.arg(additional_covariates, names(SummarizedExperiment::colData(sce)), several.ok = TRUE)
+      additional_covariates <- additional_covariates[additional_covariates != random_effect & additional_covariates != condition]
+      args$df_samples_subset <- cbind(args$df_samples_subset, SummarizedExperiment::colData(sce)[additional_covariates])
+      args$covariate_names <- additional_covariates
+    }
+    
     if (method == "cytoglmm"){
       fit <- do.call(CytoGLMM::cytoglmm, args = args)
     } else if (method == "cytoglm") {
@@ -133,6 +143,6 @@ runCytoGLMM <-
     } else {
       stop("unknown method")
     }
-    summary_fit <- summary(fit)
+    summary_fit <- summary(fit) %>% filter(protein_name %in% old_names)
     return(data.frame(marker_id = old_names[summary_fit$protein_name], p_val = summary_fit$pvalues_unadj))
   }

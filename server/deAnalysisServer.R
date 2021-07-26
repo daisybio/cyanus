@@ -17,7 +17,7 @@ resetDE <- function(){
 }
 
 plotbox_height <- "48em"
-methods_height <- "40em"
+methods_height <- "48em"
 
 methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
 methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD", "CytoGLMM" = "CytoGLMM", "CytoGLM" = "CytoGLM", "Wilcoxon rank-sum test" = "wilcoxon_median", "Student's t-test" = "t_test")
@@ -52,6 +52,24 @@ call_DE <- function() {
   trend_edgeR <- NULL
   trend_limma <- NULL
   blockID <- NULL
+  
+  #check if downsampling should be performed
+  downsampling <- isolate(input$downsampling_Yes_No_DE)
+  if(downsampling == "Yes"){
+    downsamplingNumber <- isolate(input$downsamplingNumberDE)
+    downsamplingPerSample <- isolate(input$downsampling_per_sampleDE)
+    if(downsamplingPerSample == "Yes"){
+      downsamplingPerSample <- TRUE
+    }else{
+      downsamplingPerSample <- FALSE
+    }
+    downsamplingSeed <- isolate(input$downsamplingSeedDE)
+    showNotification("Subsampling the data...", type = "warning")
+    sce <- performDownsampling(sce, downsamplingPerSample, downsamplingNumber, downsamplingSeed)
+    if(is.null(sce)){
+      return(NULL)
+    }
+  }
   
   #check if subselection is valid, set subselection:
   if (is.null(input$deSubselection)) {
@@ -192,7 +210,7 @@ call_DE <- function() {
       CytoGLM_num_boot <- isolate(input$CytoGLM_num_boot)
     }else if(method == "CytoGLMM" & is.null(groupCol)){
       shiny::showNotification("Results of CytoGLMM are not meaningful when no grouping variable like patient ID is selected.", 
-                              type = "warning", duration = 10)
+                              type = "warning", duration = NULL)
     }
   }
   
@@ -333,6 +351,7 @@ output$selectionBoxDE <- renderUI({
     uiOutput("emdInput"),
     uiOutput("CytoGLM_num_boot"),
     uiOutput("deSubselection"),
+    uiOutput("downsamplingDE"),
     width = 6
   ),
   column(
@@ -440,7 +459,7 @@ output$groupSelection <- renderUI({
   )
 })
 output$additionalTermsSelection <- renderUI({
-  req(input$chosenDAMethod, startsWith(input$chosenDAMethod, 'diffcyt')) # this means this is a linear model and additional terms are allowed
+  req(input$chosenDAMethod, (startsWith(input$chosenDAMethod, 'diffcyt')||startsWith(input$chosenDAMethod, 'CytoGLM')) )#TODO cytoglm(m) # this means this is a linear model and additional terms are allowed
   addTerms <- names(ei(reactiveVals$sce))
   addTerms <- addTerms[!addTerms %in% c("n_cells", "sample_id", input$conditionIn, input$groupCol)]
   div(
@@ -592,7 +611,7 @@ output$CytoGLM_num_boot <- renderUI({
     bsPopover(
       id = "cytoNBootQ",
       title = "Number of bootstrap samples",
-      content = HTML('CytoGLM uses bootstrapping with replacement to preserve the cluster structure in donors. For more information refer to <a href="https://doi.org/10.1186/s12859-021-04067-x" target="_blank">Seiler et al.</a>')
+      content = HTML('CytoGLM uses bootstrapping with replacement to preserve the cluster structure in donors. For more information refer to <a href="https://doi.org/10.1186/s12859-021-04067-x" target="_blank">Seiler et al.</a><br><b>Setting this number very high has a great influence on runtime.</b>')
     )
   )
 })
@@ -627,6 +646,56 @@ output$deSubselection <- renderUI({
       placement = "top"
     )
   )
+})
+
+output$downsamplingDE <- renderUI({
+  req(reactiveVals$sce)
+  smallest_n <- min(CATALYST::ei(reactiveVals$sce)$n_cells)
+  sum_n <- sum(CATALYST::ei(reactiveVals$sce)$n_cells)
+  div(
+    column(
+      radioButtons(
+        "downsampling_Yes_No_DE",
+        label = "Do you want to perform downsampling?",
+        choices = c("Yes", "No"),
+        selected = "No",
+        inline = TRUE
+      ),
+      width = 3
+    ),
+    column(
+      numericInput(
+        "downsamplingNumberDE",
+        label=sprintf("How many cells? (Lowest #cells/sample: %s)", smallest_n),
+        value=ifelse(smallest_n > 20000, 20000, smallest_n),
+        min=1000,
+        max=sum_n,
+        step=1000
+        ),
+      width = 3
+      ),
+    column(
+      radioButtons(
+        "downsampling_per_sampleDE",
+        label = "Per sample?",
+        choices = c("Yes", "No"),
+        inline = TRUE
+      ),
+      width = 3
+      ),
+    column(
+      numericInput(
+        "downsamplingSeedDE",
+        label = "Set Seed",
+        value = 1234,
+        min=1,
+        max=100000,
+        step=1
+      ),
+      width = 3
+    )
+  )
+  
 })
 
 output$extraFeatures <- renderUI({
@@ -749,7 +818,7 @@ output$DEFeatureSelection <- renderUI({
     stop("by name or by class?")
   shinyWidgets::pickerInput(
     inputId = "DEFeaturesIn",
-    label = "Features to use for differential analysis",
+    label = "Features to use for differential expression analysis",
     choices = choices,
     selected = selected,
     multiple = TRUE,
@@ -941,16 +1010,9 @@ output$deExprsCluster <- renderUI({
                     tags$h3("Plot Options"),
                     selectizeInput("deBoxFacet",
                                    "Facet by:",
-                                   c("antigen", "cluster_id"), 
-                                   multiple = F, 
-                                   selected = "antigen"),
-                    hidden(selectizeInput(
-                      "deBoxK",
-                      "Clusters",
-                      names(cluster_codes(reactiveVals$sce)),
-                      multiple = F
-                      # selected = "meta9" #TODO: take first 
-                    )),
+                                   c("marker", "cluster_id"), 
+                                   multiple = F),
+                    uiOutput("deBoxK"),
                     selectizeInput("deBoxFeatures",
                                    "Markers:",
                                    markers, 
@@ -958,8 +1020,8 @@ output$deExprsCluster <- renderUI({
                                    multiple = F),
                     selectizeInput(
                       "deBoxColor",
-                      "Color by:",
-                      c(names(colData(reactiveVals$sce)), names(cluster_codes(reactiveVals$sce))),
+                      "Color and Group by:",
+                      c(names(colData(reactiveVals$sce))),# names(cluster_codes(reactiveVals$sce))),
                       selected = factors[1],
                       multiple = F
                     ),
@@ -994,13 +1056,25 @@ output$deExprsCluster <- renderUI({
   )
 })
 
+output$deBoxK <- renderUI({
+  req(input$deBoxFacet == "cluster_id")
+  selectizeInput(
+    "deBoxK",
+    "Clusters",
+    rev(names(cluster_codes(reactiveVals$sce))),
+    multiple = F
+    # selected = "meta9" #TODO: take first 
+  )
+})
+
 output$clusterDEPlot <- renderPlot({
-  if(input$deBoxK == "all"){
-    k <- NULL
-    facet_by <- NULL
-  }else{
+  req(input$deBoxFacet)
+  facet_by <- input$deBoxFacet
+  if (facet_by == "marker"){
+    facet_by <- "antigen"
+    k <- 'all'
+  } else {
     k <- input$deBoxK
-    facet_by <- input$deBoxFacet
   }
   sce <- isolate(reactiveVals$sce)
   if(input$deBoxSubselect != "No"){
@@ -1034,7 +1108,12 @@ output$downloadPlotPbExprs <- downloadHandler(
     waiter_show(id = "app",html = tagList(spinner$logo, 
                                           HTML("<br>Downloading...")), 
                 color=spinner$color)
-    ggsave(file, plot =reactiveVals$pbExprsPlot, width=10, height=12)
+    my_height <- 3
+    my_width <- 2.5
+    facet_info <- reactiveVals$pbExprsPlot %>% ggplot2::ggplot_build() %>% magrittr::extract2('layout') %>% magrittr::extract2('layout')
+    nr_row <- max(facet_info$ROW)
+    nr_col <- max(facet_info$COL)
+    ggsave(file, plot = reactiveVals$pbExprsPlot, width=my_width*nr_col, height=my_height*nr_row)
     waiter_hide(id="app")
   }
 )
@@ -1053,6 +1132,19 @@ observe({
     shinyjs::show("DEVisualization")
     req(reactiveVals$visExpClicked)
     shinyjs::show("deTopTable")
+  }
+})
+
+observeEvent(input$downsampling_Yes_No_DE, {
+  req(input$downsampling_Yes_No_DE)
+  if(input$downsampling_Yes_No_DE == "No"){
+    shinyjs::disable("downsamplingNumberDE")
+    shinyjs::disable("downsampling_per_sampleDE")
+    shinyjs::disable("downsamplingSeedDE")
+  }else{
+    shinyjs::enable("downsamplingNumberDE")
+    shinyjs::enable("downsampling_per_sampleDE")
+    shinyjs::enable("downsamplingSeedDE")
   }
 })
 
