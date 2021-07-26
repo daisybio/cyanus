@@ -17,7 +17,7 @@ resetDE <- function(){
 }
 
 plotbox_height <- "48em"
-methods_height <- "40em"
+methods_height <- "48em"
 
 methodsDA <- c("edgeR" = "diffcyt-DA-edgeR", "Voom" = "diffcyt-DA-voom", "GLMM" = "diffcyt-DA-GLMM")
 methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "EMD" = "sceEMD", "CytoGLMM" = "CytoGLMM", "CytoGLM" = "CytoGLM", "Wilcoxon rank-sum test" = "wilcoxon_median", "Student's t-test" = "t_test")
@@ -52,6 +52,24 @@ call_DE <- function() {
   trend_edgeR <- NULL
   trend_limma <- NULL
   blockID <- NULL
+  
+  #check if downsampling should be performed
+  downsampling <- isolate(input$downsampling_Yes_No_DE)
+  if(downsampling == "Yes"){
+    downsamplingNumber <- isolate(input$downsamplingNumberDE)
+    downsamplingPerSample <- isolate(input$downsampling_per_sampleDE)
+    if(downsamplingPerSample == "Yes"){
+      downsamplingPerSample <- TRUE
+    }else{
+      downsamplingPerSample <- FALSE
+    }
+    downsamplingSeed <- isolate(input$downsamplingSeedDE)
+    showNotification("Subsampling the data...", type = "warning")
+    sce <- performDownsampling(sce, downsamplingPerSample, downsamplingNumber, downsamplingSeed)
+    if(is.null(sce)){
+      return(NULL)
+    }
+  }
   
   #check if subselection is valid, set subselection:
   if (is.null(input$deSubselection)) {
@@ -333,6 +351,7 @@ output$selectionBoxDE <- renderUI({
     uiOutput("emdInput"),
     uiOutput("CytoGLM_num_boot"),
     uiOutput("deSubselection"),
+    uiOutput("downsamplingDE"),
     width = 6
   ),
   column(
@@ -627,6 +646,56 @@ output$deSubselection <- renderUI({
       placement = "top"
     )
   )
+})
+
+output$downsamplingDE <- renderUI({
+  req(reactiveVals$sce)
+  smallest_n <- min(CATALYST::ei(reactiveVals$sce)$n_cells)
+  sum_n <- sum(CATALYST::ei(reactiveVals$sce)$n_cells)
+  div(
+    column(
+      radioButtons(
+        "downsampling_Yes_No_DE",
+        label = "Do you want to perform downsampling?",
+        choices = c("Yes", "No"),
+        selected = "No",
+        inline = TRUE
+      ),
+      width = 3
+    ),
+    column(
+      numericInput(
+        "downsamplingNumberDE",
+        label=sprintf("How many cells? (Lowest #cells/sample: %s)", smallest_n),
+        value=ifelse(smallest_n > 20000, 20000, smallest_n),
+        min=1000,
+        max=sum_n,
+        step=1000
+        ),
+      width = 3
+      ),
+    column(
+      radioButtons(
+        "downsampling_per_sampleDE",
+        label = "Per sample?",
+        choices = c("Yes", "No"),
+        inline = TRUE
+      ),
+      width = 3
+      ),
+    column(
+      numericInput(
+        "downsamplingSeedDE",
+        label = "Set Seed",
+        value = 1234,
+        min=1,
+        max=100000,
+        step=1
+      ),
+      width = 3
+    )
+  )
+  
 })
 
 output$extraFeatures <- renderUI({
@@ -1063,6 +1132,27 @@ observe({
     shinyjs::show("DEVisualization")
     req(reactiveVals$visExpClicked)
     shinyjs::show("deTopTable")
+  }
+})
+
+observeEvent(input$downsampling_Yes_No_DE, {
+  req(input$downsampling_Yes_No_DE)
+  if(input$downsampling_Yes_No_DE == "No"){
+    shinyjs::disable("downsamplingNumberDE")
+    shinyjs::disable("downsampling_per_sampleDE")
+    shinyjs::disable("downsamplingSeedDE")
+  }else{
+    shinyjs::enable("downsamplingNumberDE")
+    shinyjs::enable("downsampling_per_sampleDE")
+    shinyjs::enable("downsamplingSeedDE")
+  }
+})
+
+observeEvent(input$deBoxFacet, {
+  if(input$deBoxFacet == "cluster_id"){
+    shinyjs::show("deBoxK")
+  }else{
+    shinyjs::hide("deBoxK")
   }
 })
 
