@@ -105,7 +105,21 @@ tmp[tmp == "t_test"] <- "t-test"
 tmp[tmp == "wilcoxon_median"] <- "Wilcoxon test"
 tmp[tmp == "kruskal_median"] <- "Kruskal-Wallis test"
 
-tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "sceEMD")))
+
+tmp$method[tmp$method == "sceEMD"] <- "CyEMD"
+tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "CyEMD")))
+
+tmp$significant <- as.character(tmp$significant)
+tmp$significant[tmp$significant == TRUE] <- "Yes"
+tmp$significant[tmp$significant == FALSE] <- "No"
+
+eff$magnitude <- as.character(eff$magnitude)
+eff$magnitude[eff$magnitude == "small"] <- "Small"
+eff$magnitude[eff$magnitude == "negligible"] <- "Negligible"
+eff$magnitude[eff$magnitude == "large"] <- "Large"
+eff$magnitude[eff$magnitude == "moderate"] <- "Moderate"
+eff$magnitude <- factor(eff$magnitude, levels=c("Negligible", "Small", "Moderate", "Large"))
+
 
 ggplot(tmp, aes(marker_id, method)) + 
   geom_tile(aes(fill=significant), color="white", size=1) + 
@@ -122,7 +136,7 @@ ggplot(tmp, aes(marker_id, method)) +
         plot.tag.position=c(.85, 0.5)) +
   scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent", name="Significant") + 
   ggside::geom_xsidetile(data=eff, aes(y=overall_group, xfill=magnitude), color="white", size=0.4) + 
-  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='Effect Size\nMagnitude', na.value="transparent", drop=FALSE)
+  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,4,6)], name="Cohen’s d\nEffect size\nMagnitude", na.value="transparent", drop=FALSE)
 
 
 
