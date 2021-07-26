@@ -49,7 +49,7 @@ deBody <- function(){
     ),
     
     fluidRow(
-      uiOutput("selectionBoxDE"),
+        uiOutput("selectionBoxDE"),
     ),
     
     fluidRow(

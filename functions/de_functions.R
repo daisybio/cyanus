@@ -148,18 +148,18 @@ runDS <- function(sce,
       message(paste("Calculating results for", method, "..."))
       if (is.null(parameters[[method]]) &
           method == "diffcyt-DS-LMM") {
-        message(
-          paste(
-            "Making specific parameters for:",
-            method ,
-            "fixed effects:",
-            fixed_effects,
-            ", random effects:",
-            random_effects,
-            ", contrast:",
-            contrast_vars
-          )
-        )
+        # message(
+        #   paste(
+        #     "Making specific parameters for:",
+        #     method ,
+        #     "fixed effects:",
+        #     fixed_effects,
+        #     ", random effects:",
+        #     random_effects,
+        #     ", contrast:",
+        #     contrast_vars
+        #   )
+        # )
         parameters[[method]] <-
           prepDiffExp(
             sce = sce,
@@ -169,16 +169,16 @@ runDS <- function(sce,
             method = method
           )
       } else if (is.null(parameters[[method]])) {
-        message(
-          paste(
-            "Making specific parameters for:",
-            method,
-            "include in design matrix:",
-            design_matrix_vars,
-            ", contrast:",
-            contrast_vars
-          )
-        )
+        # message(
+        #   paste(
+        #     "Making specific parameters for:",
+        #     method,
+        #     "include in design matrix:",
+        #     design_matrix_vars,
+        #     ", contrast:",
+        #     contrast_vars
+        #   )
+        # )
         parameters[[method]] <-
           prepDiffExp(
             sce = sce,
@@ -191,7 +191,7 @@ runDS <- function(sce,
       #trend <- ifelse(is.null(extra_args$trend_limma), TRUE, extra_args$trend_limma)
       
       t <- system.time(
-        out <- diffcyt::diffcyt(
+        out <- suppressMessages(diffcyt::diffcyt(
           d_input = sce,
           design = parameters[[method]][["design"]],
           formula = parameters[[method]][["formula"]],
@@ -203,7 +203,7 @@ runDS <- function(sce,
           trend = trend_limma,
           markers_to_test = getMarkersToTest(sce, method, markers_to_test),
           weights = include_weights
-        )
+        ))
       )
       ds_methods <- ds_methods[ds_methods != method]
       results[[method]] <- rowData(out$res)
@@ -233,7 +233,8 @@ runDS <- function(sce,
             sceEMD_nperm,
             parallel,
             include_weights,
-            cytoGLMM_num_boot
+            cytoGLMM_num_boot,
+            fixed_effects
           )
       )
       results[[method]] <- result
@@ -256,7 +257,8 @@ runDS <- function(sce,
           sceEMD_nperm,
           parallel,
           include_weights,
-          cytoGLMM_num_boot
+          cytoGLMM_num_boot,
+          fixed_effects
         )
       results[[method]] <- result
       gc()
@@ -269,7 +271,7 @@ runDS <- function(sce,
 timeMethod<- function(method, sce, markers_to_test, clustering_to_use, 
                       contrast_vars, random_effects,
                       sceEMD_binsize, sceEMD_nperm, parallel, 
-                      include_weights, cytoGLMM_num_boot){
+                      include_weights, cytoGLMM_num_boot, cytoGLMM_additional_covariates){
   # get the cluster_ids for the current meta cluster and iterate over the clusters
   if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
     sce <- CATALYST::filterSCE(sce, CATALYST::marker_classes(sce) %in% markers_to_test)
@@ -348,6 +350,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         condition = contrast_vars,
         method = "cytoglmm",
         random_effect = random_effects,
+        additional_covariates = cytoGLMM_additional_covariates,
         parallel = parallel
       )
       cluster_results[["CytoGLMM"]] <- out
@@ -360,6 +363,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
         condition = contrast_vars,
         method = "cytoglm",
         random_effect = random_effects,
+        additional_covariates = cytoGLMM_additional_covariates,
         parallel = parallel,
         num_boot = cytoGLMM_num_boot
       )

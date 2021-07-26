@@ -1,15 +1,30 @@
-A Systematic Comparison of Differential Analysis Methods for CyTOF Data Including the Shiny App CYANUS
-================
+# A Systematic Comparison of Differential Analysis Methods for CyTOF Data
+
+Systematic Evaluation of Existing and Novel Approaches for Differential Expression Anaylsis on Real and Simulated CyTOF Data Including the Shiny App CYANUS
+
+
+
+## Table of Contents
+* [Dataset Simulation](#dataset-simulation)
+* [Methods Evaluation](#methods-evaluation)
+* [CYANUS Shiny App](#cyanus-shiny-app)
+* [Cite](#cite)
+* [Contact](#contact)
+
 
 ## Dataset Simulation
-
 TODO
 
-## Methods Evaluation
 
+## Methods Evaluation
 TODO
 
 ## CYANUS Shiny App
+
+User-friendly R Shiny App Analyzing Cytometry Data
+
+The public web interace is available at https://exbio.wzw.tum.de/cyanus/.
+
 
 The docker image for our shiny app is publicly available at [Docker
 Hub](https://hub.docker.com/repository/docker/quirinmanz/cytof_pipeline).
@@ -45,5 +60,13 @@ In that case, you have to restore the project library using
 # install.packages('renv')
 renv::restore()
 ```
+
+TODO
+
+## Cite
+TODO
+
+## Contact
+If you have difficulties using CYANUS, please open an issue. If issues on the simulation of data or evaluation of methods arise, you can either open an issue or contact the authors of the paper.
 
 
