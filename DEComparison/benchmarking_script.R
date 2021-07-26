@@ -99,7 +99,7 @@ for (sceFile in sceFiles){
                                   "ZAGA",
                                   # "ZAIG",
                                   # "hurdleBeta",
-                                  "sceEMD",
+                                  "CyEMD",
                                   "CytoGLMM",
                                   "CytoGLM",
                                   "logRegression",
@@ -111,8 +111,8 @@ for (sceFile in sceFiles){
                    fixed_effects = condition,
                    random_effects = random_effect,
                    parallel = runParallel,
-                   sceEMD_nperm = 500,
-                   sceEMD_binsize = 0,
+                   cyEMD_nperm = 500,
+                   cyEMD_binsize = 0,
                    time_methods = timed)
 
 
@@ -134,7 +134,6 @@ for (sceFile in sceFiles){
 
 
   #only possible for max. 4 sets
-  #createVennDiagram(res, DS=T, 0.05, columns = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD", "hurdleBeta")
   res <- data.table::rbindlist(sapply(res, data.table::as.data.table, simplify = FALSE), fill = T, idcol="method")
   objectToSave$results <- res
   

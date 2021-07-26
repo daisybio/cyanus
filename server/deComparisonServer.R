@@ -168,7 +168,7 @@ runMethods <- function(){
     
     blockIDLimma <- NULL
     limmaTrend <- NULL
-    sceEMD_binsize <- NULL
+    cyEMD_binsize <- NULL
     if ('limma' %in% input$chosenDAMethodComp){
       blockIDLimma <- isolate(input$blockID_limmaVenn)
       if(blockIDLimma != ""){
@@ -178,10 +178,10 @@ runMethods <- function(){
     }
     includeWeights <- isolate(input$weightsSelectionVenn)
     includeWeights <- ifelse(includeWeights == "Yes", TRUE, FALSE)
-    if ("sceEMD" %in% methods) {
-      sceEMD_binsize <- isolate(input$emdBinwidthComp)
-      if (sceEMD_binsize == 0)
-        sceEMD_binsize <- NULL
+    if ("CyEMD" %in% methods) {
+      cyEMD_binsize <- isolate(input$emdBinwidthComp)
+      if (cyEMD_binsize == 0)
+        cyEMD_binsize <- NULL
       emdNperm <- isolate(input$emdNpermComp)
     }
     if ("CytoGLM" %in% methods) {
@@ -220,8 +220,8 @@ runMethods <- function(){
         design_matrix_vars = c(condition, addTerms, group), 
         fixed_effects = c(condition, addTerms), 
         random_effects = group,
-        sceEMD_nperm = emdNperm, 
-        sceEMD_binsize = sceEMD_binsize,
+        cyEMD_nperm = emdNperm, 
+        cyEMD_binsize = cyEMD_binsize,
         cytoGLMM_num_boot = CytoGLM_num_boot,
         time_methods = FALSE,
         parallel = FALSE
@@ -314,7 +314,7 @@ output$groupSelectionComp <- renderUI({
   all_methods <- c(methodsDA, methodsDS)
   req(input$conditionInComp)
   if (input$da_dsVenn == "Differential Marker Expression")
-    any(input$chosenDAMethodComp %in% all_methods[all_methods != 'sceEMD'])
+    any(input$chosenDAMethodComp %in% all_methods[all_methods != 'CyEMD'])
   sceEI <- data.table::as.data.table(CATALYST::ei(reactiveVals$sce))
   groupCol <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id")]
   groupCol <- groupCol[sapply(groupCol, function(x) sceEI[, .(e2 = data.table::uniqueN(get(input$conditionInComp)) == 2),, by=get(x)][, all(e2)])]
@@ -379,7 +379,7 @@ output$additionalTermsSelectionComp <- renderUI({
 
 
 output$emdInputComp <- renderUI({
-  req("sceEMD" %in% input$chosenDAMethodComp)
+  req("CyEMD" %in% input$chosenDAMethodComp)
   sceEI <- ei(reactiveVals$sce)
   list(
     uiOutput("emdNpermInputComp"),
@@ -387,7 +387,7 @@ output$emdInputComp <- renderUI({
       numericInput(
         "emdBinwidthComp",
         label = span(
-          "sceEMD: Bin width for comparing histograms",
+          "CyEMD: Bin width for comparing histograms",
           icon("question-circle"),
           id = "emdBinwidthQComp"
         ),
@@ -412,7 +412,7 @@ output$emdNpermInputComp <- renderUI({
     numericInput(
       "emdNpermComp",
       label = span(
-        "sceEMD: Number of permutations for p-value estimation",
+        "CyEMD: Number of permutations for p-value estimation",
         icon("question-circle"),
         id = "emdNpermQComp"
       ),

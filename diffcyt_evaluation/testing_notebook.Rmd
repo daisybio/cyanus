@@ -251,8 +251,8 @@ summary(out)
 
 ```{r}
 #EMD
-source("../server/sceEMD.R")
-outEMD <- sceEMD(
+source("../server/cyEMD.R")
+outEMD <- cyEMD(
   sce = sceDiffcytMain, 
   k = "population", 
   condition = "condition"
@@ -303,7 +303,7 @@ out <- runCytoGLMM(
 summary(out)
 ```
 ```{r}
-outEMD <- sceEMD(
+outEMD <- cyEMD(
   sce = sceDiffcyt50pc, 
   k = "population", 
   condition = "condition",
@@ -354,7 +354,7 @@ out <- runCytoGLMM(
 summary(out)
 ```
 ```{r}
-outEMD <- sceEMD(
+outEMD <- cyEMD(
   sce = sceDiffcyt75pc, 
   k = "population", 
   condition = "condition",
