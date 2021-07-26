@@ -1,2465 +1,0 @@
-Loading required package: SingleCellExperiment
-Loading required package: SummarizedExperiment
-Loading required package: MatrixGenerics
-Loading required package: matrixStats
-
-Attaching package: ‘MatrixGenerics’
-
-The following objects are masked from ‘package:matrixStats’:
-
-    colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,
-    colCounts, colCummaxs, colCummins, colCumprods, colCumsums,
-    colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,
-    colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,
-    colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,
-    colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,
-    colWeightedMeans, colWeightedMedians, colWeightedSds,
-    colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,
-    rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,
-    rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,
-    rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,
-    rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,
-    rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,
-    rowWeightedMads, rowWeightedMeans, rowWeightedMedians,
-    rowWeightedSds, rowWeightedVars
-
-Loading required package: GenomicRanges
-Loading required package: stats4
-Loading required package: BiocGenerics
-Loading required package: parallel
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:parallel’:
-
-    clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-    clusterExport, clusterMap, parApply, parCapply, parLapply,
-    parLapplyLB, parRapply, parSapply, parSapplyLB
-
-The following object is masked from ‘package:fs’:
-
-    path
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, basename, cbind, colnames,
-    dirname, do.call, duplicated, eval, evalq, Filter, Find, get, grep,
-    grepl, intersect, is.unsorted, lapply, Map, mapply, match, mget,
-    order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,
-    rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply,
-    union, unique, unsplit, which.max, which.min
-
-Loading required package: S4Vectors
-
-Attaching package: ‘S4Vectors’
-
-The following object is masked from ‘package:base’:
-
-    expand.grid
-
-Loading required package: IRanges
-Loading required package: GenomeInfoDb
-Loading required package: Biobase
-Welcome to Bioconductor
-
-    Vignettes contain introductory material; view with
-    'browseVignettes()'. To cite Bioconductor, see
-    'citation("Biobase")', and for packages 'citation("pkgname")'.
-
-
-Attaching package: ‘Biobase’
-
-The following object is masked from ‘package:MatrixGenerics’:
-
-    rowMedians
-
-The following objects are masked from ‘package:matrixStats’:
-
-    anyMissing, rowMedians
-
-Registered S3 methods overwritten by 'lme4':
-  method                          from
-  cooks.distance.influence.merMod car 
-  influence.merMod                car 
-  dfbeta.influence.merMod         car 
-  dfbetas.influence.merMod        car 
-
-Attaching package: ‘diffcyt’
-
-The following object is masked _by_ ‘.GlobalEnv’:
-
-    transformData
-
-Loading required package: Matrix
-
-Attaching package: ‘Matrix’
-
-The following object is masked from ‘package:S4Vectors’:
-
-    expand
-
-Loading required package: DRR
-Loading required package: kernlab
-
-Attaching package: ‘kernlab’
-
-The following object is masked from ‘package:ggplot2’:
-
-    alpha
-
-The following object is masked from ‘package:BiocGenerics’:
-
-    type
-
-Loading required package: CVST
-
-Attaching package: ‘dimRed’
-
-The following object is masked from ‘package:SummarizedExperiment’:
-
-    as.data.frame
-
-The following object is masked from ‘package:GenomicRanges’:
-
-    as.data.frame
-
-The following object is masked from ‘package:GenomeInfoDb’:
-
-    as.data.frame
-
-The following object is masked from ‘package:IRanges’:
-
-    as.data.frame
-
-The following object is masked from ‘package:S4Vectors’:
-
-    as.data.frame
-
-The following object is masked from ‘package:BiocGenerics’:
-
-    as.data.frame
-
-The following object is masked from ‘package:stats’:
-
-    embed
-
-The following object is masked from ‘package:base’:
-
-    as.data.frame
-
-Loading required package: dplyr
-
-Attaching package: ‘dplyr’
-
-The following object is masked from ‘package:Biobase’:
-
-    combine
-
-The following objects are masked from ‘package:GenomicRanges’:
-
-    intersect, setdiff, union
-
-The following object is masked from ‘package:GenomeInfoDb’:
-
-    intersect
-
-The following objects are masked from ‘package:IRanges’:
-
-    collapse, desc, intersect, setdiff, slice, union
-
-The following objects are masked from ‘package:S4Vectors’:
-
-    first, intersect, rename, setdiff, setequal, union
-
-The following objects are masked from ‘package:BiocGenerics’:
-
-    combine, intersect, setdiff, union
-
-The following object is masked from ‘package:matrixStats’:
-
-    count
-
-The following objects are masked from ‘package:stats’:
-
-    filter, lag
-
-The following objects are masked from ‘package:base’:
-
-    intersect, setdiff, setequal, union
-
-Loading required package: grid
-        functions/cluster_functions.R functions/cytoGLMM_functions.R
-value   ?                             ?                             
-visible FALSE                         FALSE                         
-        functions/de_functions.R functions/diffcyt_functions.R
-value   ?                        ?                            
-visible FALSE                    FALSE                        
-        functions/gamlss_functions.R functions/hurdleBeta.R
-value   ?                            ?                     
-visible FALSE                        FALSE                 
-        functions/log_regr_functions.R functions/prep_functions.R
-value   ?                              ?                         
-visible FALSE                          FALSE                     
-        functions/sceEMD.R functions/start_functions.R
-value   ?                  ?                          
-visible FALSE              FALSE                      
-        functions/statistical_tests_functions.R functions/venn_functions.R
-value   ?                                       ?                         
-visible FALSE                                   FALSE                     
-        functions/vis_functions.R
-value   ?                        
-visible FALSE                    
-processing sce /nfs/home/students/l.arend/data/platelets_dual/sce_dual.rds
-Calculating results for diffcyt-DS-limma ...
-Making specific parameters for: diffcyt-DS-limma include in design matrix: platelets , contrast: platelets
-     [,1]
-[1,]    0
-[2,]    1
-using SingleCellExperiment object from CATALYST as input
-using cluster IDs from clustering stored in column 'all' of 'cluster_codes' data frame in 'metadata' of SingleCellExperiment object from CATALYST
-calculating features...
-calculating DS tests using method 'diffcyt-DS-limma'...
-Calculating results for diffcyt-DS-LMM ...
-Making specific parameters for: diffcyt-DS-LMM fixed effects: platelets , random effects:  , contrast: platelets
-     [,1]
-[1,]    0
-[2,]    1
-using SingleCellExperiment object from CATALYST as input
-using cluster IDs from clustering stored in column 'all' of 'cluster_codes' data frame in 'metadata' of SingleCellExperiment object from CATALYST
-calculating features...
-calculating DS tests using method 'diffcyt-DS-LMM'...
-calculating BEZI for cluster all
-Loading required package: splines
-Loading required package: gamlss.data
-
-Attaching package: ‘gamlss.data’
-
-The following object is masked from ‘package:datasets’:
-
-    sleep
-
-Loading required package: gamlss.dist
-Loading required package: MASS
-
-Attaching package: ‘MASS’
-
-The following object is masked from ‘package:dplyr’:
-
-    select
-
-Loading required package: nlme
-
-Attaching package: ‘nlme’
-
-The following object is masked from ‘package:dplyr’:
-
-    collapse
-
-The following object is masked from ‘package:dimRed’:
-
-    getData
-
-The following object is masked from ‘package:IRanges’:
-
-    collapse
-
- **********   GAMLSS Version 5.2-0  ********** 
-For more on GAMLSS look at https://www.gamlss.com/
-Type gamlssNews() to see new features/changes/bug fixes.
-
-
-Attaching package: ‘gamlss’
-
-The following object is masked from ‘package:CVST’:
-
-    CV
-
-Fitting a zero-inflated beta distribution...
-  |                                                                              |                                                                      |   0%fitting marker CD41
-GAMLSS-RS iteration 1: Global Deviance = -2758418 
-GAMLSS-RS iteration 2: Global Deviance = -3051807 
-GAMLSS-RS iteration 3: Global Deviance = -3051991 
-GAMLSS-RS iteration 4: Global Deviance = -3051991 
-GAMLSS-RS iteration 5: Global Deviance = -3051991 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.3764769  0.0004976 -756.52   <2e-16 ***
-YB           0.0397701  0.0006813   58.38   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 1.9139962  0.0006222    3076   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept)   -15.32       1.00  -15.32   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  5 
- 
-Global Deviance:     -3051991 
-            AIC:     -3051983 
-            SBC:     -3051930 
-******************************************************************
-  |                                                                              |===                                                                   |   5%fitting marker CD40
-GAMLSS-RS iteration 1: Global Deviance = 412745.6 
-GAMLSS-RS iteration 2: Global Deviance = -747760.6 
-GAMLSS-RS iteration 3: Global Deviance = -1720346 
-GAMLSS-RS iteration 4: Global Deviance = -2461292 
-GAMLSS-RS iteration 5: Global Deviance = -2852450 
-GAMLSS-RS iteration 6: Global Deviance = -2967935 
-GAMLSS-RS iteration 7: Global Deviance = -2986992 
-GAMLSS-RS iteration 8: Global Deviance = -2989147 
-GAMLSS-RS iteration 9: Global Deviance = -2989353 
-GAMLSS-RS iteration 10: Global Deviance = -2989372 
-GAMLSS-RS iteration 11: Global Deviance = -2989374 
-GAMLSS-RS iteration 12: Global Deviance = -2989374 
-GAMLSS-RS iteration 13: Global Deviance = -2989374 
-GAMLSS-RS iteration 14: Global Deviance = -2989374 
-GAMLSS-RS iteration 15: Global Deviance = -2989374 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-             Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -2.899973   0.000733 -3956.07   <2e-16 ***
-YB          -0.008547   0.001001    -8.54   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 3.1610658  0.0008298    3809   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.0751933  0.0009444  -79.62   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  15 
- 
-Global Deviance:     -2989374 
-            AIC:     -2989366 
-            SBC:     -2989313 
-******************************************************************
-  |                                                                              |======                                                                |   9%fitting marker CD42b
-GAMLSS-RS iteration 1: Global Deviance = -6819135 
-GAMLSS-RS iteration 2: Global Deviance = -12276603 
-GAMLSS-RS iteration 3: Global Deviance = -12353659 
-GAMLSS-RS iteration 4: Global Deviance = -12353670 
-GAMLSS-RS iteration 5: Global Deviance = -12353670 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.7621663  0.0001937 -3933.9   <2e-16 ***
-YB           0.0394970  0.0002647   149.2   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 4.0456285  0.0006605    6125   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -9.05038    0.04356  -207.8   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  5 
- 
-Global Deviance:     -12353670 
-            AIC:     -12353662 
-            SBC:     -12353609 
-******************************************************************
-  |                                                                              |==========                                                            |  14%fitting marker CD31
-GAMLSS-RS iteration 1: Global Deviance = -3384979 
-GAMLSS-RS iteration 2: Global Deviance = -5723004 
-GAMLSS-RS iteration 3: Global Deviance = -5788487 
-GAMLSS-RS iteration 4: Global Deviance = -5788678 
-GAMLSS-RS iteration 5: Global Deviance = -5788678 
-GAMLSS-RS iteration 6: Global Deviance = -5788678 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -0.9007767  0.0004126 -2183.07   <2e-16 ***
-YB          -0.0370983  0.0005671   -65.42   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 2.4998071  0.0006374    3922   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -4.753904   0.005127  -927.3   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  6 
- 
-Global Deviance:     -5788678 
-            AIC:     -5788670 
-            SBC:     -5788617 
-******************************************************************
-  |                                                                              |=============                                                         |  18%fitting marker CD61
-GAMLSS-RS iteration 1: Global Deviance = -3756373 
-GAMLSS-RS iteration 2: Global Deviance = -3763346 
-GAMLSS-RS iteration 3: Global Deviance = -3763346 
-GAMLSS-RS iteration 4: Global Deviance = -3763346 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  0.0587072  0.0004422  132.75   <2e-16 ***
-YB          -0.0268058  0.0006060  -44.23   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 2.1596487  0.0006322    3416   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept)   -15.32       1.00  -15.32   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  4 
- 
-Global Deviance:     -3763346 
-            AIC:     -3763338 
-            SBC:     -3763285 
-******************************************************************
-  |                                                                              |================                                                      |  23%fitting marker PAR1
-GAMLSS-RS iteration 1: Global Deviance = -3409842 
-GAMLSS-RS iteration 2: Global Deviance = -6786079 
-GAMLSS-RS iteration 3: Global Deviance = -8112096 
-GAMLSS-RS iteration 4: Global Deviance = -8272468 
-GAMLSS-RS iteration 5: Global Deviance = -8278383 
-GAMLSS-RS iteration 6: Global Deviance = -8278510 
-GAMLSS-RS iteration 7: Global Deviance = -8278513 
-GAMLSS-RS iteration 8: Global Deviance = -8278513 
-GAMLSS-RS iteration 9: Global Deviance = -8278513 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.8611150  0.0004723 -3940.3   <2e-16 ***
-YB           0.0593589  0.0006417    92.5   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 2.7395462  0.0006361    4307   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -3.040079   0.002261   -1345   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  9 
- 
-Global Deviance:     -8278513 
-            AIC:     -8278505 
-            SBC:     -8278451 
-******************************************************************
-  |                                                                              |===================                                                   |  27%fitting marker CD63
-GAMLSS-RS iteration 1: Global Deviance = 373494.9 
-GAMLSS-RS iteration 2: Global Deviance = -1403788 
-GAMLSS-RS iteration 3: Global Deviance = -1916927 
-GAMLSS-RS iteration 4: Global Deviance = -1984772 
-GAMLSS-RS iteration 5: Global Deviance = -1989606 
-GAMLSS-RS iteration 6: Global Deviance = -1989870 
-GAMLSS-RS iteration 7: Global Deviance = -1989883 
-GAMLSS-RS iteration 8: Global Deviance = -1989884 
-GAMLSS-RS iteration 9: Global Deviance = -1989884 
-GAMLSS-RS iteration 10: Global Deviance = -1989884 
-GAMLSS-RS iteration 11: Global Deviance = -1989884 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.3964323  0.0005711 -2445.3   <2e-16 ***
-YB          -0.6262327  0.0008749  -715.8   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 2.0700657  0.0006694    3092   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.321107   0.001157   -1142   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  11 
- 
-Global Deviance:     -1989884 
-            AIC:     -1989876 
-            SBC:     -1989823 
-******************************************************************
-  |                                                                              |======================                                                |  32%fitting marker CD107a
-GAMLSS-RS iteration 1: Global Deviance = 2244274 
-GAMLSS-RS iteration 2: Global Deviance = 1653439 
-GAMLSS-RS iteration 3: Global Deviance = 1198470 
-GAMLSS-RS iteration 4: Global Deviance = 894192.4 
-GAMLSS-RS iteration 5: Global Deviance = 754046.8 
-GAMLSS-RS iteration 6: Global Deviance = 714812.1 
-GAMLSS-RS iteration 7: Global Deviance = 707740.1 
-GAMLSS-RS iteration 8: Global Deviance = 706765.8 
-GAMLSS-RS iteration 9: Global Deviance = 706647 
-GAMLSS-RS iteration 10: Global Deviance = 706633.2 
-GAMLSS-RS iteration 11: Global Deviance = 706631.6 
-GAMLSS-RS iteration 12: Global Deviance = 706631.5 
-GAMLSS-RS iteration 13: Global Deviance = 706631.4 
-GAMLSS-RS iteration 14: Global Deviance = 706631.4 
-GAMLSS-RS iteration 15: Global Deviance = 706631.4 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -2.6659229  0.0008934 -2984.1   <2e-16 ***
-YB          -0.2692761  0.0015072  -178.7   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 2.849143   0.001112    2563   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 0.944952   0.001051   899.1   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  15 
- 
-Global Deviance:     706631.4 
-            AIC:     706639.4 
-            SBC:     706692.7 
-******************************************************************
-  |                                                                              |=========================                                             |  36%fitting marker CD36
-GAMLSS-RS iteration 1: Global Deviance = -3197863 
-GAMLSS-RS iteration 2: Global Deviance = -3730995 
-GAMLSS-RS iteration 3: Global Deviance = -3731469 
-GAMLSS-RS iteration 4: Global Deviance = -3731469 
-GAMLSS-RS iteration 5: Global Deviance = -3731469 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.3799755  0.0004261 -891.83   <2e-16 ***
-YB          -0.0380910  0.0005848  -65.14   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 2.2913934  0.0006396    3583   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -4.166940   0.003849   -1083   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  5 
- 
-Global Deviance:     -3731469 
-            AIC:     -3731461 
-            SBC:     -3731408 
-******************************************************************
-  |                                                                              |=============================                                         |  41%fitting marker CD45
-GAMLSS-RS iteration 1: Global Deviance = -1751475 
-GAMLSS-RS iteration 2: Global Deviance = -4073008 
-GAMLSS-RS iteration 3: Global Deviance = -5423522 
-GAMLSS-RS iteration 4: Global Deviance = -5858593 
-GAMLSS-RS iteration 5: Global Deviance = -5919627 
-GAMLSS-RS iteration 6: Global Deviance = -5924187 
-GAMLSS-RS iteration 7: Global Deviance = -5924446 
-GAMLSS-RS iteration 8: Global Deviance = -5924460 
-GAMLSS-RS iteration 9: Global Deviance = -5924461 
-GAMLSS-RS iteration 10: Global Deviance = -5924461 
-GAMLSS-RS iteration 11: Global Deviance = -5924461 
-GAMLSS-RS iteration 12: Global Deviance = -5924461 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -2.1745227  0.0005622 -3867.61   <2e-16 ***
-YB          -0.0509600  0.0007782   -65.48   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 2.6646227  0.0006658    4002   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.549909   0.001242   -1248   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  12 
- 
-Global Deviance:     -5924461 
-            AIC:     -5924453 
-            SBC:     -5924400 
-******************************************************************
-  |                                                                              |================================                                      |  45%fitting marker PAC1
-GAMLSS-RS iteration 1: Global Deviance = -10956609 
-GAMLSS-RS iteration 2: Global Deviance = -11074162 
-GAMLSS-RS iteration 3: Global Deviance = -11074163 
-GAMLSS-RS iteration 4: Global Deviance = -11074163 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.0818747  0.0001950 -419.96   <2e-16 ***
-YB           0.0065375  0.0002672   24.47   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 3.8953567  0.0006606    5897   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -10.7226     0.1005  -106.7   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  4 
- 
-Global Deviance:     -11074163 
-            AIC:     -11074155 
-            SBC:     -11074101 
-******************************************************************
-  |                                                                              |===================================                                   |  50%fitting marker CD29
-GAMLSS-RS iteration 1: Global Deviance = -8545845 
-GAMLSS-RS iteration 2: Global Deviance = -10330378 
-GAMLSS-RS iteration 3: Global Deviance = -10331496 
-GAMLSS-RS iteration 4: Global Deviance = -10331496 
-GAMLSS-RS iteration 5: Global Deviance = -10331496 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  0.3820856  0.0002193 1742.51   <2e-16 ***
-YB          -0.0041580  0.0003005  -13.84   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 3.6883774  0.0006587    5599   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -10.66371    0.09759  -109.3   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  5 
- 
-Global Deviance:     -10331496 
-            AIC:     -10331488 
-            SBC:     -10331435 
-******************************************************************
-  |                                                                              |======================================                                |  55%fitting marker CD62P
-GAMLSS-RS iteration 1: Global Deviance = 1291557 
-GAMLSS-RS iteration 2: Global Deviance = -33977.13 
-GAMLSS-RS iteration 3: Global Deviance = -238437.9 
-GAMLSS-RS iteration 4: Global Deviance = -252772.3 
-GAMLSS-RS iteration 5: Global Deviance = -253434.7 
-GAMLSS-RS iteration 6: Global Deviance = -253461.8 
-GAMLSS-RS iteration 7: Global Deviance = -253462.9 
-GAMLSS-RS iteration 8: Global Deviance = -253462.9 
-GAMLSS-RS iteration 9: Global Deviance = -253462.9 
-GAMLSS-RS iteration 10: Global Deviance = -253462.9 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.8071887  0.0005733   -1408   <2e-16 ***
-YB          -1.1247960  0.0009283   -1212   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 1.7708048  0.0006679    2651   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.276696   0.001143   -1117   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  10 
- 
-Global Deviance:     -253462.9 
-            AIC:     -253454.9 
-            SBC:     -253401.6 
-******************************************************************
-  |                                                                              |=========================================                             |  59%fitting marker CD69
-GAMLSS-RS iteration 1: Global Deviance = -3605683 
-GAMLSS-RS iteration 2: Global Deviance = -4633366 
-GAMLSS-RS iteration 3: Global Deviance = -4637147 
-GAMLSS-RS iteration 4: Global Deviance = -4637148 
-GAMLSS-RS iteration 5: Global Deviance = -4637148 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.4937087  0.0004184 -1180.0   <2e-16 ***
-YB          -0.1296286  0.0005773  -224.5   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 2.3416075  0.0006362    3680   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -5.320773   0.006781  -784.6   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  5 
- 
-Global Deviance:     -4637148 
-            AIC:     -4637140 
-            SBC:     -4637087 
-******************************************************************
-  |                                                                              |=============================================                         |  64%fitting marker CD141
-GAMLSS-RS iteration 1: Global Deviance = 2531792 
-GAMLSS-RS iteration 2: Global Deviance = 2119968 
-GAMLSS-RS iteration 3: Global Deviance = 1830061 
-GAMLSS-RS iteration 4: Global Deviance = 1674672 
-GAMLSS-RS iteration 5: Global Deviance = 1625682 
-GAMLSS-RS iteration 6: Global Deviance = 1616954 
-GAMLSS-RS iteration 7: Global Deviance = 1615903 
-GAMLSS-RS iteration 8: Global Deviance = 1615798 
-GAMLSS-RS iteration 9: Global Deviance = 1615788 
-GAMLSS-RS iteration 10: Global Deviance = 1615787 
-GAMLSS-RS iteration 11: Global Deviance = 1615787 
-GAMLSS-RS iteration 12: Global Deviance = 1615787 
-GAMLSS-RS iteration 13: Global Deviance = 1615787 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-             Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -2.507053   0.001136 -2207.43   <2e-16 ***
-YB          -0.070397   0.001839   -38.28   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 2.717463   0.001409    1929   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 1.537486   0.001237    1243   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  13 
- 
-Global Deviance:     1615787 
-            AIC:     1615795 
-            SBC:     1615848 
-******************************************************************
-  |                                                                              |================================================                      |  68%fitting marker CD154
-GAMLSS-RS iteration 1: Global Deviance = 2151436 
-GAMLSS-RS iteration 2: Global Deviance = 1475388 
-GAMLSS-RS iteration 3: Global Deviance = 929464.3 
-GAMLSS-RS iteration 4: Global Deviance = 539068.2 
-GAMLSS-RS iteration 5: Global Deviance = 348333.1 
-GAMLSS-RS iteration 6: Global Deviance = 294724 
-GAMLSS-RS iteration 7: Global Deviance = 285739 
-GAMLSS-RS iteration 8: Global Deviance = 284647.2 
-GAMLSS-RS iteration 9: Global Deviance = 284532.1 
-GAMLSS-RS iteration 10: Global Deviance = 284520.6 
-GAMLSS-RS iteration 11: Global Deviance = 284519.4 
-GAMLSS-RS iteration 12: Global Deviance = 284519.3 
-GAMLSS-RS iteration 13: Global Deviance = 284519.3 
-GAMLSS-RS iteration 14: Global Deviance = 284519.3 
-GAMLSS-RS iteration 15: Global Deviance = 284519.3 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -2.741970   0.000825 -3323.7   <2e-16 ***
-YB          -0.243758   0.001390  -175.3   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 3.021198   0.001072    2819   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 0.814271   0.001023     796   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  15 
- 
-Global Deviance:     284519.3 
-            AIC:     284527.3 
-            SBC:     284580.6 
-******************************************************************
-  |                                                                              |===================================================                   |  73%fitting marker CD3
-GAMLSS-RS iteration 1: Global Deviance = 2583588 
-GAMLSS-RS iteration 2: Global Deviance = 1988052 
-GAMLSS-RS iteration 3: Global Deviance = 1537311 
-GAMLSS-RS iteration 4: Global Deviance = 1262717 
-GAMLSS-RS iteration 5: Global Deviance = 1161472 
-GAMLSS-RS iteration 6: Global Deviance = 1141168 
-GAMLSS-RS iteration 7: Global Deviance = 1138618 
-GAMLSS-RS iteration 8: Global Deviance = 1138365 
-GAMLSS-RS iteration 9: Global Deviance = 1138342 
-GAMLSS-RS iteration 10: Global Deviance = 1138340 
-GAMLSS-RS iteration 11: Global Deviance = 1138340 
-GAMLSS-RS iteration 12: Global Deviance = 1138340 
-GAMLSS-RS iteration 13: Global Deviance = 1138340 
-GAMLSS-RS iteration 14: Global Deviance = 1138340 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-             Estimate Std. Error   t value Pr(>|t|)    
-(Intercept) -2.653447   0.001059 -2505.051  < 2e-16 ***
-YB           0.007524   0.001462     5.146 2.66e-07 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 2.877848   0.001182    2435   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 1.078372   0.001084   994.6   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  14 
- 
-Global Deviance:     1138340 
-            AIC:     1138348 
-            SBC:     1138402 
-******************************************************************
-  |                                                                              |======================================================                |  77%fitting marker CD9
-GAMLSS-RS iteration 1: Global Deviance = -7814086 
-GAMLSS-RS iteration 2: Global Deviance = -10437316 
-GAMLSS-RS iteration 3: Global Deviance = -10442376 
-GAMLSS-RS iteration 4: Global Deviance = -10442376 
-GAMLSS-RS iteration 5: Global Deviance = -10442376 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  0.499214   0.000222 2248.67   <2e-16 ***
-YB          -0.016420   0.000304  -54.01   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 3.6876359  0.0006585    5600   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -10.62633    0.09578  -110.9   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  5 
- 
-Global Deviance:     -10442376 
-            AIC:     -10442368 
-            SBC:     -10442315 
-******************************************************************
-  |                                                                              |=========================================================             |  82%fitting marker PEAR
-GAMLSS-RS iteration 1: Global Deviance = -4002801 
-GAMLSS-RS iteration 2: Global Deviance = -8414033 
-GAMLSS-RS iteration 3: Global Deviance = -9487560 
-GAMLSS-RS iteration 4: Global Deviance = -9525882 
-GAMLSS-RS iteration 5: Global Deviance = -9526178 
-GAMLSS-RS iteration 6: Global Deviance = -9526179 
-GAMLSS-RS iteration 7: Global Deviance = -9526179 
-GAMLSS-RS iteration 8: Global Deviance = -9526179 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.4885704  0.0003731 -3989.8   <2e-16 ***
-YB          -0.0961296  0.0005181  -185.5   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 3.0174761  0.0006413    4705   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -4.521909   0.004575  -988.3   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  8 
- 
-Global Deviance:     -9526179 
-            AIC:     -9526171 
-            SBC:     -9526118 
-******************************************************************
-  |                                                                              |============================================================          |  86%fitting marker GPVI
-GAMLSS-RS iteration 1: Global Deviance = -9906800 
-GAMLSS-RS iteration 2: Global Deviance = -10144308 
-GAMLSS-RS iteration 3: Global Deviance = -10144309 
-GAMLSS-RS iteration 4: Global Deviance = -10144309 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.1142347  0.0002152 -530.93   <2e-16 ***
-YB          -0.0183790  0.0002950  -62.31   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 3.6959636  0.0006594    5605   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -7.08762    0.01634  -433.8   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  4 
- 
-Global Deviance:     -10144309 
-            AIC:     -10144301 
-            SBC:     -10144248 
-******************************************************************
-  |                                                                              |================================================================      |  91%fitting marker CD47
-GAMLSS-RS iteration 1: Global Deviance = -4463099 
-GAMLSS-RS iteration 2: Global Deviance = -9028610 
-GAMLSS-RS iteration 3: Global Deviance = -9321253 
-GAMLSS-RS iteration 4: Global Deviance = -9322238 
-GAMLSS-RS iteration 5: Global Deviance = -9322239 
-GAMLSS-RS iteration 6: Global Deviance = -9322239 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.0846430  0.0003087 -3514.1   <2e-16 ***
-YB          -0.0166931  0.0004237   -39.4   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 3.2121374  0.0006499    4943   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -5.735610   0.008331  -688.5   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  6 
- 
-Global Deviance:     -9322239 
-            AIC:     -9322231 
-            SBC:     -9322178 
-******************************************************************
-  |                                                                              |===================================================================   |  95%fitting marker CD42a
-GAMLSS-RS iteration 1: Global Deviance = -11363960 
-GAMLSS-RS iteration 2: Global Deviance = -11463398 
-GAMLSS-RS iteration 3: Global Deviance = -11463398 
-GAMLSS-RS iteration 4: Global Deviance = -11463398 
-******************************************************************
-Family:  c("BEZI", "Zero Inflated Beta") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  logit
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.0990094  0.0001868  -530.2   <2e-16 ***
-YB           0.0811611  0.0002558   317.3   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 3.9837766  0.0006612    6025   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -12.0596     0.1961  -61.49   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  4 
- 
-Global Deviance:     -11463398 
-            AIC:     -11463390 
-            SBC:     -11463337 
-******************************************************************
-  |                                                                              |======================================================================| 100%
-
-calculating ZAGA for cluster all
-Fitting a zero adjusted Gamma distribution...
-  |                                                                              |                                                                      |   0%fitting marker CD41
-GAMLSS-RS iteration 1: Global Deviance = -2413718 
-GAMLSS-RS iteration 2: Global Deviance = -2413718 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -0.8871990  0.0003339 -2657.47   <2e-16 ***
-YB           0.0155520  0.0004576    33.99   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.7260062  0.0003215   -2258   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept)   -15.32       1.00  -15.32   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -2413718 
-            AIC:     -2413710 
-            SBC:     -2413657 
-******************************************************************
-  |                                                                              |===                                                                   |   5%fitting marker CD40
-GAMLSS-RS iteration 1: Global Deviance = -2973176 
-GAMLSS-RS iteration 2: Global Deviance = -2973176 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error   t value Pr(>|t|)    
-(Intercept) -2.9500150  0.0008536 -3455.810   <2e-16 ***
-YB          -0.0106799  0.0011643    -9.173   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.1208943  0.0004163  -290.4   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.0751933  0.0009444  -79.62   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -2973176 
-            AIC:     -2973168 
-            SBC:     -2973115 
-******************************************************************
-  |                                                                              |======                                                                |   9%fitting marker CD42b
-GAMLSS-RS iteration 1: Global Deviance = -12290719 
-GAMLSS-RS iteration 2: Global Deviance = -12290719 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.1441200  0.0001332 -8592.2   <2e-16 ***
-YB           0.0251109  0.0001825   137.6   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.6452168  0.0003316   -4961   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -9.05038    0.04356  -207.8   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -12290719 
-            AIC:     -12290711 
-            SBC:     -12290658 
-******************************************************************
-  |                                                                              |==========                                                            |  14%fitting marker CD31
-GAMLSS-RS iteration 1: Global Deviance = -5259369 
-GAMLSS-RS iteration 2: Global Deviance = -5259369 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -1.2284782  0.0003333 -3686.04   <2e-16 ***
-YB          -0.0313900  0.0004567   -68.74   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.732264   0.000323   -2267   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -4.753904   0.005127  -927.3   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -5259369 
-            AIC:     -5259361 
-            SBC:     -5259308 
-******************************************************************
-  |                                                                              |=============                                                         |  18%fitting marker CD61
-GAMLSS-RS iteration 1: Global Deviance = -3153906 
-GAMLSS-RS iteration 2: Global Deviance = -3153906 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -0.6622857  0.0002389 -2771.82   <2e-16 ***
-YB          -0.0113815  0.0003275   -34.76   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.0605089  0.0003272   -3241   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept)   -15.32       1.00  -15.32   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -3153906 
-            AIC:     -3153898 
-            SBC:     -3153845 
-******************************************************************
-  |                                                                              |================                                                      |  23%fitting marker PAR1
-GAMLSS-RS iteration 1: Global Deviance = -8044359 
-GAMLSS-RS iteration 2: Global Deviance = -8044359 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -1.9947644  0.0004626 -4311.90   <2e-16 ***
-YB           0.0492927  0.0006331    77.86   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.4249388  0.0003202   -1327   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -3.040079   0.002261   -1345   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -8044359 
-            AIC:     -8044351 
-            SBC:     -8044298 
-******************************************************************
-  |                                                                              |===================                                                   |  27%fitting marker CD63
-GAMLSS-RS iteration 1: Global Deviance = -1891476 
-GAMLSS-RS iteration 2: Global Deviance = -1891476 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.5644600  0.0006265 -2497.1   <2e-16 ***
-YB          -0.6756115  0.0009035  -747.8   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.1625376  0.0003398  -478.4   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.321107   0.001157   -1142   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -1891476 
-            AIC:     -1891468 
-            SBC:     -1891415 
-******************************************************************
-  |                                                                              |======================                                                |  32%fitting marker CD107a
-GAMLSS-RS iteration 1: Global Deviance = 683867.2 
-GAMLSS-RS iteration 2: Global Deviance = 683867.2 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -2.691005   0.001086 -2478.2   <2e-16 ***
-YB          -0.403782   0.001764  -228.9   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.0413046  0.0005593  -73.85   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 0.944952   0.001051   899.1   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     683867.2 
-            AIC:     683875.2 
-            SBC:     683928.5 
-******************************************************************
-  |                                                                              |=========================                                             |  36%fitting marker CD36
-GAMLSS-RS iteration 1: Global Deviance = -2712108 
-GAMLSS-RS iteration 2: Global Deviance = -2712108 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -0.8855884  0.0002991 -2960.55   <2e-16 ***
-YB          -0.0227326  0.0004100   -55.45   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.8434355  0.0003264   -2584   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -4.166940   0.003849   -1083   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -2712108 
-            AIC:     -2712100 
-            SBC:     -2712047 
-******************************************************************
-  |                                                                              |=============================                                         |  41%fitting marker CD45
-GAMLSS-RS iteration 1: Global Deviance = -5821003 
-GAMLSS-RS iteration 2: Global Deviance = -5821003 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -2.2704058  0.0006112 -3714.89   <2e-16 ***
-YB          -0.0543903  0.0008409   -64.68   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.213152   0.000335  -636.4   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.549909   0.001242   -1248   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -5821003 
-            AIC:     -5820995 
-            SBC:     -5820942 
-******************************************************************
-  |                                                                              |================================                                      |  45%fitting marker PAC1
-GAMLSS-RS iteration 1: Global Deviance = -10935849 
-GAMLSS-RS iteration 2: Global Deviance = -10935849 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -0.7344411  0.0001036 -7088.97   <2e-16 ***
-YB           0.0028730  0.0001420    20.23   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.8961479  0.0003324   -5704   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -10.7226     0.1005  -106.7   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -10935849 
-            AIC:     -10935841 
-            SBC:     -10935788 
-******************************************************************
-  |                                                                              |===================================                                   |  50%fitting marker CD29
-GAMLSS-RS iteration 1: Global Deviance = -10290595 
-GAMLSS-RS iteration 2: Global Deviance = -10290595 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -5.206e-01  8.992e-05 -5789.59   <2e-16 ***
-YB          -1.314e-03  1.232e-04   -10.66   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -2.0378388  0.0003327   -6125   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -10.66371    0.09759  -109.3   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -10290595 
-            AIC:     -10290587 
-            SBC:     -10290533 
-******************************************************************
-  |                                                                              |======================================                                |  55%fitting marker CD62P
-GAMLSS-RS iteration 1: Global Deviance = 282126.7 
-GAMLSS-RS iteration 2: Global Deviance = 282126.7 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.1228641  0.0006231   -1802   <2e-16 ***
-YB          -1.0652170  0.0009252   -1151   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.1471519  0.0003406  -432.1   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.276696   0.001143   -1117   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     282126.7 
-            AIC:     282134.7 
-            SBC:     282188 
-******************************************************************
-  |                                                                              |=========================================                             |  59%fitting marker CD69
-GAMLSS-RS iteration 1: Global Deviance = -3980646 
-GAMLSS-RS iteration 2: Global Deviance = -3980646 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.9600223  0.0003035   -3163   <2e-16 ***
-YB          -0.0832017  0.0004161    -200   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.8234840  0.0003243   -2539   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -5.320773   0.006781  -784.6   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -3980646 
-            AIC:     -3980638 
-            SBC:     -3980584 
-******************************************************************
-  |                                                                              |=============================================                         |  64%fitting marker CD141
-GAMLSS-RS iteration 1: Global Deviance = 1612743 
-GAMLSS-RS iteration 2: Global Deviance = 1612743 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-             Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -2.573346   0.001316 -1955.11   <2e-16 ***
-YB          -0.104898   0.002110   -49.71   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.086571   0.000709  -122.1   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 1.537486   0.001237    1243   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     1612743 
-            AIC:     1612751 
-            SBC:     1612804 
-******************************************************************
-  |                                                                              |================================================                      |  68%fitting marker CD154
-GAMLSS-RS iteration 1: Global Deviance = 271324.6 
-GAMLSS-RS iteration 2: Global Deviance = 271324.6 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -2.7624387  0.0009865 -2800.3   <2e-16 ***
-YB          -0.3636801  0.0016014  -227.1   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.0915784  0.0005386    -170   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 0.814271   0.001023     796   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     271324.6 
-            AIC:     271332.6 
-            SBC:     271385.8 
-******************************************************************
-  |                                                                              |===================================================                   |  73%fitting marker CD3
-GAMLSS-RS iteration 1: Global Deviance = 1140101 
-GAMLSS-RS iteration 2: Global Deviance = 1140101 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-             Estimate Std. Error   t value Pr(>|t|)    
-(Intercept) -2.722792   0.001219 -2234.151  < 2e-16 ***
-YB           0.008733   0.001684     5.187 2.14e-07 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.107839   0.000594  -181.6   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) 1.078372   0.001084   994.6   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     1140101 
-            AIC:     1140109 
-            SBC:     1140162 
-******************************************************************
-  |                                                                              |======================================================                |  77%fitting marker CD9
-GAMLSS-RS iteration 1: Global Deviance = -10442077 
-GAMLSS-RS iteration 2: Global Deviance = -10442077 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -0.4750494  0.0000846 -5615.00   <2e-16 ***
-YB          -0.0053630  0.0001159   -46.25   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -2.0987398  0.0003328   -6306   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -10.62633    0.09578  -110.9   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -10442077 
-            AIC:     -10442069 
-            SBC:     -10442016 
-******************************************************************
-  |                                                                              |=========================================================             |  82%fitting marker PEAR
-GAMLSS-RS iteration 1: Global Deviance = -9209218 
-GAMLSS-RS iteration 2: Global Deviance = -9209218 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.6872927  0.0003436 -4911.3   <2e-16 ***
-YB          -0.0739510  0.0004713  -156.9   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -0.7016570  0.0003226   -2175   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -4.521909   0.004575  -988.3   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -9209218 
-            AIC:     -9209210 
-            SBC:     -9209157 
-******************************************************************
-  |                                                                              |============================================================          |  86%fitting marker GPVI
-GAMLSS-RS iteration 1: Global Deviance = -9723123 
-GAMLSS-RS iteration 2: Global Deviance = -9723123 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -0.7505980  0.0001208 -6212.20   <2e-16 ***
-YB          -0.0100064  0.0001656   -60.43   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.7427739  0.0003321   -5248   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -7.08762    0.01634  -433.8   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -9723123 
-            AIC:     -9723115 
-            SBC:     -9723062 
-******************************************************************
-  |                                                                              |================================================================      |  91%fitting marker CD47
-GAMLSS-RS iteration 1: Global Deviance = -9057485 
-GAMLSS-RS iteration 2: Global Deviance = -9057485 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error  t value Pr(>|t|)    
-(Intercept) -1.3698843  0.0002470 -5545.26   <2e-16 ***
-YB          -0.0178252  0.0003385   -52.65   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.0289046  0.0003273   -3143   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -5.735610   0.008331  -688.5   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -9057485 
-            AIC:     -9057477 
-            SBC:     -9057423 
-******************************************************************
-  |                                                                              |===================================================================   |  95%fitting marker CD42a
-GAMLSS-RS iteration 1: Global Deviance = -11304313 
-GAMLSS-RS iteration 2: Global Deviance = -11304313 
-******************************************************************
-Family:  c("ZAGA", "Zero Adjusted GA") 
-
-Call:  gamlss::gamlss(formula = get(marker) ~ Y, family = family, data = DF,  
-    weights = NULL, control = gamlss.control(n.cyc = 200), trace = FALSE) 
-
-Fitting method: RS() 
-
-------------------------------------------------------------------
-Mu link function:  log
-Mu Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -7.436e-01  9.825e-05 -7569.1   <2e-16 ***
-YB           4.173e-02  1.346e-04   309.9   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Sigma link function:  log
-Sigma Coefficients:
-              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -1.9492256  0.0003325   -5862   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-Nu link function:  logit 
-Nu Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -12.0596     0.1961  -61.49   <2e-16 ***
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-------------------------------------------------------------------
-No. of observations in the fit:  4491504 
-Degrees of Freedom for the fit:  4
-      Residual Deg. of Freedom:  4491500 
-                      at cycle:  2 
- 
-Global Deviance:     -11304313 
-            AIC:     -11304305 
-            SBC:     -11304252 
-******************************************************************
-  |                                                                              |======================================================================| 100%
-
-calculating sceEMD for cluster all
-  |                                                                              |                                                                      |   0%  |                                                                              |                                                                      |   1%  |                                                                              |=                                                                     |   1%  |                                                                              |=                                                                     |   2%  |                                                                              |==                                                                    |   2%  |                                                                              |==                                                                    |   3%  |                                                                              |===                                                                   |   4%  |                                                                              |===                                                                   |   5%  |                                                                              |====                                                                  |   5%  |                                                                              |====                                                                  |   6%  |                                                                              |=====                                                                 |   7%  |                                                                              |=====                                                                 |   8%  |                                                                              |======                                                                |   8%  |                                                                              |======                                                                |   9%  |                                                                              |=======                                                               |   9%  |                                                                              |=======                                                               |  10%  |                                                                              |=======                                                               |  11%  |                                                                              |========                                                              |  11%  |                                                                              |========                                                              |  12%  |                                                                              |=========                                                             |  12%  |                                                                              |=========                                                             |  13%  |                                                                              |==========                                                            |  14%  |                                                                              |==========                                                            |  15%  |                                                                              |===========                                                           |  15%  |                                                                              |===========                                                           |  16%  |                                                                              |============                                                          |  17%  |                                                                              |============                                                          |  18%  |                                                                              |=============                                                         |  18%  |                                                                              |=============                                                         |  19%  |                                                                              |==============                                                        |  19%  |                                                                              |==============                                                        |  20%  |                                                                              |==============                                                        |  21%  |                                                                              |===============                                                       |  21%  |                                                                              |===============                                                       |  22%  |                                                                              |================                                                      |  22%  |                                                                              |================                                                      |  23%  |                                                                              |=================                                                     |  24%  |                                                                              |=================                                                     |  25%  |                                                                              |==================                                                    |  25%  |                                                                              |==================                                                    |  26%  |                                                                              |===================                                                   |  27%  |                                                                              |===================                                                   |  28%  |                                                                              |====================                                                  |  28%  |                                                                              |====================                                                  |  29%  |                                                                              |=====================                                                 |  29%  |                                                                              |=====================                                                 |  30%  |                                                                              |=====================                                                 |  31%  |                                                                              |======================                                                |  31%  |                                                                              |======================                                                |  32%  |                                                                              |=======================                                               |  32%  |                                                                              |=======================                                               |  33%  |                                                                              |========================                                              |  34%  |                                                                              |========================                                              |  35%  |                                                                              |=========================                                             |  35%  |                                                                              |=========================                                             |  36%  |                                                                              |==========================                                            |  37%  |                                                                              |==========================                                            |  38%  |                                                                              |===========================                                           |  38%  |                                                                              |===========================                                           |  39%  |                                                                              |============================                                          |  39%  |                                                                              |============================                                          |  40%  |                                                                              |============================                                          |  41%  |                                                                              |=============================                                         |  41%  |                                                                              |=============================                                         |  42%  |                                                                              |==============================                                        |  42%  |                                                                              |==============================                                        |  43%  |                                                                              |===============================                                       |  44%  |                                                                              |===============================                                       |  45%  |                                                                              |================================                                      |  45%  |                                                                              |================================                                      |  46%  |                                                                              |=================================                                     |  47%  |                                                                              |=================================                                     |  48%  |                                                                              |==================================                                    |  48%  |                                                                              |==================================                                    |  49%  |                                                                              |===================================                                   |  49%  |                                                                              |===================================                                   |  50%  |                                                                              |===================================                                   |  51%  |                                                                              |====================================                                  |  51%  |                                                                              |====================================                                  |  52%  |                                                                              |=====================================                                 |  52%  |                                                                              |=====================================                                 |  53%  |                                                                              |======================================                                |  54%  |                                                                              |======================================                                |  55%  |                                                                              |=======================================                               |  55%  |                                                                              |=======================================                               |  56%  |                                                                              |========================================                              |  57%  |                                                                              |========================================                              |  58%  |                                                                              |=========================================                             |  58%  |                                                                              |=========================================                             |  59%  |                                                                              |==========================================                            |  59%  |                                                                              |==========================================                            |  60%  |                                                                              |==========================================                            |  61%  |                                                                              |===========================================                           |  61%  |                                                                              |===========================================                           |  62%  |                                                                              |============================================                          |  62%  |                                                                              |============================================                          |  63%  |                                                                              |=============================================                         |  64%  |                                                                              |=============================================                         |  65%  |                                                                              |==============================================                        |  65%  |                                                                              |==============================================                        |  66%  |                                                                              |===============================================                       |  67%  |                                                                              |===============================================                       |  68%  |                                                                              |================================================                      |  68%  |                                                                              |================================================                      |  69%  |                                                                              |=================================================                     |  69%  |                                                                              |=================================================                     |  70%  |                                                                              |=================================================                     |  71%  |                                                                              |==================================================                    |  71%  |                                                                              |==================================================                    |  72%  |                                                                              |===================================================                   |  72%  |                                                                              |===================================================                   |  73%  |                                                                              |====================================================                  |  74%  |                                                                              |====================================================                  |  75%  |                                                                              |=====================================================                 |  75%  |                                                                              |=====================================================                 |  76%  |                                                                              |======================================================                |  77%  |                                                                              |======================================================                |  78%  |                                                                              |=======================================================               |  78%  |                                                                              |=======================================================               |  79%  |                                                                              |========================================================              |  79%  |                                                                              |========================================================              |  80%  |                                                                              |========================================================              |  81%  |                                                                              |=========================================================             |  81%  |                                                                              |=========================================================             |  82%  |                                                                              |==========================================================            |  82%  |                                                                              |==========================================================            |  83%  |                                                                              |===========================================================           |  84%  |                                                                              |===========================================================           |  85%  |                                                                              |============================================================          |  85%  |                                                                              |============================================================          |  86%  |                                                                              |=============================================================         |  87%  |                                                                              |=============================================================         |  88%  |                                                                              |==============================================================        |  88%  |                                                                              |==============================================================        |  89%  |                                                                              |===============================================================       |  89%  |                                                                              |===============================================================       |  90%  |                                                                              |===============================================================       |  91%  |                                                                              |================================================================      |  91%  |                                                                              |================================================================      |  92%  |                                                                              |=================================================================     |  92%  |                                                                              |=================================================================     |  93%  |                                                                              |==================================================================    |  94%  |                                                                              |==================================================================    |  95%  |                                                                              |===================================================================   |  95%  |                                                                              |===================================================================   |  96%  |                                                                              |====================================================================  |  97%  |                                                                              |====================================================================  |  98%  |                                                                              |===================================================================== |  98%  |                                                                              |===================================================================== |  99%  |                                                                              |======================================================================|  99%  |                                                                              |======================================================================| 100%
-
-calculating CytoGLMM for cluster all
-calculating CytoGLM for cluster all
-calculating logstic regression model for cluster all
-  |                                                                              |                                                                      |   0%  |                                                                              |===                                                                   |   5%  |                                                                              |======                                                                |   9%  |                                                                              |==========                                                            |  14%  |                                                                              |=============                                                         |  18%  |                                                                              |================                                                      |  23%  |                                                                              |===================                                                   |  27%  |                                                                              |======================                                                |  32%  |                                                                              |=========================                                             |  36%  |                                                                              |=============================                                         |  41%  |                                                                              |================================                                      |  45%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================                                |  55%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  64%  |                                                                              |================================================                      |  68%  |                                                                              |===================================================                   |  73%  |                                                                              |======================================================                |  77%  |                                                                              |=========================================================             |  82%  |                                                                              |============================================================          |  86%  |                                                                              |================================================================      |  91%  |                                                                              |===================================================================   |  95%  |                                                                              |======================================================================| 100%
-
-calculating wilcoxon median test for cluster all
-  |                                                                              |                                                                      |   0%  |                                                                              |===                                                                   |   5%  |                                                                              |======                                                                |   9%  |                                                                              |==========                                                            |  14%  |                                                                              |=============                                                         |  18%  |                                                                              |================                                                      |  23%  |                                                                              |===================                                                   |  27%  |                                                                              |======================                                                |  32%  |                                                                              |=========================                                             |  36%  |                                                                              |=============================                                         |  41%  |                                                                              |================================                                      |  45%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================                                |  55%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  64%  |                                                                              |================================================                      |  68%  |                                                                              |===================================================                   |  73%  |                                                                              |======================================================                |  77%  |                                                                              |=========================================================             |  82%  |                                                                              |============================================================          |  86%  |                                                                              |================================================================      |  91%  |                                                                              |===================================================================   |  95%  |                                                                              |======================================================================| 100%
-
-calculating kruskal median test for cluster all
-  |                                                                              |                                                                      |   0%  |                                                                              |===                                                                   |   5%  |                                                                              |======                                                                |   9%  |                                                                              |==========                                                            |  14%  |                                                                              |=============                                                         |  18%  |                                                                              |================                                                      |  23%  |                                                                              |===================                                                   |  27%  |                                                                              |======================                                                |  32%  |                                                                              |=========================                                             |  36%  |                                                                              |=============================                                         |  41%  |                                                                              |================================                                      |  45%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================                                |  55%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  64%  |                                                                              |================================================                      |  68%  |                                                                              |===================================================                   |  73%  |                                                                              |======================================================                |  77%  |                                                                              |=========================================================             |  82%  |                                                                              |============================================================          |  86%  |                                                                              |================================================================      |  91%  |                                                                              |===================================================================   |  95%  |                                                                              |======================================================================| 100%
-
-calculating t-test test for cluster all
-  |                                                                              |                                                                      |   0%  |                                                                              |===                                                                   |   5%  |                                                                              |======                                                                |   9%  |                                                                              |==========                                                            |  14%  |                                                                              |=============                                                         |  18%  |                                                                              |================                                                      |  23%  |                                                                              |===================                                                   |  27%  |                                                                              |======================                                                |  32%  |                                                                              |=========================                                             |  36%  |                                                                              |=============================                                         |  41%  |                                                                              |================================                                      |  45%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================                                |  55%  |                                                                              |=========================================                             |  59%  |                                                                              |=============================================                         |  64%  |                                                                              |================================================                      |  68%  |                                                                              |===================================================                   |  73%  |                                                                              |======================================================                |  77%  |                                                                              |=========================================================             |  82%  |                                                                              |============================================================          |  86%  |                                                                              |================================================================      |  91%  |                                                                              |===================================================================   |  95%  |                                                                              |======================================================================| 100%
-
-There were 50 or more warnings (use warnings() to see the first 50)

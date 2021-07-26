@@ -2,12 +2,11 @@
 library(CATALYST)
 
 sce_dual <- readRDS("data/platelets_dual/sce.rds")
-
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 
-#boxplot
+# BOXPLOT
 #features <- c("CD62P", "CD63", "CD154", "CD107a")
 features <- NULL
 color_by = "platelets"
@@ -25,11 +24,9 @@ df <- cbind(df, colData(x)[i, j])
 ncs <- table(as.list(colData(x)[by]))
 ncs <- rep(c(t(ncs)), each = nrow(x))
 df <- df[ncs > 0, , drop = FALSE]
-
 df$antigen <- as.character(df$antigen)
 df[df == "PAC1"] <- "GPIIbIIIa"
 df$antigen <- as.factor(df$antigen)
-
 boxplot <- ggplot(df, aes(x=platelets, y = value, fill = platelets))+
   geom_boxplot(width = 0.8, outlier.color = NA) +
   geom_point(alpha = 0.8, show.legend = FALSE, position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0)) +
@@ -58,7 +55,6 @@ color_by <- "platelets"
 # construct data.frame include cell metadata
 df <- data.frame(t(y), colData(x), check.names = FALSE)
 value <- ifelse(assay == "exprs", "expression", assay)
-
 gg_df <- melt(df, 
               value.name = value,
               variable.name = "antigen", 
@@ -79,13 +75,6 @@ exprs <- ggplot(gg_df, fill = NULL,
     axis.text = element_text(color = "black", size=14), 
     axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) +  scale_color_manual(values =colorBlindBlack8[c(3,8)], name="Condition", labels=c("Activated", "Baseline"))
 
-#library(ggpubr)
-#ggarrange(boxplot, exprs, g, ncol=2, nrow=2,
-#          labels=c('A', 'B', "C"),
-#          font.label=list(size=18),
-#          legend = "right",
-#          common.legend = F)
-
 
 library("cowplot")
 ggdraw() + 
@@ -94,22 +83,22 @@ ggdraw() +
   draw_plot(boxplot, 0.43, 0.25, 0.57, 0.25) + 
   draw_plot(exprs, 0.43, 0, 0.57, 0.25) + 
   draw_plot_label(c("A", "B", "C", "D"), c(0,0,0.4,0.4), c(1,0.5,0.5,0.25), size=20)
-ggsave("/nfs/home/students/l.arend/data_plot.png", width=1610, height=1000, dpi=300, limitsize=FALSE)
 
 
+
+# HEATMAP
+colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
+                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 path_no_r <- "DEComparison/dual_platelets_no_random/sce_dual_res_timed.rds"
 path_with_r <- "DEComparison/dual_platelets/sce_dual_res_timed.rds"   #with random effects
-
 results_r <- readRDS(path_with_r)[["results"]]
 results_no_r <- readRDS(path_no_r)[["results"]]
-
 times_r <- readRDS(path_with_r)[["times"]]
 times_no_r <- readRDS(path_no_r)[["times"]]
-
 eff_r <- readRDS(path_with_r)[["eff"]]
 
-# plot results
+
 tmp <- data.frame(method = results_r$method, marker_id = results_r$marker_id, p_adj = results_r$p_adj)
 tmp$significant <- results_r$p_adj < 0.05
 tmp$p_adj <- NULL
@@ -118,10 +107,6 @@ tmp$significant <- as.factor(tmp$significant)
 tmp$class <- tmp$marker_id %in% c("CD62P", "CD63", "CD154", "CD107a")
 tmp$class[tmp$class == TRUE] <- "State"
 tmp$class[tmp$class == FALSE] <- "Type"
-colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
-                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-
 tmp$marker_id <- as.character(tmp$marker_id)
 tmp[tmp == "PAC1"] <- "GPIIbIIIa"
 tmp$marker_id <- as.factor(tmp$marker_id)
@@ -161,7 +146,7 @@ with_random_effect <- ggplot(tmp, aes(marker_id, method)) +
   ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
   ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,4,6)], name='Cohen’s d\nEffect size\nMagnitude', na.value="transparent")
 
-# plot heatmap
+# plot heatmap without random
 tmp <- data.frame(method = results_no_r$method, marker_id = results_no_r$marker_id, p_adj = results_no_r$p_adj)
 tmp$significant <- results_no_r$p_adj < 0.05
 tmp$p_adj <- NULL
@@ -205,6 +190,8 @@ ggarrange(with_random_effect, no_random_effect, nrow=2,
           font.label=list(size=18),
           legend = "right",
           common.legend = T)
+
+
 
 
 # plot times

@@ -2,6 +2,8 @@
 library(CATALYST)
 library(data.table)
 library(ggplot2)
+library(reshape2)
+library(dplyr)
 
 getTimes <- function(path){
   result_rds <-
@@ -100,9 +102,7 @@ ggplot(subsampled_data,aes(
   theme_bw() + theme(text = element_text(size = 16), axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_color_manual(values = safe_colorblind_palette, name="Method")
 
-
-library(reshape2)
-library(dplyr)
+# Table
 real_data <- times[times$nr_of_cells >= 500000,]
 real_data$elapsed <- real_data$elapsed/60
 real_data <- real_data[,c("dataset", "nr_of_cells", "method", "elapsed")]
@@ -114,16 +114,14 @@ real_data[dataset == "Semi-Simulated COVID-19",]$mean <- paste(real_data[dataset
 real_data$sd <- NULL
 colnames(real_data) <- c("dataset", "number_of_cells", "method", "elapsed")
 
-test <- dcast(real_data, dataset + number_of_cells  ~ method, value.var="elapsed")
-test <- test[,c(1,2,6,7,8,11,12,4,5,10,9,3,13)]
-test <- test[c(3,4,1,5,2),]
-test <- t(test)
-colnames(test) <- test[1,]
-test <- test[-1,]
+table <- dcast(real_data, dataset + number_of_cells  ~ method, value.var="elapsed")
+table <- table[,c(1,2,6,7,8,11,12,4,5,10,9,3,13)]
+table <- table[c(3,4,1,5,2),]
+table <- t(table)
+colnames(table) <- table[1,]
+table <- table[-1,]
 
-library(xtable)
 
-print(xtable(test, type = "latex"))
 
 
 

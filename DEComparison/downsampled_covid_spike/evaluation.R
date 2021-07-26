@@ -1,6 +1,10 @@
 # SPIKE COVID PLATELETS EVALUATION
 
 source('DEComparison/benchmarking_plots.R')
+library(CATALYST)
+library(data.table)
+library(ggplot2)
+
 
 stats_table <- preparePlotData('downsampled_covid_spike')
 plot_cells_vs_elapsed(stats_table)
@@ -9,10 +13,6 @@ plot_sens_vs_spec(stats_table)
 plot_f1_vs_elapsed(stats_table)
 
 # inspection of downsampling for CD154
-
-library(CATALYST)
-library(data.table)
-library(ggplot2)
 full_sce_paths <- list.files('/localscratch/quirinmanz/cytof_data/covid_spiked', pattern = '\\_full.rds$', full.names = TRUE)
 names(full_sce_paths) <- sapply(strsplit(full_sce_paths, split = '_', fixed = T), `[`, 6)
 sces_full <- rbindlist(lapply(full_sce_paths, function(x) {
@@ -78,8 +78,6 @@ print(xtable(sens, type = "latex"))
 prec <- stats_table[,c("method", "nr_of_cells", "precision")]
 prec <- dcast(prec, method  ~ nr_of_cells, value.var="precision")
 print(xtable(prec, type = "latex"))
-
-
 
 
 # HEATMAP
@@ -222,7 +220,6 @@ ggplot(tmp[nr_of_cells == "full (4052622)"], aes(marker_id, method)) +
                              name = 'Effect Size\nMagnitude',
                              na.value = "transparent")
 
-library(data.table)
 ###take a closer look at these effect sizes
 all_inputs <- lapply(list.files("/nfs/home/students/jbernett/cytof/covid_spiked/downsampled_files/", pattern=".rds", full.names = T), readRDS)
 names(all_inputs) <- list.files("/nfs/home/students/jbernett/cytof/covid_spiked/downsampled_files/", pattern=".rds")
@@ -245,8 +242,7 @@ exprs_medians[, n_cells := factor(tstrsplit(n_cells, ".rds", keep=1), levels = c
 #exprs_medians_200000 <- exprsDT_long[n_cells == "200000", median(expression), by = c("marker", "condition")]
 #colnames(exprs_medians_200000) <- c("antigen", "condition", "expression")
 
-library(CATALYST)
-library(ggplot2)
+
 #state
 g <- plotExprs(big_list$sce_spiked_clustered_full_ds_full.rds, features = "state", color_by = "base_spike")
 g <- g +
