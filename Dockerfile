@@ -1,4 +1,4 @@
-FROM rocker/shiny:4.0.0
+FROM rocker/shiny:4.0.5
 LABEL authors="Lisi Arend, Judith Bernett, Quirin Manz"
 
 #install system packages
@@ -31,4 +31,4 @@ RUN echo "options(shiny.maxRequestSize=5000*1024^2)" > .Rprofile
 
 EXPOSE 3838
 
-["R", "-e", "shiny::runApp('', host = '0.0.0.0', port = 3838)"]
+["R", "-e", "shiny::runApp(host = '0.0.0.0', port = 3838)"]
