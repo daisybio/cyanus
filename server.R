@@ -49,6 +49,11 @@ server <- function(input, output, session) {
     }
   )
   
+  output$licenseTable <- renderTable({
+    deps_table <- sapply(unique(renv::dependencies()$Package), packageDescription, fields="License")
+    data.frame(Package = names(deps_table), License = deps_table)
+  })
+  
   shinyBS::updateButton(session, inputId = "previousTab", icon = icon("arrow-left"), style = "success")
   shinyBS::updateButton(session, inputId = "nextTab", icon = icon("arrow-right"), style = "success", disabled = FALSE)
   shinyjs::hide("loading")
