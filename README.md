@@ -1,13 +1,14 @@
-A Systematic Comparison of Differential Analysis Methods for CyTOF Data Including the Shiny App CYANUS
-================
+# CYANUS : CYtof ANaylsis Using Shiny
 
-## Dataset Simulation
+User-friendly R Shiny App Analyzing Cytometry Data
 
-TODO
+The public web interace is available at \url{https://exbio.wzw.tum.de/cyanus/}.
 
-## Methods Evaluation
-
-TODO
+## Table of Contents
+* [CYANUS Shiny App](#cyanus)
+* [A Systematic Comparison of Differential Analysis Methods for CyTOF Data](#paper)
+  + [Dataset Simulation](#dataset)
+  + [Methods Evaluation](#methods)
 
 ## CYANUS Shiny App
 
@@ -45,5 +46,16 @@ In that case, you have to restore the project library using
 # install.packages('renv')
 renv::restore()
 ```
+
+## A Systematic Comparison of Differential Analysis Methods for CyTOF Data
+
+TODO
+
+### Dataset Simulation
+TODO
+
+
+### Methods Evaluation
+TODO
 
 
