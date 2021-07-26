@@ -162,7 +162,7 @@ tmp[tmp == "t_test"] <- "t-test"
 tmp[tmp == "wilcoxon_median"] <- "Wilcoxon test"
 tmp[tmp == "kruskal_median"] <- "Kruskal-Wallis test"
 
-tmp$method[tmp$method == "sceEMD"] <- "CyEMD"
+tmp$method[tmp$method == "CyEMD"] <- "CyEMD"
 tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "CyEMD")))
 
 tmp$significant <- as.character(tmp$significant)

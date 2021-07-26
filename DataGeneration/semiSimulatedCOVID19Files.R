@@ -1,4 +1,8 @@
-spikeInMarkers <- function(pathToSCE = "/nfs/home/students/l.arend/data/covid/sce_untransformed.rds",
+source("functions/prep_functions.R")
+source("functions/cluster_functions.R")
+
+
+spikeInMarkers <- function(pathToSCE = "outpath/covid/sce_untransformed.rds",
                            subsetCondition = "covid",
                            subsetConditionValue = "healthy",
                            baselineVar = "platelets",
@@ -166,7 +170,41 @@ spikeInMarkers <- function(pathToSCE = "/nfs/home/students/l.arend/data/covid/sc
   }
 }
 
-sceList <- spikeInMarkers(pathToSCE = "/nfs/home/students/l.arend/data/covid/sce_untransformed.rds",
+#### Read in original data
+
+panel <-
+  read_excel(
+    "outpath/covid/panel_umap.xlsx"
+  )
+md <- 
+  read_excel(
+    "outpath/covid/meta_11vs8_batch.xlsx"
+  )
+exp <-
+  list.files(
+    "outpath/covid/covid_platelets",
+    pattern = "\\.fcs$",
+    full.names = T
+  )
+sce_covid <-
+  prepData(
+    exp,
+    panel,
+    md,
+    transform = FALSE,
+    md_cols = list(
+      file = "file_name",
+      id = "sample_id",
+      factors = c("covid","patient_id", "platelets", "batch", "acquisition_date")
+    )
+  )
+
+sce_covid <- clusterSCE(sce_covid)
+saveRDS(sce_covid, "outpath/covid/sce_untransformed.rds")
+
+#### Spike in CD63, CD62P, CD107a and CD154 expressions
+
+sceList <- spikeInMarkers(pathToSCE = "outpath/covid/sce_untransformed.rds",
                           subsetCondition = "covid",
                           subsetConditionValue = "healthy",
                           baselineVar = "platelets",
@@ -180,41 +218,34 @@ sce25 <- sceList[["0.25"]]
 sce50 <- sceList[["0.5"]]
 sce75 <- sceList[["0.75"]]
 sce100 <- sceList[["1.0"]]
-#outputFile <- "~/cytof/covid/sce_spiked_full.rds"
-#saveRDS(sce, outputFile)
 
-
-# ---------------------------------------------------------------
-# See if it worked
-# ---------------------------------------------------------------
-#sce <- readRDS("~/cytof/covid/sce_spiked_full.rds")
-
-source("functions/prep_functions.R")
 sce <- transformData(sce = sce)
 sce25 <- transformData(sce = sce25)
 sce50 <- transformData(sce = sce50)
 sce75 <- transformData(sce = sce75)
 sce100 <- transformData(sce = sce100)
 
-source("functions/cluster_functions.R")
 sce <- clusterSCE(sce)
 sce25 <- clusterSCE(sce25)
 sce50 <- clusterSCE(sce50)
 sce75 <- clusterSCE(sce75)
 sce100 <- clusterSCE(sce100)
 
-saveRDS(sce, "~/cytof/covid/sce_spiked_clustered_full_ds_full.rds")
-saveRDS(sce25, "~/cytof/covid/sce_spiked_clustered_25_ds_full.rds")
-saveRDS(sce50, "~/cytof/covid/sce_spiked_clustered_50_ds_full.rds")
-saveRDS(sce75, "~/cytof/covid/sce_spiked_clustered_75_ds_full.rds")
-saveRDS(sce100, "~/cytof/covid/sce_spiked_clustered_100_ds_full.rds")
+saveRDS(sce, "outpath/covid/sce_spiked_clustered_full_ds_full.rds")
+saveRDS(sce25, "outpath/covid/sce_spiked_clustered_25_ds_full.rds")
+saveRDS(sce50, "outpath/covid/sce_spiked_clustered_50_ds_full.rds")
+saveRDS(sce75, "outpath/covid/sce_spiked_clustered_75_ds_full.rds")
+saveRDS(sce100, "outpath/covid/sce_spiked_clustered_100_ds_full.rds")
 
-######tests
-scefull <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_full_ds_full.rds")
-sce25 <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_25_ds_full.rds")
-sce50 <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_50_ds_full.rds")
-sce75 <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_75_ds_full.rds")
-sce100 <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_100_ds_full.rds")
+# ---------------------------------------------------------------
+# Perform downsampling
+# ---------------------------------------------------------------
+
+scefull <- readRDS("outpath/covid_spiked/sce_spiked_clustered_full_ds_full.rds")
+sce25 <- readRDS("outpath/covid_spiked/sce_spiked_clustered_25_ds_full.rds")
+sce50 <- readRDS("outpath/covid_spiked/sce_spiked_clustered_50_ds_full.rds")
+sce75 <- readRDS("outpath/covid_spiked/sce_spiked_clustered_75_ds_full.rds")
+sce100 <- readRDS("outpath/covid_spiked/sce_spiked_clustered_100_ds_full.rds")
 
 source("functions/prep_functions.R")
 for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
@@ -223,15 +254,18 @@ for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
     sampling <- tstrsplit(scetmp, "sce", keep=2)[[1]]
     print(CATALYST::ei(last_sce))
     downsampled_sce <- downSampleSCE(sce=last_sce, cells = n, per_sample = T, seed = 1234)
-    saveRDS(downsampled_sce, paste0("~/hiwi/cytof/extdata/covid_spiked/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
-    #print(paste0("~/cytof/covid_spiked/downsampled_files/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
+    saveRDS(downsampled_sce, paste0("outpath/covid_spiked/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
     last_sce <- downsampled_sce
   }
 }
+
+### plot spiked-in data 
+
+
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-spike_in_sces <- lapply(list.files("/nfs/home/students/jbernett/cytof/covid_spiked/downsampled_files", full.names = T), readRDS)
-names(spike_in_sces) <- tstrsplit(list.files("/nfs/home/students/jbernett/cytof/covid_spiked/downsampled_files"), ".rds", keep=1)[[1]]
+spike_in_sces <- lapply(list.files("outpath/covid_spiked/downsampled_files", full.names = T), readRDS)
+names(spike_in_sces) <- tstrsplit(list.files("outpath/covid_spiked/downsampled_files"), ".rds", keep=1)[[1]]
 countsDT <- lapply(spike_in_sces, function(x){as.data.table(t(assays(x)$exprs))})
 countsDT <- rbindlist(countsDT, idcol = "filename")
 coldataDT <- lapply(spike_in_sces, function(x){as.data.table(colData(x))[, c("patient_id", "base_spike")]})
@@ -259,82 +293,3 @@ spike <- ggplot(meanDT, aes(x=alpha, y = mean, fill = base_spike))+
     axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16)) +
   labs(x = expression(alpha*" x 100"),y = "Mean Expression")
 
-
-source("functions/de_functions.R")
-source("functions/sceEMD.R")
-allResults <- list()
-i <- 1
-names <- c("sce", "sce25", "sce50", "sce75", "sce100")
-library(BiocParallel)
-param <- MulticoreParam(workers = 18, progressbar = T)
-register(param)
-for(sceObj in list(sce, sce25, sce50, sce75, sce100)){
-  print(i)
-  results <- runDS(sceObj, 
-                   ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","sceEMD"), 
-                   clustering_to_use = "all", contrast_vars = "base_spike", 
-                   design_matrix_vars = c("patient_id", "base_spike"), fixed_effects = "base_spike", 
-                   random_effects = "patient_id", markers_to_test = c("type", "state"), 
-                   sceEMD_condition = "base_spike", binSize = 0, nperm = 500, parallel=T)
-  allResults[[ names[i] ]] <- results
-  i <- i + 1
-}
-
-source("functions/venn_functions.R")
-createVennDiagram(allResults[["sce25"]], DS=T, 0.05)
-createVennDiagram(allResults[["sce50"]], DS=T, 0.05)
-createVennDiagram(allResults[["sce75"]], DS=T, 0.05)
-createVennDiagram(allResults[["sce100"]], DS=T, 0.05)
-source("functions/cytoGLMM_functions.R")
-makeDF <- function(model){
-  df <- data.frame(
-    cluster_id = factor("all"),
-    marker_id = factor(summary(model)$protein_name),
-    p_val <- summary(model)$pvalues_unadj,
-    p_adj <- summary(model)$pvalues_adj
-  )
-  colnames(df) <- c("cluster_id", "marker_id", "p_val", "p_adj")
-  df
-}
-cytoModelSCE <- runCytoGLMM(sce=sce,
-            condition="base_spike",
-            group="patient_id")
-plot(cytoModelSCE)
-allResults[["sce"]]$cytoGLMM <- makeDF(cytoModelSCE)
-createVennDiagram(allResults[["sce"]], DS=T, 0.05)
-
-
-cytoModelSCE25 <- runCytoGLMM(sce=sce25,
-                              condition="base_spike",
-                              group="patient_id")
-plot(cytoModelSCE25)
-allResults[["sce25"]]$cytoGLMM <- makeDF(cytoModelSCE25)
-createVennDiagram(allResults[["sce25"]], DS=T, 0.05)
-
-
-cytoModelSCE50 <- runCytoGLMM(sce=sce50,
-                              condition="base_spike",
-                              group="patient_id")
-plot(cytoModelSCE50)
-allResults[["sce50"]]$cytoGLMM <- makeDF(cytoModelSCE50)
-createVennDiagram(allResults[["sce50"]], DS=T, 0.05)
-
-
-cytoModelSCE75 <- runCytoGLMM(sce=sce75,
-                              condition="base_spike",
-                              group="patient_id")
-plot(cytoModelSCE75)
-allResults[["sce75"]]$cytoGLMM <- makeDF(cytoModelSCE75)
-createVennDiagram(allResults[["sce75"]], DS=T, 0.05)
-
-
-cytoModelSCE100 <- runCytoGLMM(sce=sce100,
-                               condition="base_spike",
-                               group="patient_id")
-plot(cytoModelSCE100)
-allResults[["sce100"]]$cytoGLMM <- makeDF(cytoModelSCE100)
-createVennDiagram(allResults[["sce100"]], DS=T, 0.05)
-
-
-##dual
-dualSCE <- readRDS("../l.arend/data/platelets_dual/sce_dual.rds")

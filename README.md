@@ -17,7 +17,8 @@ TODO
 
 
 ## Methods Evaluation
-TODO
+The evaluation of the methods on the different datasets can be found in the DEComparison directory. Each dataset itself has a subdirectory containing the benchmarking scripts for running the methods, the resulting .rds objects and an evaluation.R script.
+
 
 ## CYANUS Shiny App
 
