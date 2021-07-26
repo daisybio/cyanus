@@ -210,7 +210,7 @@ call_DE <- function() {
       CytoGLM_num_boot <- isolate(input$CytoGLM_num_boot)
     }else if(method == "CytoGLMM" & is.null(groupCol)){
       shiny::showNotification("Results of CytoGLMM are not meaningful when no grouping variable like patient ID is selected.", 
-                              type = "warning", duration = 10)
+                              type = "warning", duration = NULL)
     }
   }
   
@@ -459,7 +459,7 @@ output$groupSelection <- renderUI({
   )
 })
 output$additionalTermsSelection <- renderUI({
-  req(input$chosenDAMethod, startsWith(input$chosenDAMethod, 'diffcyt')) # this means this is a linear model and additional terms are allowed
+  req(input$chosenDAMethod, (startsWith(input$chosenDAMethod, 'diffcyt')||startsWith(input$chosenDAMethod, 'CytoGLM')) )#TODO cytoglm(m) # this means this is a linear model and additional terms are allowed
   addTerms <- names(ei(reactiveVals$sce))
   addTerms <- addTerms[!addTerms %in% c("n_cells", "sample_id", input$conditionIn, input$groupCol)]
   div(
@@ -611,7 +611,7 @@ output$CytoGLM_num_boot <- renderUI({
     bsPopover(
       id = "cytoNBootQ",
       title = "Number of bootstrap samples",
-      content = HTML('CytoGLM uses bootstrapping with replacement to preserve the cluster structure in donors. For more information refer to <a href="https://doi.org/10.1186/s12859-021-04067-x" target="_blank">Seiler et al.</a>')
+      content = HTML('CytoGLM uses bootstrapping with replacement to preserve the cluster structure in donors. For more information refer to <a href="https://doi.org/10.1186/s12859-021-04067-x" target="_blank">Seiler et al.</a><br><b>Setting this number very high has a great influence on runtime.</b>')
     )
   )
 })
@@ -818,7 +818,7 @@ output$DEFeatureSelection <- renderUI({
     stop("by name or by class?")
   shinyWidgets::pickerInput(
     inputId = "DEFeaturesIn",
-    label = "Features to use for differential analysis",
+    label = "Features to use for differential expression analysis",
     choices = choices,
     selected = selected,
     multiple = TRUE,
@@ -1010,16 +1010,9 @@ output$deExprsCluster <- renderUI({
                     tags$h3("Plot Options"),
                     selectizeInput("deBoxFacet",
                                    "Facet by:",
-                                   c("antigen", "cluster_id"), 
-                                   multiple = F, 
-                                   selected = "antigen"),
-                    hidden(selectizeInput(
-                      "deBoxK",
-                      "Clusters",
-                      names(cluster_codes(reactiveVals$sce)),
-                      multiple = F
-                      # selected = "meta9" #TODO: take first 
-                    )),
+                                   c("marker", "cluster_id"), 
+                                   multiple = F),
+                    uiOutput("deBoxK"),
                     selectizeInput("deBoxFeatures",
                                    "Markers:",
                                    markers, 
@@ -1027,8 +1020,8 @@ output$deExprsCluster <- renderUI({
                                    multiple = F),
                     selectizeInput(
                       "deBoxColor",
-                      "Color by:",
-                      c(names(colData(reactiveVals$sce)), names(cluster_codes(reactiveVals$sce))),
+                      "Color and Group by:",
+                      c(names(colData(reactiveVals$sce))),# names(cluster_codes(reactiveVals$sce))),
                       selected = factors[1],
                       multiple = F
                     ),
@@ -1063,13 +1056,25 @@ output$deExprsCluster <- renderUI({
   )
 })
 
+output$deBoxK <- renderUI({
+  req(input$deBoxFacet == "cluster_id")
+  selectizeInput(
+    "deBoxK",
+    "Clusters",
+    rev(names(cluster_codes(reactiveVals$sce))),
+    multiple = F
+    # selected = "meta9" #TODO: take first 
+  )
+})
+
 output$clusterDEPlot <- renderPlot({
-  if(input$deBoxK == "all"){
-    k <- NULL
-    facet_by <- NULL
-  }else{
+  req(input$deBoxFacet)
+  facet_by <- input$deBoxFacet
+  if (facet_by == "marker"){
+    facet_by <- "antigen"
+    k <- 'all'
+  } else {
     k <- input$deBoxK
-    facet_by <- input$deBoxFacet
   }
   sce <- isolate(reactiveVals$sce)
   if(input$deBoxSubselect != "No"){
@@ -1103,7 +1108,12 @@ output$downloadPlotPbExprs <- downloadHandler(
     waiter_show(id = "app",html = tagList(spinner$logo, 
                                           HTML("<br>Downloading...")), 
                 color=spinner$color)
-    ggsave(file, plot =reactiveVals$pbExprsPlot, width=10, height=12)
+    my_height <- 3
+    my_width <- 2.5
+    facet_info <- reactiveVals$pbExprsPlot %>% ggplot2::ggplot_build() %>% magrittr::extract2('layout') %>% magrittr::extract2('layout')
+    nr_row <- max(facet_info$ROW)
+    nr_col <- max(facet_info$COL)
+    ggsave(file, plot = reactiveVals$pbExprsPlot, width=my_width*nr_col, height=my_height*nr_row)
     waiter_hide(id="app")
   }
 )
