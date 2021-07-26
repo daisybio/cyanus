@@ -1,7 +1,7 @@
 # DUAL PLATELETS EVALUATION
 library(CATALYST)
 
-sce_dual <- readRDS("/nfs/home/students/l.arend/data/platelets_dual/sce_dual.rds")
+sce_dual <- readRDS("data/platelets_dual/sce.rds")
 
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -98,8 +98,8 @@ ggsave("/nfs/home/students/l.arend/data_plot.png", width=1610, height=1000, dpi=
 
 
 
-path_no_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets_no_random/sce_dual_res_timed.rds"
-path_with_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed.rds"   #with random effects
+path_no_r <- "DEComparison/dual_platelets_no_random/sce_dual_res_timed.rds"
+path_with_r <- "DEComparison/dual_platelets/sce_dual_res_timed.rds"   #with random effects
 
 results_r <- readRDS(path_with_r)[["results"]]
 results_no_r <- readRDS(path_no_r)[["results"]]
@@ -138,8 +138,19 @@ eff_r <- merge(eff_r, marker_classes, by =c("marker_id"))
 tmp[tmp == "t_test"] <- "t-test"
 tmp[tmp == "wilcoxon_median"] <- "Wilcoxon test"
 tmp[tmp == "kruskal_median"] <- "Kruskal-Wallis test"
+tmp$method[tmp$method == "sceEMD"] <- "CyEMD"
+tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "CyEMD")))
 
-tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "sceEMD")))
+tmp$significant <- as.character(tmp$significant)
+tmp$significant[tmp$significant == TRUE] <- "Yes"
+tmp$significant[tmp$significant == FALSE] <- "No"
+
+eff_r$magnitude <- as.character(eff_r$magnitude)
+eff_r$magnitude[eff_r$magnitude == "small"] <- "Small"
+eff_r$magnitude[eff_r$magnitude == "negligible"] <- "Negligible"
+eff_r$magnitude[eff_r$magnitude == "large"] <- "Large"
+eff_r$magnitude[eff_r$magnitude == "moderate"] <- "Moderate"
+eff_r$magnitude <- factor(eff_r$magnitude, levels=c("Negligible", "Small", "Moderate", "Large"))
 
 with_random_effect <- ggplot(tmp, aes(marker_id, method)) + 
   geom_tile(aes(fill=significant),color="white", size=1) + 
@@ -148,7 +159,7 @@ with_random_effect <- ggplot(tmp, aes(marker_id, method)) +
   theme(text = element_text(size = 18),  axis.text.x = element_text(angle = 90, vjust=0.5))+
   scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent", name="Significant") + 
   ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
-  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='Effect size\nMagnitude', na.value="transparent")
+  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,4,6)], name='Cohen’s d\nEffect size\nMagnitude', na.value="transparent")
 
 # plot heatmap
 tmp <- data.frame(method = results_no_r$method, marker_id = results_no_r$marker_id, p_adj = results_no_r$p_adj)
@@ -171,7 +182,12 @@ tmp[tmp == "t_test"] <- "t-test"
 tmp[tmp == "wilcoxon_median"] <- "Wilcoxon test"
 tmp[tmp == "kruskal_median"] <- "Kruskal-Wallis test"
 
-tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "sceEMD")))
+tmp$method[tmp$method == "sceEMD"] <- "CyEMD"
+tmp$method <- factor(tmp$method, levels=rev(c("diffcyt-DS-limma", "diffcyt-DS-LMM", "t-test", "Wilcoxon test","Kruskal-Wallis test", "CytoGLM","CytoGLMM", "logRegression", "ZAGA", "BEZI", "CyEMD")))
+
+tmp$significant <- as.character(tmp$significant)
+tmp$significant[tmp$significant == TRUE] <- "Yes"
+tmp$significant[tmp$significant == FALSE] <- "No"
 
 no_random_effect <- ggplot(tmp, aes(marker_id, method)) + 
   geom_tile(aes(fill=significant), color="white", size=1) + 
@@ -180,7 +196,7 @@ no_random_effect <- ggplot(tmp, aes(marker_id, method)) +
   theme(text = element_text(size = 18),  axis.text.x = element_text(angle = 90, vjust=0.5))+
   scale_fill_manual(values = colorBlindBlack8[c(7,3)], na.value="transparent", name="Significant") + 
   ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
-  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='Effect size\nMagnitude', na.value="transparent")
+  ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,4,6)], name='Cohen’s d\nEffect size\nMagnitude', na.value="transparent")
 
 
 library(ggpubr)
