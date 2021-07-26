@@ -11,7 +11,7 @@ vennBody <- function(){
           icon("question-circle"),
           id = "da_dsVennQ"
         ),
-        choices = c("Differential Cluster Abundance", "Differential Marker Expression"),
+        choices = c("Differential Marker Expression", "Differential Cluster Abundance"),
         inline = T
       ),
       bsPopover(
@@ -65,7 +65,7 @@ vennBody <- function(){
           "Here, you can compare the results of different methods run on the same subset. Choose between Differential Cluster Abundance and Differential Marker Expression methods: "
         ),
         div(
-          HTML("<ul><li>Differential Cluster Abundance methods: edgeR, voom, GLMM </li><li>Differential Marker Expression methods: limma, LMM, EMD</li></ul><br>For more information, please refer to the DE analysis tab!")
+          HTML("<ul><li>Differential Cluster Abundance methods: edgeR, voom, GLMM </li><li>Differential Marker Expression methods: limma, LMM, CyEMD, CytoGLMM, CytoGLM, Wilcoxon rank-sum test, Wilcoxon signed-rank test (for paired data), paired and unpaired t-test.</li></ul><br>For more information, please refer to the DE analysis tab!")
         ),
         title = h2("DE Method Comparison"),
         width = 12
