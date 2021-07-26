@@ -1,13 +1,13 @@
 # DUAL PLATELETS EVALUATION
 library(CATALYST)
 
-sce_dual <- readRDS("data/platelets_dual/sce.rds")
+sce_dual <- readRDS("DataGeneration/platelets_dual/sce.rds")
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 
 # BOXPLOT
-#features <- c("CD62P", "CD63", "CD154", "CD107a")
+
 features <- NULL
 color_by = "platelets"
 ncol <- 4

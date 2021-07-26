@@ -5,7 +5,7 @@ library(ggplot2)
 source('DEComparison/benchmarking_plots.R')
 
 # PLOT SIZE OF DATASET
-sce_pbmc <- readRDS('/nfs/home/students/jbernett/cytof/cytof/data/cytof_workflow_SCE.rds')
+sce_pbmc <- readRDS('DataGeneration/cytof_workflow_SCE.rds')
 pbmc_coldata <- as.data.frame(colData(sce_pbmc))
 pbmc_coldata$merging1 <- cluster_ids(sce_pbmc, 'merging1')
 pbmc_cell_counts <- ggplot(pbmc_coldata, aes(x=sample_id)) +

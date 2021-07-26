@@ -39,7 +39,7 @@ preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covi
     times[, nr_of_cells := as.numeric(nr_of_cells)]
     results[, nr_of_cells := tstrsplit(dataset, "_", keep = keep)]
     if (data_type == "downsampled_covid_spike"){
-      sce_covid_spike <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_full_ds_full.rds")
+      sce_covid_spike <- readRDS("DataGeneration/covid/sce_spiked_clustered_full_ds_full.rds")
       nr_cells_full <- sum(ei(sce_covid_spike)$n_cells)
       results$nr_of_cells[results$nr_of_cells == "full"] <- nr_cells_full
     }
@@ -66,15 +66,12 @@ preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covi
                  & alpha != 100)
       ), by = .(method, nr_of_cells, alpha)]
       
-      # stats_table[, nr_of_cells := factor(nr_of_cells, levels = c(15000, 10000, 5000, 2000, 1000))]
-      
     } else if (data_type=="simulatedCytoGLMM") {
       
       stats_table <- results[, .(
         TP = sum(
           p_adj <= 0.05 &
             marker_id %in% trues
-          # & alpha != 100
           ,
           na.rm = T
         ),
@@ -89,7 +86,6 @@ preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covi
         FN = sum(
           (p_adj > 0.05 | is.na(p_adj)) &
             marker_id %in% trues
-          # & alpha != 100
         )
       ), by = .(method, nr_of_cells)] # , alpha)]
       
@@ -100,7 +96,6 @@ preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covi
       TP = sum(
         p_adj <= 0.05 &
           marker_id %in% trues
-        # & alpha != 100
         ,
         na.rm = T
       ),
@@ -121,7 +116,6 @@ preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covi
   
   
   stats_table[, sensitivity := TP / (TP + FN)]
-  # stats_table[is.nan(sensitivity)]$sensitivity <- 0
   stats_table[, specificity := TN / (TN + FP)]
   stats_table[, precision := TP / (TP + FP)]
   stats_table[, F1 := 2 * (sensitivity * precision) / (sensitivity + precision)]
@@ -132,13 +126,13 @@ preparePlotData <- function(data_type = c("simulatedCytoGLMM", "downsampled_covi
     
     if (data_type=="simulatedCytoGLMM")
     stats_table <-
-      merge(stats_table, times[, .(method, nr_of_cells, elapsed)]) # , alpha)])
+      merge(stats_table, times[, .(method, nr_of_cells, elapsed)])
     else if (data_type=="downsampled_covid_spike")
     stats_table <-
       merge(stats_table, times[, .(method, nr_of_cells, elapsed, alpha)])
   } else if (data_type=="dual_platelets") {
     stats_table <-
-      merge(stats_table, times[, .(method,elapsed)]) # , alpha)])
+      merge(stats_table, times[, .(method,elapsed)])
   } else stop('unknown data_type')
   
   return(stats_table)

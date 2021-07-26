@@ -31,8 +31,8 @@ cytoglmm_times$random_effect <- "yes"
 sce_dual <- readRDS("~/data/platelets_dual/sce_dual.rds")
 nr_of_cells <- sum(ei(sce_dual)$n_cells)
 
-path_no_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets_no_random/sce_dual_res_timed.rds"
-path_with_r <- "/nfs/home/students/l.arend/cytof/DEComparison/dual_platelets/sce_dual_res_timed.rds"   #with random effects
+path_no_r <- "DEComparison/dual_platelets_no_random/sce_dual_res_timed.rds"
+path_with_r <- "DEComparison/dual_platelets/sce_dual_res_timed.rds"   #with grouping variable
 
 dual_random_times <- readRDS(path_with_r)[["times"]]
 dual_random_times <- dual_random_times[,c("method", "elapsed")]
@@ -49,10 +49,10 @@ dual_no_times$nr_of_cells <- nr_of_cells
 
 
 # PBMC Data
-sce_pbmc <- readRDS("~/data/pbmc_all/bigPBMC_SCE.rds")
+sce_pbmc <- readRDS("data/pbmc_all/bigPBMC_SCE.rds")
 nr_of_cells <- sum(ei(sce_pbmc)$n_cells)
 
-path_pbmc <- "~/cytof/DEComparison/pbmc_benchmarking/cytof_workflow_SCE_res_timed.rds"
+path_pbmc <- "DEComparison/pbmc_benchmarking/cytof_workflow_SCE_res_timed.rds"
 pbmc_times <- readRDS(path_pbmc)[["times"]]
 pbmc_times <- pbmc_times[,c("method", "elapsed")]
 pbmc_times$dataset <- "PBMC"
@@ -61,7 +61,7 @@ pbmc_times$nr_of_cells <- nr_of_cells
 
 
 # Simulated Covid-Spike
-sce_covid_spike <- readRDS("/localscratch/quirinmanz/cytof_data/covid_spiked/sce_spiked_clustered_full_ds_full.rds")
+sce_covid_spike <- readRDS("DataGeneration/covid/sce_spiked_clustered_full_ds_full.rds")
 nr_cells_full <- sum(ei(sce_covid_spike)$n_cells)
 
 nr_of_samples<- 22

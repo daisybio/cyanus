@@ -6,4 +6,4 @@
 #SBATCH --output=%x.%j.txt
 #SBATCH --mem=20G
 
-Rscript ../benchmarking_script.R /nfs/home/students/jbernett/cytof/cytof/data/cytof_workflow_SCE.rds /nfs/home/students/ga89koc/hiwi/cytof/DEComparison/pbmc_benchmarking condition patient_id TRUE FALSE merging1
+Rscript ../benchmarking_script.R DataGeneration/cytof_workflow_SCE.rds DEComparison/pbmc_benchmarking condition patient_id TRUE FALSE merging1

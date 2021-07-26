@@ -6,4 +6,4 @@
 #SBATCH --output=%x.%j.txt
 #SBATCH --mem=50G
 
-Rscript ../benchmarking_script.R /nfs/home/students/ga89koc/hiwi/cytof/extdata/covid_spiked /nfs/home/students/ga89koc/hiwi/cytof/DEComparison/downsampled_covid_spike base_spike patient_id TRUE FALSE
+Rscript ../benchmarking_script.R DataGeneration/covid_spiked DEComparison/downsampled_covid_spike base_spike patient_id TRUE FALSE

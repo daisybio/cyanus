@@ -13,7 +13,7 @@ plot_sens_vs_spec(stats_table)
 plot_f1_vs_elapsed(stats_table)
 
 # inspection of downsampling for CD154
-full_sce_paths <- list.files('/localscratch/quirinmanz/cytof_data/covid_spiked', pattern = '\\_full.rds$', full.names = TRUE)
+full_sce_paths <- list.files('DataGeneration/covid_spiked', pattern = '\\_full.rds$', full.names = TRUE)
 names(full_sce_paths) <- sapply(strsplit(full_sce_paths, split = '_', fixed = T), `[`, 6)
 sces_full <- rbindlist(lapply(full_sce_paths, function(x) {
   x <- readRDS(x)
@@ -221,10 +221,10 @@ ggplot(tmp[nr_of_cells == "full (4052622)"], aes(marker_id, method)) +
                              na.value = "transparent")
 
 ###take a closer look at these effect sizes
-all_inputs <- lapply(list.files("/nfs/home/students/jbernett/cytof/covid_spiked/downsampled_files/", pattern=".rds", full.names = T), readRDS)
-names(all_inputs) <- list.files("/nfs/home/students/jbernett/cytof/covid_spiked/downsampled_files/", pattern=".rds")
-full_spiked <- lapply(list.files("/nfs/home/students/jbernett/cytof/covid/", pattern=".rds", full.names = T), readRDS)
-names(full_spiked) <- list.files("/nfs/home/students/jbernett/cytof/covid/", pattern=".rds")
+all_inputs <- lapply(list.files("DataGeneration/covid_spiked/downsampled_files/", pattern=".rds", full.names = T), readRDS)
+names(all_inputs) <- list.files("DataGeneration/covid_spiked/downsampled_files/", pattern=".rds")
+full_spiked <- lapply(list.files("DataGeneration/covid/", pattern=".rds", full.names = T), readRDS)
+names(full_spiked) <- list.files("DataGeneration/covid/", pattern=".rds")
 big_list <- c(all_inputs, full_spiked)
 
 exprsDT <- lapply(big_list, function(x){as.data.table(t(assays(x)$exprs))})
@@ -238,9 +238,6 @@ exprsDT_long <- melt(exprsDT, id.vars = c("filename","patient_id", "base_spike",
 exprs_medians <- exprsDT_long[, median(expression), by = c("antigen", "base_spike", "n_cells", "alpha", "patient_id")]
 colnames(exprs_medians) <- c("antigen", "base_spike","n_cells", "alpha", "patient_id", "expression")
 exprs_medians[, n_cells := factor(tstrsplit(n_cells, ".rds", keep=1), levels = c("1000", "2000", "5000", "10000", "15000", "20000", "full"))]
-
-#exprs_medians_200000 <- exprsDT_long[n_cells == "200000", median(expression), by = c("marker", "condition")]
-#colnames(exprs_medians_200000) <- c("antigen", "condition", "expression")
 
 
 #state
