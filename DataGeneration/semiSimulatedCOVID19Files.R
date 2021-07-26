@@ -2,7 +2,7 @@ source("functions/prep_functions.R")
 source("functions/cluster_functions.R")
 
 
-spikeInMarkers <- function(pathToSCE = "outpath/covid/sce_untransformed.rds",
+spikeInMarkers <- function(pathToSCE = "DataGeneration/covid/sce_untransformed.rds",
                            subsetCondition = "covid",
                            subsetConditionValue = "healthy",
                            baselineVar = "platelets",
@@ -174,15 +174,16 @@ spikeInMarkers <- function(pathToSCE = "outpath/covid/sce_untransformed.rds",
 
 panel <-
   read_excel(
-    "outpath/covid/panel_umap.xlsx"
+    "DataGeneration/covid/panel_umap.xlsx"
   )
 md <- 
   read_excel(
-    "outpath/covid/meta_11vs8_batch.xlsx"
+    "DataGeneration/covid/meta_11vs8_batch.xlsx"
   )
+#download the data from FlowRepository
 exp <-
   list.files(
-    "outpath/covid/covid_platelets",
+    "DataGeneration/covid/covid_platelets",
     pattern = "\\.fcs$",
     full.names = T
   )
@@ -200,11 +201,11 @@ sce_covid <-
   )
 
 sce_covid <- clusterSCE(sce_covid)
-saveRDS(sce_covid, "outpath/covid/sce_untransformed.rds")
+saveRDS(sce_covid, "DataGeneration/covid/sce_untransformed.rds")
 
 #### Spike in CD63, CD62P, CD107a and CD154 expressions
 
-sceList <- spikeInMarkers(pathToSCE = "outpath/covid/sce_untransformed.rds",
+sceList <- spikeInMarkers(pathToSCE = "DataGeneration/covid/sce_untransformed.rds",
                           subsetCondition = "covid",
                           subsetConditionValue = "healthy",
                           baselineVar = "platelets",
@@ -231,21 +232,21 @@ sce50 <- clusterSCE(sce50)
 sce75 <- clusterSCE(sce75)
 sce100 <- clusterSCE(sce100)
 
-saveRDS(sce, "outpath/covid/sce_spiked_clustered_full_ds_full.rds")
-saveRDS(sce25, "outpath/covid/sce_spiked_clustered_25_ds_full.rds")
-saveRDS(sce50, "outpath/covid/sce_spiked_clustered_50_ds_full.rds")
-saveRDS(sce75, "outpath/covid/sce_spiked_clustered_75_ds_full.rds")
-saveRDS(sce100, "outpath/covid/sce_spiked_clustered_100_ds_full.rds")
+saveRDS(sce, "DataGeneration/covid/sce_spiked_clustered_full_ds_full.rds")
+saveRDS(sce25, "DataGeneration/covid/sce_spiked_clustered_25_ds_full.rds")
+saveRDS(sce50, "DataGeneration/covid/sce_spiked_clustered_50_ds_full.rds")
+saveRDS(sce75, "DataGeneration/covid/sce_spiked_clustered_75_ds_full.rds")
+saveRDS(sce100, "DataGeneration/covid/sce_spiked_clustered_100_ds_full.rds")
 
 # ---------------------------------------------------------------
 # Perform downsampling
 # ---------------------------------------------------------------
 
-scefull <- readRDS("outpath/covid_spiked/sce_spiked_clustered_full_ds_full.rds")
-sce25 <- readRDS("outpath/covid_spiked/sce_spiked_clustered_25_ds_full.rds")
-sce50 <- readRDS("outpath/covid_spiked/sce_spiked_clustered_50_ds_full.rds")
-sce75 <- readRDS("outpath/covid_spiked/sce_spiked_clustered_75_ds_full.rds")
-sce100 <- readRDS("outpath/covid_spiked/sce_spiked_clustered_100_ds_full.rds")
+scefull <- readRDS("DataGeneration/covid/sce_spiked_clustered_full_ds_full.rds")
+sce25 <- readRDS("DataGeneration/covid/sce_spiked_clustered_25_ds_full.rds")
+sce50 <- readRDS("DataGeneration/covid/sce_spiked_clustered_50_ds_full.rds")
+sce75 <- readRDS("DataGeneration/covid/sce_spiked_clustered_75_ds_full.rds")
+sce100 <- readRDS("DataGeneration/covid/sce_spiked_clustered_100_ds_full.rds")
 
 source("functions/prep_functions.R")
 for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
@@ -254,7 +255,7 @@ for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
     sampling <- tstrsplit(scetmp, "sce", keep=2)[[1]]
     print(CATALYST::ei(last_sce))
     downsampled_sce <- downSampleSCE(sce=last_sce, cells = n, per_sample = T, seed = 1234)
-    saveRDS(downsampled_sce, paste0("outpath/covid_spiked/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
+    saveRDS(downsampled_sce, paste0("DataGeneration/covid/sce_spiked_clustered_", sampling, "_ds_", n, ".rds"))
     last_sce <- downsampled_sce
   }
 }
@@ -264,8 +265,8 @@ for(scetmp in c("scefull", "sce25", "sce50", "sce75", "sce100")){
 
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-spike_in_sces <- lapply(list.files("outpath/covid_spiked/downsampled_files", full.names = T), readRDS)
-names(spike_in_sces) <- tstrsplit(list.files("outpath/covid_spiked/downsampled_files"), ".rds", keep=1)[[1]]
+spike_in_sces <- lapply(list.files("DataGeneration/covid/downsampled_files", full.names = T), readRDS)
+names(spike_in_sces) <- tstrsplit(list.files("DataGeneration/covid/downsampled_files"), ".rds", keep=1)[[1]]
 countsDT <- lapply(spike_in_sces, function(x){as.data.table(t(assays(x)$exprs))})
 countsDT <- rbindlist(countsDT, idcol = "filename")
 coldataDT <- lapply(spike_in_sces, function(x){as.data.table(colData(x))[, c("patient_id", "base_spike")]})
