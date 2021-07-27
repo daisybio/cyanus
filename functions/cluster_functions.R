@@ -315,7 +315,6 @@ plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "",
       metadata(sce)$experiment_info[[facet_by]] <- as.factor(metadata(sce)$experiment_info[[facet_by]])
       cond_levels <- levels(CATALYST::ei(sce)[[facet_by]])
       both_cond <- data.table::rbindlist(sapply(cond_levels, function(cond){
-        browser()
         if (subselection_col != "") 
           sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name == marker), get(facet_by) == cond, get(subselection_col) == subselection)
         else 
