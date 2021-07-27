@@ -280,8 +280,10 @@ call_DE <- function() {
           parallel = FALSE
         )
         out <- results[[method]]
-        #the effect sizes do not have to be computed multiple times
-        reactiveVals$eff_r[[method]] <- findEffectSize(sce, condition, groupCol, clustering_to_use)
+        reactiveVals$eff_r[[method]] <- effectSize(sce = sce,
+                                                   condition = condition,
+                                                   group = groupCol, k=clustering_to_use, 
+                                                   use_assay="exprs", use_mean=FALSE)
       }
     },
     message = function(m) {
@@ -295,32 +297,6 @@ call_DE <- function() {
   return(out)
 }
 
-findEffectSize <- function(sce, condition, groupCol, clustering_to_use){
-  #the effect sizes do not have to be computed multiple times
-  found_effect_size <- FALSE
-  if(!is.null(reactiveVals$eff_r)){
-    for(method in names(reactiveVals$eff_r)){
-      eff_size <- reactiveVals$eff_r[[method]]
-      if(is.null(groupCol) & !("grouped" %in% eff_size$overall_group)){
-        found_effect_size <- TRUE
-        return(eff_size)
-      }else if(!is.null(groupCol) & "grouped" %in% eff_size$overall_group){
-        if(reactiveVals$methodsInfo[[method]]$grouping_columns == groupCol){
-          found_effect_size <- TRUE
-          return(eff_size)
-        }
-      }
-    }
-  }
-  if(is.null(reactiveVals$eff_r) | !found_effect_size){
-    return(effectSize(sce = sce,
-                      condition = condition,
-                      group = groupCol, k=clustering_to_use, 
-                      use_assay="exprs", use_mean=FALSE)
-           )
-  }
-  
-}
 
 # Renderer ----
 

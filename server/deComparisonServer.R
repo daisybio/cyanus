@@ -226,9 +226,12 @@ runMethods <- function(){
         time_methods = FALSE,
         parallel = FALSE
       )
-      #the effect sizes do not have to be computed multiple times
-      reactiveVals$eff_r[["comparison"]] <- findEffectSize(sce, condition, group, clusters)
-      resultVenn[["effect_size"]] <- reactiveVals$eff_r[["comparison"]]
+
+      resultVenn[["effect_size"]] <- effectSize(sce = sce,
+                                                condition = condition,
+                                                group = group, 
+                                                k=clusters, 
+                                                use_assay="exprs", use_mean=FALSE)
     },
     message = function(m) {
       shinyjs::html(id = "emdProgress",
