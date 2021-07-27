@@ -4,9 +4,6 @@ startBody <- function() {
                          "Platelets Dual Antiplatelet Therapy" = "data/platelets_dual",
                          "Semi-Simulated COVID-19 data" = "data/covid_spiked",
                          "Simulated CytoGLMM data" = "data/cytoGLMM_simulated"
-                         #"Platelets" = "data/platelets",
-                         #"Platelets Small" = "data/platelets_small",
-                        #"Time Data Melissa" = "data/timeData"
                         )
   availableExampleData <- exampleDataVector %in% list.files("data", full.names = T)
   exampleDataVector <- exampleDataVector[availableExampleData]
