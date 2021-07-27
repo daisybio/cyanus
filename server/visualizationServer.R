@@ -390,8 +390,7 @@ output$runDRparBox <- renderUI({
       ),
       hidden(div(
         id = "isobox",
-        fluidRow(
-          numericInput(
+        numericInput(
             "valueGraph",
             label = span(
               "Choose k for the KNN construction",
@@ -401,7 +400,6 @@ output$runDRparBox <- renderUI({
             min = 0,
             value = 5,
             max = 200
-          )
         ),
         bsPopover(
           id = "kQ",

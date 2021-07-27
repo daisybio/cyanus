@@ -32,9 +32,10 @@ downSampleSCE <- function(sce, cells, per_sample=TRUE, seed = NULL) {
     set.seed(seed)
   cs <- unlist(lapply(cs, function(u)
     sample(u, min(cells, length(u)))))
-  S4Vectors::metadata(sce)$experiment_info$n_cells <- rep(cells, nrow(ei(sce)))
+  S4Vectors::metadata(sce)$experiment_info$n_cells <- sapply(ei(sce)$n_cells, function(x) min(x, cells))
   return(sce[,cs])
 }
+
 
 makeSampleSelection <- function(sce=sce, deselected_samples){
   # All Samples

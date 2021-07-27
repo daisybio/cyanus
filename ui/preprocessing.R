@@ -62,7 +62,7 @@ preprocessingBody <- function() {
   dsPrepPopover <- bsPopover(
     id="dsPrepPopover",
     title = "Downsample your data",
-    content = "If you have a big dataset and do not want to wait too long for your analyses, you can perform a downsampling on your dataset."
+    content = "If you have a big dataset and do not want to wait too long for your analyses, you can perform a downsampling on your dataset. If you choose to downsample per sample, the number of cells you specify will be randomly picked from each sample. Otherwise, the number you specify will be divided by the number of samples and this number will be randomly picked from each sample. If the number is bigger than the sample size, all cells from this sample will be taken."
   )
   
   # box with markers, samples and patients (all markers, patients, samples selected by default)
