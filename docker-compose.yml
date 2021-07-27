@@ -1,82 +1,39 @@
-nginx:
- build: nginx/
- ports:
-  - "3848:80"
- links:
-  - cytofA
-  - cytofB
-  - cytofC
-  - cytofD
-  - cytofE
-  - cytofF
- volumes:
-  - ./nginx/nginx.conf:/opt/nginx/conf/nginx.conf
- restart: always
+version: '3.5'
 
-cytofA:
- container_name: cytof-shinyA
- image: quirinmanz/cytof_pipeline:latest
- volumes:
-  - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
-  - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
- restart: always
+services:
+  cyanus:
+    image: quirinmanz/cyanus:latest
+    restart: unless-stopped
+    ports:
+      - 3838:3838
+    networks:
+      - sp-net
+    volumes:
+      - ./data:/srv/cytof_pipeline/data
+      #- ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
+  shinyproxy:
+    build: ./shinyproxy
+    restart: unless-stopped
+    depends_on: 
+      - cyanus
+    expose:
+      - 8080
+    networks:
+      - sp-net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  nginx: 
+    image: nginx:1.17.5
+    restart: unless-stopped
+    ports:
+      - 4848:80
+    networks:
+      - sp-net
+    depends_on:
+      - shinyproxy
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
 
-cytofB:
- container_name: cytof-shinyB
- image: quirinmanz/cytof_pipeline:latest
- volumes:
-  - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
-  - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
- restart: always
-
-cytofC:
- container_name: cytof-shinyC
- image: quirinmanz/cytof_pipeline:latest
- volumes:
-  - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
-  - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
- restart: always
-
-cytofD:
- container_name: cytof-shinyD
- image: quirinmanz/cytof_pipeline:latest
- volumes:
-  - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
-  - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
- restart: always
-
-cytofE:
- container_name: cytof-shinyE
- image: quirinmanz/cytof_pipeline:latest
- volumes:
-  - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
-  - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
- restart: always
-
-cytofF:
- container_name: cytof-shinyF
- image: quirinmanz/cytof_pipeline:latest
- volumes:
-  - /nfs/home/students/l.arend/data:/srv/cytof_pipeline/data
-  - ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
-  - /nfs/home/students/ga89koc/hiwi/cytof/logs:/var/log
- restart: always
-
-cytof-watchtower:
- image: jm9e/watchtower
- container_name: cytof-watchtower
- environment:
-  - SCOPE=cytof
- restart: always
- volumes:
-  - /var/run/docker.sock:/var/run/docker.sock
-  - /home/mlist/.docker/config.json:/config.json
-
- command: --debug true --cleanup true cytof-shiny -i 120
-
+networks:
+  sp-net:
 
