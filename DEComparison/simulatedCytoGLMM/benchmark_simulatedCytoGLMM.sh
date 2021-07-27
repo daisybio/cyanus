@@ -6,4 +6,4 @@
 #SBATCH --output=%x.%j.txt
 #SBATCH --mem=50G
 
-Rscript ../benchmarking_script.R /nfs/home/students/ga89koc/hiwi/cytof/extdata/cytoGLMM_simulated /nfs/home/students/ga89koc/hiwi/cytof/DEComparison/simulatedCytoGLMM condition patient_id TRUE FALSE
+Rscript ../benchmarking_script.R DataGeneration/cytoGLMM_simulated DEComparison/simulatedCytoGLMM condition patient_id TRUE FALSE

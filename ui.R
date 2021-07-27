@@ -106,7 +106,7 @@ body <-
                              Since the Wilcoxon rank-sum test and the t-test on sample medians, as well as
                              our novel method CyEMD performed well, we made them available in this interface as well."),
         div(img(src="cyanus_logo.png", height="150px", style="float:right; padding:20px;")),
-        title = h1("Welcome to CYANUS: CYtof ANalysis Using Shiny"),
+        title = h1("Welcome to CYANUS: CYtometry ANalysis Using Shiny"),
         width = 12
       ))
     ),

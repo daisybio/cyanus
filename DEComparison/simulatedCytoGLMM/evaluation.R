@@ -126,8 +126,8 @@ ggplot(tmp, aes(marker_id, method)) +
 
 
 # PLOT EXPRESSIONS
-cytoGLMMS <- lapply(list.files("/localscratch/quirinmanz/cytof_data/cytoGLMM_simulated/", full.names = T, pattern=".rds"), readRDS)
-names(cytoGLMMS) <- tstrsplit(list.files("/localscratch/quirinmanz/cytof_data/cytoGLMM_simulated/", pattern=".rds"), ".rds", keep=1)[[1]]
+cytoGLMMS <- lapply(list.files("DataGeneration/cytoGLMM_simulated/", full.names = T, pattern=".rds"), readRDS)
+names(cytoGLMMS) <- tstrsplit(list.files("DataGeneration/cytoGLMM_simulated/", pattern=".rds"), ".rds", keep=1)[[1]]
 
 exprsDT <- lapply(cytoGLMMS, function(x){as.data.table(t(assays(x)$exprs))})
 exprsDT <- rbindlist(exprsDT, idcol = "filename")

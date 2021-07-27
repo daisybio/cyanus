@@ -6,5 +6,5 @@
 #SBATCH --output=%x.%j.txt
 #SBATCH --mem-per-cpu=70G
 
-Rscript ../benchmarking_script.R /nfs/home/students/l.arend/data/platelets_dual /nfs/home/students/ga89koc/hiwi/cytof/DEComparison/dual_platelets platelets patient_id TRUE FALSE
+Rscript ../benchmarking_script.R DataGeneration/platelets_dual DEComparison/dual_platelets platelets patient_id TRUE FALSE
 

@@ -334,7 +334,7 @@ output$selectionBoxDE <- renderUI({
         icon("question-circle"),
         id = "da_dsQ"
       ),
-      choices = c("Differential Cluster Abundance", "Differential Marker Expression"),
+      choices = c("Differential Marker Expression", "Differential Cluster Abundance"),
       inline = T
     ),
     bsPopover(

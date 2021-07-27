@@ -1,12 +1,15 @@
 # BENCHMARKING SCRIPT
 
 # run the script like this for example: 
-#       Rscript benchmarking_script.R /nfs/home/students/l.arend/data/covid_spiked/sce_spiked_clustered_ds_full.rds /nfs/home/students/l.arend/data/covid_spiked TRUE FALSE
+# Rscript benchmarking_script.R DataGeneration/covid/sce_spiked_clustered_ds_full.rds DataGeneration/covid/ TRUE FALSE
 
 # first argument -> path of the sce object or objects -> can be a file or a directory
 # second argument -> output directory
-# third argument -> if it should be timed
-# fourth argument -> if run parallel
+# third argument -> condition
+# fourth argument -> grouping variable; can be NULL
+# fifth argument -> if it should be timed
+# sixth argument -> if it should be run in parallel
+# seventh argument -> which clustering should be used; if none is specified, cluster "all" is taken
 
 
 setwd("../..")
@@ -20,11 +23,11 @@ sapply(list.files("functions", full.names = TRUE), source)
 
 # save arguments
 args <- commandArgs(TRUE)
-#args <- c("/nfs/home/students/l.arend/data/cytoGLMM_simulated", "/nfs/home/students/ga89koc/hiwi/cytof/DEComparison/simulatedCytoGLMM", "condition", "patient_id", "TRUE", "FALSE")
-scePath <-  args[1] #"/nfs/home/students/l.arend/data/covid_spiked/downsampled_files/"
+#args <- c("DataGeneration/cytoGLMM_simulated", "DEComparison/simulatedCytoGLMM", "condition", "patient_id", "TRUE", "FALSE")
+scePath <-  args[1] #"DataGeneration/covid/"
 outputPath <- args[2] # "DEComparison/"
-condition <- args[3]
-random_effect <- args[4]
+condition <- args[3] # condition
+random_effect <- args[4] # patient_id
 if(tolower(random_effect) == "null"){
   random_effect <- NULL
 }
@@ -97,8 +100,6 @@ for (sceFile in sceFiles){
                                   "diffcyt-DS-LMM",
                                   "BEZI",
                                   "ZAGA",
-                                  # "ZAIG",
-                                  # "hurdleBeta",
                                   "CyEMD",
                                   "CytoGLMM",
                                   "CytoGLM",
@@ -115,9 +116,6 @@ for (sceFile in sceFiles){
                    cyEMD_binsize = 0,
                    time_methods = timed)
 
-
-  #res[p_adj <= 0.05]
-  #library(ggplot2)
   objectToSave <- list()
   # lets compute and save the effect size:
   objectToSave$eff <- effectSize(sce, condition, random_effect, clustering_to_use)
