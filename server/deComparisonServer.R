@@ -490,10 +490,15 @@ output$downsamplingComp <- renderUI({
     column(
       radioButtons(
         "downsampling_Yes_No_Comp",
-        label = "Do you want to perform downsampling?",
+        label = span("Do you want to perform downsampling?", icon("question-circle"), id="dsCompPopover"),
         choices = c("Yes", "No"),
         selected = "No",
         inline = TRUE
+      ),
+      bsPopover(
+        id="dsCompPopover",
+        title = "Downsample your data",
+        content = "If you have a big dataset and do not want to wait too long for your analyses, you can perform a downsampling on your dataset. If you choose to downsample per sample, the number of cells you specify will be randomly picked from each sample. Otherwise, the number you specify will be divided by the number of samples and this number will be randomly picked from each sample. If the number is bigger than the sample size, all cells from this sample will be taken."
       ),
       width = 3
     ),
@@ -739,7 +744,7 @@ output$downloadVenn <- renderUI({
   req(reactiveVals$lastVenn)
   div(
     downloadButton("downloadVennButton", "Download Plot"),
-    style = "float:right;"
+    style = "position: absolute; bottom: 5px; right:5px"
   )
 })
 
@@ -762,7 +767,7 @@ output$downloadTableVenn <- renderUI({
   fluidRow(
     div(
       downloadButton("downloadTableVennAll", "Download All Results"),
-      style = "float:right;"
+      style = "position: absolute; top: 5px; right:5px"
     )
   )
 })
@@ -840,14 +845,19 @@ observeEvent(input$diffExpButtonVenn, {
       reactiveVals$lastAllResults <- allResultsDT
       
       shinydashboard::box(
-        renderDataTable(
-          DT::datatable(
-            allResultsDT,
-            rownames = F,
-            options = list(pageLength = 10, searching = FALSE, 
-                           columnDefs = list(list( targets = "_all", 
-                                                   render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}"))))
+        div(
+          renderDataTable(
+            DT::datatable(
+              allResultsDT,
+              rownames = F,
+              options = list(pageLength = 10, searching = FALSE, 
+                             columnDefs = list(list( targets = "_all", 
+                                                     render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}"))))
+            )
           )
+        ),
+        div(
+          uiOutput("downloadTableVenn")
         ),
         id = "vennResultsTable",
         title = "Results",

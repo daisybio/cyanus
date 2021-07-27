@@ -360,16 +360,16 @@ output$selectionBoxDE <- renderUI({
     uiOutput("extraFeatures"),
     uiOutput("normalizeSelection"),
     uiOutput("weightSelection"),
-    width = 6),
-  div(
-    bsButton(
-      "diffExpButton",
-      "Start Analysis",
-      icon = icon("tools"),
-      style = "success"
+    div(
+      bsButton(
+        "diffExpButton",
+        "Start Analysis",
+        icon = icon("tools"),
+        style = "success"
+      ),
+      style = "float: right; bottom:5px"
     ),
-    style = "float: right; bottom:5px"
-  ),
+    width = 6),
   title = "Choose Method and Parameters",
   width = 12,
   height = methods_height,
@@ -656,12 +656,19 @@ output$downsamplingDE <- renderUI({
     column(
       radioButtons(
         "downsampling_Yes_No_DE",
-        label = "Do you want to perform downsampling?",
+        label = span("Do you want to perform downsampling?", icon("question-circle"), id="dsDEPopover"),
         choices = c("Yes", "No"),
         selected = "No",
         inline = TRUE
       ),
-      width = 3
+      bsPopover(
+        id="dsDEPopover",
+        title = "Downsample your data",
+        content = "If you have a big dataset and do not want to wait too long for your analyses, you can perform a downsampling on your dataset. If you choose to downsample per sample, the number of cells you specify will be randomly picked from each sample. Otherwise, the number you specify will be divided by the number of samples and this number will be randomly picked from each sample. If the number is bigger than the sample size, all cells from this sample will be taken.",
+        placement = "top"
+      ),
+      width = 3,
+      style='padding:0px;'
     ),
     column(
       numericInput(
@@ -692,7 +699,8 @@ output$downsamplingDE <- renderUI({
         max=100000,
         step=1
       ),
-      width = 3
+      width = 3,
+      style='padding:0px;'
     )
   )
   

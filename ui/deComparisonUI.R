@@ -39,17 +39,17 @@ vennBody <- function(){
       uiOutput("normalizeSelectionComp"),
       uiOutput("weightSelectionComp"),
       uiOutput("fdrComp"),
+      div(
+        bsButton(
+          "diffExpButtonVenn",
+          "Start Comparison",
+          icon = icon("tools"),
+          style = "success"
+        ),
+        style = "float: right; bottom:5px"
+      ),
       width = 6,
       id="column2_comparison"),
-    div(
-      bsButton(
-        "diffExpButtonVenn",
-        "Start Comparison",
-        icon = icon("tools"),
-        style = "success"
-      ),
-      style = "float: right; bottom:5px"
-    ),
     title = "Choose Method and Parameters",
     width = 12,
     height = methods_height_venn
@@ -78,21 +78,16 @@ vennBody <- function(){
       shinydashboard::box(
         div(
           uiOutput("vennTitle"),
-          shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px"))
+          shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px")),
+          uiOutput("downloadVenn")
           ),
         id = "vennDiagramsBox",
         title= "Result Comparison",
         width = 12
-      )
-    ),
-    fluidRow(
-      uiOutput("downloadVenn")
+      ),
     ),
     fluidRow(
       uiOutput("vennTable")
-    ),
-    fluidRow(
-      uiOutput("downloadTableVenn")
     )
   )
   return(vennBody)

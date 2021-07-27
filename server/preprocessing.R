@@ -214,18 +214,17 @@ performDownsampling <- function(sce, per_sample, downsamplingNumber, downsamplin
   smallest_n <- min(CATALYST::ei(sce)$n_cells)
   sum_n <- sum(CATALYST::ei(sce)$n_cells)
   if(per_sample & downsamplingNumber > smallest_n){
-    showNotification("You selected a number of cells that is higher than your smallest sample!", type = "error")
-    return(NULL)
+    showNotification("You selected a number of cells that is higher than your smallest sample!", type = "warning")
   }else if(!per_sample & downsamplingNumber > sum_n){
     showNotification("You selected a number of cells that is higher than your overall dataset size!", type = "error")
     return(NULL)
-  }else{
-    sce <- downSampleSCE(sce=sce, 
+  }
+  sce <- downSampleSCE(sce=sce, 
                         cells=downsamplingNumber,
                         per_sample=per_sample, 
                         seed=downsamplingSeed)
-    return(sce)
-  }
+  return(sce)
+  
 }
 
 # if filtering button is clicked -> selection is applied to sce
