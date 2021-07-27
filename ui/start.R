@@ -1,7 +1,6 @@
 startBody <- function() {
   box_height <- "12em"
   exampleDataVector <- c("PBMC" = "data/pbmc",
-                         "Platelets Dual Antiplatelet Therapy" = "data/platelets_dual",
                          "Semi-Simulated COVID-19 data" = "data/covid_spiked",
                          "Simulated CytoGLMM data" = "data/cytoGLMM_simulated"
                         )

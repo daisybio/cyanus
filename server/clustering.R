@@ -459,10 +459,19 @@ output$clusteringOutput <- renderUI({
                   c(
                     "all",
                     levels(
+                      droplevels(
                       SummarizedExperiment::rowData(reactiveVals$sce)$marker_class
+                      )
                     )
                   ),
-                selected = "type"
+                selected = ifelse("type" %in% c(
+                  "all",
+                  levels(
+                    droplevels(
+                      SummarizedExperiment::rowData(reactiveVals$sce)$marker_class
+                    )
+                  )
+                ), "type", "state")
               ),
               circle = TRUE,
               status = "info",
