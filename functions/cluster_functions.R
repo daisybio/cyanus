@@ -311,9 +311,11 @@ plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "",
       FlowSOM:::legendContinuous(colorPalette(100), S4Vectors::metadata(sce)$SOM_medianValues[, marker])
     } else {
       graphics::layout(matrix(c(3, 1, 2, 4), ncol = 4), widths = c(1,2,2,1))
-      
+      metadata(sce)$experiment_info <- as.data.frame(metadata(sce)$experiment_info)
+      metadata(sce)$experiment_info[[facet_by]] <- as.factor(metadata(sce)$experiment_info[[facet_by]])
       cond_levels <- levels(CATALYST::ei(sce)[[facet_by]])
       both_cond <- data.table::rbindlist(sapply(cond_levels, function(cond){
+        browser()
         if (subselection_col != "") 
           sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name == marker), get(facet_by) == cond, get(subselection_col) == subselection)
         else 
