@@ -78,7 +78,7 @@ vennBody <- function(){
       shinydashboard::box(
         div(
           uiOutput("vennTitle"),
-          shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "550px")),
+          shinycssloaders::withSpinner(plotOutput("vennDiagrams", width = "100%", height = "1000px")),
           uiOutput("downloadVenn")
           ),
         id = "vennDiagramsBox",
