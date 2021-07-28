@@ -38,7 +38,7 @@ createVennHeatmap <- function(res, DS = T, fdr_threshold = 0.05, columns = NULL)
   if(DS){
     g <- g+ facet_wrap(~ cluster_id) +
       ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
-      ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,2,6)], name='effect size\nmagnitude', na.value="transparent")
+      ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,4,6)], name='Cohen’s d\neffect size\nmagnitude', na.value="transparent")
   }
   return(g)
 }

@@ -45,9 +45,20 @@ sce <- prepData(fs, panel, md, features = panel$fcs_colname)
 
 #plotNRS(sce, features = "type", color_by = "condition")
 
+######## ORIGINAL VERSION #################
+#set.seed(1234)
+#sce <- cluster(sce, features = "type",
+#               xdim = 10, ydim = 10, maxK = 20, seed = 1234)
+###########################################
+
+######## CUSTOM VERSION FOR APP ############
+#should be the same 
+source("functions/cluster_functions.R")
 set.seed(1234)
-sce <- cluster(sce, features = "type",
+sce <- clusterSCE(sce, features = "type",
                xdim = 10, ydim = 10, maxK = 20, seed = 1234)
+############################################
+
 
 #plotExprHeatmap(sce, features = "type", 
 #                by = "cluster_id", k = "meta20", 
@@ -168,4 +179,13 @@ sce <- mergeClusters(sce, k = "meta20",
 
 #sce <- mergeClusters(sce, k = "meta20", id = "merging_all",
 #                     table = data.frame(old_cluster = seq_len(20), new_cluster = "all"))
-saveRDS(sce, file = "outpath/cytof_workflow_SCE.rds")
+########## CUSTOM CODE FOR APP ##########################
+metadata(sce)$clusterRun <- list(
+       features = CATALYST:::.get_features(sce, "type"),
+       assayType = c("exprs" = "Transformed"),
+       xdim = 10,
+       ydim = 10,
+       maxK = 20
+)
+saveRDS(sce, file = "data/pbmc/sce.rds")
+#######################################################

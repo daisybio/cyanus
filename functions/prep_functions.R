@@ -32,9 +32,10 @@ downSampleSCE <- function(sce, cells, per_sample=TRUE, seed = NULL) {
     set.seed(seed)
   cs <- unlist(lapply(cs, function(u)
     sample(u, min(cells, length(u)))))
-  S4Vectors::metadata(sce)$experiment_info$n_cells <- rep(cells, nrow(ei(sce)))
+  S4Vectors::metadata(sce)$experiment_info$n_cells <- sapply(ei(sce)$n_cells, function(x) min(x, cells))
   return(sce[,cs])
 }
+
 
 makeSampleSelection <- function(sce=sce, deselected_samples){
   # All Samples
@@ -334,7 +335,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
       colnames(eff_r_grouped) <- c("cluster_id", "target", "magnitude_grouped")
       top <- merge(top, eff_r_overall[, c("cluster_id", "target", "magnitude_overall")], by = c("cluster_id", "target"), sort=FALSE)
       eff_r_anno <- factor(top$magnitude_overall, levels = c("negligible", "small", "moderate", "large"))
-      eff_pal <- colorBlindBlack8[c(8,5,2,6)]
+      eff_pal <- colorBlindBlack8[c(8,5,4,6)]
       names(eff_pal) <- levels(eff_r$magnitude)
       anno_cols$overall <- eff_pal
       if(nrow(eff_r_grouped) != 0){

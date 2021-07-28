@@ -143,6 +143,6 @@ runCytoGLMM <-
     } else {
       stop("unknown method")
     }
-    summary_fit <- summary(fit) %>% filter(protein_name %in% old_names)
+    summary_fit <- summary(fit) %>% dplyr::filter(protein_name %in% features)
     return(data.frame(marker_id = old_names[summary_fit$protein_name], p_val = summary_fit$pvalues_unadj))
   }
