@@ -26,7 +26,7 @@ COPY ./functions ./functions
 COPY ./ui ./ui
 COPY ./server ./server
 COPY ./www ./www
-COPY .data ./data
+COPY ./data ./data
 
 RUN echo "options(shiny.maxRequestSize=5000*1024^2)" > .Rprofile
 
