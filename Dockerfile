@@ -16,7 +16,7 @@ WORKDIR /srv/cytof_pipeline
 ENV RENV_VERSION 0.13.1
 RUN R -e "install.packages('remotes', repos = c(CRAN = 'https://cloud.r-project.org'))"
 RUN R -e "remotes::install_github('rstudio/renv@${RENV_VERSION}')"
-RUN R -e "install.packages('BiocManager'); BiocManager::install('HDCytoData')"
+
 COPY renv.lock.shiny renv.lock
 RUN R -e "renv::restore()"
 
@@ -26,6 +26,7 @@ COPY ./functions ./functions
 COPY ./ui ./ui
 COPY ./server ./server
 COPY ./www ./www
+COPY .data ./data
 
 RUN echo "options(shiny.maxRequestSize=5000*1024^2)" > .Rprofile
 

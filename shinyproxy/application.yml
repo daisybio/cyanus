@@ -23,6 +23,7 @@ proxy:
       container-cmd: ["R", "-e", "shiny::runApp(host='0.0.0.0', port=3838)"]
       container-network: cyanus_sp-net
       container-image: quirinmanz/cyanus:latest
+      
 
 logging:
   file:
