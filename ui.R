@@ -34,8 +34,8 @@ body <-
       ".waiter-overlay-content{
       height: 100vh;
       position: absolute;
-      top: 50px; /*30 pixels from the top*/
-      right: 50px; /*48% from the right*/
+      top: 50vh; /*30 pixels from the top*/
+      right: 50%; /*48% from the right*/
     }"
     ),
     tags$head(
@@ -88,7 +88,7 @@ body <-
                               '))),
     waiter_show_on_load(html = tagList(spin_square_circle(), 
                                        HTML("<br>Loading App...")), 
-                        color="rgb(0, 102, 204, .5)"),
+                        color="rgb(146, 180, 242, .5)"),
     div(
       id = "loading",
       fluidRow(box(

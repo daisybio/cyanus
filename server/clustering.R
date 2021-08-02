@@ -150,7 +150,7 @@ observeEvent(input$mergeClusteringButton, {
       isolate(reactiveVals$sce),
       isolate(input$clusterCode),
       isolate(reactiveVals$mergingFrame),
-      id = sprintf("merged_%s", isolate(input$clusterCode)),
+      id = sprintf("merging_%s", isolate(input$clusterCode)),
       overwrite = TRUE
     )
   
@@ -286,7 +286,7 @@ output$selectClusterCode <- renderUI({
 })
 
 output$clusterSizes <- renderTable({
-  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun, input$clusterCode)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun, input$clusterCode, cluster_ids(reactiveVals$sce, input$clusterCode))
   res <-
     as.data.frame(table(cluster_ids(reactiveVals$sce, input$clusterCode),
                         useNA =

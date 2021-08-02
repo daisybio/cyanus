@@ -969,7 +969,7 @@ output$deBoxPlots <- renderUI({
 output$deExprsCluster <- renderUI({
   #if we only have counts -> copy counts to exprs
   if(length(assays(reactiveVals$sce)) == 1){
-    showNotification("You have not normalized your data. We will assume that you have given us expression data as input.", type = "warning", duration = 10)
+    showNotification("You have not transformed your data. We will assume that you have given us already transformed data as input.", type = "warning", duration = 10)
     assays(reactiveVals$sce)$exprs <- assays(reactiveVals$sce)$counts
   }
   
