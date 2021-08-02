@@ -4,6 +4,5 @@
 .Ruserdata
 .RDataTmp
 extdata/
-data/
 .DS_Store
 logs/*
