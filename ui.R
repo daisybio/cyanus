@@ -78,7 +78,13 @@ body <-
         /* toggle button when hovered  */                    
          .skin-blue .main-header .navbar .sidebar-toggle:hover{
                               background-color: #6495ed;
-                              }
+         }
+         /* remove focus from success buttons */
+         .btn-success:focus{
+                              background-color: #00a65a;
+                              border-color: #008d4c;
+          }
+                              
                               '))),
     waiter_show_on_load(html = tagList(spin_square_circle(), 
                                        HTML("<br>Loading App...")), 
