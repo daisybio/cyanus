@@ -146,7 +146,13 @@ observeEvent(input$runDRButton, {
     shinyjs::show("visPlotBox")
     if (length(reactiveVals$availableDRs) == 1) {
       output$visPlot <- renderPlot({
-        ggplotObject <- ggplot() + theme_void()
+        ggplotObject <- makeDR(sce = isolate(reactiveVals$sce), 
+                               dr_chosen = method, 
+                               color_chosen = renameColorColumn(names(colData(reactiveVals$sce)), T)[[1]], 
+                               facet_chosen = "", 
+                               assay_chosen = assay, 
+                               scale =T, 
+                               dims = c(1, 2))
         return(ggplotObject)
       })
     }
@@ -296,7 +302,7 @@ output$dimensionsVis <- renderUI({
     ),
     value = 2,
     min = 2,
-    max = 10,
+    max = ifelse(input$selectedRunMethod == "TSNE", 3, 10),
     step = 1
     ),
     bsPopover(
