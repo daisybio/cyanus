@@ -4,8 +4,11 @@ clusteringBody <- tabItem(
     HTML(
       "Detect and define cell populations for further downstream analysis via
         <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://bioconductor.org/packages/release/bioc/html/FlowSOM.html>FlowSOM</a> clustering &
-        <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://bioconductor.org/packages/release/bioc/html/ConsensusClusterPlus.html>ConsensusClusterPlus</a> metaclustering:
-        First group cells into clusters with FlowSOM using Self-Organizing Map clustering and Minimal Spanning Trees, and subsequently perform metaclustering with ConsensusClusterPlus which determines cluster count and membership by stability evidence."
+        <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://bioconductor.org/packages/release/bioc/html/ConsensusClusterPlus.html>ConsensusClusterPlus</a> meta-clustering:<br>
+        First group cells into clusters with FlowSOM using Self-Organizing Map clustering and Minimal Spanning Trees, and subsequently perform meta-clustering with ConsensusClusterPlus which determines cluster count and membership by stability evidence.<br>
+        A self-organizing map (SOM) is an artificial neural network that reflects the topological information of the input in lower dimensions.<br>
+        Meta clustering is carried out based on a consensus hierarchical method. By re-sampling from the original data and clustering the samples, an agreement value between the perturbations is obtained, which leads to meta clusters in a hierarchical structure. The number of meta clusters is manually chosen based on the relative change in area under the cumulative distribution function curve. (Clustering Output, Section 1. Delta Area)<br>
+        This clustering approach is fast and performs better than comparable techniques <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://doi.org/10.1002/cyto.a.23030>Weber et al. (2016)</a>."
     ),
     title = h2("Clustering"),
     width = 12
@@ -37,24 +40,39 @@ clusteringBody <- tabItem(
       column(
         sliderInput(
           inputId = "xdim",
-          label = "X-dimension of the grid size of the self-organizing map",
+          label = span("X-dimension of the grid size of the self-organizing map", icon("question-circle"), id = "xdimQ"),
           value = 10,
           min = 1,
           max = 100
+        ),
+        bsPopover(
+          id = "xdimQ",
+          title = "",
+          content = "This specificies the x-dimension of the self-organizing map´s grid. The default 10x10 grid will yield 100 clusters."
         ),
         sliderInput(
           inputId = "ydim",
-          label = "Y-dimension of the grid size of the self-organizing map",
+          label = span("Y-dimension of the grid size of the self-organizing map", icon("question-circle"), id = "ydimQ"),
           value = 10,
           min = 1,
           max = 100
         ),
+        bsPopover(
+          id = "ydimQ",
+          title = "",
+          content = "This specificies the y-dimension of the self-organizing map´s grid. The default 10x10 grid will yield 100 clusters."
+        ),
         sliderInput(
           inputId = "k",
-          label = "Maximum Number of Clusters to Evaluate in the Metaclustering",
+          label = span("Maximum Number of Clusters to Evaluate in the Meta-Clustering", icon("question-circle"), id = "kQ"),
           value = 20,
           min = 3,
           max = 80
+        ),
+        bsPopover(
+          id = "kQ",
+          title = "",
+          content = "This specificies the maximum number of clusters to evaluate in the meta-clustering. The default will yield 2 through 20 meta-clusters and one additional cluster containing all cells."
         ),
         shinyjs::hidden(div(
           id = "invalidClusteringParamsWarning",

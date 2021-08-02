@@ -503,6 +503,20 @@
       "Repository": "CRAN",
       "Hash": "84dffc44f23c419537c1c79cc46347a5"
     },
+    "TTR": {
+      "Package": "TTR",
+      "Version": "0.24.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7e2c62de2799dc212e5b52526c288e72"
+    },
+    "VIM": {
+      "Package": "VIM",
+      "Version": "6.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "cedaf753a297ecc8cd21d0113c91eb37"
+    },
     "XML": {
       "Package": "XML",
       "Version": "3.99-0.5",
@@ -850,6 +864,12 @@
       "Repository": "CRAN",
       "Hash": "6c8fe8fa26a23b79949375d372c7b395"
     },
+    "destiny": {
+      "Package": "destiny",
+      "Version": "3.4.0",
+      "Source": "Bioconductor",
+      "Hash": "e457d05887202a19ca44db9ac3f1951a"
+    },
     "diffcyt": {
       "Package": "diffcyt",
       "Version": "1.10.0",
@@ -904,6 +924,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "179ecb375114445f52a3c008d6c287a5"
+    },
+    "e1071": {
+      "Package": "e1071",
+      "Version": "1.7-8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "28e8460677280027c8580b5450aa091e"
     },
     "edgeR": {
       "Package": "edgeR",
@@ -1108,6 +1135,13 @@
       "Source": "Bioconductor",
       "Hash": "74cc699c301fe804db5889c40992b580"
     },
+    "ggplot.multistats": {
+      "Package": "ggplot.multistats",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "16eb694612ca865d7af90b884270e540"
+    },
     "ggplot2": {
       "Package": "ggplot2",
       "Version": "3.3.3",
@@ -1156,6 +1190,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "6770aac2203800889cccd6aee7f206a7"
+    },
+    "ggthemes": {
+      "Package": "ggthemes",
+      "Version": "4.2.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "617fb2c300f68e8b1ba21043fba88fd7"
     },
     "ggvenn": {
       "Package": "ggvenn",
@@ -1349,6 +1390,13 @@
       "Repository": "CRAN",
       "Hash": "c3994c036d19fc22c5e2a209c8298bfb"
     },
+    "knn.covertree": {
+      "Package": "knn.covertree",
+      "Version": "1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8b6a1fe603f86518a69abe5ef75be88e"
+    },
     "ks": {
       "Package": "ks",
       "Version": "1.11.7",
@@ -1362,6 +1410,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "3d5108641f47470611a32d0bdf357a72"
+    },
+    "laeken": {
+      "Package": "laeken",
+      "Version": "0.5.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f34570fa43de9f3ee62ec4137023f675"
     },
     "lambda.r": {
       "Package": "lambda.r",
@@ -1438,6 +1493,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "5f2466f5127e0ce67e44bb381387eeca"
+    },
+    "lmtest": {
+      "Package": "lmtest",
+      "Version": "0.9-38",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b0edacc02f7a3dad41a1afc385e929f4"
     },
     "locfit": {
       "Package": "locfit",
@@ -1647,6 +1709,12 @@
       "Repository": "CRAN",
       "Hash": "e4c9df9e478e08a32c27a406ce8fba90"
     },
+    "pcaMethods": {
+      "Package": "pcaMethods",
+      "Version": "1.82.0",
+      "Source": "Bioconductor",
+      "Hash": "4eb769394f0d18ac018d5e2fec880ca6"
+    },
     "pcaPP": {
       "Package": "pcaPP",
       "Version": "1.9-73",
@@ -1773,6 +1841,13 @@
       "Repository": "CRAN",
       "Hash": "a8730dcbdd19f9047774909f0ec214a4"
     },
+    "proxy": {
+      "Package": "proxy",
+      "Version": "0.4-26",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "50b405c6419e921b9e9360cc9ebbcf2d"
+    },
     "ps": {
       "Package": "ps",
       "Version": "1.5.0",
@@ -1807,6 +1882,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "aa9e6fe999d7c41f2b69c2bd3cf33f40"
+    },
+    "ranger": {
+      "Package": "ranger",
+      "Version": "0.13.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "420a2d7a05923e33bbdf5b67eaebbfe5"
     },
     "rappdirs": {
       "Package": "rappdirs",
@@ -2042,6 +2124,13 @@
       "Repository": "CRAN",
       "Hash": "0f9ba299f2385e686745b066c6d7a7c4"
     },
+    "smoother": {
+      "Package": "smoother",
+      "Version": "1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1cb390cce52318cf0b6a0513d9b676f2"
+    },
     "snow": {
       "Package": "snow",
       "Version": "0.4-3",
@@ -2195,6 +2284,13 @@
       "Repository": "CRAN",
       "Hash": "a9737c75f5f949695617b05e78281b2f"
     },
+    "vcd": {
+      "Package": "vcd",
+      "Version": "1.4-8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "bfd83643ebd2a3a5758199b612e1428f"
+    },
     "vctrs": {
       "Package": "vctrs",
       "Version": "0.3.8",
@@ -2225,10 +2321,10 @@
     },
     "waiter": {
       "Package": "waiter",
-      "Version": "0.2.2",
+      "Version": "0.2.3",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "fa38293709d399fff7c861798970dd28"
+      "Hash": "30b15e2b6a0abc1e67bb468d9d851071"
     },
     "waldo": {
       "Package": "waldo",
@@ -2278,6 +2374,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "b8acdf8af494d9ec19ccb2481a9b11c2"
+    },
+    "xts": {
+      "Package": "xts",
+      "Version": "0.12.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ca2fd4ad8ef78cca3aa2b30f992798a8"
     },
     "yaml": {
       "Package": "yaml",
