@@ -1,21 +1,9 @@
 version: '3.5'
 
 services:
-  cyanus:
-    image: quirinmanz/cyanus:latest
-    restart: unless-stopped
-    ports:
-      - 3838:3838
-    networks:
-      - sp-net
-    volumes:
-      - ./data:/srv/cytof_pipeline/data
-      #- ./shiny-server.conf:/etc/shiny-server/shiny-server.conf
   shinyproxy:
     build: ./shinyproxy
     restart: unless-stopped
-    depends_on: 
-      - cyanus
     expose:
       - 8080
     networks:

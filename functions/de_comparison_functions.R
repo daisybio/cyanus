@@ -16,11 +16,11 @@ createVennHeatmap <- function(res, DS = T, fdr_threshold = 0.05, columns = NULL)
       idcol = "method", fill = TRUE)
   if(DS){
     eff_r <- res[["effect_size"]]
-    results[, feature := paste0(marker_id, "(", cluster_id, ")")]
+    results[, feature := marker_id]#paste0(marker_id, "(", cluster_id, ")")]
     eff_r[, marker_id := sapply(strsplit(eff_r$group2,'::'), "[", 1)]
-    eff_r[, feature := paste0(marker_id, "(", cluster_id, ")")]
+    eff_r[, feature := marker_id]#paste0(marker_id, "(", cluster_id, ")")]
     eff_r <- eff_r[feature %in% results$feature]
-    label <- "Marker (Cluster)"
+    label <- "Marker"# (Cluster)"
   }else{
     results[, feature := cluster_id]
     label <- "Cluster ID"
@@ -36,7 +36,7 @@ createVennHeatmap <- function(res, DS = T, fdr_threshold = 0.05, columns = NULL)
                       name = "Significant",
                       na.value = "transparent")
   if(DS){
-    g <- g+
+    g <- g+ facet_wrap(~ cluster_id) +
       ggside::geom_xsidetile(data=eff_r, aes(y=overall_group, xfill=magnitude), color="white", size=0.2) + 
       ggside::scale_xfill_manual(values=colorBlindBlack8[c(8,5,4,6)], name='Cohen’s d\neffect size\nmagnitude', na.value="transparent")
   }

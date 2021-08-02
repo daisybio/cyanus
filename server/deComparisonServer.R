@@ -759,7 +759,7 @@ output$downloadVennButton <- downloadHandler(
     waiter_show(id = "app",html = tagList(spinner$logo, 
                                           HTML("<br>Downloading...")), 
                 color=spinner$color)
-    ggsave(file, plot = reactiveVals$lastVenn, width=12, height=12)
+    ggsave(file, plot = reactiveVals$lastVenn, width=16, height=12)
     waiter_hide(id="app")
   }
 )
