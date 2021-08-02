@@ -1320,8 +1320,24 @@ observeEvent(input$visExpButton,{
   
   output$topTable <- renderDataTable({
     out <- reactiveVals$DEruns[[visMethod]] 
-    reactiveVals$topTable <- data.frame(out)
-    DT::datatable(reactiveVals$topTable, rownames = FALSE, 
+    topTableOut <- data.frame(out)
+    eff_r <- isolate(reactiveVals$eff_r)[[visMethod]]
+    eff_r[, marker_id := sapply(strsplit(eff_r$group2,'::'), "[", 1)]
+    topTableOut <- merge(topTableOut, eff_r[, c("cluster_id", "marker_id", "overall_group","effsize", "magnitude")], by = c("cluster_id", "marker_id"), all.x=TRUE, all.y=FALSE, allow.cartesian=TRUE)
+    colnames(topTableOut) <- c(colnames(data.frame(out)), "overall_group","cohens_d", "magnitude")
+    
+    reactiveVals$topTable <- topTableOut
+    topTableOut$p_val <- formatC(topTableOut$p_val)
+    topTableOut$p_adj <- formatC(topTableOut$p_adj)
+    topTableOut$cohens_d <- formatC(topTableOut$cohens_d)
+    if(visMethod == "diffcyt-DS-limma"){
+      topTableOut$logFC <- formatC(topTableOut$logFC)
+      topTableOut$AveExpr <- formatC(topTableOut$AveExpr)
+      topTableOut$t <- formatC(topTableOut$t)
+      topTableOut$B <- formatC(topTableOut$B)
+      
+    }
+    DT::datatable(topTableOut, rownames = FALSE, 
                   options = list(pageLength = 10, searching = FALSE, 
                                  columnDefs = list(list( targets = c(1,2), 
                                                          render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}")))))

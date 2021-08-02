@@ -846,6 +846,9 @@ observeEvent(input$diffExpButtonVenn, {
         colnames(allResultsDT) <- c("cluster_id", "marker_id", "method", "p_val", "p_adj", "overall_group","cohens_d", "magnitude")
       }
       reactiveVals$lastAllResults <- allResultsDT
+      allResultsDT$p_val <- formatC(allResultsDT$p_val)
+      allResultsDT$p_adj <- formatC(allResultsDT$p_adj)
+      allResultsDT$cohens_d <- formatC(allResultsDT$cohens_d)
       
       shinydashboard::box(
         div(
