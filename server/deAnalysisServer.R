@@ -280,8 +280,10 @@ call_DE <- function() {
           parallel = FALSE
         )
         out <- results[[method]]
-        #the effect sizes do not have to be computed multiple times
-        reactiveVals$eff_r[[method]] <- findEffectSize(sce, condition, groupCol, clustering_to_use)
+        reactiveVals$eff_r[[method]] <- effectSize(sce = sce,
+                                                   condition = condition,
+                                                   group = groupCol, k=clustering_to_use, 
+                                                   use_assay="exprs", use_mean=FALSE)
       }
     },
     message = function(m) {
@@ -295,32 +297,6 @@ call_DE <- function() {
   return(out)
 }
 
-findEffectSize <- function(sce, condition, groupCol, clustering_to_use){
-  #the effect sizes do not have to be computed multiple times
-  found_effect_size <- FALSE
-  if(!is.null(reactiveVals$eff_r)){
-    for(method in names(reactiveVals$eff_r)){
-      eff_size <- reactiveVals$eff_r[[method]]
-      if(is.null(groupCol) & !("grouped" %in% eff_size$overall_group)){
-        found_effect_size <- TRUE
-        return(eff_size)
-      }else if(!is.null(groupCol) & "grouped" %in% eff_size$overall_group){
-        if(reactiveVals$methodsInfo[[method]]$grouping_columns == groupCol){
-          found_effect_size <- TRUE
-          return(eff_size)
-        }
-      }
-    }
-  }
-  if(is.null(reactiveVals$eff_r) | !found_effect_size){
-    return(effectSize(sce = sce,
-                      condition = condition,
-                      group = groupCol, k=clustering_to_use, 
-                      use_assay="exprs", use_mean=FALSE)
-           )
-  }
-  
-}
 
 # Renderer ----
 
@@ -334,7 +310,7 @@ output$selectionBoxDE <- renderUI({
         icon("question-circle"),
         id = "da_dsQ"
       ),
-      choices = c("Differential Cluster Abundance", "Differential Marker Expression"),
+      choices = c("Differential Marker Expression", "Differential Cluster Abundance"),
       inline = T
     ),
     bsPopover(
@@ -360,16 +336,16 @@ output$selectionBoxDE <- renderUI({
     uiOutput("extraFeatures"),
     uiOutput("normalizeSelection"),
     uiOutput("weightSelection"),
-    width = 6),
-  div(
-    bsButton(
-      "diffExpButton",
-      "Start Analysis",
-      icon = icon("tools"),
-      style = "success"
+    div(
+      bsButton(
+        "diffExpButton",
+        "Start Analysis",
+        icon = icon("tools"),
+        style = "success"
+      ),
+      style = "float: right; bottom:5px"
     ),
-    style = "float: right; bottom:5px"
-  ),
+    width = 6),
   title = "Choose Method and Parameters",
   width = 12,
   height = methods_height,
@@ -656,12 +632,19 @@ output$downsamplingDE <- renderUI({
     column(
       radioButtons(
         "downsampling_Yes_No_DE",
-        label = "Do you want to perform downsampling?",
+        label = span("Do you want to perform downsampling?", icon("question-circle"), id="dsDEPopover"),
         choices = c("Yes", "No"),
         selected = "No",
         inline = TRUE
       ),
-      width = 3
+      bsPopover(
+        id="dsDEPopover",
+        title = "Downsample your data",
+        content = "If you have a big dataset and do not want to wait too long for your analyses, you can perform a downsampling on your dataset. If you choose to downsample per sample, the number of cells you specify will be randomly picked from each sample. Otherwise, the number you specify will be divided by the number of samples and this number will be randomly picked from each sample. If the number is bigger than the sample size, all cells from this sample will be taken.",
+        placement = "top"
+      ),
+      width = 3,
+      style='padding:0px;'
     ),
     column(
       numericInput(
@@ -692,7 +675,8 @@ output$downsamplingDE <- renderUI({
         max=100000,
         step=1
       ),
-      width = 3
+      width = 3,
+      style='padding:0px;'
     )
   )
   
@@ -985,7 +969,7 @@ output$deBoxPlots <- renderUI({
 output$deExprsCluster <- renderUI({
   #if we only have counts -> copy counts to exprs
   if(length(assays(reactiveVals$sce)) == 1){
-    showNotification("You have not normalized your data. We will assume that you have given us expression data as input.", type = "warning", duration = 10)
+    showNotification("You have not transformed your data. We will assume that you have given us already transformed data as input.", type = "warning", duration = 10)
     assays(reactiveVals$sce)$exprs <- assays(reactiveVals$sce)$counts
   }
   
@@ -1336,8 +1320,24 @@ observeEvent(input$visExpButton,{
   
   output$topTable <- renderDataTable({
     out <- reactiveVals$DEruns[[visMethod]] 
-    reactiveVals$topTable <- data.frame(out)
-    DT::datatable(reactiveVals$topTable, rownames = FALSE, 
+    topTableOut <- data.frame(out)
+    eff_r <- isolate(reactiveVals$eff_r)[[visMethod]]
+    eff_r[, marker_id := sapply(strsplit(eff_r$group2,'::'), "[", 1)]
+    topTableOut <- merge(topTableOut, eff_r[, c("cluster_id", "marker_id", "overall_group","effsize", "magnitude")], by = c("cluster_id", "marker_id"), all.x=TRUE, all.y=FALSE, allow.cartesian=TRUE)
+    colnames(topTableOut) <- c(colnames(data.frame(out)), "overall_group","cohens_d", "magnitude")
+    
+    reactiveVals$topTable <- topTableOut
+    topTableOut$p_val <- formatC(topTableOut$p_val)
+    topTableOut$p_adj <- formatC(topTableOut$p_adj)
+    topTableOut$cohens_d <- formatC(topTableOut$cohens_d)
+    if(visMethod == "diffcyt-DS-limma"){
+      topTableOut$logFC <- formatC(topTableOut$logFC)
+      topTableOut$AveExpr <- formatC(topTableOut$AveExpr)
+      topTableOut$t <- formatC(topTableOut$t)
+      topTableOut$B <- formatC(topTableOut$B)
+      
+    }
+    DT::datatable(topTableOut, rownames = FALSE, 
                   options = list(pageLength = 10, searching = FALSE, 
                                  columnDefs = list(list( targets = c(1,2), 
                                                          render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}")))))

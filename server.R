@@ -5,7 +5,7 @@ server <- function(input, output, session) {
   
   reactiveVals$preprocessingShowed <- FALSE
 
-  spinner <- list(logo = spin_square_circle(), color="rgb(0, 102, 204, .5)")
+  spinner <- list(logo = spin_loaders(id = 29, color = "black"), color="rgb(146, 180, 242, .5)")
   
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())
@@ -41,13 +41,18 @@ server <- function(input, output, session) {
       paste("sce.rds")
     },
     content = function(file){
-      waiter_show(id = "app",html = tagList(spinner$logo, 
+      waiter_show(id = "app", html = tagList(spinner$logo, 
                                             HTML("<br>Downloading...")), 
                   color=spinner$color)
       saveRDS(object = reactiveVals$sce, file = file)
       waiter_hide(id="app")
     }
   )
+  
+  output$licenseTable <- renderTable({
+    deps_table <- sapply(unique(renv::dependencies()$Package), packageDescription, fields="License")
+    data.frame(Package = names(deps_table), License = deps_table)
+  })
   
   shinyBS::updateButton(session, inputId = "previousTab", icon = icon("arrow-left"), style = "success")
   shinyBS::updateButton(session, inputId = "nextTab", icon = icon("arrow-right"), style = "success", disabled = FALSE)

@@ -98,6 +98,9 @@ observeEvent(input$loadData, {
   }else
     stop("Which tab is selected?")
   
+  #drop levels of markers
+  SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+  
   # set negative values to zero
   if (length(which(assays(reactiveVals$sce)$counts < 0)) > 0){
     assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- 0

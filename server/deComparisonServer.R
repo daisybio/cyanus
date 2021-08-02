@@ -226,9 +226,12 @@ runMethods <- function(){
         time_methods = FALSE,
         parallel = FALSE
       )
-      #the effect sizes do not have to be computed multiple times
-      reactiveVals$eff_r[["comparison"]] <- findEffectSize(sce, condition, group, clusters)
-      resultVenn[["effect_size"]] <- reactiveVals$eff_r[["comparison"]]
+
+      resultVenn[["effect_size"]] <- effectSize(sce = sce,
+                                                condition = condition,
+                                                group = group, 
+                                                k=clusters, 
+                                                use_assay="exprs", use_mean=FALSE)
     },
     message = function(m) {
       shinyjs::html(id = "emdProgress",
@@ -490,10 +493,15 @@ output$downsamplingComp <- renderUI({
     column(
       radioButtons(
         "downsampling_Yes_No_Comp",
-        label = "Do you want to perform downsampling?",
+        label = span("Do you want to perform downsampling?", icon("question-circle"), id="dsCompPopover"),
         choices = c("Yes", "No"),
         selected = "No",
         inline = TRUE
+      ),
+      bsPopover(
+        id="dsCompPopover",
+        title = "Downsample your data",
+        content = "If you have a big dataset and do not want to wait too long for your analyses, you can perform a downsampling on your dataset. If you choose to downsample per sample, the number of cells you specify will be randomly picked from each sample. Otherwise, the number you specify will be divided by the number of samples and this number will be randomly picked from each sample. If the number is bigger than the sample size, all cells from this sample will be taken."
       ),
       width = 3
     ),
@@ -739,7 +747,7 @@ output$downloadVenn <- renderUI({
   req(reactiveVals$lastVenn)
   div(
     downloadButton("downloadVennButton", "Download Plot"),
-    style = "float:right;"
+    style = "position: absolute; bottom: 5px; right:5px"
   )
 })
 
@@ -751,7 +759,7 @@ output$downloadVennButton <- downloadHandler(
     waiter_show(id = "app",html = tagList(spinner$logo, 
                                           HTML("<br>Downloading...")), 
                 color=spinner$color)
-    ggsave(file, plot = reactiveVals$lastVenn, width=12, height=12)
+    ggsave(file, plot = reactiveVals$lastVenn, width=16, height=12)
     waiter_hide(id="app")
   }
 )
@@ -762,7 +770,7 @@ output$downloadTableVenn <- renderUI({
   fluidRow(
     div(
       downloadButton("downloadTableVennAll", "Download All Results"),
-      style = "float:right;"
+      style = "position: absolute; top: 5px; right:5px"
     )
   )
 })
@@ -838,16 +846,24 @@ observeEvent(input$diffExpButtonVenn, {
         colnames(allResultsDT) <- c("cluster_id", "marker_id", "method", "p_val", "p_adj", "overall_group","cohens_d", "magnitude")
       }
       reactiveVals$lastAllResults <- allResultsDT
+      allResultsDT$p_val <- formatC(allResultsDT$p_val)
+      allResultsDT$p_adj <- formatC(allResultsDT$p_adj)
+      allResultsDT$cohens_d <- formatC(allResultsDT$cohens_d)
       
       shinydashboard::box(
-        renderDataTable(
-          DT::datatable(
-            allResultsDT,
-            rownames = F,
-            options = list(pageLength = 10, searching = FALSE, 
-                           columnDefs = list(list( targets = "_all", 
-                                                   render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}"))))
+        div(
+          renderDataTable(
+            DT::datatable(
+              allResultsDT,
+              rownames = F,
+              options = list(pageLength = 10, searching = FALSE, 
+                             columnDefs = list(list( targets = "_all", 
+                                                     render = JS("function(data, type, row, meta) {","return data === null ? 'NA' : data;","}"))))
+            )
           )
+        ),
+        div(
+          uiOutput("downloadTableVenn")
         ),
         id = "vennResultsTable",
         title = "Results",
