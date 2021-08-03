@@ -68,7 +68,7 @@ runMethods <- function(){
           isolate(reactiveVals$subselectionMap),
           condition,
           excluded,
-          method # TODO there is no method here. Test this again
+          method 
         )
     },
     message = function(m) {

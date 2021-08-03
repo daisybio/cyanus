@@ -30,7 +30,6 @@ median_test <- function(test = c("Wilcoxon", "Kruskal_Wallis", "T_Test"),
   }
   
   p.values <- data.table::rbindlist(BiocParallel::bplapply(features, function(f){
-    # browser() #TODO: make sure that medians are sorted corresponding to group / random_effect
     # medians_control <- data[y == levels(data$y)[1], median(get(f)), by = sample_id]
     # medians_case <- data[y == levels(data$y)[2], median(get(f)), by = sample_id]
     # median_data <- data.table::data.table(
@@ -42,7 +41,6 @@ median_test <- function(test = c("Wilcoxon", "Kruskal_Wallis", "T_Test"),
     #                                 variable.name = "condition", 
     #                                 value.name = "median")
     if (!is.null(random_effect)) {
-      # browser() #TODO: set paired to TRUE
       median_data <- data[, .(sample_median = median(get(f))), by = .(sample_id, y, re)]
       paired <- TRUE
     } else {

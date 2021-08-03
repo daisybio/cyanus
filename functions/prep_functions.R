@@ -207,7 +207,7 @@ plotExprHeatmapCustom <- function (x, features = NULL, by = c("sample_id", "clus
 
 
 
-# TODO: this belongs in de_functions.R but it needs .anno_factors
+# this belongs in de_functions.R but it needs .anno_factors
 check_args_plotDiffHeatmapCustom <- function(u){
   CATALYST:::.check_sce(u$x, TRUE)
   CATALYST:::.check_pal(u$hm_pal)
