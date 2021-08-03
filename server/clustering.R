@@ -193,7 +193,6 @@ observeEvent(reactiveVals$sce, {
 
 
 ### Renderer ----
-#TODO: add continue without clustering button
 
 output$featuresOut <- renderUI({
   req(input$useFeaturesIn)
@@ -238,10 +237,10 @@ output$clusteringVisualizationSelection <- renderUI({
   
   shinydashboard::box(
     shinydashboard::box(width=12, 
-    div(HTML("Here you can select the meta-cluster you want to investigate in this part of the analysis.<br>
-        The meta-cluster starting with `som` contains the original clusters resulting from the self-organizing map without meta-clustering. You can have a look at it, but will most likely want to use a meta-cluster identified by ConsensusClusterPlus.<br>
-        The meta-clusters starting with `meta` were identified by ConsensusClusterPlus and contains as many clusters as indicated by the number following `meta`. To determine which meta-cluster represents your data best, you can use the delta area plot. (Section 1. Delta Area)<br>
-        The meta-cluster `all` contains all cells. It is especially usefull for differential expression analysis when comparing conditions overall."))),
+    div(HTML("Here, you can select the meta-cluster you want to investigate in this part of the analysis.<br>
+        The meta-cluster starting with `som` contains the original clusters resulting from the self-organizing map without meta-clustering. You can have a look at it, but you will most likely want to use a meta-cluster identified by ConsensusClusterPlus.<br>
+        The meta-clusters starting with `meta` were identified by ConsensusClusterPlus and contain as many clusters as indicated by the number following `meta`. To determine which meta-cluster represents your data best, you can use the delta area plot. (Section 1. Delta Area)<br>
+        The meta-cluster `all` contains all cells. It is especially useful for differential expression analysis when comparing conditions overall."))),
     column(
       uiOutput("selectClusterCode"),
       div(
@@ -289,7 +288,7 @@ output$selectClusterCode <- renderUI({
   choicesClusterCode <-
     c('all', choicesClusterCode[choicesClusterCode != 'all'])
   selectInput("clusterCode",
-              span("Select Meta-Cluster", icon("question-circle"), id = "clusterCodeQ"),
+              "Select Meta-Cluster",
               rev(choicesClusterCode))
 })
 
@@ -325,13 +324,13 @@ output$delta_area <- renderUI({
     "document.getElementById('clusteringVisualizationSelection').scrollIntoView();"
   )
   shinydashboard::box(
-    div(
+    div(HTML(
       'It is recommended to choose a meta-cluster where the plateau is reached, similarly to the `elbow method`.<br>
                           "The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups.<br>
                           It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fits the data.<br>
                           The `natural` number of clusters present in the data should thus corresponds to the value of k where there is no longer a considerable increase in stability (plateau onset)." Crowell et al. (2020)',
       style = "text-align: center;vertical-align: middle;"
-    ),
+    )),
     renderPlot(
       CATALYST::delta_area(reactiveVals$sce)
     ),
