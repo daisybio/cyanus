@@ -429,13 +429,13 @@ output$groupSelection <- renderUI({
     ),
     bsPopover(
       id = "groupColQ",
-      title = "TODO",
-      content = "TODO: explain paired data"
+      title = "Paired study design",
+      content = "In a paired study design, every sample has another corresponding sample. These samples are in different conditions. Here, you can select the column which identifies what samples are paired. Often this is something like the PatientID."
     )
   )
 })
 output$additionalTermsSelection <- renderUI({
-  req(input$chosenDAMethod, (startsWith(input$chosenDAMethod, 'diffcyt')||startsWith(input$chosenDAMethod, 'CytoGLM')) )#TODO cytoglm(m) # this means this is a linear model and additional terms are allowed
+  req(input$chosenDAMethod, (startsWith(input$chosenDAMethod, 'diffcyt')||startsWith(input$chosenDAMethod, 'CytoGLM')) ) # this means this is a linear model and additional terms are allowed
   addTerms <- names(ei(reactiveVals$sce))
   addTerms <- addTerms[!addTerms %in% c("n_cells", "sample_id", input$conditionIn, input$groupCol)]
   div(
@@ -1047,7 +1047,6 @@ output$deBoxK <- renderUI({
     "Clusters",
     rev(names(cluster_codes(reactiveVals$sce))),
     multiple = F
-    # selected = "meta9" #TODO: take first 
   )
 })
 

@@ -77,7 +77,6 @@ simulateSCE <- function (n_samples = 16,
   sce
 }
 
-#TODO: add covariates
 runCytoGLMM <-
   function(sce,
            condition,
@@ -89,7 +88,7 @@ runCytoGLMM <-
            sample_id = "sample_id",
            parallel = FALSE,
            num_boot = 500) {
-    # TODO: how to handle weights?
+    # Enhancements: how to handle weights?
     match.arg(method)
     stopifnot(is.logical(parallel))
     bppar <- BiocParallel::bpparam()

@@ -5,9 +5,9 @@ clusteringBody <- tabItem(
       "Detect and define cell populations for further downstream analysis via
         <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://bioconductor.org/packages/release/bioc/html/FlowSOM.html>FlowSOM</a> clustering &
         <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://bioconductor.org/packages/release/bioc/html/ConsensusClusterPlus.html>ConsensusClusterPlus</a> meta-clustering:<br>
-        First group cells into clusters with FlowSOM using Self-Organizing Map clustering and Minimal Spanning Trees, and subsequently perform meta-clustering with ConsensusClusterPlus which determines cluster count and membership by stability evidence.<br>
+        First, group cells into clusters with FlowSOM using self-organizing map clustering and minimal spanning trees, and subsequently perform meta-clustering with ConsensusClusterPlus which determines cluster count and membership by stability evidence.<br>
         A self-organizing map (SOM) is an artificial neural network that reflects the topological information of the input in lower dimensions.<br>
-        Meta clustering is carried out based on a consensus hierarchical method. By re-sampling from the original data and clustering the samples, an agreement value between the perturbations is obtained, which leads to meta clusters in a hierarchical structure. The number of meta clusters is manually chosen based on the relative change in area under the cumulative distribution function curve. (Clustering Output, Section 1. Delta Area)<br>
+        Meta clustering is carried out based on a consensus hierarchical method. By re-sampling from the original data and clustering the samples, an agreement value between the perturbations is obtained which leads to meta clusters in a hierarchical structure. The number of meta clusters is manually chosen based on the relative change in area under the cumulative distribution function curve. (Clustering Output, Section 1. Delta Area)<br>
         This clustering approach is fast and performs better than comparable techniques <a target=\"_blank\" rel=\"noopener noreferrer\" href = https://doi.org/10.1002/cyto.a.23030>Weber et al. (2016)</a>."
     ),
     title = h2("Clustering"),
