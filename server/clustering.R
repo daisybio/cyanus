@@ -131,7 +131,7 @@ observeEvent(input$clusterCode, {
   reactiveVals$mergingFrame <-
     data.frame(
       old_cluster = curr_cluster_ids,
-      new_cluster = rep("new_cluster_id", times = length(curr_cluster_ids))
+      new_cluster = curr_cluster_ids
     )
 })
 
@@ -145,12 +145,15 @@ observeEvent(input$mergeClustersDT_cell_edit, {
 })
 
 observeEvent(input$mergeClusteringButton, {
+  new_metacluster <- isolate(input$mergeClusteringNewName)
+  if (is.null(new_metacluster) || is.na(new_metacluster) || new_metacluster == "")
+    new_metacluster <- sprintf("merging_%s", isolate(input$clusterCode))
   reactiveVals$sce <-
     mergeClusters(
       isolate(reactiveVals$sce),
       isolate(input$clusterCode),
       isolate(reactiveVals$mergingFrame),
-      id = sprintf("merged_%s", isolate(input$clusterCode)),
+      id = new_metacluster,
       overwrite = TRUE
     )
   
@@ -234,6 +237,11 @@ output$clusteringVisualizationSelection <- renderUI({
   req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
   shinydashboard::box(
+    shinydashboard::box(width=12, 
+    div(HTML("Here you can select the meta-cluster you want to investigate in this part of the analysis.<br>
+        The meta-cluster starting with `som` contains the original clusters resulting from the self-organizing map without meta-clustering. You can have a look at it, but will most likely want to use a meta-cluster identified by ConsensusClusterPlus.<br>
+        The meta-clusters starting with `meta` were identified by ConsensusClusterPlus and contains as many clusters as indicated by the number following `meta`. To determine which meta-cluster represents your data best, you can use the delta area plot. (Section 1. Delta Area)<br>
+        The meta-cluster `all` contains all cells. It is especially usefull for differential expression analysis when comparing conditions overall."))),
     column(
       uiOutput("selectClusterCode"),
       div(
@@ -281,12 +289,12 @@ output$selectClusterCode <- renderUI({
   choicesClusterCode <-
     c('all', choicesClusterCode[choicesClusterCode != 'all'])
   selectInput("clusterCode",
-              "Select Meta-Clusters",
+              span("Select Meta-Cluster", icon("question-circle"), id = "clusterCodeQ"),
               rev(choicesClusterCode))
 })
 
 output$clusterSizes <- renderTable({
-  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun, input$clusterCode)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun, input$clusterCode, cluster_ids(reactiveVals$sce, input$clusterCode))
   res <-
     as.data.frame(table(cluster_ids(reactiveVals$sce, input$clusterCode),
                         useNA =
@@ -318,10 +326,10 @@ output$delta_area <- renderUI({
   )
   shinydashboard::box(
     div(
-      'It is recommended to choose a metacluster where the plateau is reached.
-                          "The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups.
-                          It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fits the data.
-                          The "natural" number of clusters present in the data should thus corresponds to the value of k where there is no longer a considerable increase in stability (plateau onset)."',
+      'It is recommended to choose a meta-cluster where the plateau is reached, similarly to the `elbow method`.<br>
+                          "The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups.<br>
+                          It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fits the data.<br>
+                          The `natural` number of clusters present in the data should thus corresponds to the value of k where there is no longer a considerable increase in stability (plateau onset)." Crowell et al. (2020)',
       style = "text-align: center;vertical-align: middle;"
     ),
     renderPlot(
@@ -330,20 +338,21 @@ output$delta_area <- renderUI({
     title = "1. Delta Area",
     width = 12,
     collapsible = TRUE,
-    collapsed = FALSE
+    collapsed = TRUE
   )
 })
 
 output$clusterMergingBox <- renderUI({
-  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun, input$clusterCode)
   
   shinydashboard::box(
     HTML(
       "You can assign new cluster names in the <b>new_cluster</b> column by double-clicking.<br>
-                                      <i>Make sure to assign new names to <b>all</b> clusters.</i>"
+      <i>If you do not assign new names to all clusters the old cluster names will be kept.</i>"
     ),
     withSpinner(DTOutput("mergeClustersDT")),
     div(
+      textInput("mergeClusteringNewName", "New Meta-Cluster Name", value = sprintf("merging_%s", isolate(input$clusterCode))),
       bsButton(
         "mergeClusteringButton",
         "Merge Clustering",
