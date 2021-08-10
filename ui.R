@@ -14,7 +14,7 @@ jscode <- "shinyjs.closewindow = function() { window.close(); }"
 sapply(list.files("ui", full.names = TRUE), source, environment())
 
 header <-
-  dashboardHeader(title = span(img(src="logo_title.png", height="50px")), uiOutput("dashboard"))
+  dashboardHeader(title = span(img(src="logo_title.png", height="50px")), tags$li(uiOutput("dashboard"), class='dropdown'), tags$li(a(icon('envelope'), " Contact for problems/suggestions", href = "https://github.com/biomedbigdata/cyanus/issues", target = "_blank"), class='dropdown'))
 
 sidebar <- dashboardSidebar(useShinyjs(),
                             extendShinyjs(text = jscode, functions = c("closewindow")),
@@ -97,7 +97,7 @@ body <-
         box(
           width = 8,
           div(HTML(
-            "Recently, high-dimensional time-of-flight mass cytometry (CyTOF)
+            'Recently, high-dimensional time-of-flight mass cytometry (CyTOF)
                              has emerged with the ability to identify more than 40 parameters simultaneously.
                              Traditional flow cytometry would require multiple tubes with different
                              antibody panels to cover the same number of markers. Consequently,
@@ -113,9 +113,9 @@ body <-
                              within cell populations between samples in different conditions.
                              For this, we integrated the published methods diffcyt-DS-limma,
                              diffcyt-DS-LMM, CytoGLMM and CytoGLM. Additionally, we performed a comprehensive analysis
-                             of these existing methods and novel approaches published in …. Since the Wilcoxon rank-sum 
+                             of these existing methods and novel approaches available on <a href="https://doi.org/10.1101/2021.08.09.455609" target="_blank">bioRxiv</a>. Since the Wilcoxon rank-sum 
                              test and the t-test on sample medians, as well as our novel method CyEMD performed well, 
-                             we made them available in this interface."),
+                             we made them available in this interface.'),
             style = "font-size: large;"
           )
         ),
