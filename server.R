@@ -5,7 +5,9 @@ server <- function(input, output, session) {
   
   reactiveVals$preprocessingShowed <- FALSE
 
-  spinner <- list(logo = spin_loaders(id = 29, color = "black"), color="rgb(146, 180, 242, .5)")
+  spinner <- list(logo = list(a(icon('envelope'), " Contact", href = "https://github.com/biomedbigdata/cyanus/issues", target = "_blank", style='color: black'), 
+                              tags$br(), tags$br(), 
+                              spin_loaders(id = 29, color = "black")), color="rgb(146, 180, 242, .5)")
   
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())
@@ -33,7 +35,7 @@ server <- function(input, output, session) {
   
   output$dashboard <- renderUI({
     req(reactiveVals$sce)
-    downloadButton("dashboardButton", "Download current SCE object")
+    div(downloadButton("dashboardButton", "Download current SCE object"), style="height: 50px; display: flex; align-items: center;")
   })
   
   output$dashboardButton <- downloadHandler(

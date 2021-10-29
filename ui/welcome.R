@@ -3,7 +3,7 @@ welcomeBody <- tabItem(tabName = "welcome",
                          box(
                            width = 8,
                            div(HTML(
-                             "Recently, high-dimensional time-of-flight mass cytometry (CyTOF)
+                             'Recently, high-dimensional time-of-flight mass cytometry (CyTOF)
                              has emerged with the ability to identify more than 40 parameters simultaneously.
                              Traditional flow cytometry would require multiple tubes with different
                              antibody panels to cover the same number of markers. Consequently,
@@ -19,9 +19,9 @@ welcomeBody <- tabItem(tabName = "welcome",
                              within cell populations between samples in different conditions.
                              For this, we integrated the published methods diffcyt-DS-limma,
                              diffcyt-DS-LMM, CytoGLMM and CytoGLM. Additionally, we performed a comprehensive analysis
-                             of these existing methods and novel approaches published in …. Since the Wilcoxon rank-sum 
+                             of these existing methods and novel approaches available on <a href="https://doi.org/10.1101/2021.08.09.455609" target="_blank">bioRxiv</a>. Since the Wilcoxon rank-sum 
                              test and the t-test on sample medians, as well as our novel method CyEMD performed well, 
-                             we made them available in this interface."),
+                             we made them available in this interface.'),
                              style = "font-size: large;"
                            )
                          ),
