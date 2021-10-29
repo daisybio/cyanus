@@ -74,13 +74,13 @@ observeEvent(input$loadData, {
     conditions <- names(reactiveVals$data$upload$md)[!names(reactiveVals$data$upload$md) 
                                                      %in% c("sample_id", "file_name")]
     md_cols <- list(file = "file_name", id = "sample_id", factors = conditions)
-    
     tryCatch({reactiveVals$sce <- CATALYST::prepData(
       dn,
       panel = reactiveVals$data$upload$panel,
       md = reactiveVals$data$upload$md,
       transform = FALSE,
-      md_cols = md_cols
+      md_cols = md_cols,
+      FACS = input$isFACSData
     )},
     error = function(e){
       showNotification(HTML(sprintf("Loading the data failed with the following message:<br>
