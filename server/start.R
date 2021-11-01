@@ -74,21 +74,29 @@ observeEvent(input$loadData, {
     conditions <- names(reactiveVals$data$upload$md)[!names(reactiveVals$data$upload$md) 
                                                      %in% c("sample_id", "file_name")]
     md_cols <- list(file = "file_name", id = "sample_id", factors = conditions)
-    tryCatch({reactiveVals$sce <- CATALYST::prepData(
-      dn,
-      panel = reactiveVals$data$upload$panel,
-      md = reactiveVals$data$upload$md,
-      transform = FALSE,
-      md_cols = md_cols,
-      FACS = input$isFACSData
-    )},
+    
+    tryCatch({
+      withCallingHandlers({
+        reactiveVals$sce <- CATALYST::prepData(
+        dn,
+        panel = reactiveVals$data$upload$panel,
+        md = reactiveVals$data$upload$md,
+        transform = FALSE,
+        md_cols = md_cols,
+        FACS = input$isFACSData
+      )},
+      message = function(m) {
+        showNotification(HTML(sprintf("Loading the data produced with the following message:<br>
+                                    <b>%s</b>", m$message)), duration = NULL, type = "message")
+      },
+      warning = function(w) {
+        showNotification(HTML(sprintf("Loading the data produced with the following warning:<br>
+                                    <b>%s</b>", w$message)), duration = NULL, type = "warning")
+      }
+      )},
     error = function(e){
       showNotification(HTML(sprintf("Loading the data failed with the following message:<br>
                                     <b>%s</b>", e$message)), duration = NULL, type = "error")
-    },
-    warning=function(w) {
-      showNotification(HTML(sprintf("Loading the data succeeded with the following warning:<br>
-                                    <b>%s</b>", w$message)), duration = NULL, type = "warning")
     })
   } else if (input$chooseDataTab == "dataExample") {
     reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
@@ -97,6 +105,9 @@ observeEvent(input$loadData, {
 
   }else
     stop("Which tab is selected?")
+  
+  
+  if (!is.null(reactiveVals$sce)) { # meaning the data loading worked
   
   #drop levels of markers
   SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
@@ -117,14 +128,15 @@ observeEvent(input$loadData, {
     )
   }
 
-  
   start_tab <- which(tab_ids == "start")
-  if (isolate(reactiveVals$max_tab > start_tab))
+  if (isolate(reactiveVals$max_tab) > start_tab)
     reactiveVals$max_tab <- start_tab
-  reactiveVals$continue[which(tab_ids == "start")] <- TRUE
-  updateButton(session, "loadData", label = " Load Data", disabled = FALSE)
-  waiter_hide(id = "app")
+  reactiveVals$continue[start_tab] <- TRUE
   runjs("document.getElementById('nextTab').scrollIntoView();")
+    
+  }
+  updateButton(session, "loadData", label = " Load Data", disabled = FALSE) 
+  waiter_hide(id = "app")
   })
 
 output$panelDT <- renderDT(
