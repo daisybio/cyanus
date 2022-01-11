@@ -61,13 +61,7 @@ docker-compose up -d
 ```
 
 ## Cite
-The manuscript is currently under consideration. 
-
-A preprint is available on bioRxiv: 
-
-A Systematic Comparison of Differential Analysis Methods for CyTOF Data  
-Lis Arend, Judith Bernett, Quirin Manz, Melissa Klug, Olga Lazareva, Jan Baumbach, Dario Bongiovanni, Markus List  
-bioRxiv 2021.08.09.455609; doi: [https://doi.org/10.1101/2021.08.09.455609](https://doi.org/10.1101/2021.08.09.455609)
+Lis Arend, Judith Bernett, Quirin Manz, Melissa Klug, Olga Lazareva, Jan Baumbach, Dario Bongiovanni, Markus List, A systematic comparison of novel and existing differential analysis methods for CyTOF data, Briefings in Bioinformatics, 2021;, bbab471, [https://doi.org/10.1093/bib/bbab471](https://doi.org/10.1093/bib/bbab471)
 
 ## Contact
 If you have difficulties using CYANUS, please open an issue. If issues on the simulation of data or evaluation of methods arise, you can either open an issue or contact the authors of the paper.
