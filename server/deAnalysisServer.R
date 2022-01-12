@@ -785,8 +785,8 @@ output$DEFeatureSelection <- renderUI({
       selected <- choices[1]
     }
   } else if (input$DEMarkerToTest == "Marker by Name") {
-    is_marker <- SummarizedExperiment::rowData(reactiveVals$sce)$marker_class %in% c("type", "state")
     choices <- rownames(reactiveVals$sce)
+    is_marker <- choices[SummarizedExperiment::rowData(reactiveVals$sce)$marker_class %in% c("type", "state")]
     names(choices) <-
       sprintf("%s (%s)", choices, as.character(marker_classes(reactiveVals$sce)))
     if("state" %in% marker_classes(reactiveVals$sce)){
@@ -797,7 +797,7 @@ output$DEFeatureSelection <- renderUI({
       selected <- rownames(reactiveVals$sce)[marker_classes(reactiveVals$sce) == "type"]
       choices <- sortMarkerNames(choices, as.character(marker_classes(reactiveVals$sce)), first = "type")
     }
-    choices <- choices[is_marker]
+    choices <- choices[choices %in% is_marker]
   } else
     stop("by name or by class?")
   shinyWidgets::pickerInput(
@@ -1064,7 +1064,7 @@ output$clusterDEPlot <- renderPlot({
     category <- isolate(reactiveVals$subselectionMap[[input$deBoxSubselect]])
     sce <- filterSCE(sce, get(category) == input$deBoxSubselect)
   }
-  reactiveVals$pbExprsPlot <- plotPbExprs(sce, 
+  reactiveVals$pbExprsPlot <- plotPbExprsMod(sce, 
                                           k = k, 
                                           features = input$deBoxFeatures, 
                                           color_by = input$deBoxColor, 
