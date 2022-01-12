@@ -8,11 +8,16 @@ startBody <- function() {
   exampleDataVector <- exampleDataVector[availableExampleData]
   
   dataUploadBox <- shinydashboard::box(
-    fileInput(
+    column(fileInput(
       "fcsFiles",
       "Choose FCS File(s)",
       multiple = TRUE,
       accept = c(".fcs")
+    ), 
+    width=9),
+    column(
+    checkboxInput("isFACSData", HTML("<b>FACS Data</b>"), FALSE),
+    width= 3
     ),
     title = "Upload FCS Data",
     height = box_height,

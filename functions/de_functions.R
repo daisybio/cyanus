@@ -620,3 +620,84 @@ runDS_old <- function(sce, condition, random_effect = NULL,
   }
   result
 }
+
+
+plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs", 
+                            fun = c("median", "mean", "sum"), facet_by = c("antigen", 
+                                                                           "cluster_id"), color_by = "condition", group_by = color_by, 
+                            shape_by = NULL, size_by = FALSE, geom = c("both", "points", 
+                                                                       "boxes"), jitter = TRUE, ncol = NULL) 
+{
+  fun <- match.arg(fun)
+  geom <- match.arg(geom)
+  facet_by <- match.arg(facet_by)
+  stopifnot(is.logical(jitter), length(jitter) == 1)
+  if (!is.null(ncol)) 
+    stopifnot(is.numeric(ncol), length(ncol) == 1, ncol%%1 == 
+                0)
+  if (facet_by == "cluster_id") {
+    CATALYST:::.check_sce(x, TRUE)
+    k <- CATALYST:::.check_k(x, k)
+  }
+  else CATALYST:::.check_sce(x)
+  CATALYST:::.check_assay(x, assay)
+  CATALYST:::.check_cd_factor(x, color_by)
+  CATALYST:::.check_cd_factor(x, group_by)
+  CATALYST:::.check_cd_factor(x, shape_by)
+  shapes <- CATALYST:::.get_shapes(x, shape_by)
+  if (is.null(shapes)) 
+    shape_by <- NULL
+  x <- x[CATALYST:::.get_features(x, features), ]
+  if (any(c(facet_by, group_by) == "cluster_id")) {
+    x$cluster_id <- cluster_ids(x, k)
+    by <- c("cluster_id", "sample_id")
+  }
+  else by <- "sample_id"
+  ms <- CATALYST:::.agg(x, by, fun, assay)
+  df <- reshape2::melt(ms, varnames = c("antigen", by[length(by)]))
+  df[[by[length(by)]]] <- factor(df[[by[length(by)]]], levels(colData(x)[[by[length(by)]]]))
+  if (length(by) == 2) 
+    names(df)[ncol(df)] <- "cluster_id"
+  x_var <- ifelse(facet_by == "antigen", group_by, "antigen")
+  if (!is.null(df$cluster_id)) 
+    df$cluster_id <- factor(df$cluster_id, levels(x$cluster_id))
+  i <- match(df$sample_id, x$sample_id)
+  j <- setdiff(names(colData(x)), c(names(df), "cluster_id"))
+  df <- cbind(df, colData(x)[i, j, drop=FALSE])
+  ncs <- table(as.list(colData(x)[by]))
+  ncs <- rep(c(t(ncs)), each = nrow(x))
+  if (size_by) {
+    size_by <- "n_cells"
+    df$n_cells <- ncs
+  }
+  else size_by <- NULL
+  df <- df[ncs > 0, , drop = FALSE]
+  ggplot(df, aes_string(x_var, "value", col = color_by)) + 
+    facet_wrap(facet_by, ncol = ncol, scales = "free_y") + 
+    (if (geom != "boxes") 
+      geom_point(alpha = 0.8, position = (if (jitter) {
+        position_jitterdodge(jitter.width = 0.2, jitter.height = 0)
+      }
+      else "identity"), aes_string(fill = color_by, size = size_by, 
+                                   shape = shape_by))) + (if (geom != "points") 
+                                     geom_boxplot(alpha = 0.4, width = 0.8, fill = NA, outlier.color = NA, 
+                                                  show.legend = FALSE)) + scale_shape_manual(values = shapes) + 
+    scale_size_continuous(range = c(0.5, 3)) + guides(fill = FALSE, 
+                                                      size = guide_legend(order = 3), shape = guide_legend(order = 2, 
+                                                                                                           override.aes = list(size = 3)), col = guide_legend(order = 1, 
+                                                                                                                                                              override.aes = list(alpha = 1, size = 3))) + ylab(paste(fun, 
+                                                                                                                                                                                                                      ifelse(assay == "exprs", "expression", assay))) + theme_bw() + 
+    theme(legend.key.height = unit(0.8, "lines"), axis.text = element_text(color = "black"), 
+          strip.text = element_text(face = "bold"), strip.background = element_rect(fill = NA, 
+                                                                                    color = NA), panel.grid.minor = element_blank(), 
+          panel.grid.major = element_line(color = "grey", 
+                                          size = 0.2)) + if (length(unique(c(x_var, color_by, 
+                                                                             group_by))) == 1) {
+                                            theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+                                          }else {
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, 
+                                     vjust = 1))
+  }
+}
+
+
