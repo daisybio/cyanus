@@ -655,6 +655,7 @@ plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs"
   else by <- "sample_id"
   ms <- CATALYST:::.agg(x, by, fun, assay)
   df <- reshape2::melt(ms, varnames = c("antigen", by[length(by)]))
+  df[[by[length(by)]]] <- factor(df[[by[length(by)]]], levels(colData(x)[[by[length(by)]]]))
   if (length(by) == 2) 
     names(df)[ncol(df)] <- "cluster_id"
   x_var <- ifelse(facet_by == "antigen", group_by, "antigen")
