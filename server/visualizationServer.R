@@ -439,11 +439,18 @@ output$radioButtonsColorVis <- renderUI({
 })
 
 output$radioButtonsScale <- renderUI({
+  div(
   radioButtons(
     inputId = "scaleVis",
     label = span("Scale ",  icon("question-circle"), id = "scaleVisQ"),
     choices = c("yes", "no"),
     inline = TRUE
+  ),
+  bsPopover(
+    id = "scaleVisQ",
+    title = "For coloring by expression",
+    content = HTML("Should the counts / the expression data be scaled between 0 and 1 using lower (1%) and upper (99%) expression quantiles?")
+  )
   )
 })
 
@@ -458,11 +465,6 @@ output$visPlotBox <- renderUI({
           uiOutput("selectColorBy"),
           uiOutput("assayVis"),
           uiOutput("radioButtonsScale"),
-          bsPopover(
-            id = "scaleVisQ",
-            title = "For coloring by expression",
-            content = "Should the counts / the expression data be scaled between 0 and 1 using lower (1%) and upper (99%) expression quantiles?"
-          ),
           uiOutput("facet_by"),
           uiOutput("plotDimensions"),
           div(
