@@ -844,11 +844,11 @@ observeEvent(input$diffExpButtonVenn, {
         eff_r[, marker_id := sapply(strsplit(eff_r$group2,'::'), "[", 1)]
         allResultsDT <- merge(allResultsDT, eff_r[, c("cluster_id", "marker_id", "overall_group","effsize", "magnitude")], by = c("cluster_id", "marker_id"), all.x=TRUE, all.y=FALSE, allow.cartesian=TRUE)
         colnames(allResultsDT) <- c("cluster_id", "marker_id", "method", "p_val", "p_adj", "overall_group","cohens_d", "magnitude")
+        allResultsDT$cohens_d <- formatC(allResultsDT$cohens_d)
       }
       reactiveVals$lastAllResults <- allResultsDT
       allResultsDT$p_val <- formatC(allResultsDT$p_val)
       allResultsDT$p_adj <- formatC(allResultsDT$p_adj)
-      allResultsDT$cohens_d <- formatC(allResultsDT$cohens_d)
       
       shinydashboard::box(
         div(
