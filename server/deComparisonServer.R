@@ -147,15 +147,38 @@ runMethods <- function(){
     # -------------------------------
     # DA: run all methods
     # -------------------------------
-  
-    resultVenn <- runDA(sce = sce, 
-          parameters = parameters,
-          da_methods = c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM"),
-          clustering_to_use = clusters, 
-          normalize = normalize, 
-          trend_edgeR = edgeRTrend, 
-          blockID = blockIDVoom
+    showNotification(
+      ui =
+        HTML("<div id='daComparisonProgress'><b>DE Progress:</b><div>"),
+      duration = NULL,
+      id = "progressNoteDAComp"
     )
+    tryCatch({
+      withCallingHandlers({
+        resultVenn <- runDA(sce = sce, 
+                            parameters = parameters,
+                            da_methods = c("diffcyt-DA-edgeR", "diffcyt-DA-voom", "diffcyt-DA-GLMM"),
+                            clustering_to_use = clusters, 
+                            normalize = normalize, 
+                            trend_edgeR = edgeRTrend, 
+                            blockID = blockIDVoom
+        )
+      },
+      message = function(m) {
+        shinyjs::html(id = "daComparisonProgress",
+                      html = sprintf("<br>%s", HTML(m$message)),
+                      add = TRUE)
+      },
+      warning = function(w) {
+        shinyjs::html(id = "daComparisonProgress",
+                      html = sprintf("<br><b><i>Warning: </i>%s</b>", HTML(w$message)),
+                      add = TRUE)
+      })},
+      error = function(e){
+        showNotification(HTML(sprintf("The analysis failed with the following message:<br>
+                                    <b>%s</b><br>Please retry with different parameters.", e$message)), duration = NULL, type = "error")
+      })
+    # removeNotification("progressNoteDAComp")
 
     return(resultVenn)
     
@@ -200,46 +223,57 @@ runMethods <- function(){
     showNotification(
       ui =
         HTML(
-          "<div id='emdProgress'><b>Progress:</b><div>"
+          "<div id='deComparisonProgress'><b>Progress:</b><div>"
         ),
       duration = NULL,
-      id = "emdProgressNote"
+      id = "deComparisonProgressNote"
     )
-
-    withCallingHandlers({
-      resultVenn <- runDS(
-        sce = sce,
-        ds_methods = methods,
-        clustering_to_use = clusters,
-        contrast_vars = condition,
-        markers_to_test = markersToTest,
-        parameters = parameters,
-        blockID = blockIDLimma,
-        trend_limma = limmaTrend,
-        include_weights = includeWeights,
-        design_matrix_vars = c(condition, addTerms, group), 
-        fixed_effects = c(condition, addTerms), 
-        random_effects = group,
-        cyEMD_nperm = emdNperm, 
-        cyEMD_binsize = cyEMD_binsize,
-        cytoGLMM_num_boot = CytoGLM_num_boot,
-        time_methods = FALSE,
-        parallel = FALSE
-      )
-
-      resultVenn[["effect_size"]] <- effectSize(sce = sce,
-                                                condition = condition,
-                                                group = group, 
-                                                k=clusters, 
-                                                use_assay="exprs", use_mean=FALSE)
+    tryCatch({
+      withCallingHandlers({
+        resultVenn <- runDS(
+          sce = sce,
+          ds_methods = methods,
+          clustering_to_use = clusters,
+          contrast_vars = condition,
+          markers_to_test = markersToTest,
+          parameters = parameters,
+          blockID = blockIDLimma,
+          trend_limma = limmaTrend,
+          include_weights = includeWeights,
+          design_matrix_vars = c(condition, addTerms, group), 
+          fixed_effects = c(condition, addTerms), 
+          random_effects = group,
+          cyEMD_nperm = emdNperm, 
+          cyEMD_binsize = cyEMD_binsize,
+          cytoGLMM_num_boot = CytoGLM_num_boot,
+          time_methods = FALSE,
+          parallel = FALSE
+        )
+  
+        resultVenn[["effect_size"]] <- effectSize(sce = sce,
+                                                  condition = condition,
+                                                  group = group, 
+                                                  k=clusters, 
+                                                  use_assay="exprs", use_mean=FALSE)
+      },
+      message = function(m) {
+        shinyjs::html(id = "deComparisonProgress",
+                      html = sprintf("<br>%s", HTML(m$message)),
+                      add = TRUE)
+      },
+      warning = function(w) {
+        shinyjs::html(id = "deComparisonProgress",
+                      html = sprintf("<br><b><i>Warning: </i>%s</b>", HTML(w$message)),
+                      add = TRUE)
+      })
+      
     },
-    message = function(m) {
-      shinyjs::html(id = "emdProgress",
-                    html = sprintf("<br>%s", HTML(m$message)),
-                    add = TRUE)
+    error = function(e){
+      showNotification(HTML(sprintf("The analysis failed with the following message:<br>
+                                    <b>%s</b><br>Please retry with different parameters.", e$message)), duration = NULL, type = "error")
     })
     
-    removeNotification("emdProgressNote")
+    # removeNotification("deComparisonProgressNote")
     return(resultVenn)
   }
 }
@@ -814,7 +848,7 @@ observeEvent(input$diffExpButtonVenn, {
                              HTML("<br>DE Analysis in Progress...<br>Please be patient")), 
               color=spinner$color)
   resultVenn <- runMethods()
-  if(!is.null(resultVenn)){
+  if(!is.null(resultVenn) && length(resultVenn) > 0){
       ds_bool <- isolate(reactiveVals$ds_bool)
     output$vennTitle <- renderUI({
       div(
@@ -870,9 +904,9 @@ observeEvent(input$diffExpButtonVenn, {
         width = 12
       )
     })
+    shinyjs::show("vennDiagramsBox")
   }
   waiter_hide(id = "app")
-  shinyjs::show("vennDiagramsBox")
   shinyjs::enable("diffExpButtonVenn")
   shinyjs::enable("previousTab")
   shinyjs::enable("nextTab")

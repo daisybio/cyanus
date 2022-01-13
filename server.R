@@ -1,4 +1,5 @@
 server <- function(input, output, session) {
+  library(data.table)
   
   # make reactiveValues and server-wide variables
   reactiveVals <- reactiveValues()

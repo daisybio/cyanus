@@ -243,7 +243,8 @@ call_DE <- function() {
       duration = NULL,
       id = "progressNote"
     )
-    
+  out <- NULL
+  tryCatch({
     withCallingHandlers({
       #extra args: cyEMD_condition, binSize, nperm
       if (methodType == "DA") {
@@ -290,6 +291,15 @@ call_DE <- function() {
       shinyjs::html(id = "deProgress",
                     html = sprintf("<br>%s", HTML(m$message)),
                     add = TRUE)
+    },
+    warning = function(w) {
+      shinyjs::html(id = "deProgress",
+                    html = sprintf("<br><b><i>Warning: </i>%s</b>", HTML(w$message)),
+                    add = TRUE)
+    })},
+    error = function(e){
+      showNotification(HTML(sprintf("The analysis failed with the following message:<br>
+                                    <b>%s</b><br>Please retry with different parameters.", e$message)), duration = NULL, type = "error")
     })
     
   
@@ -1149,20 +1159,6 @@ observeEvent(input$diffExpButton,{
                "diffExpButton",
                label = " Analysis...",
                disabled = TRUE)
-  
-  # check if a methods was already performed else create the list
-  if (is.null(reactiveVals$DEruns)){
-    reactiveVals$DEruns <- list()
-    output$heatmapDEPlot <- renderPlot({
-      ggplotObject <- ggplot() + theme_void()
-      return(ggplotObject)
-    })
-  }
-  
-  if(is.null(reactiveVals$methodsInfo)){
-    reactiveVals$methodsInfo <- list()
-  }
-  
 
   # call diffcyt function
   waiter_show(
@@ -1176,6 +1172,20 @@ observeEvent(input$diffExpButton,{
   out <- call_DE()
   waiter_hide(id = "app")
   if(!is.null(out)){
+    
+    # check if a methods was already performed else create the list
+    if (is.null(reactiveVals$DEruns)){
+      reactiveVals$DEruns <- list()
+      output$heatmapDEPlot <- renderPlot({
+        ggplotObject <- ggplot() + theme_void()
+        return(ggplotObject)
+      })
+    }
+    
+    if(is.null(reactiveVals$methodsInfo)){
+      reactiveVals$methodsInfo <- list()
+    }
+  
     # add method to DAruns
     reactiveVals$DEruns[[DAmethod]] <- out
   
