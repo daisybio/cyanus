@@ -163,6 +163,7 @@ runMethods <- function(){
                             trend_edgeR = edgeRTrend, 
                             blockID = blockIDVoom
         )
+        removeNotification("progressNoteDAComp")
       },
       message = function(m) {
         shinyjs::html(id = "daComparisonProgress",
@@ -178,7 +179,6 @@ runMethods <- function(){
         showNotification(HTML(sprintf("The analysis failed with the following message:<br>
                                     <b>%s</b><br>Please retry with different parameters.", e$message)), duration = NULL, type = "error")
       })
-    # removeNotification("progressNoteDAComp")
 
     return(resultVenn)
     
@@ -255,6 +255,7 @@ runMethods <- function(){
                                                   group = group, 
                                                   k=clusters, 
                                                   use_assay="exprs", use_mean=FALSE)
+        removeNotification("deComparisonProgressNote")
       },
       message = function(m) {
         shinyjs::html(id = "deComparisonProgress",
@@ -273,7 +274,6 @@ runMethods <- function(){
                                     <b>%s</b><br>Please retry with different parameters.", e$message)), duration = NULL, type = "error")
     })
     
-    # removeNotification("deComparisonProgressNote")
     return(resultVenn)
   }
 }
