@@ -65,21 +65,21 @@ output$downsamplingBoxPreprocessing <- renderUI({
 
 
 # render markers box
-output$markersBox <- renderUI({
-  pickerInput(
-    inputId = "markerSelection",
-    label = "Markers",
-    choices = names(channels(reactiveVals$sce)),
-    selected = names(channels(reactiveVals$sce)),
-    options = list(
-      `actions-box` = TRUE,
-      size = 4,
-      `selected-text-format` = "count > 3",
-      "dropup-auto" = FALSE
-    ),
-    multiple = TRUE
-  )
-})
+# output$markersBox <- renderUI({
+#   pickerInput(
+#     inputId = "markerSelection",
+#     label = "Markers",
+#     choices = names(channels(reactiveVals$sce)),
+#     selected = names(channels(reactiveVals$sce)),
+#     options = list(
+#       `actions-box` = TRUE,
+#       size = 4,
+#       `selected-text-format` = "count > 3",
+#       "dropup-auto" = FALSE
+#     ),
+#     multiple = TRUE
+#   )
+# })
 
 # render samples box
 output$samplesBox <- renderUI({
@@ -240,13 +240,13 @@ observeEvent(input$filterSelectionButton,{
   }
   if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
     if (length(input$patientSelection) != allpatients){
-      reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% input$patientSelection)
+      reactiveVals$sce <- filterSCE(reactiveVals$sce, patient_id %in% input$patientSelection)
     }
   }
   
-  markers <- isolate(input$markerSelection)
-  sce <- reactiveVals$sce[rownames(reactiveVals$sce) %in% markers, ]
-  plotPreprocessing(sce)
+  # markers <- isolate(input$markerSelection)
+  # sce <- reactiveVals$sce[rownames(reactiveVals$sce) %in% markers, ]
+  plotPreprocessing(reactiveVals$sce)
   
   waiter_hide(id = "app")
 })
