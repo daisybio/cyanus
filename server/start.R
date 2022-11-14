@@ -8,27 +8,32 @@ observeEvent(input$fcsFiles, {
 })
 
 observeEvent(input$metaFile, {
-  if(endsWith(input$metaFile$datapath, ".csv")){
+  if(endsWith(tolower(input$metaFile$datapath), ".csv")){
     reactiveVals$data$upload$md <- data.table::fread(input$metaFile$datapath)
     data.table::setDF(reactiveVals$data$upload$md)
-  }else if(endsWith(input$metaFile$datapath, ".xls") | 
-           endsWith(input$metaFile$datapath, ".xlsx")){
+  }else if(endsWith(tolower(input$metaFile$datapath), ".xls") | 
+           endsWith(tolower(input$metaFile$datapath), ".xlsx")){
     library(xlsx)
     showNotification("There are often problems with reading Excel files. If you can, please upload a .csv file", type = "warning")
     reactiveVals$data$upload$md <- read.xlsx2(input$metaFile$datapath, 1)
+  } else {
+    showNotification(HTML("<b>Unknown file extension.</b><br>Please upload a CSV (*.csv) or Excel (*.xls, *.xlsx) file.<br>Example: Check out the PBMC Example Data."), duration = NULL, type = "error")
   }
 })
 
 observeEvent(input$panelFile, {
-  if(endsWith(input$panelFile$datapath, ".csv")){
+  if(endsWith(tolower(input$panelFile$datapath), ".csv")){
     tmp_panel <-
       data.table::fread(input$panelFile$datapath)
     data.table::setDF(tmp_panel)
-  }else if(endsWith(input$panelFile$datapath, ".xls") | 
-            endsWith(input$panelFile$datapath, ".xlsx")){
+  }else if(endsWith(tolower(input$panelFile$datapath), ".xls") | 
+            endsWith(tolower(input$panelFile$datapath), ".xlsx")){
     library(xlsx)
     showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
     tmp_panel <- read.xlsx2(input$panelFile$datapath, 1)
+  } else {
+    showNotification(HTML("<b>Unknown file extension.</b><br>Please upload a CSV (*.csv) or Excel (*.xls, *.xlsx) file.<br>Example: Check out the PBMC Example Data."), duration = NULL, type = "error")
+    return()
   }
   if(any(!names(tmp_panel) %in% c("fcs_colname", "antigen", "marker_class")))
     showNotification(HTML("Error while reading the panel file:<br>A CSV or Excel file with headers describing the panel:<br>for each channel:<br>fcs_colname: its column name in the input data<br>antigen: targeted protein marker<br>marker_class: (optionally) class (type, state, or none)<br>i.e.:<br>fcs_colname,antigen[,marker_class]<br><b>Example: Check out the PBMC Example Data</b>"), duration = NULL, type = "error")
