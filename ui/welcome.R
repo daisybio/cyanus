@@ -34,6 +34,27 @@ welcomeBody <- tabItem(tabName = "welcome",
                        )),
                        fluidRow(
                          shinydashboard::box(
+                           width = 12,
+                           title = 'Cyanus - the flower',
+                           div(
+                             HTML(
+                               'The flower <i>Centaurea cyanus</i>, commonly known as cornflower, has various applications. 
+                               Its strong blue color is utilized as pigment for food and drinks and its leaves can be consumed as tea. 
+                               In the past, it has also been used in herbal medicine. <br><br>
+                               However, it has recently come to our attention that the flower has a strong symbolic value. 
+                               It is, e.g., the national flower of Estonia. In France, it is a symbol for veterans, victims of war, widows, and orphans. 
+                               In Belgium, Sweden, and Finland, it has been used as symbol for liberal parties.
+                               In Germany and Austria, however, it has been used by the Nazis and other nationalist, antisemitic movements. <br><br>
+                               We explicitly distance ourselves from any connection to this symbolic use. '
+                             ),
+                             style = "font-size: large;"
+                           ),
+                           collapsible = TRUE,
+                           collapsed = TRUE
+                           )
+                        ),
+                       fluidRow(
+                         shinydashboard::box(
                            withSpinner(tableOutput('licenseTable')),
                            title = "Dependencies",
                            width = 12,
