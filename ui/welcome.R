@@ -41,7 +41,7 @@ welcomeBody <- tabItem(tabName = "welcome",
                                'Our old logo resembled the flower <i>Centaurea cyanus</i>, commonly known as cornflower. 
                                Its strong blue color is utilized as pigment for food and drinks and its leaves can be consumed as tea. 
                                In the past, it has also been used in herbal medicine. <br><br>
-                               Tt has recently come to our attention that the flower also has a strong symbolic value. 
+                               It has recently come to our attention that the flower also has a strong symbolic value. 
                                It is, e.g., the national flower of Estonia. In France, it is a symbol for veterans, victims of war, widows, and orphans. 
                                In Belgium, Sweden, and Finland, it has been used as symbol for liberal parties.
                                In Germany and Austria, however, it has been used by the Nazis and other nationalist, antisemitic movements. <br><br>
