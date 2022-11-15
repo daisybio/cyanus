@@ -8,7 +8,7 @@ server <- function(input, output, session) {
 
   spinner <- list(logo = list(a(icon('envelope'), " Contact", href = "https://github.com/biomedbigdata/cyanus/issues", target = "_blank", style='color: black'), 
                               tags$br(), tags$br(), 
-                              spin_loaders(id = 29, color = "black")), color="rgb(146, 180, 242, .5)")
+                              spin_loaders(id = 5, color = "black")), color="rgb(146, 180, 242, .5)")
   
   # read all server files
   sapply(list.files("server", full.names = TRUE), source, environment())

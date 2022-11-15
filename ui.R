@@ -54,32 +54,32 @@ body <-
 
         /* navbar (rest of the header) */
         .skin-blue .main-header .navbar {
-                              background-color: #92b4f2;
+                              background-color: #8489c3;
                               }        
 
         /* main sidebar */
         .skin-blue .main-sidebar {
-                              background-color: #92b4f2;
+                              background-color: #8489c3;
                               }
 
         /* active selected tab in the sidebarmenu */
         .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
-                              background-color: #3676e8;
+                              background-color: #b0b3e0;
                               }
 
         /* other links in the sidebarmenu */
         .skin-blue .main-sidebar .sidebar .sidebar-menu a{
-                              background-color: #6495ed;
+                              background-color: #4a4d78;
                               color: #fffff;
                               }
 
         /* other links in the sidebarmenu when hovered */
          .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
-                              background-color: #6495ed;
+                              background-color: #4a4d78;
                               }
         /* toggle button when hovered  */                    
          .skin-blue .main-header .navbar .sidebar-toggle:hover{
-                              background-color: #6495ed;
+                              background-color: #4a4d78;
          }
          /* remove focus from success buttons */
          .btn-success:focus{
@@ -88,7 +88,7 @@ body <-
           }
                               
                               '))),
-    waiter_show_on_load(html = tagList(spin_loaders(id = 29, color = "black"), 
+    waiter_show_on_load(html = tagList(spin_loaders(id = 5, color = "black"), 
                                        HTML("<br>Loading App...")), 
                         color="rgb(146, 180, 242, .5)"),
     div(
