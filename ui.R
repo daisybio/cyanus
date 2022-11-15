@@ -30,6 +30,10 @@ sidebar <- dashboardSidebar(useShinyjs(),
 body <-
   dashboardBody(
     useWaiter(), # include dependencies
+    titlePanel(windowTitle = "CYANUS",
+               title = tags$head(tags$link(rel="icon",
+                                           type="image/png",
+                                           href="favicon.png"))),
     tags$style( # manually make waiter overly for the whole page
       ".waiter-overlay-content{
       color: black;
