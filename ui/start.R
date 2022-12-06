@@ -3,7 +3,7 @@ startBody <- function() {
   exampleDataVector <- c("PBMC" = "data/pbmc",
                          "Semi-Simulated COVID-19 data" = "data/covid_spiked",
                          "Simulated CytoGLMM data" = "data/cytoGLMM_simulated"
-                        )
+  )
   availableExampleData <- exampleDataVector %in% list.files("data", full.names = T)
   exampleDataVector <- exampleDataVector[availableExampleData]
   
@@ -16,9 +16,9 @@ startBody <- function() {
     ), 
     width=9),
     column(
-    checkboxInput("isFACSData", HTML("<b>FACS Data</b>"), FALSE),
-    checkboxInput("isEmptyValue", span(HTML("<b>Empty Value</b>"), icon("circle-question"), id = "emptyValueQ"), TRUE),
-    width= 3
+      checkboxInput("isFACSData", HTML("<b>FACS Data</b>"), FALSE),
+      checkboxInput("isEmptyValue", span(HTML("<b>Empty Value</b>"), icon("circle-question"), id = "emptyValueQ"), TRUE),
+      width= 3
     ),
     title = "Upload FCS Data",
     height = box_height,

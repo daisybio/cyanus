@@ -27,7 +27,7 @@ observeEvent(input$panelFile, {
       data.table::fread(input$panelFile$datapath)
     data.table::setDF(tmp_panel)
   }else if(endsWith(tolower(input$panelFile$datapath), ".xls") | 
-            endsWith(tolower(input$panelFile$datapath), ".xlsx")){
+           endsWith(tolower(input$panelFile$datapath), ".xlsx")){
     library(xlsx)
     showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
     tmp_panel <- read.xlsx2(input$panelFile$datapath, 1)
@@ -67,7 +67,7 @@ observeEvent(input$loadData, {
   resetDE()
   resetDEComparison()
   waiter_show(id = "app",html = tagList(spinner$logo, 
-                             HTML("<br>Loading Data...<br>Please be patient")), 
+                                        HTML("<br>Loading Data...<br>Please be patient")), 
               color=spinner$color)
   
   library(CATALYST)
@@ -75,7 +75,7 @@ observeEvent(input$loadData, {
   if (input$chooseDataTab == "dataUpload") {
     dn <- dirname(input$fcsFiles$datapath)[1]
     file.rename(input$fcsFiles$datapath, file.path(dn, "/", input$fcsFiles$name))
-
+    
     conditions <- names(reactiveVals$data$upload$md)[!names(reactiveVals$data$upload$md) 
                                                      %in% c("sample_id", "file_name")]
     md_cols <- list(file = "file_name", id = "sample_id", factors = conditions)
@@ -83,67 +83,67 @@ observeEvent(input$loadData, {
     tryCatch({
       withCallingHandlers({
         reactiveVals$sce <- CATALYST::prepData(
-        dn,
-        panel = reactiveVals$data$upload$panel,
-        md = reactiveVals$data$upload$md,
-        transform = FALSE,
-        md_cols = md_cols,
-        FACS = input$isFACSData,
-        emptyValue = input$isEmptyValue
-      )},
-      message = function(m) {
-        showNotification(HTML(sprintf("Loading the data produced with the following message:<br>
+          dn,
+          panel = reactiveVals$data$upload$panel,
+          md = reactiveVals$data$upload$md,
+          transform = FALSE,
+          md_cols = md_cols,
+          FACS = input$isFACSData,
+          emptyValue = input$isEmptyValue
+        )},
+        message = function(m) {
+          showNotification(HTML(sprintf("Loading the data produced with the following message:<br>
                                     <b>%s</b>", m$message)), duration = NULL, type = "message")
-      },
-      warning = function(w) {
-        showNotification(HTML(sprintf("Loading the data produced with the following warning:<br>
+        },
+        warning = function(w) {
+          showNotification(HTML(sprintf("Loading the data produced with the following warning:<br>
                                     <b>%s</b>", w$message)), duration = NULL, type = "warning")
-      }
+        }
       )},
-    error = function(e){
-      showNotification(HTML(sprintf("Loading the data failed with the following message:<br>
+      error = function(e){
+        showNotification(HTML(sprintf("Loading the data failed with the following message:<br>
                                     <b>%s</b>", e$message)), duration = NULL, type = "error")
-    })
+      })
   } else if (input$chooseDataTab == "dataExample") {
     reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
   } else if (input$chooseDataTab == "sceUpload") {
     reactiveVals$sce <- readRDS(file.path(input$sceFile$datapath))
-
+    
   }else
     stop("Which tab is selected?")
   
   
   if (!is.null(reactiveVals$sce)) { # meaning the data loading worked
-  
-  #drop levels of markers
-  SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
-  
-  # set negative values to zero
-  if (length(which(assays(reactiveVals$sce)$counts < 0)) > 0){
-    assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- 0
-    if ("exprs" %in% assayNames(reactiveVals$sce)){
-      assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- 0
-    }
-    showNotification(
-      HTML(
-        "<b>Negative values found.</b><br>
+    
+    #drop levels of markers
+    SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+    
+    # set negative values to zero
+    if (length(which(assays(reactiveVals$sce)$counts < 0)) > 0){
+      assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- 0
+      if ("exprs" %in% assayNames(reactiveVals$sce)){
+        assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- 0
+      }
+      showNotification(
+        HTML(
+          "<b>Negative values found.</b><br>
       Negative values were found in the data and now set to 0."
-      ),
-      duration = 10,
-      type = "message"
-    )
-  }
-
-  start_tab <- which(tab_ids == "start")
-  if (isolate(reactiveVals$max_tab) > start_tab)
-    reactiveVals$max_tab <- start_tab
-  reactiveVals$continue[start_tab] <- TRUE
-  runjs("document.getElementById('nextTab').scrollIntoView();")
+        ),
+        duration = 10,
+        type = "message"
+      )
+    }
+    
+    start_tab <- which(tab_ids == "start")
+    if (isolate(reactiveVals$max_tab) > start_tab)
+      reactiveVals$max_tab <- start_tab
+    reactiveVals$continue[start_tab] <- TRUE
+    runjs("document.getElementById('nextTab').scrollIntoView();")
     
   }
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE) 
   waiter_hide(id = "app")
-  })
+})
 
 output$panelDT <- renderDT(
   checkNullTable(reactiveVals$data$upload$panel),
@@ -161,11 +161,11 @@ output$currentData <- renderInfoBox({
   }else {
     fcs <- reactiveVals$data$example$fcs
     panel <- reactiveVals$data$example$panel
-     md <- reactiveVals$data$example$md
+    md <- reactiveVals$data$example$md
   }
   
   status <- "warning"
-
+  
   # if current data tab is sce upload
   if (input$chooseDataTab == "sceUpload"){
     value <- list(
@@ -180,41 +180,41 @@ output$currentData <- renderInfoBox({
         caption.placement = "top"
       )
     )
-  
+    
   } else { 
-  # if current data tab is upload data
-  if(input$chooseDataTab == "dataUpload"){
-    tableObj <- fluidRow(column(
-      12, h5(HTML("<b style=\"color:grey;\">If you provide a panel, you can alter its cells by double-clicking</b>")), hr(), DTOutput("panelDT")))
-  
-  # if current data tab is example data  
-  }else{
-    tableObj <- renderTable(
-      checkNullTable(panel),
-      caption = "Panel Data",
-      caption.placement = "top"
-    )
-  }
-  value <-
-    list(
-      renderTable(
-        checkNullTable(fcs),
-        caption = "FCS Data",
-        caption.placement = "top"
-      ),
-      tableObj,
-      renderTable(
-        checkNullTable(md),
-        caption = "Metadata",
+    # if current data tab is upload data
+    if(input$chooseDataTab == "dataUpload"){
+      tableObj <- fluidRow(column(
+        12, h5(HTML("<b style=\"color:grey;\">If you provide a panel, you can alter its cells by double-clicking</b>")), hr(), DTOutput("panelDT")))
+      
+      # if current data tab is example data  
+    }else{
+      tableObj <- renderTable(
+        checkNullTable(panel),
+        caption = "Panel Data",
         caption.placement = "top"
       )
-    )
+    }
+    value <-
+      list(
+        renderTable(
+          checkNullTable(fcs),
+          caption = "FCS Data",
+          caption.placement = "top"
+        ),
+        tableObj,
+        renderTable(
+          checkNullTable(md),
+          caption = "Metadata",
+          caption.placement = "top"
+        )
+      )
   }
   if (input$chooseDataTab == "dataUpload" &
       !is.null(input$fcsFiles)) {
     status <- "success"
   }else if (input$chooseDataTab == "dataExample" &
-           input$exampleData != "") {
+            input$exampleData != "") {
     status <- "success"
     info <- readRDS(file.path(input$exampleData, "help.rds"))
     value <- c(info,value)
