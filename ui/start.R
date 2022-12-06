@@ -17,34 +17,36 @@ startBody <- function() {
     width=9),
     column(
     checkboxInput("isFACSData", HTML("<b>FACS Data</b>"), FALSE),
+    checkboxInput("isEmptyValue", span(HTML("<b>Empty Value</b>"), icon("circle-question"), id = "emptyValueQ"), TRUE),
     width= 3
     ),
     title = "Upload FCS Data",
     height = box_height,
-    width = 5
+    width = 6
+  )
+  
+  emptyValuePopover <- bsPopover(
+    id = "emptyValueQ",
+    title = "Allow empty value",
+    content = "<b>If you get the warning <i>Empty keyword name detected![...] set emptyValue to FALSE and try again!</i>, uncheck the emptyValue checkbox!</b><br>This parameter is from the flowCore::read.FCS() function indicating whether or not empty values are allowed for keyword values in the TEXT segment. Affects how double delimiters are treated."
   )
   
   metaUploadBox <- shinydashboard::box(
-    column(fileInput(
+    fileInput(
       "metaFile",
       "Choose Metadata File (optional)",
       accept = c(".csv", ".xlsx", ".xls")
     ),
-    width = 9),
-    column(
-      checkboxInput("isEmptyValue", HTML("<b>Empty Value</b>"), TRUE),
-      width= 3
-    ),
     title = span("Upload Metadata", icon("circle-question"), id = "metaQ"),
     height = box_height,
-    width = 4
+    width = 3
   )
   
   metaPopover <- 
     bsPopover(
       id = "metaQ",
       title = "A CSV or Excel file with headers describing the experiment",
-      content = "e.g. 4 columns:<br>file_name, sample_id, patient_id, condition<br>file_name: the FCS file name<br>sample_id: a unique sample identifier<br>patient_id: the patient ID<br>condition: brief sample description (e.g. reference/stimulated, healthy/diseased)<br><b>Example: Check out the PBMC Example Metadata</b>.<br> If you get the warning <i>Empty keyword name detected![...] set emptyValue to FALSE and try again!</i>, uncheck the emptyValue checkbox!"
+      content = "e.g. 4 columns:<br>file_name, sample_id, patient_id, condition<br>file_name: the FCS file name<br>sample_id: a unique sample identifier<br>patient_id: the patient ID<br>condition: brief sample description (e.g. reference/stimulated, healthy/diseased)<br><b>Example: Check out the PBMC Example Metadata</b>."
     )
   
   panelUploadBox <- shinydashboard::box(
@@ -108,7 +110,7 @@ startBody <- function() {
     fluidRow(
       tabBox(
         tabPanel(
-          fluidRow(dataUploadBox, panelUploadBox, panelPopover, metaUploadBox, metaPopover),
+          fluidRow(dataUploadBox, emptyValuePopover, panelUploadBox, panelPopover, metaUploadBox, metaPopover),
           value = "dataUpload",
           title = "Upload Data"
         ),

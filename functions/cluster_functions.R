@@ -188,7 +188,7 @@ plotMarkerCustom <- function(sce,
   channels <- rowData(sce)[rowData(sce)$marker_name %in% marker, "channel_name"]
   marker_dict <- rowData(sce)[rowData(sce)$marker_name %in% marker, "marker_name"]
   names(marker_dict) <- rowData(sce)[rowData(sce)$marker_name %in% marker, "channel_name"]
-  if(facet_by == "" & subselection_col == ""){
+  if(is.null(subselection) & facet_by == "" & subselection_col == ""){
     if (is.null(lim)) 
       lim <- c(min(mfis[, channels]), max(mfis[, channels]))
     plotList <- lapply(seq_along(channels), function(channelI) {
@@ -608,6 +608,7 @@ clusterSCE <-
     S4Vectors::metadata(x)$SOM_codes <- som$map$codes
     S4Vectors::metadata(x)$SOM_medianValues <- som$map$medianValues
     S4Vectors::metadata(x)$SOM_MST <- som$MST
+    # this was changed because of the new FlowSOM clustering
     S4Vectors::metadata(x)$SOM_MST$size <- som$map$pctgs
     S4Vectors::metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
     x <-

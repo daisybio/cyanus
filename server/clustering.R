@@ -627,8 +627,8 @@ output$clusterStarPlot <- renderPlot({
   reactiveVals$starCluster
 })
 
+
 output$clusterStarMarkerPlot <- renderPlot({
-  # TODO: why not possible with isolate
   req(input$plotStarMarkerFeatureIn)
   reactiveVals$starMarkerCluster <-
     plotMarkerCustom(
