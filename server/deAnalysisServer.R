@@ -317,7 +317,7 @@ output$selectionBoxDE <- renderUI({
       inputId = "da_ds",
       label = span(
         "What type of testing do you want to perform?",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "da_dsQ"
       ),
       choices = c("Differential Marker Expression", "Differential Cluster Abundance"),
@@ -350,7 +350,7 @@ output$selectionBoxDE <- renderUI({
       bsButton(
         "diffExpButton",
         "Start Analysis",
-        icon = icon("tools"),
+        icon = icon("screwdriver-wrench"),
         style = "success"
       ),
       style = "float: right; bottom:5px"
@@ -375,7 +375,7 @@ output$deMethodSelection <- renderUI({
    div(
      selectizeInput(
       inputId = "chosenDAMethod",
-      label = span("Available Methods", icon("question-circle"), id = "deMethodsQ"),
+      label = span("Available Methods", icon("circle-question"), id = "deMethodsQ"),
       choices = choices,
       multiple = F
     ),
@@ -401,7 +401,7 @@ output$conditionSelection <- renderUI({
       choices = condChoices,
       label = span(
         "What condition do you want to analyse?",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "conditionInQ"
       )
     ),
@@ -426,7 +426,7 @@ output$groupSelection <- renderUI({
       choices = groupCol,
       label = span(
         "Do you have paired samples? Which column identifies the group e.g. patient_id?",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "groupColQ"
       ),
       options = list(
@@ -454,7 +454,7 @@ output$additionalTermsSelection <- renderUI({
       choices = addTerms,
       label = span(
         "Additional fixed terms to include in the Model",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "addTermsQ"
       ),
       options = list(
@@ -480,7 +480,7 @@ output$weightSelection <- renderUI({
     div(
       radioButtons(
         inputId = "weightsSelection",
-        label = span("Do you want to include precision weights (cell counts) within the model?", icon("question-circle"), id = "weightSelectQ"),
+        label = span("Do you want to include precision weights (cell counts) within the model?", icon("circle-question"), id = "weightSelectQ"),
         choices = c("Yes", "No"), 
         inline = T
       ),
@@ -515,7 +515,7 @@ output$normalizeSelection <- renderUI({
     div(
       radioButtons(
         inputId = "normalizeDE",
-        label = span("Normalize?", icon("question-circle"), id = "normalizeDEQ"),
+        label = span("Normalize?", icon("circle-question"), id = "normalizeDEQ"),
         choices = c("Yes", "No"),
         inline = T
       ),
@@ -539,7 +539,7 @@ output$emdInput <- renderUI({
       "emdBinwidth",
       label = span(
         "Bin width for comparing histograms",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "emdBinwidthQ"
       ),
       value = 0,
@@ -563,7 +563,7 @@ output$emdNpermInput <- renderUI({
       "emdNperm",
       label = span(
         "Number of permutations for p-value estimation",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "emdNpermQ"
       ),
       value = min(500, maxPerm),
@@ -586,7 +586,7 @@ output$CytoGLM_num_boot <- renderUI({
       "cytoNBoot",
       label = span(
         "Number of bootstrap samples",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "cytoNBootQ"
       ),
       value = 1000,
@@ -621,7 +621,7 @@ output$deSubselection <- renderUI({
   div(
     checkboxGroupInput(
       inputId = "deSubselection",
-      label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectQ"),
+      label = span("Do you want to analyse this condition just on a subset?", icon("circle-question"), id = "subSelectQ"),
       choices = c(choices), 
       inline = T
     ),
@@ -642,7 +642,7 @@ output$downsamplingDE <- renderUI({
     column(
       radioButtons(
         "downsampling_Yes_No_DE",
-        label = span("Do you want to perform downsampling?", icon("question-circle"), id="dsDEPopover"),
+        label = span("Do you want to perform downsampling?", icon("circle-question"), id="dsDEPopover"),
         choices = c("Yes", "No"),
         selected = "No",
         inline = TRUE
@@ -698,7 +698,7 @@ output$extraFeatures <- renderUI({
     div(
       selectizeInput(
         inputId = "edgeR_trendMethod",
-        label = span("Trend Method", icon("question-circle"), id = "trendMethodQ"),
+        label = span("Trend Method", icon("circle-question"), id = "trendMethodQ"),
         choices = c("none", "locfit", "movingave", "loess", "locfit.mixed"),
         multiple = F
       ),
@@ -715,7 +715,7 @@ output$extraFeatures <- renderUI({
     div(
       selectizeInput(
         inputId = "blockID_voom",
-        label = span("Block ID", icon("question-circle"), id = "blockIDvoomQ"),
+        label = span("Block ID", icon("circle-question"), id = "blockIDvoomQ"),
         choices = cols,
         options = list(
           placeholder = "Select your block IDs or nothing",
@@ -736,7 +736,7 @@ output$extraFeatures <- renderUI({
     div(
       selectizeInput(
         inputId = "blockID_limma",
-        label = span("Block ID", icon("question-circle"), id = "blockIDlimmaQ"),
+        label = span("Block ID", icon("circle-question"), id = "blockIDlimmaQ"),
         choices = cols,
         options = list(
           placeholder = "Select your block IDs or nothing",
@@ -752,7 +752,7 @@ output$extraFeatures <- renderUI({
       ),
       radioButtons(
         inputId = "trend_limma",
-        label = span("Limma Trend Method", icon("question-circle"), id = "trendlimmaQ"),
+        label = span("Limma Trend Method", icon("circle-question"), id = "trendlimmaQ"),
         choices = c("Yes", "No"),
         inline = T
       ),
@@ -1306,7 +1306,7 @@ observeEvent(input$visExpButton,{
     
     dropdownButton(
       value,
-      icon = icon("info-circle"),
+      icon = icon("circle-info"),
       status = "info",
       right = TRUE
     )

@@ -8,7 +8,7 @@ vennBody <- function(){
         inputId = "da_dsVenn",
         label = span(
           "What type of analysis method do you want to perform?",
-          icon("question-circle"),
+          icon("circle-question"),
           id = "da_dsVennQ"
         ),
         choices = c("Differential Marker Expression", "Differential Cluster Abundance"),
@@ -43,7 +43,7 @@ vennBody <- function(){
         bsButton(
           "diffExpButtonVenn",
           "Start Comparison",
-          icon = icon("tools"),
+          icon = icon("screwdriver-wrench"),
           style = "success"
         ),
         style = "float: right; bottom:5px"

@@ -6,7 +6,7 @@ deBody <- function(){
   
   plotBox <- shinydashboard::box(
     uiOutput("deBoxPlots"),
-    title = span("Boxplots", icon("question-circle"), id = "boxplotPopover"),
+    title = span("Boxplots", icon("circle-question"), id = "boxplotPopover"),
     width = 12,
     height = plotbox_height,
   )

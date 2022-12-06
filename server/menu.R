@@ -14,16 +14,16 @@ reactiveVals$continue <- c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE)
 tabs <- list(
   menuItem("Welcome",
            tabName = tab_ids[1],
-           icon = icon("home")),
+           icon = icon("house")),
   menuItem(
     "Get Started",
     tabName = tab_ids[2],
-    icon = icon("play-circle")
+    icon = icon("circle-play")
   ),
   menuItem(
     "Preprocessing",
     tabName = tab_ids[3],
-    icon = icon("tools")
+    icon = icon("screwdriver-wrench")
   ),
   menuItem(
     "Visualization",
@@ -38,7 +38,7 @@ tabs <- list(
   menuItem(
     "DE Analysis",
     tabName = tab_ids[6],
-    icon = icon("chart-bar")
+    icon = icon("chart-column")
   ),
   menuItem(
     "DE Method Comparison",
@@ -48,7 +48,7 @@ tabs <- list(
   menuItem(
     "Goodbye",
     tabName = tab_ids[8],
-    icon = icon("stop")
+    icon = icon("circle-stop")
   )
 )
 
@@ -66,7 +66,7 @@ observeEvent({
     shinyjs::show("nextTab")
   else if (reactiveVals$current_tab == length(tab_ids))
     shinyjs::hide("nextTab")
-    #shinyBS::updateButton(session, inputId = "nextTab", icon = icon("times-circle"), style = "warning", disabled = FALSE)
+    #shinyBS::updateButton(session, inputId = "nextTab", icon = icon("circle-xmark"), style = "warning", disabled = FALSE)
   else
     stop("what is the current id?")
   if (!reactiveVals$continue[reactiveVals$current_tab] &&

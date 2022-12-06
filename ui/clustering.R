@@ -33,14 +33,14 @@ clusteringBody <- tabItem(
             width = 12,
             color = "orange",
             fill = TRUE,
-            icon = shiny::icon("exclamation-triangle")
+            icon = shiny::icon("triangle-exclamation")
           ))),
         width = 6
       ),
       column(
         sliderInput(
           inputId = "xdim",
-          label = span("X-dimension of the grid size of the self-organizing map", icon("question-circle"), id = "xdimQ"),
+          label = span("X-dimension of the grid size of the self-organizing map", icon("circle-question"), id = "xdimQ"),
           value = 10,
           min = 1,
           max = 100
@@ -52,7 +52,7 @@ clusteringBody <- tabItem(
         ),
         sliderInput(
           inputId = "ydim",
-          label = span("Y-dimension of the grid size of the self-organizing map", icon("question-circle"), id = "ydimQ"),
+          label = span("Y-dimension of the grid size of the self-organizing map", icon("circle-question"), id = "ydimQ"),
           value = 10,
           min = 1,
           max = 100
@@ -64,7 +64,7 @@ clusteringBody <- tabItem(
         ),
         sliderInput(
           inputId = "k",
-          label = span("Maximum Number of Clusters to Evaluate in the Meta-Clustering", icon("question-circle"), id = "kQ"),
+          label = span("Maximum Number of Clusters to Evaluate in the Meta-Clustering", icon("circle-question"), id = "kQ"),
           value = 20,
           min = 3,
           max = 80
@@ -83,7 +83,7 @@ clusteringBody <- tabItem(
             width = 12,
             color = "orange",
             fill = TRUE,
-            icon = shiny::icon("exclamation-triangle")
+            icon = shiny::icon("triangle-exclamation")
           ))),
         width = 6
       ),

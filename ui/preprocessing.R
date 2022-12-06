@@ -16,7 +16,7 @@ preprocessingBody <- function() {
         width = 12,
         color = "orange",
         fill = TRUE,
-        icon = shiny::icon("exclamation-triangle")
+        icon = shiny::icon("triangle-exclamation")
       )
     ),
     textInput("cofactor", "Cofactor:", value = "5"),
@@ -24,14 +24,14 @@ preprocessingBody <- function() {
       bsButton(
         "prepButton",
         "Start Transformation",
-        icon = icon("tools"),
+        icon = icon("screwdriver-wrench"),
         style = "success"
       ),
       style = "float: right;"
     ),
     title = span(
       "Choose Cofactor for Arcsinh Transformation",
-      icon("question-circle"),
+      icon("circle-question"),
       id = "cofactor"
     ),
     height = marker_sample_height,
@@ -54,7 +54,7 @@ preprocessingBody <- function() {
       ),
       style = "float: right;"
     ),
-    title = span("Downsampling", icon("question-circle"), id="dsPrepPopover"),
+    title = span("Downsampling", icon("circle-question"), id="dsPrepPopover"),
     height = marker_sample_height,
     width = 4
   )
@@ -90,7 +90,7 @@ preprocessingBody <- function() {
     ),
     title = span(
       "Selecting Samples and Patients",
-      icon("question-circle"),
+      icon("circle-question"),
       id = "selecting"
     ),
     height = marker_sample_height,
@@ -105,7 +105,7 @@ preprocessingBody <- function() {
   # box for counts plots
   countsBox <- shinydashboard::box(
     uiOutput("designCounts"),
-    title = span("Counts Plot", icon("question-circle"), id = "counts"),
+    title = span("Counts Plot", icon("circle-question"), id = "counts"),
     width = 12,
     height = plot_height
   )
@@ -118,7 +118,7 @@ preprocessingBody <- function() {
   # box for mds plots
   mdsBox <- shinydashboard::box(
     uiOutput("designMDS"),
-    title = span("MDS Plot", icon("question-circle"), id = "mds"),
+    title = span("MDS Plot", icon("circle-question"), id = "mds"),
     width = 12,
     height = plot_height
   )
@@ -131,7 +131,7 @@ preprocessingBody <- function() {
   # box for nrs plots
   nrsBox <- shinydashboard::box(
     uiOutput("designNRS"),
-    title = span("NRS Plot", icon("question-circle"), id = "nrs"),
+    title = span("NRS Plot", icon("circle-question"), id = "nrs"),
     width = 12,
     height = plot_height
   )
@@ -143,7 +143,7 @@ preprocessingBody <- function() {
   # box for exprs plots
   exprsBox <- shinydashboard::box(
     uiOutput("designExprs"),
-    title = span("Expression Densities", icon("question-circle"), id = "exprs"),
+    title = span("Expression Densities", icon("circle-question"), id = "exprs"),
     width = 12,
     height = plot_height
   )
@@ -156,7 +156,7 @@ preprocessingBody <- function() {
   # box for exprs heatmpa plots
   exprsHeatmapBox <- shinydashboard::box(
     uiOutput("designExprsHeatmap"),
-    title = span("Expression Heatmap", icon("question-circle"), id = "exprsHeatmap"),
+    title = span("Expression Heatmap", icon("circle-question"), id = "exprsHeatmap"),
     width = 12,
     height = plot_height
   )
@@ -239,7 +239,7 @@ preprocessingBody <- function() {
           ),
           style = "float: right; margin-top: 5px; margin-right: 5px;"
         ),
-        title = span("Column Reordering of Metadata", icon("question-circle"), id = "reorderingTabBoxTitle"),
+        title = span("Column Reordering of Metadata", icon("circle-question"), id = "reorderingTabBoxTitle"),
         bsPopover(id = "reorderingTabBoxTitle",
                   title = "Reorder Metadata", 
                   placement = "top",

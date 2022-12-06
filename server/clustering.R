@@ -11,6 +11,7 @@ resetClustering <- function(){
 
 
 ### Observer ----
+
 observeEvent(input$startClustering, {
   updateButton(session,
                "startClustering",
@@ -190,7 +191,6 @@ observeEvent(reactiveVals$sce, {
   else
     reactiveVals$continue[which(tab_ids == "clustering")] <- FALSE
 })
-
 
 ### Renderer ----
 
@@ -517,6 +517,7 @@ output$clusteringOutput <- renderUI({
               tags$h3("Plot Options"),
               selectInput(
                 "plotStarMarkerFeatureIn",
+                multiple=TRUE,
                 label = "Marker",
                 choices = stats::setNames(
                   rownames(reactiveVals$sce),
@@ -525,7 +526,15 @@ output$clusteringOutput <- renderUI({
                     rownames(reactiveVals$sce),
                     as.character(marker_classes(reactiveVals$sce))
                   )
-                )
+                ),
+                selected = stats::setNames(
+                  rownames(reactiveVals$sce),
+                  sprintf(
+                    "%s (%s)",
+                    rownames(reactiveVals$sce),
+                    as.character(marker_classes(reactiveVals$sce))
+                  )
+                )[1]
               ),
               selectInput(
                 "plotStarMarkerFacets",
@@ -572,7 +581,6 @@ output$clusteringOutput <- renderUI({
 
 output$plotStarMarkerSubselectionChoicesBox <- renderUI({
   req(input$plotStarMarkerSubselection, input$plotStarMarkerSubselection != "")
-  
   choices <- levels(ei(reactiveVals$sce)[[input$plotStarMarkerSubselection]])
   
   selectInput(
@@ -620,10 +628,12 @@ output$clusterStarPlot <- renderPlot({
 })
 
 output$clusterStarMarkerPlot <- renderPlot({
+  # TODO: why not possible with isolate
+  req(input$plotStarMarkerFeatureIn)
   reactiveVals$starMarkerCluster <-
     plotMarkerCustom(
-      reactiveVals$sce,
-      input$plotStarMarkerFeatureIn,
+      sce = reactiveVals$sce,
+      marker = input$plotStarMarkerFeatureIn,
       facet_by = input$plotStarMarkerFacets,
       subselection_col = isolate(input$plotStarMarkerSubselection),
       subselection = input$plotStarMarkerSubselectionChoices,

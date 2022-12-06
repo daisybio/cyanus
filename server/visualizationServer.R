@@ -219,7 +219,7 @@ observeEvent(input$startDimRed, {
     )
     dropdownButton(
       shinydashboard::box(value, title = "Info", width = 12),
-      icon = icon("info-circle"),
+      icon = icon("circle-info"),
       status = "info",
       right = TRUE
     )
@@ -272,7 +272,7 @@ output$markersVis <- renderUI({
       inputId = "pickedFeaturesVis",
       label = span(
         "Features to use for the dimensionality reduction",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "pickedFeaturesVisQ"
       ),
       choices = choices,
@@ -297,7 +297,7 @@ output$dimensionsVis <- renderUI({
     numericInput(
     "nrDimensions",
     label = span("How many dimensions should be returned?",
-      icon("question-circle"),
+      icon("circle-question"),
       id = "dimensionsQ"
     ),
     value = 2,
@@ -353,7 +353,7 @@ output$runDRparBox <- renderUI({
             "From how many cells do you want to sample (minimal number of cells in a sample: %s)?",
             min(metadata(reactiveVals$sce)$experiment_info$n_cells)
           ),
-          icon("question-circle"),
+          icon("circle-question"),
           id = "cellQ"
         ),
         value = 100,
@@ -370,7 +370,7 @@ output$runDRparBox <- renderUI({
         "seedSubsamplingDR",
         label = span(
             "Set a seed for your subsampling so that your results are reproducible",
-          icon("question-circle"),
+          icon("circle-question"),
           id = "seedsubsamplingDRQ"
         ),
         value = 42,
@@ -385,7 +385,7 @@ output$runDRparBox <- renderUI({
       ),
       radioButtons(
         inputId = "scaleRun",
-        label = span("Scale ",  icon("question-circle"), id = "scaleQ"),
+        label = span("Scale ",  icon("circle-question"), id = "scaleQ"),
         choices = c("yes", "no"),
         inline = TRUE
       ),
@@ -400,7 +400,7 @@ output$runDRparBox <- renderUI({
             "valueGraph",
             label = span(
               "Choose k for the KNN construction",
-              icon("question-circle"),
+              icon("circle-question"),
               id = "kQ"
             ),
             min = 0,
@@ -417,7 +417,7 @@ output$runDRparBox <- renderUI({
         bsButton(
           "runDRButton",
           "Run with these parameters",
-          icon = icon("mouse-pointer"),
+          icon = icon("arrow-pointer"),
           style = "success"
         ),
         style = "float: right;"
@@ -442,7 +442,7 @@ output$radioButtonsScale <- renderUI({
   div(
   radioButtons(
     inputId = "scaleVis",
-    label = span("Scale ",  icon("question-circle"), id = "scaleVisQ"),
+    label = span("Scale ",  icon("circle-question"), id = "scaleVisQ"),
     choices = c("yes", "no"),
     inline = TRUE
   ),
@@ -507,7 +507,7 @@ output$methodsVis <- renderUI({
       inputId = "selectedVisMethod",
       label = span(
         "Dimensionality Reduction Method",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "drVisQ"
       ),
       vis_methods
@@ -534,7 +534,7 @@ output$assayVis <- renderUI({
       "assayVisSelected",
       label = span(
         "Do you want to use raw counts or the normalization?",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "assayQ"
       ),
       choices = choices,

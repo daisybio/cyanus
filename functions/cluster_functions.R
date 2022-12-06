@@ -1,92 +1,8 @@
-############
-## mystar ##
-############
-# Internal use only:
-# Add a new vertex shape to iGraph to make star charts
-mystar <- function(coords, v = NULL, params) {
-  vertex.color <- params("vertex", "color")
-  if (length(vertex.color) != 1 && !is.null(v)) {
-    vertex.color <- vertex.color[v]
-  }
-  vertex.size    <- 1 / 200 * params("vertex", "size")
-  if (length(vertex.size) != 1 && !is.null(v)) {
-    vertex.size <- vertex.size[v]
-  }
-  data <- params("vertex", "data")
-  cP <- params("vertex", "cP")
-  scale <- params("vertex", "scale")
-  bg <- params("vertex", "bg")
-  graphics::symbols(
-    coords[, 1],
-    coords[, 2],
-    circles = vertex.size,
-    inches = FALSE,
-    bg = bg,
-    bty = 'n',
-    add = TRUE
-  )
-  graphics::stars(
-    data,
-    locations = coords,
-    labels = NULL,
-    scale = scale,
-    len = vertex.size,
-    col.segments = cP,
-    draw.segments = TRUE,
-    mar = c(0, 0, 0, 0),
-    add = TRUE,
-    inches = FALSE
-  )
-  
-}
-
-plotStarLegendCustom <- function (labels, colors = grDevices::rainbow(length(labels)), 
-                                  main = "") 
-{
-  graphics::plot(1, type = "n", xlab = "", ylab = "", xlim = c(-3, 
-                                                               3), ylim = c(-3, 3), asp = 1, bty = "n", xaxt = "n", 
-                 yaxt = "n", main = main)
-  graphics::stars(matrix(c(1:(2 * length(labels))), nrow = 2), 
-                  col.segments = colors, locations = c(0, 0), draw.segments = TRUE, 
-                  add = TRUE, inches = FALSE)
-  n <- length(labels)
-  angle <- 2 * pi/n
-  angles <- seq(angle/2, 2 * pi, by = angle)
-  left <- (angles > (pi/2) & angles < (3 * pi/2))
-  x <- c(2, -2)[left + 1]
-  y_tmp <- c(seq(-2, 2, by = 4/(sum(!left) + 1))[-c(1, sum(!left) + 
-                                                      2)], seq(2, -2, by = -4/(sum(left) + 1))[-c(1, sum(left) + 
-                                                                                                    2)])
-  y <- FlowSOM:::shiftFunction(y_tmp, max((cummax(y_tmp) < 0) * seq_along(y_tmp)))
-  for (i in seq_along(labels)) {
-    graphics::text(x = x[i], y = y[i], labels = labels[i], 
-                   adj = c(as.numeric(left)[i], 0.5), cex = 1.5)
-    graphics::lines(x = c(x[i] + c(-0.2, 0.2)[left[i] + 
-                                                1], c(1.5, -1.5)[left[i] + 1], cos(angles[i])), 
-                    y = c(y[i], y[i], sin(angles[i])), col = colors[i], 
-                    lwd = 2)
-  }
-}
-
-PlotBackgroundLegendCustom <- function (backgroundValues, background, main = "Background", max_rows = 10)
-{
-  graphics::plot.new()
-  if (is.numeric(backgroundValues)) {
-    FlowSOM:::legendContinuous(background$col, as.numeric(gsub(".*,", 
-                                                     "", gsub("].*", "", levels(background$values)))))
-  }
-  else {
-    graphics::legend("center", legend = levels(background$values), 
-                     fill = background$col, cex = 1.5, ncol = ceiling(length(levels(background$values))/max_rows), 
-                     bty = "n", title = main)
-  }
-}
-
 
 plotStarsCustom <-
-  function (sce,
-            markers = SummarizedExperiment::rowData(sce)$marker_name[SummarizedExperiment::rowData(sce)$used_for_clustering],
-            view = "MST",
+  function (sce, 
+            backgroundValues = NULL,
+            markers = SummarizedExperiment::rowData(sce)$marker_name[SummarizedExperiment::rowData(sce)$used_for_clustering], 
             colorPalette = grDevices::colorRampPalette(
               c(
                 "#00007F",
@@ -99,262 +15,278 @@ plotStarsCustom <-
                 "red",
                 "#7F0000"
               )
-            ),
-            starBg = "white",
-            backgroundValues = NULL,
-            backgroundColor = function(n) {
-              grDevices::rainbow(n, alpha = 0.3)
-            },
-            backgroundLim = NULL,
-            backgroundBreaks = NULL,
-            backgroundSize = NULL,
-            thresholds = NULL,
-            legend = TRUE,
-            query = NULL,
-            range = "all",
-            main = "")
+            ), 
+            list_insteadof_ggarrange = FALSE, ...) 
   {
-    igraph::add.vertex.shape(
-      "star",
-      clip = igraph::igraph.shape.noclip,
-      plot = mystar,
-      parameters = list(
-        vertex.data = NULL,
-        vertex.cP = colorPalette,
-        vertex.scale = FALSE,
-        vertex.bg = starBg
-      )
-    )
-    if (is.null(thresholds)) {
-      data <- S4Vectors::metadata(sce)$SOM_medianValues[, markers, drop = FALSE]
-      if (range == "all") {
-        min_data <- min(data, na.rm = TRUE)
-        max_data <- max(data, na.rm = TRUE)
-        data <- (data - min_data) / (max_data - min_data)
-      }
-      else if (range == "one") {
-        data <- apply(data, 2, function(x) {
-          min_x <- min(x, na.rm = TRUE)
-          max_x <- max(x, na.rm = TRUE)
-          (x - min_x) / (max_x - min_x)
-        })
-      }
+    if (length(names(list(...))) > 0 && "backgroundColor" %in% 
+        names(list(...))) {
+      warning(paste0("\"backgroundColor\" is deprecated, ", 
+                     "please use \"backgroundColors\" instead."))
+    }
+    p <- PlotFlowSOMCustom(sce, view = "MST", 
+                             backgroundValues = backgroundValues,
+                             maxNodeSize = 1.5)
+    channels <- rowData(sce)[rownames(rowData(sce)) %in% markers, "channel_name"]
+    p <- AddStarsCustom(p = p, sce=sce, markers = markers, colorPalette = colorPalette)
+    if (!is.null(names(colorPalette))) {
+      names(colorPalette) <- markers
+    }
+    l1 <- FlowSOM::PlotStarLegend(markers, colorPalette)
+    l2 <- ggpubr::get_legend(p)
+    if (list_insteadof_ggarrange) {
+      p <- p + ggplot2::theme(legend.position = "none")
+      l2 <- ggpubr::as_ggplot(l2)
+      return(list(tree = p, starLegend = l1, backgroundLegend = l2))
     }
     else {
-      if (fsom$transform) {
-        warning("Thresholds should be given in the transformed space")
-      }
-      if (!is.null(fsom$scaled.center)) {
-        thresholds <-
-          scale(
-            t(thresholds),
-            center = fsom$scaled.center[markers],
-            scale = fsom$scaled.scale[markers]
-          )
-      }
-      data <- t(sapply(seq_len(fsom$map$nNodes), function(i) {
-        res = NULL
-        for (m in seq_along(markers)) {
-          res = c(res,
-                  sum(
-                    subset(fsom$data, fsom$map$mapping[,
-                                                       1] == i)[, markers[m]] > thresholds[m]
-                  ) / sum(fsom$map$mapping[,
-                                           1] == i))
-        }
-        res
-      }))
+      p <- ggpubr::ggarrange(p, ggpubr::ggarrange(l1, l2, 
+                                                  ncol = 1), NULL, ncol = 3, widths = c(3, 1, 0.3), 
+                             legend = "none")
+      return(p)
     }
-    switch(view,
-           MST = {
-             layout <- S4Vectors::metadata(sce)$SOM_MST$l
-             lty <- 1
-           },
-           grid = {
-             layout <- as.matrix(fsom$map$grid)
-             lty <- 0
-           },
-           tSNE = {
-             layout <- fsom$MST$l2
-             lty <- 0
-           },
-           stop(
-             "The view should be MST, grid or tSNE. tSNE will only work\n                   if you specified this when building the MST."
-           ))
-    if (!is.null(backgroundValues)) {
-      background <- FlowSOM:::computeBackgroundColor(backgroundValues,
-                                                     backgroundColor,
-                                                     backgroundLim,
-                                                     backgroundBreaks)
-      if (is.null(backgroundSize)) {
-        backgroundSize <- S4Vectors::metadata(sce)$SOM_MST$size
-        backgroundSize[backgroundSize == 0] <- 3
-      }
-    }
-    else {
-      background <- NULL
-    }
-    oldpar <- graphics::par(no.readonly = TRUE)
-    graphics::par(mar = c(1, 1, 1, 1))
-    if (legend) {
-      if (!is.null(backgroundValues)) {
-      graphics::layout(matrix(c(1, 3, 2, 3), 2, 2, byrow = TRUE),
-                       widths = c(1, 2),
-                       heights = c(1))
-      }
-      else {
-        graphics::layout(matrix(c(1, 2), 1, 2, byrow = TRUE),
-                         widths = c(1, 2),
-                         heights = c(1))
-      }
-      if (is.null(query)) {
-        plotStarLegendCustom(markers, colorPalette(ncol(data)), "\nMarker")
-      }
-      else {
-        plotStarQuery(fsom$prettyColnames[markers],
-                      values = query ==
-                        "high",
-                      colorPalette(ncol(data)))
-      }
-      if (!is.null(backgroundValues)) {
-        PlotBackgroundLegendCustom(backgroundValues, background, "Cluster")
-      }
-    }
-    igraph::plot.igraph(
-      S4Vectors::metadata(sce)$SOM_MST$g,
-      vertex.shape = "star",
-      vertex.label = NA,
-      vertex.size = S4Vectors::metadata(sce)$SOM_MST$size,
-      vertex.data = data,
-      vertex.cP = colorPalette(ncol(data)),
-      vertex.scale = FALSE,
-      layout = layout,
-      edge.lty = lty,
-      mark.groups = background$groups,
-      mark.col = background$col[background$values],
-      mark.border = background$col[background$values],
-      mark.expand = backgroundSize,
-      main = main
-    )
-    tree_plot <- recordPlot()
-    graphics::par(oldpar)
-    graphics::layout(1)
-    return(recordPlot())
-    # return(list(star_legend = star_legend_plot, background_legend = background_legend_plot, tree = tree_plot))
   }
 
-plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "", subselection=NULL, assayType = "exprs", view = "MST", main = NULL, colorPalette = grDevices::colorRampPalette(c("#00007F", 
-                                                                                                                           "blue", "#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", 
-                                                                                                                           "red", "#7F0000")), backgroundValues = NULL, backgroundColor = function(n) {
-                                                                                                                             grDevices::rainbow(n, alpha = 0.3)
-                                                                                                                           }, backgroundBreaks = NULL, backgroundLim = NULL) 
+PlotFlowSOMCustom <- function (sce, view = "MST", 
+                               nodeSizes = S4Vectors::metadata(sce)$SOM_MST$size,
+                               maxNodeSize = 1.5, 
+                               refNodeSize = max(nodeSizes),
+                               equalNodeSize = FALSE, 
+                               backgroundValues = NULL,
+                               backgroundColors = NULL, 
+                               backgroundLim = NULL, 
+                               title = NULL) 
 {
-
-  switch(view, MST = {
-    layout <- S4Vectors::metadata(sce)$SOM_MST$l
-    lty <- 1
-  }, grid = {
-    layout <- as.matrix(fsom$map$grid)
-    lty <- 0
-  }, tSNE = {
-    layout <- fsom$MST$l2
-    lty <- 0
-  }, stop("The view should be MST, grid or tSNE. tSNE will only work\n                   if you specified this when building the MST."))
+  requireNamespace("ggplot2")
+  nNodes <- nrow(metadata(sce)$SOM_MST$l)
+  if (length(backgroundValues) != nNodes && !is.null(backgroundValues)) {
+    stop(paste0("Length of 'backgroundValues' should be equal to number of ", 
+                "clusters in FlowSOM object (", nNodes, " clusters and ", 
+                length(backgroundValues), " backgroundValues)."))
+  }
+  if (deparse(substitute(backgroundColors)) == "backgroundColor") {
+    warning(paste0("In the new FlowSOM version \"backgroundColors\"", 
+                   " is used instead of \"backgroundColor\""))
+  }
+  layout <- as.data.frame(metadata(sce)$SOM_MST$l)
+  colnames(layout) <- c("x", "y")
+  autoNodeSize <- min(stats::dist(layout[, c(1, 2)]))
+  maxNodeSize <- autoNodeSize * maxNodeSize
+  if (equalNodeSize) {
+    scaledNodeSize <- rep(maxNodeSize, nNodes)
+  }
+  else {
+    scaledNodeSize <- data.frame(size = S4Vectors::metadata(sce)$SOM_MST$size) %>% 
+      dplyr::mutate(scaled = (.data$size/refNodeSize) * maxNodeSize^2) %>% 
+      dplyr::mutate(sqrt_scaled = sqrt(.data$scaled)) %>% 
+      dplyr::pull(.data$sqrt_scaled)
+  }
+  plot_df <- data.frame(x = layout$x, y = layout$y, size = scaledNodeSize, 
+                        bg_size = scaledNodeSize * 1.5)
+  p <- ggplot2::ggplot(plot_df)
   if (!is.null(backgroundValues)) {
-    background <- FlowSOM:::computeBackgroundColor(backgroundValues, 
-                                         backgroundColor, backgroundLim, backgroundBreaks)
+    p <- AddBackgroundCustom(p, backgroundValues = backgroundValues, 
+                               backgroundColors = backgroundColors, backgroundLim = backgroundLim)
   }
-  else {
-    background <- NULL
+  if (view == "MST") {
+    edges <- ParseEdgesCustom(sce)
+    p <- p + ggplot2::geom_segment(data = edges, ggplot2::aes(x = .data$x, 
+                                                              y = .data$y, xend = .data$xend, yend = .data$yend), 
+                                   linewidth = 0.2)
   }
-  oldpar <- graphics::par(no.readonly = TRUE)
-  if (is.null(main)) 
-    main <- marker
-  if (!is.null(subselection))
-    main <- paste0(main, ", ", subselection)
-  if (is.null(marker)) {
-    igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, 
-                        vertex.size = S4Vectors::metadata(sce)$SOM_MST$size, vertex.label = NA, 
-                        edge.lty = lty)
+  nodeInfo <- ggplot2::ggplot_build(p)$plot$data
+  p <- p + ggforce::geom_circle(data = nodeInfo, 
+                                ggplot2::aes(x0 = .data$x, y0 = .data$y, r = .data$size), 
+                                fill = "white", 
+                                size = 0.2)
+  p <- p + ggplot2::coord_fixed() + ggplot2::theme_void()
+  if (!is.null(title)) {
+    p <- p + ggplot2::ggtitle(title)
   }
-  else {
-    if (facet_by == "") {
-      if (subselection_col == "") {
-        igraph::V(S4Vectors::metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[as.numeric(cut(S4Vectors::metadata(sce)$SOM_medianValues[, 
-                                                                                                                      marker], breaks = 100))]
-        igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = S4Vectors::metadata(sce)$SOM_MST$size, 
-                            vertex.label = NA, main = main, edge.lty = lty, 
-                            mark.groups = background$groups, mark.col = background$col[background$values], 
-                            mark.border = background$col[background$values])
-      } else {
-        sce_filtered <- CATALYST::filterSCE(sce, get(subselection_col) == subselection)
-        median_cond <- data.table::data.table(t(SummarizedExperiment::assay(sce_filtered, assayType)))
-        median_cond[, cluster_id := sce_filtered$cluster_id]
-        median_cond <- median_cond[, .(my_marker = median(get(marker))), by = cluster_id]
-        missing_clusters <- median_cond[, setdiff(levels(cluster_id), cluster_id)]
-        if (length(missing_clusters) != 0)
-          median_cond <- rbind(median_cond, data.table::data.table(cluster_id = missing_clusters, my_marker= NA))
-        data.table::setkey(median_cond, cluster_id)
-        lev <- median_cond[, my_marker]
-        yval <- seq(min(lev, na.rm = T), max(lev, na.rm = T), by = (max(lev, na.rm = T) - min(lev, na.rm = T))/length(colorPalette(100)))
+  return(p)
+}
 
-        igraph::V(S4Vectors::metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[findInterval(median_cond[, my_marker], yval)]
-        igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = S4Vectors::metadata(sce)$SOM_MST$size,
-                            vertex.label = NA, main = main, edge.lty = lty, 
-                            mark.groups = background$groups, mark.col = background$col[background$values],
-                            mark.border = background$col[background$values])
-      }
-      
-      graphics::par(fig = c(0, 0.2, 0, 1), mar = c(0, 0, 0, 
-                                                   0), new = TRUE)
-      
-      FlowSOM:::legendContinuous(colorPalette(100), S4Vectors::metadata(sce)$SOM_medianValues[, marker])
-    } else {
-      graphics::layout(matrix(c(3, 1, 2, 4), ncol = 4), widths = c(1,2,2,1))
-      metadata(sce)$experiment_info <- as.data.frame(metadata(sce)$experiment_info)
+
+ParseEdgesCustom <- function (sce) 
+{
+  edgeList <- as.data.frame(igraph::as_edgelist(metadata(sce)$SOM_MST$graph), 
+                            stringsAsFactors = FALSE)
+  coords <- metadata(sce)$SOM_MST$l
+  segmentPlot <- lapply(seq_len(nrow(edgeList)), function(row_id) {
+    node_ids <- as.numeric(edgeList[row_id, ])
+    row <- c(coords[node_ids[1], 1], coords[node_ids[1], 
+                                            2], coords[node_ids[2], 1], coords[node_ids[2], 
+                                                                               2])
+    return(row)
+  })
+  segmentPlot <- do.call(rbind, segmentPlot)
+  colnames(segmentPlot) <- c("x", "y", "xend", "yend")
+  return(as.data.frame(segmentPlot))
+}
+
+
+AddStarsCustom <- function (p, 
+                              sce, 
+                              markers = rowData(sce)$marker_name, 
+                              colorPalette = NULL) 
+{
+  nNodes <- nrow(metadata(sce)$SOM_MST$l)
+  nMarkers <- length(markers)
+  nodeInfo <- ggplot2::ggplot_build(p)$plot$data
+  data <- S4Vectors::metadata(sce)$SOM_medianValues[, markers, drop = FALSE]
+  data[is.na(data)] <- 0
+  data <- FlowSOM:::ScaleStarHeights(data, nodeInfo$size)
+  markers_tmp <- rep(1, ncol(data))
+  names(markers_tmp) <- colnames(data)
+  starValues <- lapply(seq_len(nNodes), function(cl) {
+    nodeData <- FlowSOM:::ParseArcs(x = nodeInfo$x[cl], y = nodeInfo$y[cl], 
+                                    arcValues = markers_tmp, arcHeights = data[cl, ])
+    return(nodeData)
+  })
+  starValues <- do.call(rbind, starValues)
+  starValues$Markers <- factor(starValues$Markers, levels = colnames(data))
+  p <- FlowSOM:::AddStarsPies(p, starValues, colorPalette, showLegend = FALSE)
+  return(p)
+}
+
+AddBackgroundCustom <- function (p, backgroundValues, backgroundColors = NULL, backgroundLim = NULL) 
+{
+  if (is.character(backgroundValues)) {
+    backgroundValues <- factor(backgroundValues)
+  }
+  p <- FlowSOM:::AddScale(p, backgroundValues, backgroundColors, backgroundLim, 
+                          labelLegend = "Background")
+  p <- p + ggforce::geom_circle(ggplot2::aes(x0 = .data$x, 
+                                             y0 = .data$y, r = .data$bg_size, fill = backgroundValues), 
+                                col = NA, alpha = 0.4)
+  return(p)
+}
+
+
+
+plotMarkerCustom <- function(sce,
+                             marker = SummarizedExperiment::rowData(sce)$marker_name[SummarizedExperiment::rowData(sce)$used_for_clustering][1], 
+                             facet_by = "", subselection_col = "",
+                             subselection=NULL, assayType = "exprs",
+                             refMarkers = SummarizedExperiment::rowData(sce)$marker_name[SummarizedExperiment::rowData(sce)$used_for_clustering],
+                             colorPalette = grDevices::colorRampPalette(
+                               c(
+                                 "#00007F",
+                                 "blue",
+                                 "#007FFF",
+                                 "cyan",
+                                 "#7FFF7F",
+                                 "yellow",
+                                 "#FF7F00",
+                                 "red",
+                                 "#7F0000"
+                               )
+                             ),
+                             backgroundValues = NULL,
+                             lim = NULL, 
+                             ...){
+  mfis <- GetClusterMFIsCustom(sce)
+  channels <- rowData(sce)[rowData(sce)$marker_name %in% marker, "channel_name"]
+  marker_dict <- rowData(sce)[rowData(sce)$marker_name %in% marker, "marker_name"]
+  names(marker_dict) <- rowData(sce)[rowData(sce)$marker_name %in% marker, "channel_name"]
+  if(facet_by == "" & subselection_col == ""){
+    if (is.null(lim)) 
+      lim <- c(min(mfis[, channels]), max(mfis[, channels]))
+    plotList <- lapply(seq_along(channels), function(channelI) {
+      p <- PlotVariableCustom(sce, variable = mfis[, channels[channelI]], 
+                              variableName = "MFI", colorPalette = colorPalette, 
+                              backgroundValues = backgroundValues,
+                              lim = lim, ...)
+      p <- p + ggplot2::ggtitle(marker_dict[channelI])
+    })
+  }
+  else if(facet_by != ""){
       metadata(sce)$experiment_info[[facet_by]] <- as.factor(metadata(sce)$experiment_info[[facet_by]])
       cond_levels <- levels(CATALYST::ei(sce)[[facet_by]])
-      both_cond <- data.table::rbindlist(sapply(cond_levels, function(cond){
+      mfis_cond <- data.table::rbindlist(sapply(cond_levels, function(cond){
         if (subselection_col != "") 
-          sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name == marker), get(facet_by) == cond, get(subselection_col) == subselection)
+          sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name %in% marker), get(facet_by) == cond, get(subselection_col) == subselection)
         else 
-          sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name == marker), get(facet_by) == cond)
+          sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name %in% marker), get(facet_by) == cond)
         median_cond <- data.table::data.table(t(SummarizedExperiment::assay(sce_filtered, assayType)))
         median_cond[, cluster_id := sce_filtered$cluster_id]
-        median_cond <- median_cond[, .(my_marker = median(get(marker))), by = cluster_id]
-        missing_clusters <- median_cond[, setdiff(levels(cluster_id), cluster_id)]
-        if (length(missing_clusters) != 0)
-        median_cond <- rbind(median_cond, data.table::data.table(cluster_id = missing_clusters, my_marker= NA))
+        tmp_list <- lapply(marker, function(m){
+          tmpDF <- median_cond[, .(median(get(m), na.rm = TRUE)), by = cluster_id]
+          missing_clusters <- median_cond[, setdiff(levels(cluster_id), cluster_id)]
+          if (length(missing_clusters) != 0)
+            tmpDF <- rbind(tmpDF, data.table::data.table(cluster_id = missing_clusters, V1= NA))
+          setnames(tmpDF, 'V1', m)
+        })
+        median_cond <- Reduce(merge, tmp_list)
         data.table::setkey(median_cond, cluster_id)
       }, simplify = FALSE), idcol = "condition")
-      lev <- both_cond[, my_marker]
-      yval <- seq(min(lev, na.rm = T), max(lev, na.rm = T), by = (max(lev, na.rm = T) - min(lev, na.rm = T))/length(colorPalette(100)))
-      for (cond in cond_levels) {
-        igraph::V(S4Vectors::metadata(sce)$SOM_MST$graph)$color <- colorPalette(100)[findInterval(both_cond[condition == cond, my_marker], yval)]
-        if (cond != cond_levels[1]) main <- NULL
-        igraph::plot.igraph(S4Vectors::metadata(sce)$SOM_MST$graph, layout = layout, vertex.size = S4Vectors::metadata(sce)$SOM_MST$size,
-                          vertex.label = NA, edge.lty = lty, 
-                          mark.groups = background$groups, mark.col = background$col[background$values],
-                          mark.border = background$col[background$values])
-        title(main = main, sub = cond, cex.main=2, cex.sub = 2)
-      }
-      
-      graphics::par(oldpar)
-      graphics::par(fig = c(0, 0.2, 0, 1), mar = c(0, 0, 0, 
-                                                   0), new = TRUE)
-      
-      FlowSOM:::legendContinuous(colorPalette(100), both_cond[!is.na(my_marker), my_marker])
+      if (is.null(lim))
+        lim <- c(min(mfis_cond[, ..marker], na.rm = TRUE), max(mfis_cond[, ..marker], na.rm = TRUE))
+      plotList <- lapply(seq_along(channels), function(channelI) {
+        lapply(cond_levels, function(cond){
+          p <- PlotVariableCustom(sce, variable = mfis_cond[condition == cond, get(marker_dict[channelI])], 
+                                  variableName = "MFI", colorPalette = colorPalette, 
+                                  backgroundValues = backgroundValues,
+                                  lim = lim, ...)
+          if(subselection_col != ""){
+            p <- p + ggplot2::ggtitle(paste(marker_dict[channelI], ',', cond, ',', subselection))
+          }else{
+            p <- p + ggplot2::ggtitle(paste(marker_dict[channelI], ',', cond))
+          }
+        })
+      })
+      plotList <- unlist(plotList, recursive = FALSE)
     }
-    if (!is.null(backgroundValues)) {
-      graphics::par(fig = c(0.8, 1, 0, 1), mar = c(0, 0, 0, 
-                                                   0), new = TRUE)
-      PlotBackgroundLegendCustom(backgroundValues, background, "Cluster", max_rows = 20)
-    }
+  else{
+    sce_filtered <- CATALYST::filterSCE(sce, get(subselection_col) == subselection)
+    median_cond <- data.table::data.table(t(SummarizedExperiment::assay(sce_filtered, assayType)))
+    median_cond[, cluster_id := sce_filtered$cluster_id]
+    tmp_list <- lapply(marker, function(m){
+      tmpDF <- median_cond[, .(median(get(m), na.rm = TRUE)), by = cluster_id]
+      missing_clusters <- median_cond[, setdiff(levels(cluster_id), cluster_id)]
+      if (length(missing_clusters) != 0)
+        tmpDF <- rbind(tmpDF, data.table::data.table(cluster_id = missing_clusters, V1= NA))
+      setnames(tmpDF, 'V1', m)
+    })
+    median_cond <- Reduce(merge, tmp_list)
+    data.table::setkey(median_cond, cluster_id)
+    plotList <- lapply(seq_along(channels), function(channelI) {
+      p <- PlotVariableCustom(sce, variable = median_cond[, get(marker_dict[channelI])], 
+                              variableName = "MFI", colorPalette = colorPalette, 
+                              backgroundValues = backgroundValues,
+                              lim = lim, ...)
+      p <- p + ggplot2::ggtitle(paste(marker_dict[channelI], ',', subselection))
+    })
   }
-  graphics::par(oldpar)
-  graphics::layout(1)
-  return(recordPlot())
+  p <- ggpubr::ggarrange(plotlist = plotList, common.legend = TRUE, 
+                         legend = "right")
+  return(p)
+  
 }
+
+
+GetClusterMFIsCustom <- function (sce) 
+{
+  MFIs <-S4Vectors::metadata(sce)$SOM_medianValues[, drop = FALSE]
+  rownames(MFIs) <- seq_len(nrow(MFIs))
+  colnames(MFIs) <- rowData(sce)[, "channel_name"]
+  return(MFIs)
+}
+
+
+PlotVariableCustom <- function (sce, variable, variableName = "", colorPalette = FlowSOM_colors, 
+                                lim = NULL, ...) 
+{
+  if (length(variable) != nrow(metadata(sce)$SOM_MST$l)) {
+    stop(paste0("Length of 'variable' should be equal to number of clusters in", 
+                " FlowSOM object (", nrow(metadata(sce)$SOM_MST$l), " clusters and ", 
+                length(variable), " variables)."))
+  }
+  p <- PlotFlowSOMCustom(sce = sce, ...)
+  p <- FlowSOM::AddNodes(p = p, values = variable, colorPalette = colorPalette, 
+                         lim = lim, label = variableName)
+  return(p)
+}
+
 
 plotAbundancesCustom <-
   function (x,
@@ -414,7 +346,7 @@ plotAbundancesCustom <-
       o <- colnames(fq)[h$order]
       df$sample_id <- factor(df$sample_id, o)
     }
-    p <- ggplot2::ggplot(df, ggplot2::aes_string(y = "Freq")) + ggplot2::labs(x = NULL,
+    p <- ggplot2::ggplot(df, ggplot2::aes(y = Freq)) + ggplot2::labs(x = NULL,
                                                    y = "Proportion [%]") + ggplot2::theme_bw() + ggplot2::theme(
                                                      panel.grid = ggplot2::element_blank(),
                                                      strip.text = ggplot2::element_text(face = "bold"),
@@ -676,6 +608,7 @@ clusterSCE <-
     S4Vectors::metadata(x)$SOM_codes <- som$map$codes
     S4Vectors::metadata(x)$SOM_medianValues <- som$map$medianValues
     S4Vectors::metadata(x)$SOM_MST <- som$MST
+    S4Vectors::metadata(x)$SOM_MST$size <- som$map$pctgs
     S4Vectors::metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
     x <-
       CATALYST::mergeClusters(

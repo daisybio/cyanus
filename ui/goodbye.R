@@ -13,7 +13,7 @@ goodbyeBody <- tabItem(tabName = "goodbye",
                        #     bsButton(
                        #       inputId = "exit",
                        #       label = "Quit App",
-                       #       icon = icon("times-circle"),
+                       #       icon = icon("circle-xmark"),
                        #       style = "warning",
                        #       block = TRUE,
                        #     )

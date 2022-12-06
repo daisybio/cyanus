@@ -302,7 +302,7 @@ output$DSVenn <- renderUI({
   pickerInput(
     "chosenDAMethodComp",
     choices = methodsDS,
-    label = span("Available Methods", icon("question-circle"), id = "deMethodsCompQ"),
+    label = span("Available Methods", icon("circle-question"), id = "deMethodsCompQ"),
     options = list(
       `actions-box` = TRUE,
       size = 4,
@@ -335,7 +335,7 @@ output$conditionSelectionComp <- renderUI({
       choices = condChoices,
       label = span(
         "What condition do you want to analyse?",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "conditionInQComp"
       )
     ),
@@ -363,7 +363,7 @@ output$groupSelectionComp <- renderUI({
       choices = groupCol,
       label = span(
         "Do you have paired samples? Which column identifies the group e.g. patient_id?",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "groupColQComp"
       ),
       options = list(
@@ -395,7 +395,7 @@ output$additionalTermsSelectionComp <- renderUI({
       choices = addTerms,
       label = span(
         "Additional fixed terms to include in the Model",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "addTermsQComp"
       ),
       options = list(
@@ -425,7 +425,7 @@ output$emdInputComp <- renderUI({
         "emdBinwidthComp",
         label = span(
           "CyEMD: Bin width for comparing histograms",
-          icon("question-circle"),
+          icon("circle-question"),
           id = "emdBinwidthQComp"
         ),
         value = 0,
@@ -450,7 +450,7 @@ output$emdNpermInputComp <- renderUI({
       "emdNpermComp",
       label = span(
         "CyEMD: Number of permutations for p-value estimation",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "emdNpermQComp"
       ),
       value = min(500, maxPerm),
@@ -474,7 +474,7 @@ output$CytoGLM_num_bootComp <- renderUI({
       "cytoNBootComp",
       label = span(
         "CytoGLM: Number of bootstrap samples",
-        icon("question-circle"),
+        icon("circle-question"),
         id = "cytoNBootQComp"
       ),
       value = 1000,
@@ -503,7 +503,7 @@ output$deSubselectionComp <- renderUI({
   div(
     checkboxGroupInput(
       inputId = "deSubselectionComp",
-      label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectVennQ"),
+      label = span("Do you want to analyse this condition just on a subset?", icon("circle-question"), id = "subSelectVennQ"),
       choices = choices, 
       inline = T
     ),
@@ -527,7 +527,7 @@ output$downsamplingComp <- renderUI({
     column(
       radioButtons(
         "downsampling_Yes_No_Comp",
-        label = span("Do you want to perform downsampling?", icon("question-circle"), id="dsCompPopover"),
+        label = span("Do you want to perform downsampling?", icon("circle-question"), id="dsCompPopover"),
         choices = c("Yes", "No"),
         selected = "No",
         inline = TRUE
@@ -654,7 +654,7 @@ output$extraFeaturesComp <- renderUI({
     div(
       selectizeInput(
         inputId = "edgeR_trendMethodVenn",
-        label = span("EdgeR Trend Method", icon("question-circle"), id = "trendMethodVennQ"),
+        label = span("EdgeR Trend Method", icon("circle-question"), id = "trendMethodVennQ"),
         choices = c( "none", "locfit", "movingave", "loess", "locfit.mixed"),
         multiple = F
       ),
@@ -666,7 +666,7 @@ output$extraFeaturesComp <- renderUI({
       ),
       selectizeInput(
         inputId = "blockID_voomVenn",
-        label = span("Voom: Block ID", icon("question-circle"), id = "blockIDvoomVennQ"),
+        label = span("Voom: Block ID", icon("circle-question"), id = "blockIDvoomVennQ"),
         choices = cols,
         options = list(
           placeholder = "Select your block IDs or nothing",
@@ -689,7 +689,7 @@ output$extraFeaturesComp <- renderUI({
     div(
       selectizeInput(
         inputId = "blockID_limmaVenn",
-        label = span("Limma: Block ID", icon("question-circle"), id = "blockIDlimmaQVenn"),
+        label = span("Limma: Block ID", icon("circle-question"), id = "blockIDlimmaQVenn"),
         choices = cols,
         options = list(
           placeholder = "Select your block IDs or nothing",
@@ -705,7 +705,7 @@ output$extraFeaturesComp <- renderUI({
       ),
       radioButtons(
         inputId = "trend_limmaVenn",
-        label = span("Limma Trend Method", icon("question-circle"), id = "trendlimmaQVenn"),
+        label = span("Limma Trend Method", icon("circle-question"), id = "trendlimmaQVenn"),
         choices = c("Yes", "No"),
         inline = T
       ),
@@ -726,7 +726,7 @@ output$normalizeSelectionComp <- renderUI({
     div(
       radioButtons(
         inputId = "normalizeDEVenn",
-        label = span("Normalize?", icon("question-circle"), id = "normalizeDEQVenn"),
+        label = span("Normalize?", icon("circle-question"), id = "normalizeDEQVenn"),
         choices = c("Yes", "No"),
         inline = T
       ),
@@ -747,7 +747,7 @@ output$weightSelectionComp <- renderUI({
     div(
       radioButtons(
         inputId = "weightsSelectionVenn",
-        label = span("Do you want to include precision weights (cell counts) within the model?", icon("question-circle"), id = "weightSelectVennQ"),
+        label = span("Do you want to include precision weights (cell counts) within the model?", icon("circle-question"), id = "weightSelectVennQ"),
         choices = c("Yes", "No"), 
         inline = T
       ),

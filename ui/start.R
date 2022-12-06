@@ -21,32 +21,37 @@ startBody <- function() {
     ),
     title = "Upload FCS Data",
     height = box_height,
-    width = 6
+    width = 5
   )
   
   metaUploadBox <- shinydashboard::box(
-    fileInput(
+    column(fileInput(
       "metaFile",
       "Choose Metadata File (optional)",
       accept = c(".csv", ".xlsx", ".xls")
     ),
-    title = span("Upload Metadata", icon("question-circle"), id = "metaQ"),
+    width = 9),
+    column(
+      checkboxInput("isEmptyValue", HTML("<b>Empty Value</b>"), TRUE),
+      width= 3
+    ),
+    title = span("Upload Metadata", icon("circle-question"), id = "metaQ"),
     height = box_height,
-    width = 3
+    width = 4
   )
   
   metaPopover <- 
     bsPopover(
       id = "metaQ",
       title = "A CSV or Excel file with headers describing the experiment",
-      content = "e.g. 4 columns:<br>file_name, sample_id, patient_id, condition<br>file_name: the FCS file name<br>sample_id: a unique sample identifier<br>patient_id: the patient ID<br>condition: brief sample description (e.g. reference/stimulated, healthy/diseased)<br><b>Example: Check out the PBMC Example Metadata</b>"
+      content = "e.g. 4 columns:<br>file_name, sample_id, patient_id, condition<br>file_name: the FCS file name<br>sample_id: a unique sample identifier<br>patient_id: the patient ID<br>condition: brief sample description (e.g. reference/stimulated, healthy/diseased)<br><b>Example: Check out the PBMC Example Metadata</b>.<br> If you get the warning <i>Empty keyword name detected![...] set emptyValue to FALSE and try again!</i>, uncheck the emptyValue checkbox!"
     )
   
   panelUploadBox <- shinydashboard::box(
     fileInput("panelFile",
               "Choose Panel File (optional)",
               accept = c(".csv", ".xlsx", ".xls")),
-    title = span("Upload Panel Data", icon("question-circle"), id = "panelQ"),
+    title = span("Upload Panel Data", icon("circle-question"), id = "panelQ"),
     height = box_height,
     width = 3
   )
@@ -79,7 +84,7 @@ startBody <- function() {
       "Upload SCE object",
       accept = c(".rds")
     ),
-    title = span("Upload SCE object", icon("question-circle"), id = "sceObj"),
+    title = span("Upload SCE object", icon("circle-question"), id = "sceObj"),
     height = box_height,
     width = 12
   )
