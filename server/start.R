@@ -132,6 +132,13 @@ observeEvent(input$loadData, {
       type = "message"
     )
   }
+  if(input$chooseDataTab == "dataUpload" & is.null(reactiveVals$data$upload$panel)){
+    # create and show
+    tmp_panel <- as.data.table(rowData(reactiveVals$sce))
+    tmp_panel <- tmp_panel[, c('channel_name', 'marker_name', 'marker_class')]
+    colnames(tmp_panel) <- c('fcs_colname', 'antigen', 'marker_class')
+    reactiveVals$data$upload$panel <- tmp_panel
+  }
 
   start_tab <- which(tab_ids == "start")
   if (isolate(reactiveVals$max_tab) > start_tab)
@@ -143,6 +150,24 @@ observeEvent(input$loadData, {
   updateButton(session, "loadData", label = " Load Data", disabled = FALSE) 
   waiter_hide(id = "app")
   })
+
+observeEvent(reactiveVals$data$upload$panel, {
+  req(reactiveVals$data$upload$panel)
+  if(any(duplicated(reactiveVals$data$upload$panel$fcs_colname))){
+    showNotification(paste("Some fcs_colnames are duplicated:", 
+                           reactiveVals$data$upload$panel$fcs_colname[anyDuplicated(reactiveVals$data$upload$panel$fcs_colname)], 
+                           ". This can cause problems, please change it!"), 
+                     type = "warning", 
+                     duration = NULL)
+  }
+  if(any(duplicated(reactiveVals$data$upload$panel$antigen))){
+    showNotification(paste("Some antigens are duplicated:", 
+                           reactiveVals$data$upload$panel$antigen[anyDuplicated(reactiveVals$data$upload$panel$antigen)], 
+                           ". This can cause problems, please change it!"), 
+                     type = "warning", 
+                     duration = NULL)
+  }
+})
 
 output$panelDT <- renderDT(
   checkNullTable(reactiveVals$data$upload$panel),
@@ -243,5 +268,7 @@ output$currentData <- renderInfoBox({
 })
 
 observeEvent(input$panelDT_cell_edit, {
+  start_tab <- which(tab_ids == "start")
+  reactiveVals$continue[start_tab] <- FALSE
   reactiveVals$data$upload$panel <<- editData(reactiveVals$data$upload$panel, input$panelDT_cell_edit, "panelDT")
 })
