@@ -35,10 +35,18 @@ observeEvent(input$panelFile, {
     showNotification(HTML("<b>Unknown file extension.</b><br>Please upload a CSV (*.csv) or Excel (*.xls, *.xlsx) file.<br>Example: Check out the PBMC Example Data."), duration = NULL, type = "error")
     return()
   }
-  if(any(!names(tmp_panel) %in% c("fcs_colname", "antigen", "marker_class")))
-    showNotification(HTML("Error while reading the panel file:<br>A CSV or Excel file with headers describing the panel:<br>for each channel:<br>fcs_colname: its column name in the input data<br>antigen: targeted protein marker<br>marker_class: (optionally) class (type, state, or none)<br>i.e.:<br>fcs_colname,antigen[,marker_class]<br><b>Example: Check out the PBMC Example Data</b>"), duration = NULL, type = "error")
-  else
-    reactiveVals$data$upload$panel <- tmp_panel
+  if(any(!c("fcs_colname", "antigen") %in% names(tmp_panel))){
+    # try setting header to TRUE
+    tmp_panel <- data.table::fread(input$panelFile$datapath, header = TRUE)
+    data.table::setDF(tmp_panel)
+    if(any(!c("fcs_colname", "antigen") %in% names(tmp_panel))){
+      showNotification(HTML("Error while reading the panel file:<br>A CSV or Excel file with headers describing the panel:<br>for each channel:<br>fcs_colname: its column name in the input data<br>antigen: targeted protein marker<br>marker_class: (optionally) class (type, state, or none)<br>i.e.:<br>fcs_colname,antigen[,marker_class]<br><b>Example: Check out the PBMC Example Data</b>"), duration = NULL, type = "error")
+    }else{
+      reactiveVals$data$upload$panel <- tmp_panel[, colnames(tmp_panel) %in% c("fcs_colname", "antigen", "marker_class")]
+    }
+  }else{
+    reactiveVals$data$upload$panel <- tmp_panel[, colnames(tmp_panel) %in% c("fcs_colname", "antigen", "marker_class")]
+  }
 })
 
 observeEvent(input$sceFile, {
@@ -139,6 +147,13 @@ observeEvent(input$loadData, {
     colnames(tmp_panel) <- c('fcs_colname', 'antigen', 'marker_class')
     reactiveVals$data$upload$panel <- tmp_panel
   }
+  if(input$chooseDataTab == "dataUpload" & is.null(reactiveVals$data$upload$md)){
+    # create and show
+    file_names <- unlist(unname(input$fcsFiles['name']))
+    sample_ids  <- tstrsplit(file_names, '.fcs', keep = 1)[[1]]
+    reactiveVals$data$upload$md <- data.table('file_name' = file_names, 
+                                              'sample_id' = sample_ids)
+  }
 
   start_tab <- which(tab_ids == "start")
   if (isolate(reactiveVals$max_tab) > start_tab)
@@ -153,6 +168,8 @@ observeEvent(input$loadData, {
 
 observeEvent(reactiveVals$data$upload$panel, {
   req(reactiveVals$data$upload$panel)
+  if(!is.null(reactiveVals$data$upload$panel)){
+  }
   if(any(duplicated(reactiveVals$data$upload$panel$fcs_colname))){
     showNotification(paste("Some fcs_colnames are duplicated:", 
                            reactiveVals$data$upload$panel$fcs_colname[anyDuplicated(reactiveVals$data$upload$panel$fcs_colname)], 
@@ -173,6 +190,12 @@ output$panelDT <- renderDT(
   checkNullTable(reactiveVals$data$upload$panel),
   editable = "cell"
 )
+
+output$metadataDT <- renderDT(
+  checkNullTable(reactiveVals$data$upload$md),
+  editable = "cell",
+  selection = list(target = 'column')
+  )
 
 output$currentData <- renderInfoBox({
   if(input$chooseDataTab == "dataUpload"){
@@ -208,14 +231,35 @@ output$currentData <- renderInfoBox({
   } else { 
   # if current data tab is upload data
   if(input$chooseDataTab == "dataUpload"){
-    tableObj <- fluidRow(column(
-      12, h5(HTML("<b style=\"color:grey;\">If you provide a panel, you can alter its cells by double-clicking</b>")), hr(), DTOutput("panelDT")))
-  
-  # if current data tab is example data  
+    tablePanel <- fluidRow(
+      column(12, h5(HTML("<p style=\"color:grey;\">Panel Data</p>"))),
+      column(
+      12, h5(HTML("<b style=\"color:grey;\">If you provide a panel, you can edit its cells by double-clicking. If you want create one from all columns of your fcs files, click 'Create Panel' after uploading your fcs files. If you want to edit the automatically guessed panel, just upload your fcs files and click on 'Load Data'. You can then modify the guessed panel. </b>")), hr(), DTOutput("panelDT")),
+      column(12, 
+             bsButton("panel_init", "Create Panel", disabled = ifelse(is.null(reactiveVals$data$upload$fcs) || !file.exists(input$fcsFiles$datapath[1]), TRUE, FALSE)),
+             bsButton("panel_add_column", "Add Marker Class", disabled = ifelse(is.null(panel), TRUE, ifelse('marker_class' %in% colnames(panel), TRUE, FALSE))),
+             bsButton("panel_add_row", "Add Row", disabled = ifelse(is.null(panel), TRUE, FALSE)),
+             bsButton("panel_delete_rows", "Delete Selected Rows", disabled = ifelse(is.null(panel), TRUE, FALSE)),
+             bsButton('panel_reset', 'Reset Panel', disabled = ifelse(is.null(panel), TRUE, FALSE))
+             )
+      )
+    tableMetadata <- fluidRow(
+      column(12, h5(HTML("<p style=\"color:grey;\">Metadata</p>"))),
+      column(
+      12, h5(HTML("<b style=\"color:grey;\">If you provide metadata, you can alter its cells by double-clicking. If you want to create metadata from your fcs files, upload your files first and then click on 'Load Data'. Attention: If you write numbers in your column, the feature will be interpreted as continous. If you do not want that (e.g., in the case of patient ID), add some letters (e.g., P1). </b>")), hr(), DTOutput("metadataDT")),
+      column(12, 
+             bsButton("md_add_column", "Add Column", disabled = ifelse(is.null(md), TRUE, FALSE)),
+             bsButton("md_remove_column", "Delete Selected Columns", disabled = ifelse(is.null(md), TRUE, FALSE))
+      ))
   }else{
-    tableObj <- renderTable(
+    tablePanel <- renderTable(
       checkNullTable(panel),
       caption = "Panel Data",
+      caption.placement = "top"
+    )
+    tableMetadata <- renderTable(
+      checkNullTable(md),
+      caption = "Metadata",
       caption.placement = "top"
     )
   }
@@ -226,12 +270,18 @@ output$currentData <- renderInfoBox({
         caption = "FCS Data",
         caption.placement = "top"
       ),
-      tableObj,
-      renderTable(
-        checkNullTable(md),
-        caption = "Metadata",
-        caption.placement = "top"
-      )
+      column(tablePanel,
+             div(
+               downloadButton("downloadPanel", "Download Panel as CSV"),
+               style = "float: right;"
+             ),
+             width = 12),
+      column(tableMetadata,
+             div(
+               downloadButton("downloadMD", "Download Metadata as CSV"),
+               style = "float: right;"
+             ),
+             width = 12)
     )
   }
   if (input$chooseDataTab == "dataUpload" &
@@ -270,5 +320,154 @@ output$currentData <- renderInfoBox({
 observeEvent(input$panelDT_cell_edit, {
   start_tab <- which(tab_ids == "start")
   reactiveVals$continue[start_tab] <- FALSE
+  if (isolate(reactiveVals$max_tab) > start_tab)
+    reactiveVals$max_tab <- start_tab
   reactiveVals$data$upload$panel <<- editData(reactiveVals$data$upload$panel, input$panelDT_cell_edit, "panelDT")
 })
+
+
+observeEvent(input$metadataDT_cell_edit, {
+  start_tab <- which(tab_ids == "start")
+  reactiveVals$continue[start_tab] <- FALSE
+  if (isolate(reactiveVals$max_tab) > start_tab)
+    reactiveVals$max_tab <- start_tab
+  reactiveVals$data$upload$md <<- editData(reactiveVals$data$upload$md, input$metadataDT_cell_edit, "metadataDT")
+})
+
+
+observeEvent(input$panel_init, {
+  if(is.null(reactiveVals$data$upload$fcs)){
+    reactiveVals$data$upload$panel <- data.table('fcs_colname' = c('* E D I T *'), 
+                                                 'antigen' = c('* E D I T *'))
+  }else{
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Creating Panel...<br>Please be patient")), 
+                color=spinner$color)
+    fs <- flowCore::read.FCS(input$fcsFiles$datapath[1])
+    panel <- data.table(pData(flowCore::parameters(fs)))
+    # remove unnecessary columns
+    panel <- panel[, -c('range', 'minRange', 'maxRange')]
+    # remove empty values
+    panel <- panel[!is.na(panel$desc)]
+    # rename columns
+    colnames(panel) <- c('fcs_colname', 'antigen')
+    reactiveVals$data$upload$panel <- panel
+    waiter_hide(id = "app")
+  }
+  start_tab <- which(tab_ids == "start")
+  reactiveVals$continue[start_tab] <- FALSE
+  if (isolate(reactiveVals$max_tab) > start_tab)
+    reactiveVals$max_tab <- start_tab
+})
+
+observeEvent(input$panel_add_row, {
+  req(reactiveVals$data$upload$panel)
+  new_row <- data.table(t(rep('*E D I T*', ncol(reactiveVals$data$upload$panel))))
+  colnames(new_row) <- colnames(reactiveVals$data$upload$panel)
+  new_row[, (colnames(new_row)) := lapply(.SD, as.factor), .SDcols = colnames(new_row)]
+  reactiveVals$data$upload$panel[, (colnames(reactiveVals$data$upload$panel)) := lapply(.SD, as.factor), .SDcols = colnames(reactiveVals$data$upload$panel)]
+  reactiveVals$data$upload$panel <- rbindlist(list(new_row,
+                                                   reactiveVals$data$upload$panel))
+  start_tab <- which(tab_ids == "start")
+  reactiveVals$continue[start_tab] <- FALSE
+  if (isolate(reactiveVals$max_tab) > start_tab)
+    reactiveVals$max_tab <- start_tab
+  }
+)
+
+observeEvent(input$panel_add_column, {
+  req(reactiveVals$data$upload$panel)
+  reactiveVals$data$upload$panel$marker_class <- 'none'
+  start_tab <- which(tab_ids == "start")
+  reactiveVals$continue[start_tab] <- FALSE
+  if (isolate(reactiveVals$max_tab) > start_tab)
+    reactiveVals$max_tab <- start_tab
+})
+
+observeEvent(input$md_add_column, {
+  req(reactiveVals$data$upload$md)
+  feature_name <- paste0('condition_', ncol(reactiveVals$data$upload$md) - 1)
+  reactiveVals$data$upload$md[, eval(feature_name)] <- '* E D I T *'
+  start_tab <- which(tab_ids == "start")
+  reactiveVals$continue[start_tab] <- FALSE
+  if (isolate(reactiveVals$max_tab) > start_tab)
+    reactiveVals$max_tab <- start_tab
+})
+
+
+observeEvent(input$panel_delete_rows,{
+  if (!is.null(input$panelDT_rows_selected)) {
+    reactiveVals$data$upload$panel <- reactiveVals$data$upload$panel[-as.numeric(input$panelDT_rows_selected), ]
+    start_tab <- which(tab_ids == "start")
+    reactiveVals$continue[start_tab] <- FALSE
+    if (isolate(reactiveVals$max_tab) > start_tab)
+      reactiveVals$max_tab <- start_tab
+  }
+})
+
+observeEvent(input$md_remove_column, {
+  if (!is.null(input$metadataDT_columns_selected)) {
+    to_delete <- c(as.numeric(input$metadataDT_columns_selected))
+    if(!any(c('file_name', 'sample_id') %in% colnames(reactiveVals$data$upload$md)[to_delete])){
+      reactiveVals$data$upload$md <-reactiveVals$data$upload$md[, colnames(reactiveVals$data$upload$md)[-to_delete], with = FALSE]
+      colnames(reactiveVals$data$upload$md) <- c('file_name', 'sample_id', paste0('condition_', 
+                                                                                  seq(ncol(reactiveVals$data$upload$md)-2)))
+      start_tab <- which(tab_ids == "start")
+      reactiveVals$continue[start_tab] <- FALSE
+      if (isolate(reactiveVals$max_tab) > start_tab)
+        reactiveVals$max_tab <- start_tab
+    }else{
+      showNotification('file_name and sample_id cannot be deleted!', type = 'error')
+    }
+  }
+})
+
+observeEvent(input$panel_reset, {
+  req(reactiveVals$data$upload$panel)
+  reactiveVals$data$upload$panel <- NULL
+  start_tab <- which(tab_ids == "start")
+  reactiveVals$continue[start_tab] <- FALSE
+  if (isolate(reactiveVals$max_tab) > start_tab)
+    reactiveVals$max_tab <- start_tab
+})
+
+output$downloadPanel <- downloadHandler(
+  filename = "panel.csv",
+  content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    if(input$chooseDataTab == "dataUpload"){
+      panel <- reactiveVals$data$upload$panel
+    }else if(input$chooseDataTab == "dataExample"){
+      panel <- reactiveVals$data$example$panel
+    }else{
+      panel <- data.table()
+    }
+    write.csv(panel, file, row.names = FALSE, quote = FALSE)
+    waiter_hide(id = "app")
+  }
+)
+
+output$downloadMD <- downloadHandler(
+  filename = "metadata.csv",
+  content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    if(input$chooseDataTab == "dataUpload"){
+      md <- reactiveVals$data$upload$md
+    }else if(input$chooseDataTab == "dataExample"){
+      md <- reactiveVals$data$example$md
+    }else{
+      md <- data.table()
+    }
+    write.csv(md, file, row.names = FALSE, quote = FALSE)
+    waiter_hide(id = "app")
+  }
+)
+
+
+
+
+
