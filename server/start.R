@@ -79,7 +79,7 @@ observeEvent(input$loadData, {
               color=spinner$color)
   
   library(CATALYST)
-  
+  reactiveVals$has_error <- FALSE
   if (input$chooseDataTab == "dataUpload") {
     dn <- dirname(input$fcsFiles$datapath)[1]
     file.rename(input$fcsFiles$datapath, file.path(dn, "/", input$fcsFiles$name))
@@ -108,8 +108,13 @@ observeEvent(input$loadData, {
       }
       )},
     error = function(e){
+      reactiveVals$has_error <- TRUE
       showNotification(HTML(sprintf("Loading the data failed with the following message:<br>
                                     <b>%s</b>", e$message)), duration = NULL, type = "error")
+      start_tab <- which(tab_ids == "start")
+      reactiveVals$continue[start_tab] <- FALSE
+      if (isolate(reactiveVals$max_tab) > start_tab)
+        reactiveVals$max_tab <- start_tab
     })
   } else if (input$chooseDataTab == "dataExample") {
     reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
@@ -118,9 +123,8 @@ observeEvent(input$loadData, {
 
   }else
     stop("Which tab is selected?")
-  
-  
-  if (!is.null(reactiveVals$sce)) { # meaning the data loading worked
+
+  if (!is.null(reactiveVals$sce) & !reactiveVals$has_error) { # meaning the data loading worked
   
   #drop levels of markers
   SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
@@ -154,7 +158,7 @@ observeEvent(input$loadData, {
     reactiveVals$data$upload$md <- data.table('file_name' = file_names, 
                                               'sample_id' = sample_ids)
   }
-
+  
   start_tab <- which(tab_ids == "start")
   if (isolate(reactiveVals$max_tab) > start_tab)
     reactiveVals$max_tab <- start_tab
@@ -234,10 +238,9 @@ output$currentData <- renderInfoBox({
     tablePanel <- fluidRow(
       column(12, h5(HTML("<p style=\"color:grey;\">Panel Data</p>"))),
       column(
-      12, h5(HTML("<b style=\"color:grey;\">If you provide a panel, you can edit its cells by double-clicking. If you want create one from all columns of your fcs files, click 'Create Panel' after uploading your fcs files. If you want to edit the automatically guessed panel, just upload your fcs files and click on 'Load Data'. You can then modify the guessed panel. </b>")), hr(), DTOutput("panelDT")),
+      12, h5(HTML("<b style=\"color:grey;\">If you provide a panel, you can edit its cells by double-clicking. If you want to edit the automatically guessed panel, just upload your fcs files and click on 'Load Data'. You can then modify the guessed panel. </b>")), hr(), DTOutput("panelDT")),
       column(12, 
-             bsButton("panel_init", "Create Panel", disabled = ifelse(is.null(reactiveVals$data$upload$fcs) || !file.exists(input$fcsFiles$datapath[1]), TRUE, FALSE)),
-             bsButton("panel_add_column", "Add Marker Class", disabled = ifelse(is.null(panel), TRUE, ifelse('marker_class' %in% colnames(panel), TRUE, FALSE))),
+             bsButton("panel_add_column", "Add Marker Class Column", disabled = ifelse(is.null(panel), TRUE, ifelse('marker_class' %in% colnames(panel), TRUE, FALSE))),
              bsButton("panel_add_row", "Add Row", disabled = ifelse(is.null(panel), TRUE, FALSE)),
              bsButton("panel_delete_rows", "Delete Selected Rows", disabled = ifelse(is.null(panel), TRUE, FALSE)),
              bsButton('panel_reset', 'Reset Panel', disabled = ifelse(is.null(panel), TRUE, FALSE))
@@ -335,31 +338,6 @@ observeEvent(input$metadataDT_cell_edit, {
 })
 
 
-observeEvent(input$panel_init, {
-  if(is.null(reactiveVals$data$upload$fcs)){
-    reactiveVals$data$upload$panel <- data.table('fcs_colname' = c('* E D I T *'), 
-                                                 'antigen' = c('* E D I T *'))
-  }else{
-    waiter_show(id = "app",html = tagList(spinner$logo, 
-                                          HTML("<br>Creating Panel...<br>Please be patient")), 
-                color=spinner$color)
-    fs <- flowCore::read.FCS(input$fcsFiles$datapath[1])
-    panel <- data.table(pData(flowCore::parameters(fs)))
-    # remove unnecessary columns
-    panel <- panel[, -c('range', 'minRange', 'maxRange')]
-    # remove empty values
-    panel <- panel[!is.na(panel$desc)]
-    # rename columns
-    colnames(panel) <- c('fcs_colname', 'antigen')
-    reactiveVals$data$upload$panel <- panel
-    waiter_hide(id = "app")
-  }
-  start_tab <- which(tab_ids == "start")
-  reactiveVals$continue[start_tab] <- FALSE
-  if (isolate(reactiveVals$max_tab) > start_tab)
-    reactiveVals$max_tab <- start_tab
-})
-
 observeEvent(input$panel_add_row, {
   req(reactiveVals$data$upload$panel)
   new_row <- data.table(t(rep('*E D I T*', ncol(reactiveVals$data$upload$panel))))
@@ -410,8 +388,12 @@ observeEvent(input$md_remove_column, {
     to_delete <- c(as.numeric(input$metadataDT_columns_selected))
     if(!any(c('file_name', 'sample_id') %in% colnames(reactiveVals$data$upload$md)[to_delete])){
       reactiveVals$data$upload$md <-reactiveVals$data$upload$md[, colnames(reactiveVals$data$upload$md)[-to_delete], with = FALSE]
-      colnames(reactiveVals$data$upload$md) <- c('file_name', 'sample_id', paste0('condition_', 
+      if(ncol(reactiveVals$data$upload$md) > 2){
+        colnames(reactiveVals$data$upload$md) <- c('file_name', 'sample_id', paste0('condition_', 
                                                                                   seq(ncol(reactiveVals$data$upload$md)-2)))
+      }else if(ncol(reactiveVals$data$upload$md) == 2){
+        colnames(reactiveVals$data$upload$md) <- c('file_name', 'sample_id')
+      }
       start_tab <- which(tab_ids == "start")
       reactiveVals$continue[start_tab] <- FALSE
       if (isolate(reactiveVals$max_tab) > start_tab)
