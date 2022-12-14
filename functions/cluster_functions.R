@@ -365,8 +365,8 @@ plotAbundancesCustom <-
       sample_id = p + (if (!is.null(group_by))
         ggplot2::facet_wrap(group_by,
                    scales = "free_x")) + ggplot2::geom_bar(
-                     ggplot2::aes_string(x = "sample_id",
-                                fill = "cluster_id"),
+                     ggplot2::aes(x = sample_id,
+                                fill = cluster_id),
                      position = "fill",
                      stat = "identity"
                    ) +
@@ -375,43 +375,63 @@ plotAbundancesCustom <-
                                                                                                                                               100, 25)) + ggplot2::theme(
                                                                                                                                                 panel.border = ggplot2::element_blank(),
                                                                                                                                                 panel.spacing.x = grid::unit(1,
-                                                                                                                                                                       "lines")
-                                                                                                                                              ),
+                                                                                                                                                                       "lines")                                                                                                                                       ),
       cluster_id = {
         p <-
-          p + ggplot2::scale_shape_manual(values = shapes) + ggplot2::guides(
-            col = ggplot2::guide_legend(order = 1,
+          p + ggplot2::guides(
+            color = ggplot2::guide_legend(order = 1,
                                override.aes = list(size = 3)),
             shape = ggplot2::guide_legend(override.aes = list(size = 3))
           )
         if (is.null(group_by)) {
-          p + ggplot2::geom_boxplot(
-            ggplot2::aes_string(x = "cluster_id"),
+          p <- p + ggplot2::geom_boxplot(
+            ggplot2::aes(x = cluster_id),
             alpha = 0.2,
             position = ggplot2::position_dodge(),
             outlier.color = NA
-          ) +
-            ggplot2::geom_point(ggplot2::aes_string("cluster_id", shape = shape_by),
-                       position = ggplot2::position_jitter(width = 0.2))
+          )
+          if(is.null(shape_by)){
+            p <- p + ggplot2::geom_point(ggplot2::aes(cluster_id),
+                                         position = ggplot2::position_jitter(width = 0.2))
+          }else{
+            p <- p + ggplot2::geom_point(ggplot2::aes(cluster_id, shape = get(shape_by)),
+                                         position = ggplot2::position_jitter(width = 0.2)) + 
+              ggplot2::scale_shape_manual(values = shapes, name = shape_by)
+          }
+            
         } else {
-          p + ggplot2::facet_wrap("cluster_id", scales = "free_y",
+          p <- p + ggplot2::facet_wrap("cluster_id", scales = "free_y",
                          ncol = 4) + ggplot2::geom_boxplot(
-                           ggplot2::aes_string(
-                             x = group_by,
-                             color = group_by,
-                             fill = group_by
+                           ggplot2::aes(
+                             x = get(group_by),
+                             color = get(group_by),
+                             fill = get(group_by)
                            ),
                            position = ggplot2::position_dodge(),
                            alpha = 0.2,
                            outlier.color = NA,
                            show.legend = FALSE
-                         ) +
-            ggplot2::geom_point(ggplot2::aes_string(
-              x = group_by,
-              col = group_by,
-              shape = shape_by
-            ),
-            position = ggplot2::position_jitter(width = 0.2))
+                         )
+          
+            if(is.null(shape_by)){
+              p <- p + ggplot2::geom_point(ggplot2::aes(
+                x = get(group_by),
+                color = get(group_by)
+              ),
+              position = ggplot2::position_jitter(width = 0.2)) + 
+                scale_fill_discrete(name = group_by) + 
+                scale_color_discrete(name = group_by)
+            }else{
+              p <- p + ggplot2::geom_point(ggplot2::aes(
+                x = get(group_by),
+                color = get(group_by),
+                shape = get(shape_by)
+              ),
+              position = ggplot2::position_jitter(width = 0.2)) + 
+                scale_fill_discrete(name = group_by) + 
+                scale_color_discrete(name = group_by) +
+                ggplot2::scale_shape_manual(values = shapes, name = shape_by)
+            }
         }
       }
     )
@@ -459,11 +479,11 @@ plotClusterExprsCustom <-
                               paste0(names(fq), " (", fq, "%)")[o]
                             )))
     ggplot2::ggplot(df,
-                    ggplot2::aes_string(
-             x = "expression",
-             y = "cluster_id",
-             col = "avg",
-             fill = "avg"
+                    ggplot2::aes(
+             x = expression,
+             y = cluster_id,
+             col = avg,
+             fill = avg
            )) + ggplot2::facet_wrap( ~ antigen, scales = "free_x",
                             nrow = 2) + ggridges::geom_density_ridges(alpha = 0.2) + ggridges::theme_ridges() +
       ggplot2::theme(

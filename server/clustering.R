@@ -410,7 +410,7 @@ output$clusteringOutput <- renderUI({
           div(
             dropdownButton(
               tags$h3("Plot Options"),
-              selectizeInput("abundanceBy", "By Samples or Clusters?", abundanceByChoices),
+              selectInput("abundanceBy", "By Samples or Clusters?", abundanceByChoices),
               selectizeInput("abundanceGroup", "Group By", abundanceChoices[!abundanceChoices %in% abundanceByChoices]),
               conditionalPanel(
                 "input.abundanceBy == 'cluster_id'",
@@ -645,14 +645,17 @@ output$clusterStarMarkerPlot <- renderPlot({
 
 output$clusterAbundancePlot <- renderPlot({
   shape_by <- input$abundanceShape
-  if (is.null(shape_by) | shape_by == "")
+  group_by <- input$abundanceGroup
+  if (shape_by == "")
     shape_by <- NULL
+  if(group_by == "")
+    group_by <- NULL
   reactiveVals$abundanceCluster <-
     plotAbundancesCustom(
       reactiveVals$sce,
       k = input$clusterCode,
       by = input$abundanceBy,
-      group_by = input$abundanceGroup,
+      group_by = group_by,
       shape_by = shape_by
     )
   reactiveVals$abundanceCluster

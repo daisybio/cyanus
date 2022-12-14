@@ -17,18 +17,11 @@ startBody <- function() {
     width=9),
     column(
       checkboxInput("isFACSData", HTML("<b>FACS Data</b>"), FALSE),
-      checkboxInput("isEmptyValue", span(HTML("<b>Empty Value</b>"), icon("circle-question"), id = "emptyValueQ"), TRUE),
       width= 3
     ),
     title = "Upload FCS Data",
     height = box_height,
     width = 6
-  )
-  
-  emptyValuePopover <- bsPopover(
-    id = "emptyValueQ",
-    title = "Allow empty value",
-    content = "<b>If you get the warning <i>Empty keyword name detected![...] set emptyValue to FALSE and try again!</i>, uncheck the emptyValue checkbox!</b><br>This parameter is from the flowCore::read.FCS() function indicating whether or not empty values are allowed for keyword values in the TEXT segment. Affects how double delimiters are treated."
   )
   
   metaUploadBox <- shinydashboard::box(
@@ -110,7 +103,7 @@ startBody <- function() {
     fluidRow(
       tabBox(
         tabPanel(
-          fluidRow(dataUploadBox, emptyValuePopover, panelUploadBox, panelPopover, metaUploadBox, metaPopover),
+          fluidRow(dataUploadBox, panelUploadBox, panelPopover, metaUploadBox, metaPopover),
           value = "dataUpload",
           title = "Upload Data"
         ),

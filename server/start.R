@@ -88,8 +88,7 @@ observeEvent(input$loadData, {
           md = reactiveVals$data$upload$md,
           transform = FALSE,
           md_cols = md_cols,
-          FACS = input$isFACSData,
-          emptyValue = input$isEmptyValue
+          FACS = input$isFACSData
         )},
         message = function(m) {
           showNotification(HTML(sprintf("Loading the data produced with the following message:<br>
