@@ -392,6 +392,7 @@ plotPreprocessing <- function(sce) {
     if (feature == "all") {
       feature <- NULL
     }
+    if(nrow(ei(sce)) > 2){
     reactiveVals$mdsPlot <- CATALYST::pbMDS(
       sce,
       label_by = input$mdsLabelBy,
@@ -399,6 +400,10 @@ plotPreprocessing <- function(sce) {
       features = feature,
       assay = input$mdsAssay,
     )
+    }else{
+      reactiveVals$mdsPlot <- ggplot() + theme_void()
+      showNotification('MDS is only possible for >2 samples', type = 'warning')
+    }
     reactiveVals$mdsPlot
     
   })
