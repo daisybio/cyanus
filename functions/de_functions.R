@@ -117,7 +117,7 @@ runDS <- function(sce,
                   ds_methods = c("diffcyt-DS-limma","diffcyt-DS-LMM","CyEMD","BEZI", "ZAGA","ZAIG",
                                  "hurdleBeta", "CytoGLMM", "CytoGLM", "logRegression", "wilcoxon_median", "kruskal_median", "t_test"),
                   design_matrix_vars = NULL, fixed_effects = NULL, random_effects = NULL,
-                  parallel = FALSE, parameters = NULL, cyEMD_nperm = 500, cyEMD_binsize = NULL,
+                  parallel = FALSE, parameters = NULL, cyEMD_nperm = 500, cyEMD_binsize = NULL, cyEMD_replacement = FALSE,
                   include_weights = TRUE, trend_limma = TRUE, blockID = NULL, 
                   cytoGLMM_num_boot = 500, time_methods = FALSE) {
 

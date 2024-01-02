@@ -203,6 +203,7 @@ runMethods <- function(){
     includeWeights <- ifelse(includeWeights == "Yes", TRUE, FALSE)
     if ("CyEMD" %in% methods) {
       cyEMD_binsize <- isolate(input$emdBinwidthComp)
+      cyEMD_replacement <- ifelse(input$emd_Replacement_Yes_No_Comp == "Yes", TRUE, FALSE)
       if (cyEMD_binsize == 0)
         cyEMD_binsize <- NULL
       emdNperm <- isolate(input$emdNpermComp)
@@ -245,6 +246,7 @@ runMethods <- function(){
           random_effects = group,
           cyEMD_nperm = emdNperm, 
           cyEMD_binsize = cyEMD_binsize,
+          cyEMD_replacement = cyEMD_replacement,
           cytoGLMM_num_boot = CytoGLM_num_boot,
           time_methods = FALSE,
           parallel = FALSE
@@ -438,7 +440,8 @@ output$emdInputComp <- renderUI({
         title = "Bin width for comparing histograms",
         content = HTML("You can set a custom binwidth but we recommend to leave this at zero.<br><b>Set this to 0 to compute the binwidth for each marker based on the Freedman-Diaconis rule.</b>")
       )
-    ))
+    ),
+    uiOutput("emdReplacementInputComp"))
 })
 
 
@@ -466,6 +469,20 @@ output$emdNpermInputComp <- renderUI({
   )
 })
 
+output$emdReplacementInputComp <- renderUI({
+  req("CyEMD" %in% input$chosenDAMethodComp)
+  
+  div(
+    radioButtons(
+      "emd_Replacement_Yes_No_Comp",
+      label = span("Do you want to perform empirical p-value calculation for CyEMD with replacement?", 
+                   id="emd_Replacement_Yes_No_Comp"),
+      choices = c("Yes", "No"),
+      selected = "No",
+      inline = TRUE
+    )
+    
+    )})
 
 output$CytoGLM_num_bootComp <- renderUI({
   req("CytoGLM" %in% input$chosenDAMethodComp)

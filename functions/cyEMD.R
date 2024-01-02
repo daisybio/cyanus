@@ -45,7 +45,7 @@ rowwiseEMD <- function(mat, condition, binSize = NULL) {
   out_dt
 }
 
-cyEMD <- function(sce, condition, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE) {
+cyEMD <- function(sce, condition, binSize=NULL, nperm=100, assay="exprs", seed=1, parallel=FALSE, replace=FALSE) {
   # suppressPackageStartupMessages(library(data.table))
   bppar <- BiocParallel::bpparam()
   
@@ -65,7 +65,7 @@ cyEMD <- function(sce, condition, binSize=NULL, nperm=100, assay="exprs", seed=1
   
   # compute permutations of sample conditions
   sceEI <- CATALYST::ei(sce)
-  perms <- RcppAlgos::permuteSample(sceEI[[condition]], n = nperm, seed = seed)
+  perms <- RcppAlgos::permuteSample(sceEI[[condition]], n = nperm, seed = seed, repetition = replace)
   perm_res <- BiocParallel::bplapply(as.data.frame(t(unclass(perms))), function(perm, sceEI, data, binSize) {
     condition_permutation_cells <- rep(perm, times=sceEI$n_cells)
     rowwiseEMD(mat = data, condition = condition_permutation_cells, binSize = binSize)

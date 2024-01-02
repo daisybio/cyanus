@@ -48,6 +48,7 @@ call_DE <- function() {
   includeWeights <- NULL
   cyEMD_nperm <- NULL
   cyEMD_binsize <- NULL
+  cyEMD_replacement <- NULL
   CytoGLM_num_boot <- NULL
   trend_edgeR <- NULL
   trend_limma <- NULL
@@ -206,6 +207,7 @@ call_DE <- function() {
       if (cyEMD_binsize == 0)
         cyEMD_binsize <- NULL
       emdNperm <- isolate(input$emdNperm)
+      cyEMD_replacement <- ifelse(input$emd_Replacement_Yes_No == "Yes", TRUE, FALSE)
     } else if (input$chosenDAMethod == "CytoGLM") {
       CytoGLM_num_boot <- isolate(input$CytoGLM_num_boot)
     }else if(method == "CytoGLMM" & is.null(groupCol)){
@@ -232,6 +234,7 @@ call_DE <- function() {
     include_weights = toString(includeWeights),
     cyEMD_binsize = toString(cyEMD_binsize),
     cyEMD_nperm = toString(cyEMD_nperm),
+    cyEMD_replacement = toString(cyEMD_replacement),
     CytoGLM_num_boot = toString(CytoGLM_num_boot)
   )
   
@@ -246,7 +249,7 @@ call_DE <- function() {
   out <- NULL
   tryCatch({
     withCallingHandlers({
-      #extra args: cyEMD_condition, binSize, nperm
+      #extra args: cyEMD_condition, binSize, nperm, replace
       if (methodType == "DA") {
         results <- runDA(
           sce = sce, 
@@ -276,6 +279,7 @@ call_DE <- function() {
           random_effects = groupCol,
           cyEMD_nperm = emdNperm, 
           cyEMD_binsize = cyEMD_binsize,
+          cyEMD_replacement = cyEMD_replacement,
           cytoGLMM_num_boot = CytoGLM_num_boot,
           time_methods = FALSE,
           parallel = FALSE
@@ -337,10 +341,10 @@ output$selectionBoxDE <- renderUI({
     uiOutput("emdInput"),
     uiOutput("CytoGLM_num_boot"),
     uiOutput("deSubselection"),
-    uiOutput("downsamplingDE"),
     width = 6
   ),
   column(
+    uiOutput("downsamplingDE"),
     uiOutput("clusterSelection"),
     uiOutput("markerToTestSelection"),
     uiOutput("extraFeatures"),
@@ -552,7 +556,8 @@ output$emdInput <- renderUI({
       title = "Bin width for comparing histograms",
       content = HTML("You can set a custom binwidth but we recommend to leave this at zero.<br><b>Set this to 0 to compute the binwidth for each marker based on the Freedman-Diaconis rule.</b>")
     )
-  ))
+  ),
+  uiOutput("emdReplacementInput"))
 })
 
 output$emdNpermInput <- renderUI({
@@ -578,6 +583,21 @@ output$emdNpermInput <- renderUI({
     )
   )
 })
+
+output$emdReplacementInput <- renderUI({
+  req("CyEMD" %in% input$chosenDAMethod)
+  
+  div(
+    radioButtons(
+      "emd_Replacement_Yes_No",
+      label = span("Do you want to perform empirical p-value calculation with replacement?", 
+                   id="emd_Replacement_Yes_No"),
+      choices = c("Yes", "No"),
+      selected = "No",
+      inline = TRUE
+    )
+    
+  )})
 
 output$CytoGLM_num_boot <- renderUI({
   req(input$chosenDAMethod == "CytoGLM")
