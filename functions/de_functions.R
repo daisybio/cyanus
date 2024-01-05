@@ -18,7 +18,7 @@
 #                 clustering_to_use = "all", contrast_vars = "activated_baseline", 
 #                 design_matrix_vars = c("patient_id", "activated_baseline"), fixed_effects = "activated_baseline", 
 #                 random_effects = "patient_id", markers_to_test = "state", 
-#                 cyEMD_condition = "activated_baseline", binSize = 0, nperm = 100)
+#                 cyEMD_condition = "activated_baseline", binSize = 0, nperm = 100, replace = "FALSE")
 #createVennDiagram(results, DS = T, 0.05)
 ###################################################################################################
 
@@ -231,6 +231,7 @@ runDS <- function(sce,
             random_effects,
             cyEMD_binsize,
             cyEMD_nperm,
+            cyEMD_replacement,
             parallel,
             include_weights,
             cytoGLMM_num_boot,
@@ -255,6 +256,7 @@ runDS <- function(sce,
           random_effects,
           cyEMD_binsize,
           cyEMD_nperm,
+          cyEMD_replacement,
           parallel,
           include_weights,
           cytoGLMM_num_boot,
@@ -270,7 +272,7 @@ runDS <- function(sce,
 
 timeMethod<- function(method, sce, markers_to_test, clustering_to_use, 
                       contrast_vars, random_effects,
-                      cyEMD_binsize, cyEMD_nperm, parallel, 
+                      cyEMD_binsize, cyEMD_nperm, cyEMD_replacement, parallel, 
                       include_weights, cytoGLMM_num_boot, cytoGLMM_additional_covariates){
   # get the cluster_ids for the current meta cluster and iterate over the clusters
   if ("type" %in% markers_to_test | "state" %in% markers_to_test) {
@@ -291,6 +293,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
           condition = contrast_vars,
           binSize = cyEMD_binsize,
           nperm = cyEMD_nperm,
+          replace = cyEMD_replacement,
           parallel = parallel
         )
       cluster_results[["CyEMD"]] <- out
