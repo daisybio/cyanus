@@ -537,6 +537,7 @@ output$emdInput <- renderUI({
   req(input$chosenDAMethod == "CyEMD")
   sceEI <- ei(reactiveVals$sce)
   list(
+  uiOutput("emdReplacementInput"),  
   uiOutput("emdNpermInput"),
   div(
     numericInput(
@@ -556,13 +557,12 @@ output$emdInput <- renderUI({
       title = "Bin width for comparing histograms",
       content = HTML("You can set a custom binwidth but we recommend to leave this at zero.<br><b>Set this to 0 to compute the binwidth for each marker based on the Freedman-Diaconis rule.</b>")
     )
-  ),
-  uiOutput("emdReplacementInput"))
+  ))
 })
 
 output$emdNpermInput <- renderUI({
   req(input$conditionIn)
-  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$conditionIn]]))
+  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$conditionIn]], repetition = FALSE))
   div(
     numericInput(
       "emdNperm",
@@ -579,7 +579,7 @@ output$emdNpermInput <- renderUI({
     bsPopover(
       id = "emdNpermQ",
       title = "Number of permutations for p-value estimation",
-      content = HTML("Note that meaningful results require many permutations. E.g. for an unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br><b>This value must not exceed the factorial of the number of samples.</b>")
+      content = HTML("Note that meaningful results require many permutations. E.g. for an unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br>For p-value calculation <b>without replacement</b> this value must not exceed the factorial of the number of samples. For p-value calculation <b>with replacement</b> this value must not exceed the number of samples to the power of the number of samples.")
     )
   )
 })
@@ -591,12 +591,17 @@ output$emdReplacementInput <- renderUI({
     radioButtons(
       "emd_Replacement_Yes_No",
       label = span("Do you want to perform empirical p-value calculation with replacement?", 
-                   id="emd_Replacement_Yes_No"),
+                   icon("question-circle"),
+                   id="emd_Replacement_Yes_No_Q"),
       choices = c("Yes", "No"),
       selected = "No",
       inline = TRUE
+    ),
+    bsPopover(
+      id = "emd_Replacement_Yes_No_Q",
+      title = "Empirical p-value calculation with or without replacement",
+      content = HTML("Caution: We do not recommend to enable replacement if less than 10 samples are avaiable.")
     )
-    
   )})
 
 output$CytoGLM_num_boot <- renderUI({
@@ -1146,6 +1151,13 @@ observe({
     req(reactiveVals$visExpClicked)
     shinyjs::show("deTopTable")
   }
+})
+
+observeEvent(input$emd_Replacement_Yes_No, {
+  # Update maxPerm based on the chosen option in emd_Replacement_Yes_No
+  req(input$conditionIn)
+  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$conditionIn]], repetition = (input$emd_Replacement_Yes_No == "Yes")))
+  updateNumericInput(session, "emdNperm", max = maxPerm, value = min(500, maxPerm))
 })
 
 observeEvent(input$downsampling_Yes_No_DE, {
