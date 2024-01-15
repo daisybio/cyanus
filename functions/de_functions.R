@@ -1,7 +1,7 @@
-#the EMD functions are in cyEMD.R
+library(CyEMD)
 
 #################################### EXAMPLE #################################################### 
-#source: cluster_functions, de_functions, de_comparison_functions, cyEMD
+#source: cluster_functions, de_functions, de_comparison_functions
 #sce <- clusterSCE(sce)
 #DA: 
 #results <- 

@@ -150,16 +150,12 @@
       "Package": "CATALYST",
       "Version": "1.22.0",
       "Source": "Bioconductor",
-      "git_url": "https://git.bioconductor.org/packages/CATALYST",
-      "git_branch": "RELEASE_3_16",
-      "git_last_commit": "fa9b337",
-      "git_last_commit_date": "2022-11-01",
-      "Hash": "67fc512ebbc6647fc2db4f2126c95a41",
       "Requirements": [
         "ComplexHeatmap",
         "ConsensusClusterPlus",
         "FlowSOM",
         "Matrix",
+        "R",
         "RColorBrewer",
         "Rtsne",
         "S4Vectors",
@@ -174,15 +170,21 @@
         "ggplot2",
         "ggrepel",
         "ggridges",
+        "grDevices",
+        "graphics",
+        "grid",
         "gridExtra",
         "magrittr",
         "matrixStats",
+        "methods",
         "nnls",
         "purrr",
         "reshape2",
         "scales",
-        "scater"
-      ]
+        "scater",
+        "stats"
+      ],
+      "Hash": "67fc512ebbc6647fc2db4f2126c95a41"
     },
     "CVST": {
       "Package": "CVST",
@@ -247,6 +249,25 @@
         "utils"
       ],
       "Hash": "d08f36ccafa73097ce64b7d3f8e24040"
+    },
+    "CyEMD": {
+      "Package": "CyEMD",
+      "Version": "0.1.0",
+      "Source": "Git",
+      "RemoteType": "xgit",
+      "RemoteUrl": "https://github.com/andrearaithel/CyEMD_package.git",
+      "RemoteSha": "ad9bab4bd1c9280756d0024deeef2f2dfa6b5160",
+      "Requirements": [
+        "CATALYST",
+        "R",
+        "Rcpp",
+        "RcppAlgos",
+        "SummarizedExperiment",
+        "data.table",
+        "graphics",
+        "stats"
+      ],
+      "Hash": "f45b52dc253411c20c6f1f745b603a79"
     },
     "CytoGLMM": {
       "Package": "CytoGLMM",
