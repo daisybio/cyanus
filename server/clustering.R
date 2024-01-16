@@ -257,6 +257,13 @@ output$clusteringVisualizationSelection <- renderUI({
     column(withSpinner(uiOutput("clusterSizes")),
            width = 12,
            style = "overflow-x: scroll;"),
+    column(withSpinner(uiOutput("clusterFrequencies")),
+           div(
+             downloadButton("downloadFrequencies", "Download Cluster Frequencies per Sample"),
+             style = "float: left;"
+           ),
+           width = 12,
+           style = "overflow-x: scroll;"),
     fluidRow(withSpinner(uiOutput("delta_area"))),
     fluidRow(withSpinner(uiOutput(
       "clusteringOutput"
@@ -303,6 +310,18 @@ output$clusterSizes <- renderTable({
 },
 caption = "Cluster Sizes",
 caption.placement = "top", rownames = TRUE, colnames = FALSE)
+
+output$clusterFrequencies <- renderTable({
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun, input$clusterCode, cluster_ids(reactiveVals$sce, input$clusterCode))
+  
+  df <- calcClusterFreqBySample(reactiveVals$sce, k = input$clusterCode)
+  res <- reshape2::dcast(df, sample_id ~ cluster_id, value.var = "Freq")
+  names(res)[1] <- "Sample"
+  
+  return(res)
+},
+caption = "Cluster Frequencies per Sample [%]",
+caption.placement = "top", rownames = FALSE, colnames = TRUE)
 
 output$mergeClustersDT <- renderDT({
   req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
@@ -377,6 +396,22 @@ output$downloadClusters <- downloadHandler(
     names(add_meta) <- input$clusterCode
     
     write.csv(cbind(colData(reactiveVals$sce), add_meta), file, row.names = FALSE)
+    waiter_hide(id = "app")
+  }
+)
+
+output$downloadFrequencies <- downloadHandler(
+  filename = "Cluster_Frequencies_Per_Sample.csv",
+  content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    
+    df <- calcClusterFreqBySample(reactiveVals$sce, k = input$clusterCode)
+    res <- reshape2::dcast(df, sample_id ~ cluster_id, value.var = "Freq")
+    names(res)[1] <- "Sample"
+    
+    write.csv(res, file, row.names = FALSE)
     waiter_hide(id = "app")
   }
 )

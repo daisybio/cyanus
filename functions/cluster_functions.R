@@ -485,7 +485,15 @@ plotAbundancesCustom <-
     )
   }
 
-
+calcClusterFreqBySample <- function (x, k){
+    CATALYST:::.check_sce(x, TRUE)
+    k <- CATALYST:::.check_k(x, k)
+    ns <-
+      table(cluster_id = cluster_ids(x, k), sample_id = sample_ids(x))
+    fq <- prop.table(ns, 2) * 100
+    df <- as.data.frame(fq)
+}
+    
 plotClusterExprsCustom <-
   function (x,
             k,
