@@ -255,7 +255,7 @@
       "Version": "0.1.0",
       "Source": "Git",
       "RemoteType": "xgit",
-      "RemoteUrl": "https://github.com/andrearaithel/CyEMD_package.git",
+      "RemoteUrl": "https://github.com/biomedbigdata/CyEMD_package.git",
       "RemoteSha": "ad9bab4bd1c9280756d0024deeef2f2dfa6b5160",
       "Requirements": [
         "CATALYST",
@@ -267,7 +267,7 @@
         "graphics",
         "stats"
       ],
-      "Hash": "f45b52dc253411c20c6f1f745b603a79"
+      "Hash": "ebbe946dedb5e72e04985254151292ae"
     },
     "CytoGLMM": {
       "Package": "CytoGLMM",
