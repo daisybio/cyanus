@@ -75,7 +75,6 @@ deBody <- function(){
         )
     ), 
     fluidRow(
-      id = "Deplots",
       tabBox(
         tabPanel(
           fluidRow(plotBox, boxplotPopover),
@@ -84,7 +83,7 @@ deBody <- function(){
         ),
         tabPanel(
           fluidRow(plotViolin, vioplotPopover),
-          value = "plotViolin",
+          value = "plotViolins",
           title = "Violinplots"
         ),
         id = "DEplots",

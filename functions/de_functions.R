@@ -662,6 +662,7 @@ plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs"
   medians <- CATALYST:::.agg(x, by, "median", assay)
   
   # Check if medians is a numeric matrix with dimnames
+  # TODO: throws an error for facet_by cluster
   if (is.matrix(medians) && length(dimnames(medians)) == 2) {
     # Create a data frame from the matrix
     medians_table <- data.frame(
@@ -790,17 +791,17 @@ plotViolinMod <- function (x, k = "meta20", features = "state", assay = "exprs",
   
   df <- df[ncs > 0, , drop = FALSE]
   
-  ggplot(df, aes_string(x_var, "value", col = color_by)) + 
+  ggplot(df, aes_string(x_var, "value", col = color_by, fill = color_by)) + 
     facet_wrap(facet_by, ncol = ncol, scales = "free_y") + 
-    geom_violin(fill = "white", alpha = 0.4) +
+    geom_violin(alpha = 0.3) +
     geom_point(alpha = 0.8, position = (if (jitter) {
       position_jitterdodge(jitter.width = 0.2, jitter.height = 0)
     } else "identity"), aes_string(fill = color_by, size = size_by, shape = shape_by)) +
     scale_shape_manual(values = shapes) + 
     scale_size_continuous(range = c(0.5, 3)) + 
-    guides(fill = FALSE, size = guide_legend(order = 3), 
-           shape = guide_legend(order = 2, override.aes = list(size = 3)), 
-           col = guide_legend(order = 1, override.aes = list(alpha = 1, size = 3))) + 
+    guides(size = guide_legend(order = 4), 
+           shape = guide_legend(order = 3, override.aes = list(size = 3)), 
+           col = guide_legend(order = 2, override.aes = list(alpha = 1, size = 3))) + 
     ylab(paste(fun, ifelse(assay == "exprs", "expression", assay))) + 
     theme_bw() + 
     theme(legend.key.height = unit(0.8, "lines"), 

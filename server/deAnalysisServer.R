@@ -1000,10 +1000,10 @@ output$visDiffExp <- renderUI({
 ### BOXPLOT FUNCTIONS
 
 output$deBoxPlots <- renderUI({
-  uiOutput("deExprsCluster")
+  uiOutput("deExprsBoxplot")
 })
 
-output$deExprsCluster <- renderUI({
+output$deExprsBoxplot <- renderUI({
   #if we only have counts -> copy counts to exprs
   if(length(assays(reactiveVals$sce)) == 1){
     showNotification("You have not transformed your data. We will assume that you have given us already transformed data as input.", type = "warning", duration = 10)
@@ -1028,6 +1028,7 @@ output$deExprsCluster <- renderUI({
   }))
   names(choices) <- paste("only", choices)
   
+  # wheel for selecting parameters
   fluidRow(column(1,
                   div(dropdownButton(
                     tags$h3("Plot Options"),
@@ -1069,8 +1070,9 @@ output$deExprsCluster <- renderUI({
                   style = "position: relative; height: 550px;"
                   )
   ),
+  # boxplot
   column(11, shinycssloaders::withSpinner(
-    plotOutput("clusterDEPlot", width = "100%", height = "500px")
+    plotOutput("boxplotDE", width = "100%", height = "500px")
   )),
   div(
     div(
@@ -1096,7 +1098,7 @@ output$deBoxK <- renderUI({
   )
 })
 
-output$clusterDEPlot <- renderPlot({
+output$boxplotDE <- renderPlot({
   req(input$deBoxFacet)
   facet_by <- input$deBoxFacet
   if (facet_by == "marker"){
@@ -1126,13 +1128,13 @@ output$clusterDEPlot <- renderPlot({
   
 })
 
-# ui for download button
+# ui for download button for boxplot expression plot
 output$pbExprsPlotDownload <- renderUI({
   req(reactiveVals$pbExprsPlot)
   downloadButton("downloadPlotPbExprs", "Download Plot")
 })
 
-# function for downloading MDS plot 
+# function for downloading boxplot expression plot 
 output$downloadPlotPbExprs <- downloadHandler(
   filename = function(){
     paste0("Pb_Exprs_plot", ".pdf")
@@ -1156,21 +1158,17 @@ output$pbExprsTableDownload <- renderUI({
   req(reactiveVals$pbExprsPlot)
   downloadButton("downloadTablePbExprs", "Download Median table")
 })
-# function for downloading MDS table 
+
+# function for downloading median table 
 output$downloadTablePbExprs <- downloadHandler(
   filename = function(){
-    paste0("Pb_Exprs_plot", ".pdf")
+    paste0("median_table", ".csv")
   },
   content = function(file){
     waiter_show(id = "app",html = tagList(spinner$logo, 
                                           HTML("<br>Downloading...")), 
                 color=spinner$color)
-    my_height <- 3
-    my_width <- 2.5
-    facet_info <- reactiveVals$pbExprsPlot %>% ggplot2::ggplot_build() %>% magrittr::extract2('layout') %>% magrittr::extract2('layout')
-    nr_row <- max(facet_info$ROW)
-    nr_col <- max(facet_info$COL)
-    ggsave(file, plot = reactiveVals$pbExprsPlot, width=my_width*nr_col, height=my_height*nr_row)
+    # TODO: implement!
     waiter_hide(id="app")
     
   }
@@ -1265,10 +1263,6 @@ output$deExprsViolin <- renderUI({
     ),
     div(
       div(
-        uiOutput("pbVioTableDownload"),
-        style = "float: left; margin-right: 10px;"
-      ),
-      div(
         uiOutput("pbVioPlotDownload"),
         style = "float: right; margin-left: 10px;"
       ),
@@ -1315,16 +1309,16 @@ output$vioDEPlot <- renderPlot({
   reactiveVals$pbVioPlot
 })
 
-# ui for download button
+# ui for download button for violin plot
 output$pbVioPlotDownload <- renderUI({
   req(reactiveVals$pbVioPlot)
-  downloadButton("downloadPlotPbExprs", "Download Plot")
+  downloadButton("downloadPlotVioExprs", "Download Plot")
 })
 
-# function for downloading MDS plot
-output$downloadPlotPbExprs <- downloadHandler(
+# function for downloading violin plot
+output$downloadPlotVioExprs <- downloadHandler(
   filename = function() {
-    paste0("Pb_Exprs_plot", ".pdf")
+    paste0("Pb_Exprs_plot_violin", ".pdf")
   },
   content = function(file) {
     waiter_show(
@@ -1337,39 +1331,14 @@ output$downloadPlotPbExprs <- downloadHandler(
     )
     my_height <- 3
     my_width <- 2.5
-    facet_info <- reactiveVals$pbExprsPlot %>% ggplot2::ggplot_build() %>% magrittr::extract2('layout') %>% magrittr::extract2('layout')
+    facet_info <- reactiveVals$pbVioPlot %>% ggplot2::ggplot_build() %>% magrittr::extract2('layout') %>% magrittr::extract2('layout')
     nr_row <- max(facet_info$ROW)
     nr_col <- max(facet_info$COL)
-    ggsave(file, plot = reactiveVals$pbExprsPlot, width = my_width * nr_col, height = my_height * nr_row)
+    ggsave(file, plot = reactiveVals$pbVioPlot, width = my_width * nr_col, height = my_height * nr_row)
     waiter_hide(id = "app")
     
   }
 )
-
-# ui for median table download button
-output$pbVioTableDownload <- renderUI({
-  req(reactiveVals$pbVioPlot)
-  downloadButton("downloadTablePbExprs", "Download Median table")
-})
-# function for downloading MDS table
-output$downloadTablePbExprs <- downloadHandler(
-  filename = function() {
-    paste0("Pb_Exprs_plot", ".pdf")
-  },
-  content = function(file) {
-    waiter_show(
-      id = "app",
-      html = tagList(
-        spinner$logo,
-        HTML("<br>Downloading...")
-      ),
-      color = spinner$color
-    )
-    my_height <- 3
-    my_width <- 2.5
-    facet_info <- reactiveVals$pb
-
-})
 
 # Observer-----
 
