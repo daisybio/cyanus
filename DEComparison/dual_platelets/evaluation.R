@@ -5,7 +5,6 @@ sce_dual <- readRDS("DataGeneration/platelets_dual/sce.rds")
 colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-
 # BOXPLOT
 
 features <- NULL
@@ -27,9 +26,15 @@ df <- df[ncs > 0, , drop = FALSE]
 df$antigen <- as.character(df$antigen)
 df[df == "PAC1"] <- "GPIIbIIIa"
 df$antigen <- as.factor(df$antigen)
+
+mean_data <- aggregate(value ~ platelets, data = df, mean)
+
 boxplot <- ggplot(df, aes(x=platelets, y = value, fill = platelets))+
   geom_boxplot(width = 0.8, outlier.color = NA) +
   geom_point(alpha = 0.8, show.legend = FALSE, position = position_jitterdodge(jitter.width = 0.2, jitter.height = 0)) +
+  geom_text(aes(label = sprintf("%.2f", mean(value)), y = mean(value)), 
+            stat = "summary", fun.y = "mean", position = position_dodge(width = 0.8), 
+            vjust = -0.5, size = 3, color = "black") +
   facet_wrap( ~ antigen, scales = "free", ncol=ncol) +
   scale_fill_manual(values =colorBlindBlack8[c(3,8)], name="Condition", labels=c("Activated", "Baseline")) + 
   xlab("") +
@@ -41,8 +46,7 @@ boxplot <- ggplot(df, aes(x=platelets, y = value, fill = platelets))+
     strip.text = element_text(face = "bold", size=16),
     axis.text = element_text(color = "black", size=14), 
     axis.title = element_text(color = "black", size=16), legend.text = element_text(size=14), legend.title=element_text(size=16))
-
-
+  
 # exprs function from catalyst
 # subset features to use
 x <- sce_dual

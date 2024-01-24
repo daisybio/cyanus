@@ -11,6 +11,8 @@ resetDE <- function(){
   reactiveVals$eff_r <- NULL
   reactiveVals$DEruns <- NULL
   reactiveVals$pbExprsPlot <- NULL
+  reactiveVals$pbExprsMed <- NULL
+  reactiveVals$pbVioPlot <- NULL
   reactiveVals$diffHeatmapPlot <- NULL
   reactiveVals$topTable <- NULL
   reactiveVals$visExpClicked <- NULL
@@ -1009,7 +1011,9 @@ output$deExprsCluster <- renderUI({
   }
   
   factors <- names(colData(reactiveVals$sce))[!names(colData(reactiveVals$sce)) %in% c("patient_id", "sample_id")]
+  
   markers <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+  
   if("state" %in% markers){
     selected_marker <- "state"
   }else{
@@ -1017,7 +1021,7 @@ output$deExprsCluster <- renderUI({
   }
   choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
-  
+  print(c("n_cells", "sample_id", "patient_id"))
   choices <- unlist(sapply(choices, function(x){
     lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
     return(lvls)
@@ -1069,9 +1073,16 @@ output$deExprsCluster <- renderUI({
     plotOutput("clusterDEPlot", width = "100%", height = "500px")
   )),
   div(
-    uiOutput("pbExprsPlotDownload"),
-    style = "position: absolute; bottom: 5px; right:5px"
-  ),
+    div(
+      uiOutput("pbExprsTableDownload"),
+      style = "float: left; margin-right: 10px;"
+    ),
+    div(
+      uiOutput("pbExprsPlotDownload"),
+      style = "float: right; margin-left: 10px;"
+    ),
+    style = "position: absolute; bottom: 5px; right: 5px;"
+  )
   )
 })
 
@@ -1105,10 +1116,14 @@ output$clusterDEPlot <- renderPlot({
                                           color_by = input$deBoxColor, 
                                           facet_by = facet_by, 
                                           shape_by = input$deBoxShape)
+  
+  
+  
   shinyjs::enable("previousTab")
   shinyjs::enable("nextTab")
   #shinyjs::show("selectionBoxDE")
   reactiveVals$pbExprsPlot
+  
 })
 
 # ui for download button
@@ -1133,9 +1148,228 @@ output$downloadPlotPbExprs <- downloadHandler(
     nr_col <- max(facet_info$COL)
     ggsave(file, plot = reactiveVals$pbExprsPlot, width=my_width*nr_col, height=my_height*nr_row)
     waiter_hide(id="app")
+    
+  }
+)
+# ui for median table download button
+output$pbExprsTableDownload <- renderUI({
+  req(reactiveVals$pbExprsPlot)
+  downloadButton("downloadTablePbExprs", "Download Median table")
+})
+# function for downloading MDS table 
+output$downloadTablePbExprs <- downloadHandler(
+  filename = function(){
+    paste0("Pb_Exprs_plot", ".pdf")
+  },
+  content = function(file){
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    my_height <- 3
+    my_width <- 2.5
+    facet_info <- reactiveVals$pbExprsPlot %>% ggplot2::ggplot_build() %>% magrittr::extract2('layout') %>% magrittr::extract2('layout')
+    nr_row <- max(facet_info$ROW)
+    nr_col <- max(facet_info$COL)
+    ggsave(file, plot = reactiveVals$pbExprsPlot, width=my_width*nr_col, height=my_height*nr_row)
+    waiter_hide(id="app")
+    
+  }
+)
+### Violinplots functions
+
+
+
+output$deVioPlots <- renderUI({
+  uiOutput("deExprsViolin")
+})
+
+output$deExprsViolin <- renderUI({
+  
+  # If we only have counts -> copy counts to exprs
+  if (length(assays(reactiveVals$sce)) == 1) {
+    showNotification(
+      "You have not transformed your data. We will assume that you have given us already transformed data as input.",
+      type = "warning",
+      duration = 10
+    )
+    assays(reactiveVals$sce)$exprs <- assays(reactiveVals$sce)$counts
+  }
+  
+  factors <- names(colData(reactiveVals$sce))[!names(colData(reactiveVals$sce)) %in% c("patient_id", "sample_id")]
+  
+  markers <- unique(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+  
+  if ("state" %in% markers) {
+    selected_marker <- "state"
+  } else {
+    selected_marker <- markers[1]
+  }
+  choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
+  choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
+  print(c("n_cells", "sample_id", "patient_id"))
+  choices <- unlist(sapply(choices, function(x) {
+    lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
+    return(lvls)
+  }))
+  names(choices) <- paste("only", choices)
+  
+  fluidRow(
+    column(
+      1,
+      div(
+        dropdownButton(
+          tags$h3("Plot Options"),
+          selectizeInput("deVioFacet",
+                         "Facet by:",
+                         c("marker", "cluster_id"),
+                         multiple = FALSE),
+          uiOutput("deVioK"),
+          selectizeInput("deVioFeatures",
+                         "Markers:",
+                         markers,
+                         selected = selected_marker,
+                         multiple = FALSE),
+          selectizeInput(
+            "deVioColor",
+            "Color and Group by:",
+            c(names(colData(reactiveVals$sce))),# names(cluster_codes(reactiveVals$sce))),
+            selected = factors[1],
+            multiple = FALSE
+          ),
+          selectizeInput(
+            "deVioShape",
+            "Shape By: ",
+            c(names(colData(reactiveVals$sce))),
+            multiple = FALSE
+          ),
+          selectizeInput(
+            "deVioSubselect",
+            "Subselection",
+            choices = c("No", choices),
+            multiple = FALSE
+          ),
+          circle = TRUE,
+          status = "info",
+          icon = icon("gear"),
+          width = "400px",
+          tooltip = tooltipOptions(title = "Click to see plot options")
+        ),
+        style = "position: relative; height: 550px;"
+      )
+    ),
+    column(
+      11,
+      shinycssloaders::withSpinner(
+        plotOutput("vioDEPlot", width = "100%", height = "500px")
+      )
+    ),
+    div(
+      div(
+        uiOutput("pbVioTableDownload"),
+        style = "float: left; margin-right: 10px;"
+      ),
+      div(
+        uiOutput("pbVioPlotDownload"),
+        style = "float: right; margin-left: 10px;"
+      ),
+      style = "position: absolute; bottom: 5px; right: 5px;"
+    )
+  )
+})
+
+output$deVioK <- renderUI({
+  req(input$deVioFacet == "cluster_id")
+  selectizeInput(
+    "deVioK",
+    "Clusters",
+    rev(names(cluster_codes(reactiveVals$sce))),
+    multiple = FALSE
+  )
+})
+
+output$vioDEPlot <- renderPlot({
+  req(input$deVioFacet)
+  facet_by <- input$deVioFacet
+  if (facet_by == "marker") {
+    facet_by <- "antigen"
+    k <- 'all'
+  } else {
+    k <- input$deVioK
+  }
+  sce <- isolate(reactiveVals$sce)
+  if (input$deVioSubselect != "No") {
+    category <- isolate(reactiveVals$subselectionMap[[input$deVioSubselect]])
+    sce <- filterSCE(sce, get(category) == input$deVioSubselect)
+  }
+  reactiveVals$pbVioPlot <- plotViolinMod(
+    sce,
+    k = k,
+    features = input$deVioFeatures,
+    color_by = input$deVioColor,
+    facet_by = facet_by,
+    shape_by = input$deVioShape
+  )
+  
+  shinyjs::enable("previousTab")
+  shinyjs::enable("nextTab")
+  reactiveVals$pbVioPlot
+})
+
+# ui for download button
+output$pbVioPlotDownload <- renderUI({
+  req(reactiveVals$pbVioPlot)
+  downloadButton("downloadPlotPbExprs", "Download Plot")
+})
+
+# function for downloading MDS plot
+output$downloadPlotPbExprs <- downloadHandler(
+  filename = function() {
+    paste0("Pb_Exprs_plot", ".pdf")
+  },
+  content = function(file) {
+    waiter_show(
+      id = "app",
+      html = tagList(
+        spinner$logo,
+        HTML("<br>Downloading...")
+      ),
+      color = spinner$color
+    )
+    my_height <- 3
+    my_width <- 2.5
+    facet_info <- reactiveVals$pbExprsPlot %>% ggplot2::ggplot_build() %>% magrittr::extract2('layout') %>% magrittr::extract2('layout')
+    nr_row <- max(facet_info$ROW)
+    nr_col <- max(facet_info$COL)
+    ggsave(file, plot = reactiveVals$pbExprsPlot, width = my_width * nr_col, height = my_height * nr_row)
+    waiter_hide(id = "app")
+    
   }
 )
 
+# ui for median table download button
+output$pbVioTableDownload <- renderUI({
+  req(reactiveVals$pbVioPlot)
+  downloadButton("downloadTablePbExprs", "Download Median table")
+})
+# function for downloading MDS table
+output$downloadTablePbExprs <- downloadHandler(
+  filename = function() {
+    paste0("Pb_Exprs_plot", ".pdf")
+  },
+  content = function(file) {
+    waiter_show(
+      id = "app",
+      html = tagList(
+        spinner$logo,
+        HTML("<br>Downloading...")
+      ),
+      color = spinner$color
+    )
+    my_height <- 3
+    my_width <- 2.5
+    facet_info <- reactiveVals$pb
+
+})
 
 # Observer-----
 
