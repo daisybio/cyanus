@@ -62,9 +62,10 @@ observeEvent(input$sceFile, {
 }, ignoreInit = TRUE)
 
 observeEvent(input$exampleData, {
-  reactiveVals$data$example$fcs <- readRDS(file.path(input$exampleData, "fcs.rds"))
-  reactiveVals$data$example$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
-  reactiveVals$data$example$md <- readRDS(file.path(input$exampleData, "md.rds"))
+  setup_logfile()
+  reactiveVals$data$example$fcs <- evap(reactiveVals$data$example$fcs <- readRDS(file.path(input$exampleData, "fcs.rds")))
+  reactiveVals$data$example$panel <- evap(reactiveVals$data$example$panel <- readRDS(file.path(input$exampleData, "panel.rds")))
+  reactiveVals$data$example$md <- evap(reactiveVals$data$example$md <- readRDS(file.path(input$exampleData, "md.rds")))
 }, ignoreInit = TRUE)
 
 observeEvent(input$loadData, {
@@ -212,7 +213,7 @@ output$currentData <- renderInfoBox({
   }else {
     fcs <- reactiveVals$data$example$fcs
     panel <- reactiveVals$data$example$panel
-     md <- reactiveVals$data$example$md
+    md <- reactiveVals$data$example$md
   }
   
   status <- "warning"

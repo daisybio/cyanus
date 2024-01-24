@@ -4,6 +4,7 @@ server <- function(input, output, session) {
   # make reactiveValues and server-wide variables
   reactiveVals <- reactiveValues()
   
+  reactiveVals$call_list <- list() # saves all calls in a list
   reactiveVals$preprocessingShowed <- FALSE
 
   spinner <- list(logo = list(a(icon('envelope'), " Contact", href = "https://github.com/biomedbigdata/cyanus/issues", target = "_blank", style='color: black'), 
@@ -52,6 +53,32 @@ server <- function(input, output, session) {
     }
   )
   
+  output$downloadLog <- renderUI({
+    req(reactiveVals$sce)
+    req(reactiveVals$call_list)
+    div(downloadButton("downloadLogButton", "Download R Script"), style="height: 50px; display: flex; align-items: center;")
+  })
+  
+  output$downloadLogButton <- downloadHandler(
+    filename = function(){
+      "log.R"
+    },
+    content = function(file){
+      waiter_show(id = "log", html = tagList(spinner$logo, 
+                                             HTML("<br>Downloading...")), 
+                  color=spinner$color)
+      
+      session_dir <- file.path(tempdir(), paste0("session_", session$token))
+      dir.create(session_dir, showWarnings = FALSE)
+      log_file <- file.path(session_dir, "log.R")
+      #log_content <- sapply(reactiveVals$call_list, deparse, control = "useSource")
+      log_content <- paste(reactiveVals$call_list, collapse = '\n')
+      writeLines(log_content, con = log_file)
+      file.copy(log_file, file)
+      waiter_hide(id="log")
+    }
+  )
+  
   output$licenseTable <- renderTable({
     deps_table <- sapply(unique(renv::dependencies()$Package), packageDescription, fields="License")
     data.frame(Package = names(deps_table), License = deps_table)
@@ -61,5 +88,10 @@ server <- function(input, output, session) {
   shinyBS::updateButton(session, inputId = "nextTab", icon = icon("arrow-right"), style = "success", disabled = FALSE)
   shinyjs::hide("loading")
   waiter_hide()
+  onStop(function() {
+    session_dir <- file.path(tempdir(), paste0("session_", session$token))
+    if (file.exists(session_dir)) {
+      unlink(session_dir, recursive = TRUE)
+    }})
 }
 
