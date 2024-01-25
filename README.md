@@ -1,31 +1,22 @@
-# A Systematic Comparison of Differential Analysis Methods for CyTOF Data
+# CYANUS
 
-Systematic Evaluation of Existing and Novel Approaches for Differential Expression Anaylsis on Real and Simulated CyTOF Data Including the Shiny App CYANUS
+Code associated with the R Shiny App CYANUS. 
 
+Code required for the paper "Systematic Evaluation of Existing and Novel Approaches for Differential Expression Anaylsis on Real and Simulated CyTOF Data" can now be found at [biomedbigdata/Cyanus-Paper-Code](https://github.com/biomedbigdata/Cyanus-Paper-Code). 
 
 
 ## Table of Contents
-* [Dataset Simulation](#dataset-simulation)
-* [Methods Evaluation](#methods-evaluation)
 * [CYANUS Shiny App](#cyanus-shiny-app)
 * [Cite](#cite)
 * [Contact](#contact)
 * [Licenses](#licenses)
 
 
-## Dataset Simulation
-The PBMC dataset, the simulated CytoGLMM dataset (and its downsampled versions) and the semi-simulated COVID-19 dataset (and its downsampled versions) can be reproduced using the scripts in DataGeneration. The dual antiplatelet therapy dataset is available upon request from Melissa.Klug@tum.de.
-
-
-## Methods Evaluation
-The evaluation of the methods on the different datasets can be found in the DEComparison directory. Each dataset has a subdirectory containing the benchmarking scripts for running the methods, the resulting .rds objects and an evaluation.R script. Using the evaluation scripts, the plots from the paper can be reproduced.
-
-
 ## CYANUS Shiny App
 
 User-friendly R Shiny App Analyzing Cytometry Data
 
-The public web interace is available at https://exbio.wzw.tum.de/cyanus/.
+The public web interface is available at https://exbio.wzw.tum.de/cyanus/.
 
 The source code can be found in ui/, server/, functions/, server.R and ui.R. 
 
