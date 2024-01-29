@@ -1,7 +1,36 @@
 evap <- function(function_call) {
+  if (grepl("input", function_call)){}
+    
   call <- substitute(function_call)
   reactiveVals$call_list <<- append(reactiveVals$call_list, call) # in the shiny app, we don't have to make this global call, I think
   return_value <- eval(call)
+  return(return_value)
+}
+
+evap_input <- function(function_call) {
+  call <- substitute(function_call)
+  
+  # Function to recursively replace input variables
+  replaceInputVars <- function(expr) {
+    if (is.name(expr) && grepl("^input\\$", deparse(expr))) {
+      # Replace with the value from the input list
+      as.name(deparse(substitute(input[[deparse(expr)]])))
+    } else if (is.recursive(expr)) {
+      # Recursively replace in calls and lists
+      as.call(lapply(as.list(expr), replaceInputVars))
+    } else {
+      expr
+    }
+  }
+  
+  # Replace input variables in the call
+  modified_call <- replaceInputVars(call)
+  
+  # Append to call list
+  reactiveVals$call_list <<- append(reactiveVals$call_list, modified_call)
+  
+  # Evaluate the modified call
+  return_value <- eval(modified_call)
   return(return_value)
 }
 
@@ -15,5 +44,5 @@ setup_logfile <- function(){
   reactiveVals$call_list[[6]] <- substitute(renv::init())
   reactiveVals$call_list[[7]] <- quote(reactiveVals <- list())
   reactiveVals$call_list[[8]] <- substitute(lapply(list.files('functions', full.names = T), source))
-  reactiveVals$call_list[[9]] <- quote(reactiveVals$data <- reactiveVals$data <- list(upload = list(fcs=NULL, panel=NULL, md=NULL), example = list(fcs=NULL, panel=NULL, md=NULL) ))
+  reactiveVals$call_list[[9]] <- quote(reactiveVals$data <- list(upload = list(fcs=NULL, panel=NULL, md=NULL), example = list(fcs=NULL, panel=NULL, md=NULL) ))
 }  
