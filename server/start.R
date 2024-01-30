@@ -2,27 +2,20 @@ reactiveVals$data <- list(upload = list(fcs=NULL, panel=NULL, md=NULL), example 
 
 observeEvent(input$fcsFiles, {
   setup_logfile()
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(fcs_path <- '~/path/to/fcs_data.fcs'))
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(fileTable <- flowCore::read.FCS(fcs_path)))
   fileTable <- input$fcsFiles
-  fileTable <- evap(fileTable <- fileTable[, c("name", "size")])
+  fileTable <- fileTable[, c("name", "size")]
   fileTable$size <- sprintf("%.2f MB", fileTable$size / 1000000)
-  reactiveVals$data$upload$fcs <- evap(reactiveVals$data$upload$fcs <- fileTable)
+  reactiveVals$data$upload$fcs <- fileTable
 })
 
 observeEvent(input$metaFile, {
   if(endsWith(tolower(input$metaFile$datapath), ".csv")){
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(metadata_path <- '~/path/to/meta_data.csv'))
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(reactiveVals$data$upload$md <- data.table::fread(metadata_path)))
     reactiveVals$data$upload$md <- data.table::fread(input$metaFile$datapath)
-    evap(data.table::setDF(reactiveVals$data$upload$md))
+    data.table::setDF(reactiveVals$data$upload$md)
   }else if(endsWith(tolower(input$metaFile$datapath), ".xls") | 
            endsWith(tolower(input$metaFile$datapath), ".xlsx")){
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(metadata_path <- '~/path/to/meta_data.xls(x)'))
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(library(xlsx)))
     library(xlsx)
     showNotification("There are often problems with reading Excel files. If you can, please upload a .csv file", type = "warning")
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(reactiveVals$data$upload$md <- read.xlsx2(metadata_path, 1)))
     reactiveVals$data$upload$md <- read.xlsx2(input$metaFile$datapath, 1)
   } else {
     showNotification(HTML("<b>Unknown file extension.</b><br>Please upload a CSV (*.csv) or Excel (*.xls, *.xlsx) file.<br>Example: Check out the PBMC Example Data."), duration = NULL, type = "error")
@@ -31,18 +24,13 @@ observeEvent(input$metaFile, {
 
 observeEvent(input$panelFile, {
   if(endsWith(tolower(input$panelFile$datapath), ".csv")){
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(panel_path <- '~/path/to/panel_data.csv'))
-    reactiveVals$call_list <<- append(tmp_panel <- data.table::fread(panel_path))
     tmp_panel <-
       data.table::fread(input$panelFile$datapath)
-    evap(data.table::setDF(tmp_panel))
+    data.table::setDF(tmp_panel)
   }else if(endsWith(tolower(input$panelFile$datapath), ".xls") | 
            endsWith(tolower(input$panelFile$datapath), ".xlsx")){
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(file_path <- '~/path/to/panel_data.xls(x)'))
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(library(xlsx)))
     library(xlsx)
     showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(tmp_panel <- read.xlsx2(panel_path, 1)))
     tmp_panel <- read.xlsx2(input$panelFile$datapath, 1)
   } else {
     showNotification(HTML("<b>Unknown file extension.</b><br>Please upload a CSV (*.csv) or Excel (*.xls, *.xlsx) file.<br>Example: Check out the PBMC Example Data."), duration = NULL, type = "error")
@@ -50,29 +38,23 @@ observeEvent(input$panelFile, {
   }
   if(any(!c("fcs_colname", "antigen") %in% names(tmp_panel))){
     # try setting header to TRUE
-    reactiveVals$call_list <<- append(tmp_panel <- data.table::fread(panel_path, header = TRUE))
     tmp_panel <- data.table::fread(input$panelFile$datapath, header = TRUE)
-    evap(data.table::setDF(tmp_panel))
+    data.table::setDF(tmp_panel)
     if(any(!c("fcs_colname", "antigen") %in% names(tmp_panel))){
       showNotification(HTML("Error while reading the panel file:<br>A CSV or Excel file with headers describing the panel:<br>for each channel:<br>fcs_colname: its column name in the input data<br>antigen: targeted protein marker<br>marker_class: (optionally) class (type, state, or none)<br>i.e.:<br>fcs_colname,antigen[,marker_class]<br><b>Example: Check out the PBMC Example Data</b>"), duration = NULL, type = "error")
     }else{
-      reactiveVals$data$upload$panel <- evap(reactiveVals$data$upload$panel <- tmp_panel[, colnames(tmp_panel) %in% c("fcs_colname", "antigen", "marker_class")])
+      reactiveVals$data$upload$panel <- tmp_panel[, colnames(tmp_panel) %in% c("fcs_colname", "antigen", "marker_class")]
     }
   }else{
-    reactiveVals$data$upload$panel <- evap(reactiveVals$data$upload$panel <- tmp_panel[, colnames(tmp_panel) %in% c("fcs_colname", "antigen", "marker_class")])
+    reactiveVals$data$upload$panel <- tmp_panel[, colnames(tmp_panel) %in% c("fcs_colname", "antigen", "marker_class")]
   }
 })
 
 observeEvent(input$sceFile, {
   setup_logfile()
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(sce_path <- '~/path/to/sce_file.rds'))
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(library(CATALYST)))
   library(CATALYST)
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(tmp <- readRDS(sce_path)))
   tmp <- readRDS(file.path(input$sceFile$datapath))
   if (class(tmp) == "SingleCellExperiment"){
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(reactiveVals$data$sce$rowdata <- rowData(tmp)))
-    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(reactiveVals$data$sce$coldata <- metadata(tmp)$experiment_info))
     reactiveVals$data$sce$rowdata <- rowData(tmp)
     reactiveVals$data$sce$coldata <- metadata(tmp)$experiment_info
   } else {
@@ -83,13 +65,6 @@ observeEvent(input$sceFile, {
 
 observeEvent(input$exampleData, {
   setup_logfile()
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(fcs_path <- '~/path/to/example_data/fcs.rds'))
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(reactiveVals$data$example$fcs <- readRDS(fcs_path)))
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(panel_path <- '~/path/to/example_data/panel.rds'))
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(reactiveVals$data$example$panel <- readRDS(panel_path)))
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(metadata_path <- '~/path/to/example_data/md.rds'))
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(reactiveVals$data$example$md <- readRDS(metadata_path)))
-  
   reactiveVals$data$example$fcs <- readRDS(file.path(input$exampleData, "fcs.rds"))
   reactiveVals$data$example$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
   reactiveVals$data$example$md <- readRDS(file.path(input$exampleData, "md.rds"))
@@ -109,32 +84,27 @@ observeEvent(input$loadData, {
   library(CATALYST)
   reactiveVals$has_error <- FALSE
   if (input$chooseDataTab == "dataUpload") {
+    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(dn <- '~/path/to/fcs_data.fcs'))
     dn <- dirname(input$fcsFiles$datapath)[1]
     file.rename(input$fcsFiles$datapath, file.path(dn, "/", input$fcsFiles$name))
     
-    conditions <- evap(conditions <- names(reactiveVals$data$upload$md)[!names(reactiveVals$data$upload$md) 
-                                                                        %in% c("sample_id", "file_name")])
-    md_cols <- evap(md_cols <- list(file = "file_name", id = "sample_id", factors = conditions))
+    conditions <- names(reactiveVals$data$upload$md)[!names(reactiveVals$data$upload$md) 
+                                                                        %in% c("sample_id", "file_name")]
+    md_cols <- list(file = "file_name", id = "sample_id", factors = conditions)
     
     tryCatch({
       withCallingHandlers({
-        facs <- input$isFACSData
-        reactiveVals$call_list <<- append(reactiveVals$call_list, quote(reactiveVals$sce <- CATALYST::prepData(
-          fcs_path,
-          panel = reactiveVals$data$upload$panel,
-          md = reactiveVals$data$upload$md,
-          transform = FALSE,
-          md_cols = md_cols,
-          FACS = facs
-        )))
-      reactiveVals$sce <- CATALYST::prepData(
+      reactiveVals$sce <- evap(expression(reactiveVals$sce <- CATALYST::prepData(
         dn,
-        panel = reactiveVals$data$upload$panel,
-        md = reactiveVals$data$upload$md,
+        panel = panel,
+        md = md,
         transform = FALSE,
         md_cols = md_cols,
-        FACS = input$isFACSData
-      )},
+        FACS = FACS
+      ))[[1]], params = list(panel = reactiveVals$data$upload$panel,
+                             md = reactiveVals$data$upload$md,
+                             md_cols = md_cols,
+                             FACS = input$isFACSData))},
       message = function(m) {
         showNotification(HTML(sprintf("Loading the data produced with the following message:<br>
                                     <b>%s</b>", m$message)), duration = NULL, type = "message")
@@ -166,13 +136,12 @@ observeEvent(input$loadData, {
   if (!is.null(reactiveVals$sce) & !reactiveVals$has_error) { # meaning the data loading worked
   
   #drop levels of markers
-  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)))
   SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
   # set negative values to zero
   if (length(which(assays(reactiveVals$sce)$counts < 0)) > 0){
-    assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- evap(assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- 0)
+    assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- 0
     if ("exprs" %in% assayNames(reactiveVals$sce)){
-      assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- evap(assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- 0)
+      assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- 0
     }
     showNotification(
       HTML(
@@ -185,17 +154,16 @@ observeEvent(input$loadData, {
   }
   if(input$chooseDataTab == "dataUpload" & is.null(reactiveVals$data$upload$panel)){
     # create and show
-    tmp_panel <- evap(tmp_panel <- as.data.table(rowData(reactiveVals$sce)))
-    tmp_panel <- evap(tmp_panel <- tmp_panel[, c('channel_name', 'marker_name', 'marker_class')])
-    colnames(tmp_panel) <- evap(colnames(tmp_panel) <- c('fcs_colname', 'antigen', 'marker_class'))
-    reactiveVals$data$upload$panel <- evap(reactiveVals$data$upload$panel <- tmp_panel)
+    tmp_panel <- as.data.table(rowData(reactiveVals$sce))
+    tmp_panel <- tmp_panel[, c('channel_name', 'marker_name', 'marker_class')]
+    colnames(tmp_panel) <- c('fcs_colname', 'antigen', 'marker_class')
+    reactiveVals$data$upload$panel <- tmp_panel
   }
   if(input$chooseDataTab == "dataUpload" & is.null(reactiveVals$data$upload$md)){
     # create and show
-    file_names <- evap_input(file_names <- unlist(unname(input$fcsFiles['name'])))
-    sample_ids  <- evap(sample_ids  <- tstrsplit(file_names, '.fcs', keep = 1)[[1]])
-    reactiveVals$data$upload$md <- evap(reactiveVals$data$upload$md <- data.table('file_name' = file_names, 
-                                                                                  'sample_id' = sample_ids))
+    file_names <- unlist(unname(input$fcsFiles['name']))
+    sample_ids  <- tstrsplit(file_names, '.fcs', keep = 1)[[1]]
+    reactiveVals$data$upload$md <- data.table('file_name' = file_names, 'sample_id' = sample_ids)
   }
   
   start_tab <- which(tab_ids == "start")

@@ -71,7 +71,6 @@ server <- function(input, output, session) {
       session_dir <- file.path(tempdir(), paste0("session_", session$token))
       dir.create(session_dir, showWarnings = FALSE)
       log_file <- file.path(session_dir, "log.R")
-      #log_content <- sapply(reactiveVals$call_list, deparse, control = "useSource")
       log_content <- paste(reactiveVals$call_list, collapse = '\n')
       writeLines(log_content, con = log_file)
       file.copy(log_file, file)
