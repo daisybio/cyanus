@@ -197,7 +197,6 @@ observeEvent(input$prepSelectionButton, {
 })
 
 observeEvent(input$downsamplingButtonPreprocessing, {
-  browser()
   waiter_show(id = "app",html = tagList(spinner$logo, 
                                         HTML("<br>Running Downsampling...<br>Please be patient")), 
               color=spinner$color)
@@ -206,33 +205,16 @@ observeEvent(input$downsamplingButtonPreprocessing, {
   }else{
     per_sample=FALSE
   }
-  'To-Do (sce is too big to log it)'
-  sce <- evap(expression(sce <- current_sce)[[1]], params = list(current_sce = isolate(reactiveVals$sce)))
+  sce <- isolate(reactiveVals$sce)
+  reactiveVals$call_list <<- append(reactiveVals$call_list, quote(sce <- reactiveVals$sce))
   sce <- evap(expression(sce <- performDownsampling(sce, per_sample, number, seed))[[1]],
               params = list(per_sample = per_sample, number = isolate(input$downsamplingNumber), seed = isolate(input$downsamplingSeed)))
   if(!is.null(sce)){
-    reactiveVals$sce <- evap(expression(reactiveVals$sce <- sce)[[1]], params = NULL)
+    reactiveVals$sce <- evap(expression(reactiveVals$sce <- sce)[[1]])
   }
   plotPreprocessing(reactiveVals$sce)
   waiter_hide(id = "app")
 })
-
-performDownsampling <- function(sce, per_sample, downsamplingNumber, downsamplingSeed) {
-  smallest_n <- min(CATALYST::ei(sce)$n_cells)
-  sum_n <- sum(CATALYST::ei(sce)$n_cells)
-  if(per_sample & downsamplingNumber > smallest_n){
-    showNotification("You selected a number of cells that is higher than your smallest sample!", type = "warning")
-  }else if(!per_sample & downsamplingNumber > sum_n){
-    showNotification("You selected a number of cells that is higher than your overall dataset size!", type = "error")
-    return(NULL)
-  }
-  sce <- downSampleSCE(sce=sce, 
-                        cells=downsamplingNumber,
-                        per_sample=per_sample, 
-                        seed=downsamplingSeed)
-  return(sce)
-  
-}
 
 # if filtering button is clicked -> selection is applied to sce
 observeEvent(input$filterSelectionButton,{
