@@ -127,17 +127,24 @@ observeEvent(input$runDRButton, {
   )
   if(!reactiveVals$stopVis){
     set.seed(seed)
-    reactiveVals$sce <- runCatalystDR(
+    reactiveVals$sce <- evap(expression(reactiveVals$sce <- runCatalystDR(
       sce = reactiveVals$sce,
-      dr_chosen = method,
-      cells_chosen = nrCells,
+      dr_chosen = dr_chosen,
+      cells_chosen = cells_chosen,
       seed = seed,
-      feature_chosen = features,
-      assay_chosen = assay,
+      feature_chosen = feature_chosen,
+      assay_chosen = assay_chosen,
       scale = scale,
       k = k,
-      dimensions = nrDims
-    )
+      dimensions = dimensions
+    ))[[1]], params = list(dr_chosen = method,
+                           cells_chosen = nrCells,
+                           seed = seed,
+                           feature_chosen = features,
+                           assay_chosen = assay,
+                           scale = scale,
+                           k = k,
+                           dimensions = nrDims))
   }
 
   reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)

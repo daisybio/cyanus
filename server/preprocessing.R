@@ -142,8 +142,10 @@ observeEvent(input$reorderButton, {
   conditions <- conditions[!conditions %in% c("sample_id", "patient_id", "n_cells")]
   lapply(conditions, function(condition){
     ordered <- input[[condition]]
-    reactiveVals$sce[[condition]] <- factor(reactiveVals$sce[[condition]], levels=ordered)
-    metadata(reactiveVals$sce)$experiment_info[[condition]] <- factor(metadata(reactiveVals$sce)$experiment_info[[condition]], levels=ordered)
+    reactiveVals$sce[[condition]] <- evap(expression(reactiveVals$sce[[condition]] <- factor(reactiveVals$sce[[condition]], levels=levels))[[1]],
+                                          params = list(levels = ordered, condition = condition))
+    metadata(reactiveVals$sce)$experiment_info[[condition]] <- evap(expression(metadata(reactiveVals$sce)$experiment_info[[condition]] <- factor(metadata(reactiveVals$sce)$experiment_info[[condition]], levels=levels))[[1]],
+                                                                    params = list(levels = ordered))
   })
   plotPreprocessing(reactiveVals$sce)
   waiter_hide(id = "app")
@@ -157,8 +159,8 @@ observeEvent(input$prepButton, {
               color=spinner$color)
   # data transformation
   reactiveVals$sce <-
-    transformData(sce = reactiveVals$sce,
-                  cf = as.numeric(input$cofactor))
+    evap(expression(reactiveVals$sce <- transformData(sce = reactiveVals$sce, cf = cf))[[1]],
+         params = list(cf = as.numeric(input$cofactor)))
   plotPreprocessing(reactiveVals$sce)
   waiter_hide(id = "app")
   runjs("document.getElementById('nextTab').scrollIntoView();")
@@ -182,9 +184,11 @@ observeEvent(input$prepSelectionButton, {
   #markers <- isolate(input$markerSelection)
   samples <- isolate(input$sampleSelection)
   patients <- isolate(input$patientSelection)
-  reactiveVals$sce <- filterSCE(reactiveVals$sce,sample_id %in% samples)
+  reactiveVals$sce <- evap(expression(reactiveVals$sce <- filterSCE(reactiveVals$sce, sample_id %in% samples))[[1]],
+                           params = list(samples = samples))
   if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
-    reactiveVals$sce <- filterSCE(reactiveVals$sce,patient_id %in% patients)
+    reactiveVals$sce <- evap(expression(reactiveVals$sce <- filterSCE(reactiveVals$sce, patient_id %in% patients))[[1]],
+                             params = list(patients = patients))
   }
   
   #reactiveVals$sce <- reactiveVals$sce[rownames(reactiveVals$sce) %in% markers, ]
@@ -193,6 +197,7 @@ observeEvent(input$prepSelectionButton, {
 })
 
 observeEvent(input$downsamplingButtonPreprocessing, {
+  browser()
   waiter_show(id = "app",html = tagList(spinner$logo, 
                                         HTML("<br>Running Downsampling...<br>Please be patient")), 
               color=spinner$color)
@@ -201,10 +206,12 @@ observeEvent(input$downsamplingButtonPreprocessing, {
   }else{
     per_sample=FALSE
   }
-  sce <- isolate(reactiveVals$sce)
-  sce <- performDownsampling(sce, per_sample, isolate(input$downsamplingNumber), isolate(input$downsamplingSeed))
+  'To-Do (sce is too big to log it)'
+  sce <- evap(expression(sce <- current_sce)[[1]], params = list(current_sce = isolate(reactiveVals$sce)))
+  sce <- evap(expression(sce <- performDownsampling(sce, per_sample, number, seed))[[1]],
+              params = list(per_sample = per_sample, number = isolate(input$downsamplingNumber), seed = isolate(input$downsamplingSeed)))
   if(!is.null(sce)){
-    reactiveVals$sce <- sce
+    reactiveVals$sce <- evap(expression(reactiveVals$sce <- sce)[[1]], params = NULL)
   }
   plotPreprocessing(reactiveVals$sce)
   waiter_hide(id = "app")
@@ -236,11 +243,13 @@ observeEvent(input$filterSelectionButton,{
   allsamples <- length(as.character(unique(colData(reactiveVals$sce)$sample_id)))
   
   if (length(input$sampleSelection) != allsamples){
-    reactiveVals$sce <- filterSCE(reactiveVals$sce,sample_id %in% input$sampleSelection)
+    reactiveVals$sce <- evap(expression(reactiveVals$sce <- filterSCE(reactiveVals$sce, sample_id %in% samples))[[1]],
+                             params = list(samples = input$sampleSelection))
   }
   if (("patient_id" %in% colnames(colData(reactiveVals$sce)))){
     if (length(input$patientSelection) != allpatients){
-      reactiveVals$sce <- filterSCE(reactiveVals$sce, patient_id %in% input$patientSelection)
+      reactiveVals$sce <- evap(expression(reactiveVals$sce <- filterSCE(reactiveVals$sce, patient_id %in% patients))[[1]],
+                               params = list(patients = input$patientSelection))
     }
   }
   

@@ -136,12 +136,14 @@ observeEvent(input$loadData, {
   if (!is.null(reactiveVals$sce) & !reactiveVals$has_error) { # meaning the data loading worked
   
   #drop levels of markers
-  SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
+    SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- evap(expression(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class))[[1]],
+                                                                         params = NULL)
+  #SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
   # set negative values to zero
   if (length(which(assays(reactiveVals$sce)$counts < 0)) > 0){
-    assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- 0
+    assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- evap(expression(assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- 0)[[1]])
     if ("exprs" %in% assayNames(reactiveVals$sce)){
-      assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- 0
+      assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- evap(expression(assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- 0)[[1]])
     }
     showNotification(
       HTML(
