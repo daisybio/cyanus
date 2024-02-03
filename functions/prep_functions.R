@@ -23,6 +23,22 @@ transformData <- function (sce,
 }
 
 # DOWNSAMPLE SAMPLES
+performDownsampling <- function(sce, per_sample, downsamplingNumber, downsamplingSeed) {
+  smallest_n <- min(CATALYST::ei(sce)$n_cells)
+  sum_n <- sum(CATALYST::ei(sce)$n_cells)
+  if(per_sample & downsamplingNumber > smallest_n){
+    showNotification("You selected a number of cells that is higher than your smallest sample!", type = "warning")
+  }else if(!per_sample & downsamplingNumber > sum_n){
+    showNotification("You selected a number of cells that is higher than your overall dataset size!", type = "error")
+    return(NULL)
+  }
+  sce <- downSampleSCE(sce=sce, 
+                       cells=downsamplingNumber,
+                       per_sample=per_sample, 
+                       seed=downsamplingSeed)
+  return(sce)
+  
+}
 downSampleSCE <- function(sce, cells, per_sample=TRUE, seed = NULL) {
   if (!per_sample) {
     cells <- floor(cells / nrow(CATALYST::ei(sce)))

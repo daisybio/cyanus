@@ -1005,7 +1005,7 @@ output$deExprsCluster <- renderUI({
   #if we only have counts -> copy counts to exprs
   if(length(assays(reactiveVals$sce)) == 1){
     showNotification("You have not transformed your data. We will assume that you have given us already transformed data as input.", type = "warning", duration = 10)
-    assays(reactiveVals$sce)$exprs <- assays(reactiveVals$sce)$counts
+    assays(reactiveVals$sce)$exprs <- evap(expression(assays(reactiveVals$sce)$exprs <- assays(reactiveVals$sce)$counts)[[1]])
   }
   
   factors <- names(colData(reactiveVals$sce))[!names(colData(reactiveVals$sce)) %in% c("patient_id", "sample_id")]
