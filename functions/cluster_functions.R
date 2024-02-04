@@ -3,7 +3,7 @@
 ############
 # Internal use only:
 # Add a new vertex shape to iGraph to make star charts
-'mystar <- function(coords, v = NULL, params) {
+mystar <- function(coords, v = NULL, params) {
   vertex.color <- params("vertex", "color")
   if (length(vertex.color) != 1 && !is.null(v)) {
     vertex.color <- vertex.color[v]
@@ -22,7 +22,7 @@
     circles = vertex.size,
     inches = FALSE,
     bg = bg,
-    bty = "n",
+    bty = 'n',
     add = TRUE
   )
   graphics::stars(
@@ -354,7 +354,7 @@ plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "",
   graphics::par(oldpar)
   graphics::layout(1)
   return(recordPlot())
-}'
+}
 
 plotAbundancesCustom <-
   function (x,
@@ -488,12 +488,12 @@ plotAbundancesCustom <-
 calcClusterFreqBySample <- function (x, k){
     CATALYST:::.check_sce(x, TRUE)
     k <- CATALYST:::.check_k(x, k)
-    ns <- 
+    ns <-
       table(cluster_id = cluster_ids(x, k), sample_id = sample_ids(x))
     fq <- prop.table(ns, 2) * 100
     df <- as.data.frame(fq)
 }
-
+    
 plotClusterExprsCustom <-
   function (x,
             k,
@@ -613,7 +613,6 @@ plotFreqHeatmapCustom <- function (x,
   )
 }
 
-# SOM added to metadata
 clusterSCE <-
   function (x,
             assayType = "exprs",
@@ -685,7 +684,6 @@ clusterSCE <-
     S4Vectors::metadata(x)$SOM_codes <- som$map$codes
     S4Vectors::metadata(x)$SOM_medianValues <- som$map$medianValues
     S4Vectors::metadata(x)$SOM_MST <- som$MST
-    S4Vectors::metadata(x)$SOM <- som
     S4Vectors::metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
     x <-
       CATALYST::mergeClusters(
@@ -697,238 +695,9 @@ clusterSCE <-
     return(x)
   }
 
-# function for plotting star chart (FlowSOM)
-PlotStarsCustom <- function (fsom, markers = fsom$map$colsUsed, overall = TRUE, nodeValues = NULL, nodeColors = NULL, colorPalette = FlowSOM_colors, 
-                            list_insteadof_ggarrange = FALSE, ...) 
-{
-  fsom <- UpdateFlowSOM(fsom)
-  if (length(names(list(...))) > 0 && "backgroundColor" %in% 
-      names(list(...))) {
-    warning(paste0("\"backgroundColor\" is deprecated, ", 
-                   "please use \"backgroundColors\" instead."))
-  }
-  channels <- GetChannels(fsom, markers)
-  p <- PlotFlowSOMCustom(fsom = fsom, nodeValues = nodeValues, nodeColors = nodeColors, ...)
-  if (!is.null(names(colorPalette))) {
-    names(colorPalette) <- GetChannels(fsom, names(colorPalette))
-  }
-  if(overall){
-    p <- AddStars(p = p, fsom = fsom, markers = channels, colorPalette = colorPalette)
-    if (!is.null(names(colorPalette))) {
-      names(colorPalette) <- fsom$prettyColnames[GetChannels(fsom, 
-                                                             names(colorPalette))]
-    }
-    l1 <- PlotStarLegend(channels, colorPalette)
-    l2 <- ggpubr::get_legend(p, position = "bottom")
-    if (list_insteadof_ggarrange) {
-      p <- p + ggplot2::theme(legend.position = "none")
-      l2 <- ggpubr::as_ggplot(l2)
-      return(list(tree = p, starLegend = l1, backgroundLegend = l2))
-    }
-    else {
-      p <- ggpubr::ggarrange(p, ggpubr::ggarrange(l1, l2, 
-                                                  ncol = 1), NULL, ncol = 3, widths = c(3, 1, 0.3), 
-                             legend = "none")
-    }
-  }
-  return(p)
-}
-
-
-# function for plotting with FlowSOM (FlowSOM)
-PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view = "MST", nodeSizes = fsom$map$pctgs, maxNodeSize = 1, 
-                               refNodeSize = max(nodeSizes), equalNodeSize = FALSE, backgroundValues = NULL, 
-                               backgroundColors = NULL, backgroundLim = NULL, title = NULL) 
-{
-  requireNamespace("ggplot2")
-  fsom <- UpdateFlowSOM(fsom)
-  nNodes <- NClusters(fsom)
-  isEmpty <- fsom$map$pctgs == 0
-  if (length(nodeSizes) != nNodes) {
-    stop(paste0("Length of 'nodeSizes' should be equal to number of clusters ", 
-                "in FlowSOM object (", nNodes, " clusters and ", 
-                length(nodeSizes), " node sizes)."))
-  }
-  if (length(backgroundValues) != nNodes && !is.null(backgroundValues)) {
-    stop(paste0("Length of 'backgroundValues' should be equal to number of ", 
-                "clusters in FlowSOM object (", nNodes, " clusters and ", 
-                length(backgroundValues), " backgroundValues)."))
-  }
-  if (deparse(substitute(backgroundColors)) == "backgroundColor") {
-    warning(paste0("In the new FlowSOM version \"backgroundColors\"", 
-                   " is used instead of \"backgroundColor\""))
-  }
-  layout <- FlowSOM:::ParseLayout(fsom, view)
-  if (is.matrix(view) || is.data.frame(view)) 
-    view <- "matrix"
-  autoNodeSize <- FlowSOM:::AutoMaxNodeSize(layout = layout, overlap = ifelse(view %in% 
-                                                                                c("grid"), -0.3, 1))
-  maxNodeSize <- autoNodeSize * maxNodeSize
-  if (equalNodeSize) {
-    scaledNodeSize <- rep(maxNodeSize, nNodes)
-  }
-  else {
-    scaledNodeSize <- FlowSOM:::ParseNodeSize(nodeSizes, maxNodeSize, 
-                                              refNodeSize)
-  }
-  if (any(isEmpty)) {
-    scaledNodeSize[isEmpty] <- min(maxNodeSize, 0.05)
-  }
-  plot_df <- data.frame(x = layout$x, y = layout$y, size = scaledNodeSize, 
-                        bg_size = scaledNodeSize * 1.5)
-  p <- ggplot2::ggplot(plot_df)
-  if (!is.null(backgroundValues)) {
-    p <- FlowSOM:::AddBackground(p, backgroundValues = backgroundValues, 
-                                 backgroundColors = backgroundColors, backgroundLim = backgroundLim)
-  }
-  if (view == "MST") {
-    p <- FlowSOM:::AddMST(p, fsom)
-  }
-  if(is.null(nodeValues)){
-    p <- FlowSOM:::AddNodes(p = p, values = as.character(isEmpty), colorPalette = c(`TRUE` = "gray", 
-                                                                                    `FALSE` = "white"), showLegend = FALSE)
-  } else {
-    p <- FlowSOM:::AddNodes(p = p, values = nodeValues, colorPalette = nodeColors, showLegend = FALSE)
-  }
-  p <- p + guides(fill_new = guide_legend(title = "Clusters")) # diese Zeile muss auch in die original PlotStars Funktion von FlowSOM
-  p <- p + ggplot2::coord_fixed() + ggplot2::theme_void()
-  if (!is.null(title)) {
-    p <- p + ggplot2::ggtitle(title) + theme(plot.title = element_text(hjust = 0.5))
-  } 
-  return(p)
-}
-
-
-# own function for enabling selection of groups and facetting
-library(grid)
-library(gridExtra)
-plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "", subselection=NULL, assayType = "exprs", colorPalette = grDevices::colorRampPalette(c("#00007F","blue", "#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", 
-                                                                                                                                                                      "red", "#7F0000")), backgroundValues = NULL)
-{
-  if (facet_by == "") {
-    # no faceting
-    if (subselection_col == "") {
-      # no subselection
-      color_values <- round(S4Vectors::metadata(sce)$SOM_medianValues[, marker], 2)
-      colors <- colorPalette(100)[as.numeric(cut(color_values, breaks = 100))]
-      # plot star chart for single marker with color_values and colors
-      p <- PlotStarCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = color_values, nodeColors = colorPalette, backgroundValues = backgroundValues)
-      p <- p + ggtitle(marker) + theme(plot.title = element_text(hjust = 0.5))
-      
-      
-      # TODO add legend for coloring
-      #color_legend <- colorPalette(100)
-      my_breaks <- seq(min(color_values), max(color_values), (max(color_values)-min(color_values))/5)
-      legend_data <- data.frame(value = color_values, constant_y = 1)
-      lplot <- ggplot(legend_data, aes(x = value, y = constant_y, fill = value)) +
-        geom_tile() +
-        scale_fill_gradientn(colors = colorPalette(100), guide = "colourbar", breaks = my_breaks) +
-        theme_classic() +
-        theme(legend.key.height= unit(2,'cm'),
-              legend.title = element_blank())
-      # Draw Only Legend without plot 
-      legend <- get_legend(lplot)
-      
-      # Add legend to the plot
-      p <- p + theme(legend.position = "left")  # cluster legend
-      p <- ggarrange(p, legend, ncol=2, widths = c(6, 1))
-    } else {
-      # subselection by group
-      sce_filtered <- CATALYST::filterSCE(sce, get(subselection_col) == subselection)
-      median_cond <- data.table::data.table(t(SummarizedExperiment::assay(sce_filtered, assayType)))
-      median_cond[, cluster_id := sce_filtered$cluster_id]
-      median_cond <- median_cond[, .(my_marker = median(get(marker))), by = cluster_id]
-      missing_clusters <- median_cond[, setdiff(levels(cluster_id), cluster_id)]
-      if (length(missing_clusters) != 0)
-        median_cond <- rbind(median_cond, data.table::data.table(cluster_id = missing_clusters, my_marker= NA))
-      data.table::setkey(median_cond, cluster_id)
-      lev <- round(median_cond[, my_marker], 2)
-      yval <- seq(min(lev, na.rm = T), max(lev, na.rm = T), by = (max(lev, na.rm = T) - min(lev, na.rm = T))/length(colorPalette(100)))
-      
-      # plot star chart for subselection with new calculated color_values
-      colors <- colorPalette(100)[findInterval(median_cond[, my_marker], yval)]
-      p <- PlotStarCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = lev, nodeColors = colorPalette, backgroundValues = backgroundValues)
-      p <- p + ggtitle(paste0(marker, ", ", subselection)) + theme(plot.title = element_text(hjust = 0.5))
-      
-      # TODO add legend for coloring
-      my_breaks <- seq(min(lev, na.rm = T), max(lev, na.rm = T),by = (max(lev, na.rm = T) - min(lev, na.rm = T))/5)
-      legend_data <- data.frame(value = my_breaks[-1], constant_y = 1)
-      lplot <- ggplot(legend_data, aes(x = value, y = constant_y, fill = value)) +
-        geom_tile() +
-        scale_fill_gradientn(colors = colorPalette(100), guide = "colourbar", breaks = my_breaks) +
-        theme_classic() +
-        theme(legend.key.height= unit(2, 'cm'),
-              legend.title = element_blank())
-      # Draw Only Legend without plot 
-      legend <- get_legend(lplot)
-      
-      # Add legend to the plot
-      p <- p + theme(legend.position = "left")  # cluster legend
-      p <- ggarrange(p, legend, ncol=2, widths = c(6, 1))
-    }
-    return(p)
-  } else {
-    # facet
-    metadata(sce)$experiment_info <- as.data.frame(metadata(sce)$experiment_info)
-    metadata(sce)$experiment_info[[facet_by]] <- as.factor(metadata(sce)$experiment_info[[facet_by]])
-    cond_levels <- levels(CATALYST::ei(sce)[[facet_by]])
-    both_cond <- data.table::rbindlist(sapply(cond_levels, function(cond){
-      if (subselection_col != ""){
-        sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name == marker), get(facet_by) == cond, get(subselection_col) == subselection)
-      }
-      else {
-        sce_filtered <- CATALYST::filterSCE(CATALYST::filterSCE(sce, marker_name == marker), get(facet_by) == cond)
-      }
-      median_cond <- data.table::data.table(t(SummarizedExperiment::assay(sce_filtered, assayType)))
-      median_cond[, cluster_id := sce_filtered$cluster_id]
-      median_cond <- median_cond[, .(my_marker = median(get(marker))), by = cluster_id]
-      missing_clusters <- median_cond[, setdiff(levels(cluster_id), cluster_id)]
-      if (length(missing_clusters) != 0)
-        median_cond <- rbind(median_cond, data.table::data.table(cluster_id = missing_clusters, my_marker= NA))
-      data.table::setkey(median_cond, cluster_id)
-    }, simplify = FALSE), idcol = "condition")
-    lev <- round(both_cond[, my_marker], 2)
-    yval <- seq(min(lev, na.rm = T), max(lev, na.rm = T), by = (max(lev, na.rm = T) - min(lev, na.rm = T))/length(colorPalette(100)))
-    plots <- list()
-    for (cond in cond_levels) {
-      # draw new plot with only selected condition
-      color_values <- round(both_cond[condition == cond, my_marker], 2)
-      colors <- colorPalette(100)[findInterval(color_values, yval)]
-      p <- PlotStarCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = color_values, nodeColors = colorPalette, backgroundValues = backgroundValues)
-      if(subselection_col == ""){
-        title_plot <- marker
-      } else {
-        title_plot <- paste0(marker, ", ", subselection)
-      }
-      p <- p + ggtitle(paste0(title_plot, ", ", cond)) + theme(plot.title = element_text(hjust = 0.5))
-      plots[[cond]] <- p
-    }
-    # TODO add legend for coloring
-    my_breaks <- seq(min(lev, na.rm = T), max(lev, na.rm = T),by = (max(lev, na.rm = T) - min(lev, na.rm = T))/5)
-    legend_data <- data.frame(value = my_breaks[-1], constant_y = 1)
-    lplot <- ggplot(legend_data, aes(x = value, y = constant_y, fill = value)) +
-      geom_tile() +
-      scale_fill_gradientn(colors = colorPalette(100), guide = "colourbar", breaks = my_breaks) +
-      theme_classic() +
-      theme(legend.key.height= unit(2, 'cm'),
-            legend.title = element_blank())
-    # Draw Only Legend without plot 
-    legend <- get_legend(lplot)
-    
-    # hide one cluster legend to avoid double plotting
-    plots[[1]] <- plots[[1]] + theme(legend.position = "left")
-    plots[[2]] <- plots[[2]] + theme(legend.position = "none")
-    
-    # Combine the plots and legend with patchwork
-    library(patchwork)
-    p <- wrap_plots(plots, nrow = 1, heights = c(6,1)) + legend
-    return(p)
-  }
-}
-
-'addClusterAll <- function(sce){
+addClusterAll <- function(sce){
   sce$cluster_id <- as.factor("all")
   S4Vectors::metadata(sce)$cluster_codes <- data.frame(all = as.factor("all"))
   return(sce)
-}'
+}
 
