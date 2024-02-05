@@ -1021,7 +1021,7 @@ output$deExprsBoxplot <- renderUI({
   }
   choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
-  print(c("n_cells", "sample_id", "patient_id"))
+  #print(c("n_cells", "sample_id", "patient_id"))
   choices <- unlist(sapply(choices, function(x){
     lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
     return(lvls)
@@ -1112,7 +1112,7 @@ output$boxplotDE <- renderPlot({
     category <- isolate(reactiveVals$subselectionMap[[input$deBoxSubselect]])
     sce <- filterSCE(sce, get(category) == input$deBoxSubselect)
   }
-  reactiveVals$pbExprsPlot <- plotPbExprsMod(sce, 
+  result <- plotPbExprsMod(sce, 
                                           k = k, 
                                           features = input$deBoxFeatures, 
                                           color_by = input$deBoxColor, 
@@ -1121,6 +1121,10 @@ output$boxplotDE <- renderPlot({
   
   
   
+  
+  
+  reactiveVals$pbExprsPlot <- result$plot
+  reactiveVals$pbExprsMed <- result$medians_table
   shinyjs::enable("previousTab")
   shinyjs::enable("nextTab")
   #shinyjs::show("selectionBoxDE")
@@ -1155,7 +1159,7 @@ output$downloadPlotPbExprs <- downloadHandler(
 )
 # ui for median table download button
 output$pbExprsTableDownload <- renderUI({
-  req(reactiveVals$pbExprsPlot)
+  req(reactiveVals$pbExprsMed)
   downloadButton("downloadTablePbExprs", "Download Median table")
 })
 
@@ -1169,6 +1173,7 @@ output$downloadTablePbExprs <- downloadHandler(
                                           HTML("<br>Downloading...")), 
                 color=spinner$color)
     # TODO: implement!
+    write.csv(reactiveVals$pbExprsMed, file, row.names = FALSE, quote = TRUE, sep = ",")
     waiter_hide(id="app")
     
   }
@@ -1204,7 +1209,7 @@ output$deExprsViolin <- renderUI({
   }
   choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
-  print(c("n_cells", "sample_id", "patient_id"))
+  #print(c("n_cells", "sample_id", "patient_id"))
   choices <- unlist(sapply(choices, function(x) {
     lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
     return(lvls)

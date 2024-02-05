@@ -493,7 +493,7 @@ createCustomContrastMatrix <- function(sce, contrastVars, matrix, designMatrix =
     cnames <- colnames(matrix)
     bool <- getBools(cnames, contrastVars)
     contrast <- diffcyt::createContrast(bool)
-    print(contrast)
+    #print(contrast)
     return(contrast)
   }else{
     #the entries have to correspond to the levels of the fixed effect terms in the model formula
@@ -504,7 +504,7 @@ createCustomContrastMatrix <- function(sce, contrastVars, matrix, designMatrix =
     contrast <- unlist(lapply(names(lvlList), function(x){
       return( c( 0, rep(bool[x], length(lvlList[[x]]) -1 )) ) 
     }))
-    print(contrast)
+    #print(contrast)
     return(diffcyt::createContrast(unname(contrast)))
   }
 }
@@ -624,7 +624,115 @@ runDS_old <- function(sce, condition, random_effect = NULL,
   result
 }
 
-
+# Boxplot
+# plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs", 
+#                             fun = c("median", "mean", "sum"), facet_by = c("antigen", 
+#                                                                            "cluster_id"), color_by = "condition", group_by = color_by, 
+#                             shape_by = NULL, size_by = FALSE, geom = c("both", "points", 
+#                                                                        "boxes"), jitter = TRUE, ncol = NULL) 
+#   
+#   
+#   
+#   
+# {
+#   fun <- match.arg(fun)
+#   geom <- match.arg(geom)
+#   facet_by <- match.arg(facet_by)
+#   stopifnot(is.logical(jitter), length(jitter) == 1)
+#   if (!is.null(ncol)) 
+#     stopifnot(is.numeric(ncol), length(ncol) == 1, ncol%%1 == 
+#                 0)
+#   if (facet_by == "cluster_id") {
+#     CATALYST:::.check_sce(x, TRUE)
+#     k <- CATALYST:::.check_k(x, k)
+#   }
+#   else CATALYST:::.check_sce(x)
+#   CATALYST:::.check_assay(x, assay)
+#   CATALYST:::.check_cd_factor(x, color_by)
+#   CATALYST:::.check_cd_factor(x, group_by)
+#   CATALYST:::.check_cd_factor(x, shape_by)
+#   shapes <- CATALYST:::.get_shapes(x, shape_by)
+#   print(str(shape_by))
+#   if (is.null(shapes)) 
+#     shape_by <- NULL
+#   x <- x[CATALYST:::.get_features(x, features), ]
+#   if (any(c(facet_by, group_by) == "cluster_id")) {
+#     x$cluster_id <- cluster_ids(x, k)
+#     by <- c("cluster_id", "sample_id")
+#   }
+#   else by <- "sample_id"
+#   ms <- CATALYST:::.agg(x, by, fun, assay)
+#   
+#   # Calculate medians
+#   medians <- CATALYST:::.agg(x, by, "median", assay)
+#   #print (str(medians))
+#   medians_table <- NULL 
+#   # Check if medians is a numeric matrix with dimnames
+#   # TODO: throws an error for facet_by cluster
+#   
+#   if (is.matrix(medians) && length(dimnames(medians)) == 2) {
+#     # Create a data frame from the matrix
+#     medians_table <- data.frame(
+#       antigen = rownames(medians),
+#       cluster_id = colnames(medians),
+#       median_value = as.vector(medians)
+#       
+#     )
+#     
+#     
+#     
+#   } else {
+#     stop("Unexpected format for medians. Unable to create a table.")
+#   }
+#   
+#   
+#   df <- reshape2::melt(ms, varnames = c("antigen", by[length(by)]))
+#   df[[by[length(by)]]] <- factor(df[[by[length(by)]]], levels(colData(x)[[by[length(by)]]]))
+#   if (length(by) == 2) 
+#     names(df)[ncol(df)] <- "cluster_id"
+#   x_var <- ifelse(facet_by == "antigen", group_by, "antigen")
+#   if (!is.null(df$cluster_id)) 
+#     df$cluster_id <- factor(df$cluster_id, levels(x$cluster_id))
+#   i <- match(df$sample_id, x$sample_id)
+#   j <- setdiff(names(colData(x)), c(names(df), "cluster_id"))
+#   df <- cbind(df, colData(x)[i, j, drop=FALSE])
+#   ncs <- table(as.list(colData(x)[by]))
+#   ncs <- rep(c(t(ncs)), each = nrow(x))
+#   if (size_by) {
+#     size_by <- "n_cells"
+#     df$n_cells <- ncs
+#   }
+#   else size_by <- NULL
+#   df <- df[ncs > 0, , drop = FALSE]
+#   # Return both the medians_table and the plot
+#   return(list(medians_table = medians_table, plot = ggplot(df, aes_string(x_var, "value", col = color_by)) + 
+#                 facet_wrap(facet_by, ncol = ncol, scales = "free_y") + 
+#                 (if (geom != "boxes") 
+#                   geom_point(alpha = 0.8, position = (if (jitter) {
+#                     position_jitterdodge(jitter.width = 0.2, jitter.height = 0)
+#                   }
+#                   else "identity"), aes_string(fill = color_by, size = size_by, 
+#                                                shape = shape_by))) + (if (geom != "points") 
+#                                                  geom_boxplot(alpha = 0.4, width = 0.8, fill = NA, outlier.color = NA, 
+#                                                               show.legend = FALSE)) + scale_shape_manual(values = shapes) + 
+#                 scale_size_continuous(range = c(0.5, 3)) + guides(fill = FALSE, 
+#                                                                   size = guide_legend(order = 3), shape = guide_legend(order = 2, 
+#                                                                                                                        override.aes = list(size = 3)), col = guide_legend(order = 1, 
+#                                                                                                                                                                           override.aes = list(alpha = 1, size = 3))) + ylab(paste(fun, 
+#                                                                                                                                                                                                                                   ifelse(assay == "exprs", "expression", assay))) + theme_bw() + 
+#                 theme(legend.key.height = unit(0.8, "lines"), axis.text = element_text(color = "black"), 
+#                       strip.text = element_text(face = "bold"), strip.background = element_rect(fill = NA, 
+#                                                                                                 color = NA), panel.grid.minor = element_blank(), 
+#                       panel.grid.major = element_line(color = "grey", 
+#                                                       size = 0.2)) + if (length(unique(c(x_var, color_by, 
+#                                                                                          group_by))) == 1) {
+#                                                         theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+#                                                       } else {
+#                                                         theme(axis.text.x = element_text(angle = 45, hjust = 1, 
+#                                                                                          vjust = 1))
+#                                                       }
+#   ))
+# }
 plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs", 
                             fun = c("median", "mean", "sum"), facet_by = c("antigen", 
                                                                            "cluster_id"), color_by = "condition", group_by = color_by, 
@@ -657,25 +765,6 @@ plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs"
   }
   else by <- "sample_id"
   ms <- CATALYST:::.agg(x, by, fun, assay)
-  
-  # Calculate medians
-  medians <- CATALYST:::.agg(x, by, "median", assay)
-  
-  # Check if medians is a numeric matrix with dimnames
-  # TODO: throws an error for facet_by cluster
-  if (is.matrix(medians) && length(dimnames(medians)) == 2) {
-    # Create a data frame from the matrix
-    medians_table <- data.frame(
-      antigen = rownames(medians),
-      cluster_id = colnames(medians),
-      median_value = as.vector(medians)
-      
-    )
-    print(str(medians_table))
-  } else {
-    stop("Unexpected format for medians. Unable to create a table.")
-  }
-  
   df <- reshape2::melt(ms, varnames = c("antigen", by[length(by)]))
   df[[by[length(by)]]] <- factor(df[[by[length(by)]]], levels(colData(x)[[by[length(by)]]]))
   if (length(by) == 2) 
@@ -694,7 +783,12 @@ plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs"
   }
   else size_by <- NULL
   df <- df[ncs > 0, , drop = FALSE]
-  ggplot(df, aes_string(x_var, "value", col = color_by)) + 
+  medians_table <- data.frame(
+    Name = c("Alice", "Bob", "Charlie"),
+    Age = c(25, 30, 22),
+    Score = c(95, 87, 92)
+  )
+  return(list(medians_table = medians_table, plot = ggplot(df, aes_string(x_var, "value", col = color_by)) + 
     facet_wrap(facet_by, ncol = ncol, scales = "free_y") + 
     (if (geom != "boxes") 
       geom_point(alpha = 0.8, position = (if (jitter) {
@@ -717,102 +811,179 @@ plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs"
                                                                              group_by))) == 1) {
                                             theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
                                           }else {
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, 
-                                     vjust = 1))
+                                            theme(axis.text.x = element_text(angle = 45, hjust = 1, 
+                                                                             vjust = 1))
                                           }
-
+  ))
 }
-
 ### Violinplot
 
+# plotViolinMod <- function (x, k = "meta20", features = "state", assay = "exprs", 
+#                            fun = c("mean", "sum"), facet_by = "antigen", 
+#                            color_by = "condition", shape_by = NULL, size_by = FALSE, 
+#                            geom = "violins", jitter = TRUE, ncol = NULL) 
+# {
+#   
+#   fun <- match.arg(fun)
+#   geom <- match.arg(geom)
+#   facet_by <- match.arg(facet_by)
+#   stopifnot(is.logical(jitter), length(jitter) == 1)
+#   if (!is.null(ncol)) 
+#     stopifnot(is.numeric(ncol), length(ncol) == 1, ncol %% 1 == 0)
+#   
+#   if (facet_by == "cluster_id") {
+#     CATALYST:::.check_sce(x, TRUE)
+#     k <- CATALYST:::.check_k(x, k)
+#   } else {
+#     CATALYST:::.check_sce(x)
+#   }
+#   
+#   CATALYST:::.check_assay(x, assay)
+#   CATALYST:::.check_cd_factor(x, color_by)
+#   CATALYST:::.check_cd_factor(x, shape_by)
+#   shapes <- CATALYST:::.get_shapes(x, shape_by)
+#   if (is.null(shapes)) 
+#     shape_by <- NULL
+#   
+#   x <- x[CATALYST:::.get_features(x, features), ]
+#   
+#   if (facet_by == "cluster_id") {
+#     x$cluster_id <- cluster_ids(x, k)
+#     by <- c("cluster_id", "sample_id")
+#   } else {
+#     by <- "sample_id"
+#   }
+#   
+#   ms <- CATALYST:::.agg(x, by, fun, assay)
+#   
+#   df <- reshape2::melt(ms, varnames = c("antigen", by[length(by)]))
+#   df <- reshape2::melt(ms, varnames = c("antigen", by[length(by)]))
+#   df[[by[length(by)]]] <- factor(df[[by[length(by)]]], levels = unique(colData(x)[[by[length(by)]]]))
+#   
+#   if (length(by) == 2) 
+#     names(df)[ncol(df)] <- "cluster_id"
+#   
+#   x_var <- ifelse(facet_by == "antigen", color_by, "antigen")
+#   
+#   
+#   if (!is.null(df$cluster_id)) 
+#     df$cluster_id <- factor(df$cluster_id, levels = x$cluster_id)
+#   
+#   i <- match(df$sample_id, x$sample_id)
+#   j <- setdiff(names(colData(x)), c(names(df), "cluster_id"))
+#   df <- cbind(df, colData(x)[i, j, drop = FALSE])
+#   ncs <- table(as.list(colData(x)[by]))
+#   ncs <- rep(c(t(ncs)), each = nrow(x))
+#   
+#   if (size_by) {
+#     size_by <- "n_cells"
+#     df$n_cells <- ncs
+#   } else {
+#     size_by <- NULL
+#   }
+#   
+#   df <- df[ncs > 0, , drop = FALSE]
+#   
+#   ggplot(df, aes_string(x_var, "value", col = color_by, fill = color_by)) + 
+#     facet_wrap(facet_by, ncol = ncol, scales = "free_y") + 
+#     geom_violin(alpha = 0.3) +
+#     geom_point(alpha = 0.8, position = (if (jitter) {
+#       position_jitterdodge(jitter.width = 0.2, jitter.height = 0)
+#     } else "identity"), aes_string(fill = color_by, size = size_by, shape = shape_by)) +
+#     scale_shape_manual(values = shapes) + 
+#     scale_size_continuous(range = c(0.5, 3)) + 
+#     guides(size = guide_legend(order = 4), 
+#            shape = guide_legend(order = 3, override.aes = list(size = 3)), 
+#            col = guide_legend(order = 2, override.aes = list(alpha = 1, size = 3))) + 
+#     ylab(paste(fun, ifelse(assay == "exprs", "expression", assay))) + 
+#     theme_bw() + 
+#     theme(legend.key.height = unit(0.8, "lines"), 
+#           axis.text = element_text(color = "black"), 
+#           strip.text = element_text(face = "bold"), 
+#           strip.background = element_rect(fill = NA, color = NA), 
+#           panel.grid.minor = element_blank(), 
+#           panel.grid.major = element_line(color = "grey", size = 0.2)) + 
+#     if (length(unique(c(x_var, color_by, facet_by))) == 1) {
+#       theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+#     } else {
+#       theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+#     }
+# }
 plotViolinMod <- function (x, k = "meta20", features = "state", assay = "exprs", 
-                           fun = c("mean", "sum"), facet_by = "antigen", 
-                           color_by = "condition", shape_by = NULL, size_by = FALSE, 
-                           geom = "violins", jitter = TRUE, ncol = NULL) 
+                           fun = c("median", "mean", "sum"), facet_by = c("antigen", 
+                                                                          "cluster_id"), color_by = "condition", group_by = color_by, 
+                           shape_by = NULL, size_by = FALSE, geom = c("both", "points", 
+                                                                      "violin"), jitter = TRUE, ncol = NULL) 
 {
-  
   fun <- match.arg(fun)
   geom <- match.arg(geom)
   facet_by <- match.arg(facet_by)
   stopifnot(is.logical(jitter), length(jitter) == 1)
   if (!is.null(ncol)) 
-    stopifnot(is.numeric(ncol), length(ncol) == 1, ncol %% 1 == 0)
-  
+    stopifnot(is.numeric(ncol), length(ncol) == 1, ncol%%1 == 
+                0)
   if (facet_by == "cluster_id") {
     CATALYST:::.check_sce(x, TRUE)
     k <- CATALYST:::.check_k(x, k)
-  } else {
-    CATALYST:::.check_sce(x)
   }
-  
+  else CATALYST:::.check_sce(x)
   CATALYST:::.check_assay(x, assay)
   CATALYST:::.check_cd_factor(x, color_by)
+  CATALYST:::.check_cd_factor(x, group_by)
   CATALYST:::.check_cd_factor(x, shape_by)
   shapes <- CATALYST:::.get_shapes(x, shape_by)
   if (is.null(shapes)) 
     shape_by <- NULL
-  
   x <- x[CATALYST:::.get_features(x, features), ]
-  
-  if (facet_by == "cluster_id") {
+  if (any(c(facet_by, group_by) == "cluster_id")) {
     x$cluster_id <- cluster_ids(x, k)
     by <- c("cluster_id", "sample_id")
-  } else {
-    by <- "sample_id"
   }
-  
+  else by <- "sample_id"
   ms <- CATALYST:::.agg(x, by, fun, assay)
-  
   df <- reshape2::melt(ms, varnames = c("antigen", by[length(by)]))
-  df <- reshape2::melt(ms, varnames = c("antigen", by[length(by)]))
-  df[[by[length(by)]]] <- factor(df[[by[length(by)]]], levels = unique(colData(x)[[by[length(by)]]]))
-  
+  df[[by[length(by)]]] <- factor(df[[by[length(by)]]], levels(colData(x)[[by[length(by)]]]))
   if (length(by) == 2) 
     names(df)[ncol(df)] <- "cluster_id"
-  
-  x_var <- ifelse(facet_by == "antigen", color_by, "antigen")
-  
-  
+  x_var <- ifelse(facet_by == "antigen", group_by, "antigen")
   if (!is.null(df$cluster_id)) 
-    df$cluster_id <- factor(df$cluster_id, levels = x$cluster_id)
-  
+    df$cluster_id <- factor(df$cluster_id, levels(x$cluster_id))
   i <- match(df$sample_id, x$sample_id)
   j <- setdiff(names(colData(x)), c(names(df), "cluster_id"))
-  df <- cbind(df, colData(x)[i, j, drop = FALSE])
+  df <- cbind(df, colData(x)[i, j, drop=FALSE])
   ncs <- table(as.list(colData(x)[by]))
   ncs <- rep(c(t(ncs)), each = nrow(x))
-  print(str(ncs))
   if (size_by) {
     size_by <- "n_cells"
     df$n_cells <- ncs
-  } else {
-    size_by <- NULL
   }
-  
+  else size_by <- NULL
   df <- df[ncs > 0, , drop = FALSE]
   
-  ggplot(df, aes_string(x_var, "value", col = color_by, fill = color_by)) + 
+  ggplot(df, aes_string(x_var, "value", col = color_by)) + 
     facet_wrap(facet_by, ncol = ncol, scales = "free_y") + 
-    geom_violin(alpha = 0.3) +
-    geom_point(alpha = 0.8, position = (if (jitter) {
-      position_jitterdodge(jitter.width = 0.2, jitter.height = 0)
-    } else "identity"), aes_string(fill = color_by, size = size_by, shape = shape_by)) +
+    (if (geom != "violin") 
+      geom_point(alpha = 0.8, position = (if (jitter) {
+        position_jitterdodge(jitter.width = 0.2, jitter.height = 0)
+      }
+      else "identity"), aes_string(fill = color_by, size = size_by, 
+                                   shape = shape_by))) + 
+    (if (geom != "points") 
+      geom_violin(alpha = 0.4, fill = NA, draw_quantiles = c(0.25, 0.5, 0.75))) + 
     scale_shape_manual(values = shapes) + 
     scale_size_continuous(range = c(0.5, 3)) + 
-    guides(size = guide_legend(order = 4), 
-           shape = guide_legend(order = 3, override.aes = list(size = 3)), 
-           col = guide_legend(order = 2, override.aes = list(alpha = 1, size = 3))) + 
+    guides(fill = FALSE, size = guide_legend(order = 3), shape = guide_legend(order = 2, 
+                                                                              override.aes = list(size = 3)), col = guide_legend(order = 1, 
+                                                                                                                                 override.aes = list(alpha = 1, size = 3))) + 
     ylab(paste(fun, ifelse(assay == "exprs", "expression", assay))) + 
     theme_bw() + 
-    theme(legend.key.height = unit(0.8, "lines"), 
-          axis.text = element_text(color = "black"), 
-          strip.text = element_text(face = "bold"), 
-          strip.background = element_rect(fill = NA, color = NA), 
-          panel.grid.minor = element_blank(), 
+    theme(legend.key.height = unit(0.8, "lines"), axis.text = element_text(color = "black"), 
+          strip.text = element_text(face = "bold"), strip.background = element_rect(fill = NA, 
+                                                                                    color = NA), panel.grid.minor = element_blank(), 
           panel.grid.major = element_line(color = "grey", size = 0.2)) + 
-    if (length(unique(c(x_var, color_by, facet_by))) == 1) {
+    if (length(unique(c(x_var, color_by, group_by))) == 1) {
       theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
-    } else {
+    }else {
       theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
     }
 }
