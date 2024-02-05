@@ -739,6 +739,7 @@ plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs"
                             shape_by = NULL, size_by = FALSE, geom = c("both", "points", 
                                                                        "boxes"), jitter = TRUE, ncol = NULL) 
 {
+  print(str(color_by))
   fun <- match.arg(fun)
   geom <- match.arg(geom)
   facet_by <- match.arg(facet_by)
@@ -783,12 +784,8 @@ plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs"
   }
   else size_by <- NULL
   df <- df[ncs > 0, , drop = FALSE]
-  medians_table <- data.frame(
-    Name = c("Alice", "Bob", "Charlie"),
-    Age = c(25, 30, 22),
-    Score = c(95, 87, 92)
-  )
-  return(list(medians_table = medians_table, plot = ggplot(df, aes_string(x_var, "value", col = color_by)) + 
+  
+  plot <- ggplot(df, aes_string(x_var, "value", col = color_by)) + 
     facet_wrap(facet_by, ncol = ncol, scales = "free_y") + 
     (if (geom != "boxes") 
       geom_point(alpha = 0.8, position = (if (jitter) {
@@ -814,7 +811,59 @@ plotPbExprsMod <- function (x, k = "meta20", features = "state", assay = "exprs"
                                             theme(axis.text.x = element_text(angle = 45, hjust = 1, 
                                                                              vjust = 1))
                                           }
-  ))
+  # Extract medians from the ggplot object
+  #print(str(ggplot_build(plot)$plot$data$antigen))
+  medians <- ggplot_build(plot)$data[[2]]$middle
+  median_value <- ggplot_build(plot)$plot$data$value
+  header <- NULL
+  hmany <- NULL
+  cluster_true <- FALSE
+  if (facet_by=="cluster_id"){
+    header <- unique(levels(ggplot_build(plot)$plot$data$cluster_id))
+    antigen <-unique(levels(ggplot_build(plot)$plot$data$antigen))
+    if(color_by == "condition"){
+      hmany <- unique(levels(ggplot_build(plot)$plot$data$condition))
+    }
+    else if(color_by == "sample_id"){
+      hmany <- unique(levels(ggplot_build(plot)$plot$data$sample_id))
+    }
+    else if (color_by == "patient_id"){
+      hmany <-unique(levels(ggplot_build(plot)$plot$data$patient_id))
+    }
+    else if (color_by=="cluster_id"){
+      hmany <-unique(levels(ggplot_build(plot)$plot$data$cluster_id))
+    }
+    pltnmbr <- rep(antigen, each = length(hmany))
+    allnmbr <- rep(header, each = length(pltnmbr))
+    medians_table <- data.table("cluster_id"=allnmbr,"marker/type" = pltnmbr,"color_by/group_by"= hmany, "median"=medians)
+  }
+  else{
+    header <- unique(levels(ggplot_build(plot)$plot$data$antigen))
+    if(color_by == "condition"){
+      hmany <- unique(levels(ggplot_build(plot)$plot$data$condition))
+    }
+    else if(color_by == "sample_id"){
+      hmany <- unique(levels(ggplot_build(plot)$plot$data$sample_id))
+    }
+    else if (color_by == "patient_id"){
+      hmany <-unique(levels(ggplot_build(plot)$plot$data$patient_id))
+    }
+    else if (color_by=="cluster_id"){
+      hmany <-unique(levels(ggplot_build(plot)$plot$data$cluster_id))
+    }
+    all_combinations <- rep(header, each = length(hmany))
+    #print (str(all_combinations))
+    # Create the medians_table
+    medians_table <- data.table("marker" = all_combinations,"color_by/group_by"= hmany, "median"=medians)
+  }
+  #print(str(header))
+  
+  #print(str(hmany))
+  #antigen <- unique(levels(ggplot_build(plot)$plot$data$antigen))
+  #patient_id <- ggplot_build(plot)$plot$data$patient_id
+  
+  
+  return(list(medians_table = medians_table, plot = plot))
 }
 ### Violinplot
 
