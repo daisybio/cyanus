@@ -311,7 +311,7 @@ output$clusterSizes <- renderTable({
   
   total_cells <- sum(res$Size)
   res$Fraction <- round((res$Size / total_cells) * 100, 2)
-  names(res) <- c("Cluster", "Size", "Fraction [%]")
+  names(res) <- c("Cluster", "Size", "Proportion [%]")
   t(res)
 },
 caption = "Cluster Sizes",
