@@ -658,7 +658,6 @@ output$clusterHeatmapDownload <- renderUI({
 })
 
 output$clusterStarPlot <- renderPlot({
-  browser()
   req(SummarizedExperiment::rowData(reactiveVals$sce)$used_for_clustering)
   reactiveVals$starCluster <-
     plotStarsCustom(metadata(reactiveVals$sce)$SOM, overall = TRUE, backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]])
