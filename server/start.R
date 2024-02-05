@@ -1,6 +1,7 @@
 reactiveVals$data <- list(upload = list(fcs=NULL, panel=NULL, md=NULL), example = list(fcs=NULL, panel=NULL, md=NULL) )
 
 observeEvent(input$fcsFiles, {
+  setup_logfile()
   fileTable <- input$fcsFiles
   fileTable <- fileTable[, c("name", "size")]
   fileTable$size <- sprintf("%.2f MB", fileTable$size / 1000000)
@@ -27,7 +28,7 @@ observeEvent(input$panelFile, {
       data.table::fread(input$panelFile$datapath)
     data.table::setDF(tmp_panel)
   }else if(endsWith(tolower(input$panelFile$datapath), ".xls") | 
-            endsWith(tolower(input$panelFile$datapath), ".xlsx")){
+           endsWith(tolower(input$panelFile$datapath), ".xlsx")){
     library(xlsx)
     showNotification("There are often problems with reading Excel files in. If you can, please upload a .csv file", type = "warning")
     tmp_panel <- read.xlsx2(input$panelFile$datapath, 1)
@@ -50,6 +51,7 @@ observeEvent(input$panelFile, {
 })
 
 observeEvent(input$sceFile, {
+  setup_logfile()
   library(CATALYST)
   tmp <- readRDS(file.path(input$sceFile$datapath))
   if (class(tmp) == "SingleCellExperiment"){
@@ -62,6 +64,7 @@ observeEvent(input$sceFile, {
 }, ignoreInit = TRUE)
 
 observeEvent(input$exampleData, {
+  setup_logfile()
   reactiveVals$data$example$fcs <- readRDS(file.path(input$exampleData, "fcs.rds"))
   reactiveVals$data$example$panel <- readRDS(file.path(input$exampleData, "panel.rds"))
   reactiveVals$data$example$md <- readRDS(file.path(input$exampleData, "md.rds"))
@@ -75,29 +78,33 @@ observeEvent(input$loadData, {
   resetDE()
   resetDEComparison()
   waiter_show(id = "app",html = tagList(spinner$logo, 
-                             HTML("<br>Loading Data...<br>Please be patient")), 
+                                        HTML("<br>Loading Data...<br>Please be patient")), 
               color=spinner$color)
   
   library(CATALYST)
   reactiveVals$has_error <- FALSE
   if (input$chooseDataTab == "dataUpload") {
+    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(dn <- '~/path/to/fcs_data.fcs'))
     dn <- dirname(input$fcsFiles$datapath)[1]
     file.rename(input$fcsFiles$datapath, file.path(dn, "/", input$fcsFiles$name))
-
+    
     conditions <- names(reactiveVals$data$upload$md)[!names(reactiveVals$data$upload$md) 
-                                                     %in% c("sample_id", "file_name")]
+                                                                        %in% c("sample_id", "file_name")]
     md_cols <- list(file = "file_name", id = "sample_id", factors = conditions)
     
     tryCatch({
       withCallingHandlers({
-        reactiveVals$sce <- CATALYST::prepData(
+      reactiveVals$sce <- evap(expression(reactiveVals$sce <- CATALYST::prepData(
         dn,
-        panel = reactiveVals$data$upload$panel,
-        md = reactiveVals$data$upload$md,
+        panel = panel,
+        md = md,
         transform = FALSE,
         md_cols = md_cols,
-        FACS = input$isFACSData
-      )},
+        FACS = FACS
+      ))[[1]], params = list(panel = reactiveVals$data$upload$panel,
+                             md = reactiveVals$data$upload$md,
+                             md_cols = md_cols,
+                             FACS = input$isFACSData))},
       message = function(m) {
         showNotification(HTML(sprintf("Loading the data produced with the following message:<br>
                                     <b>%s</b>", m$message)), duration = NULL, type = "message")
@@ -106,7 +113,7 @@ observeEvent(input$loadData, {
         showNotification(HTML(sprintf("Loading the data produced with the following warning:<br>
                                     <b>%s</b>", w$message)), duration = NULL, type = "warning")
       }
-      )},
+    )},
     error = function(e){
       reactiveVals$has_error <- TRUE
       showNotification(HTML(sprintf("Loading the data failed with the following message:<br>
@@ -117,23 +124,26 @@ observeEvent(input$loadData, {
         reactiveVals$max_tab <- start_tab
     })
   } else if (input$chooseDataTab == "dataExample") {
+    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(reactiveVals$sce <- readRDS('~/path/to/example_data/sce.rds')))
     reactiveVals$sce <- readRDS(file.path(input$exampleData, "sce.rds"))
   } else if (input$chooseDataTab == "sceUpload") {
+    reactiveVals$call_list <<- append(reactiveVals$call_list, quote(reactiveVals$sce <- readRDS('~/path/to/sce.rds')))
     reactiveVals$sce <- readRDS(file.path(input$sceFile$datapath))
-
+    
   }else
     stop("Which tab is selected?")
-
+  
   if (!is.null(reactiveVals$sce) & !reactiveVals$has_error) { # meaning the data loading worked
   
   #drop levels of markers
-  SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
-  
+    SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- evap(expression(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class))[[1]],
+                                                                         params = NULL)
+  #SummarizedExperiment::rowData(reactiveVals$sce)$marker_class <- droplevels(SummarizedExperiment::rowData(reactiveVals$sce)$marker_class)
   # set negative values to zero
   if (length(which(assays(reactiveVals$sce)$counts < 0)) > 0){
-    assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- 0
+    assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- evap(expression(assays(reactiveVals$sce)$counts[assays(reactiveVals$sce)$counts < 0 ] <- 0)[[1]])
     if ("exprs" %in% assayNames(reactiveVals$sce)){
-      assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- 0
+      assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- evap(expression(assays(reactiveVals$sce)$exprs[assays(reactiveVals$sce)$exprs < 0 ] <- 0)[[1]])
     }
     showNotification(
       HTML(
@@ -155,8 +165,7 @@ observeEvent(input$loadData, {
     # create and show
     file_names <- unlist(unname(input$fcsFiles['name']))
     sample_ids  <- tstrsplit(file_names, '.fcs', keep = 1)[[1]]
-    reactiveVals$data$upload$md <- data.table('file_name' = file_names, 
-                                              'sample_id' = sample_ids)
+    reactiveVals$data$upload$md <- data.table('file_name' = file_names, 'sample_id' = sample_ids)
   }
   
   start_tab <- which(tab_ids == "start")
@@ -212,7 +221,7 @@ output$currentData <- renderInfoBox({
   }else {
     fcs <- reactiveVals$data$example$fcs
     panel <- reactiveVals$data$example$panel
-     md <- reactiveVals$data$example$md
+    md <- reactiveVals$data$example$md
   }
   
   status <- "warning"
@@ -320,6 +329,7 @@ output$currentData <- renderInfoBox({
   shinydashboard::box(value, title = "Selected Data", status = status)
 })
 
+#To-Do!!!
 observeEvent(input$panelDT_cell_edit, {
   start_tab <- which(tab_ids == "start")
   reactiveVals$continue[start_tab] <- FALSE

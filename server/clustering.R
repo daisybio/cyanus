@@ -32,14 +32,15 @@ observeEvent(input$startClustering, {
   tryCatch({
     withCallingHandlers({
       reactiveVals$sce <-
-        clusterSCE(
+        evap(expression(reactiveVals$sce <- clusterSCE(
           reactiveVals$sce,
-          input$assayTypeIn,
-          reactiveVals$clusterFeatureNames,
-          input$xdim,
-          input$ydim,
-          input$k
-        )
+          assayTypeIn,
+          clusterFeatureNames,
+          xdim,
+          ydim,
+          k
+        ))[[1]], params = list(assayTypeIn = input$assayTypeIn, clusterFeatureNames = reactiveVals$clusterFeatureNames,
+                               xdim = input$xdim, ydim = input$ydim, k = input$k))
     },
     message = function(m) {
       shinyjs::html(id = "clusteringProgress",
@@ -54,13 +55,14 @@ observeEvent(input$startClustering, {
   
   assays <- c("exprs" = "Transformed", "counts" = "Raw")
   
-  metadata(reactiveVals$sce)$clusterRun <- list(
-    features = reactiveVals$clusterFeatureNames,
-    assayType = assays[input$assayTypeIn],
-    xdim = input$xdim,
-    ydim = input$ydim,
-    maxK = input$k
-  )
+  metadata(reactiveVals$sce)$clusterRun <- evap(expression(metadata(reactiveVals$sce)$clusterRun <- list(
+    features = clusterFeatureNames,
+    assayType = assayTypeIn,
+    xdim = xdim,
+    ydim = ydim,
+    maxK = k
+  ))[[1]], params = list(clusterFeatureNames = reactiveVals$clusterFeatureNames, assayTypeIn = assays[input$assayTypeIn], 
+  xdim = input$xdim, ydim = input$ydim, k = input$k))
   waiter_hide(id = "app")
   
   updateButton(session,
@@ -149,13 +151,13 @@ observeEvent(input$mergeClusteringButton, {
   if (is.null(new_metacluster) || is.na(new_metacluster) || new_metacluster == "")
     new_metacluster <- sprintf("merging_%s", isolate(input$clusterCode))
   reactiveVals$sce <-
-    mergeClusters(
+    evap(expression(reactiveVals$sce <- mergeClusters(
       isolate(reactiveVals$sce),
-      isolate(input$clusterCode),
-      isolate(reactiveVals$mergingFrame),
-      id = new_metacluster,
+      clusterCode,
+      mergingFrame,
+      id = id,
       overwrite = TRUE
-    )
+    ))[[1]], params = list(clusterCode = isolate(input$clusterCode), mergingFrame = isolate(reactiveVals$mergingFrame), id = new_metacluster))
   
   # runjs(
   #   "$('#mergeClusteringButton').closest('.box-header').find('[data-widget=collapse]').click();"
@@ -306,6 +308,10 @@ output$clusterSizes <- renderTable({
                         useNA =
                           "ifany"))
   names(res) <- c("Cluster", "Size")
+  
+  total_cells <- sum(res$Size)
+  res$Fraction <- round((res$Size / total_cells) * 100, 2)
+  names(res) <- c("Cluster", "Size", "Proportion [%]")
   t(res)
 },
 caption = "Cluster Sizes",
