@@ -42,15 +42,19 @@ observeEvent(input$startClustering, {
         ))[[1]], params = list(assayTypeIn = input$assayTypeIn, clusterFeatureNames = reactiveVals$clusterFeatureNames,
                                xdim = input$xdim, ydim = input$ydim, k = input$k))
     },
-    message = function(m) {
+    
+    error = function(e) {
       shinyjs::html(id = "clusteringProgress",
-                    html = sprintf("<br>%s", HTML(m$message)),
+                    html = sprintf("<br>%s", HTML(e$message)),
                     add = TRUE)
+      
+      stop(e)
     })
   },
   error = function(e){
     showNotification(HTML(sprintf("Clustering failed with the following message:<br>
                                     <b>%s</b>", e$message)), duration = NULL, type = "error")
+    
   })
   
   assays <- c("exprs" = "Transformed", "counts" = "Raw")
@@ -654,9 +658,11 @@ output$clusterHeatmapDownload <- renderUI({
 })
 
 output$clusterStarPlot <- renderPlot({
+  browser()
   req(SummarizedExperiment::rowData(reactiveVals$sce)$used_for_clustering)
   reactiveVals$starCluster <-
-    plotStarsCustom(reactiveVals$sce, backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]])
+    plotStarsCustom(metadata(reactiveVals$sce)$SOM, overall = TRUE, backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]])
+  print(reactiveVals$starCluster)
   reactiveVals$starCluster
 })
 
