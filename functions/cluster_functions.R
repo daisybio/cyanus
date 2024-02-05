@@ -614,6 +614,16 @@ plotFreqHeatmapCustom <- function (x,
   )
 }
 
+library(SingleCellExperiment)
+library(FlowSOM)
+library(S4Vectors)
+library(ggplot2)
+library(ggpubr)
+library(grid) 
+library(gridExtra) 
+library(cowplot) 
+library(patchwork)
+
 # SOM added to metadata
 clusterSCE <-
   function (x,
@@ -702,7 +712,7 @@ clusterSCE <-
 plotStarsCustom <- function (fsom, markers = fsom$map$colsUsed, overall = TRUE, nodeValues = NULL, nodeColors = NULL, colorPalette = FlowSOM_colors, 
                              list_insteadof_ggarrange = FALSE, ...) 
 {
-  fsom <- UpdateFlowSOM(fsom)
+  fsom <- FlowSOM::UpdateFlowSOM(fsom)
   if (length(names(list(...))) > 0 && "backgroundColor" %in% 
       names(list(...))) {
     warning(paste0("\"backgroundColor\" is deprecated, ", 
@@ -742,7 +752,7 @@ PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view 
                                backgroundColors = NULL, backgroundLim = NULL, title = NULL) 
 {
   requireNamespace("ggplot2")
-  fsom <- UpdateFlowSOM(fsom)
+  fsom <- FlowSOM::UpdateFlowSOM(fsom)
   nNodes <- NClusters(fsom)
   isEmpty <- fsom$map$pctgs == 0
   if (length(nodeSizes) != nNodes) {
@@ -801,8 +811,6 @@ PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view 
 
 
 # own function for enabling selection of groups and facetting
-library(grid)
-library(gridExtra)
 plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "", subselection=NULL, assayType = "exprs", colorPalette = grDevices::colorRampPalette(c("#00007F","blue", "#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", 
                                                                                                                                                                       "red", "#7F0000")), backgroundValues = NULL)
 {
@@ -813,7 +821,7 @@ plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "",
       color_values <- round(S4Vectors::metadata(sce)$SOM_medianValues[, marker], 2)
       colors <- colorPalette(100)[as.numeric(cut(color_values, breaks = 100))]
       # plot star chart for single marker with color_values and colors
-      p <- PlotStarCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = color_values, nodeColors = colorPalette, backgroundValues = backgroundValues)
+      p <- plotStarsCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = color_values, nodeColors = colorPalette, backgroundValues = backgroundValues)
       p <- p + ggtitle(marker) + theme(plot.title = element_text(hjust = 0.5))
       
       
@@ -848,7 +856,7 @@ plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "",
       
       # plot star chart for subselection with new calculated color_values
       colors <- colorPalette(100)[findInterval(median_cond[, my_marker], yval)]
-      p <- PlotStarCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = lev, nodeColors = colorPalette, backgroundValues = backgroundValues)
+      p <- plotStarsCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = lev, nodeColors = colorPalette, backgroundValues = backgroundValues)
       p <- p + ggtitle(paste0(marker, ", ", subselection)) + theme(plot.title = element_text(hjust = 0.5))
       
       # TODO add legend for coloring
@@ -895,7 +903,7 @@ plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "",
       # draw new plot with only selected condition
       color_values <- round(both_cond[condition == cond, my_marker], 2)
       colors <- colorPalette(100)[findInterval(color_values, yval)]
-      p <- PlotStarCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = color_values, nodeColors = colorPalette, backgroundValues = backgroundValues)
+      p <- plotStarsCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = color_values, nodeColors = colorPalette, backgroundValues = backgroundValues)
       if(subselection_col == ""){
         title_plot <- marker
       } else {
@@ -921,15 +929,14 @@ plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "",
     plots[[2]] <- plots[[2]] + theme(legend.position = "none")
     
     # Combine the plots and legend with patchwork
-    library(patchwork)
     p <- wrap_plots(plots, nrow = 1, heights = c(6,1)) + legend
     return(p)
   }
 }
 
-'addClusterAll <- function(sce){
+addClusterAll <- function(sce){
   sce$cluster_id <- as.factor("all")
   S4Vectors::metadata(sce)$cluster_codes <- data.frame(all = as.factor("all"))
   return(sce)
-}'
+}
 
