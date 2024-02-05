@@ -16,6 +16,18 @@ deBody <- function(){
     title = "Median expression of markers",
     content = "This plots helps to get a rough image of how strong the differences might be."
   )
+  plotViolin <- shinydashboard::box(
+    uiOutput("deVioPlots"),
+    title = span("Violinplots", icon("question-circle"), id = "vioplotPopover"),
+    width = 12,
+    height = plotbox_height,
+  )
+  
+  vioplotPopover <- bsPopover(
+    id = "vioplotPopover",
+    title = "Median expression of markers",
+    content = "This plots helps to get a rough image of how strong the differences might be."
+  )
   
   debody <- tabItem(
     tabName = "de",
@@ -63,9 +75,24 @@ deBody <- function(){
         )
     ), 
     fluidRow(
-      plotBox,
-      boxplotPopover,
+      tabBox(
+        tabPanel(
+          fluidRow(plotBox, boxplotPopover),
+          value = "plotCounts",
+          title = "Boxplots"
+        ),
+        tabPanel(
+          fluidRow(plotViolin, vioplotPopover),
+          value = "plotViolins",
+          title = "Violinplots"
+        ),
+        id = "DEplots",
+        title = "Visual Analysation",
+        width = 12,
+        height = plotbox_height
+      )
     ),
+      
     
     fluidRow(
         uiOutput("selectionBoxDE"),
