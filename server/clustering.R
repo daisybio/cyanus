@@ -270,7 +270,7 @@ output$clusteringVisualizationSelection <- renderUI({
            ),
            width = 12,
            style = "overflow-x: scroll;"),
-    fluidRow(withSpinner(uiOutput("delta_area"))),
+    fluidRow(withSpinner(uiOutput("metaClusteringAnalysis"))),
     fluidRow(withSpinner(uiOutput(
       "clusteringOutput"
     ))),
@@ -346,28 +346,69 @@ options = list(pageLength = nlevels(
               k = input$clusterCode)
 )))
 
-output$delta_area <- renderUI({
+output$metaClusteringAnalysis <- renderUI({
   req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
   runjs(
     "document.getElementById('clusteringVisualizationSelection').scrollIntoView();"
   )
   shinydashboard::box(
-    div(HTML(
-      'It is recommended to choose a meta-cluster where the plateau is reached, similarly to the `elbow method`.<br>
-                          "The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups.<br>
-                          It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fits the data.<br>
-                          The `natural` number of clusters present in the data should thus corresponds to the value of k where there is no longer a considerable increase in stability (plateau onset)." Crowell et al. (2020)',
-      style = "text-align: center;vertical-align: middle;"
-    )),
-    renderPlot(
-      CATALYST::delta_area(reactiveVals$sce)
+    fluidRow(
+      shinydashboard::tabBox(
+        tabPanel(
+          "PAC",
+          fluidRow(withSpinner(
+            plotlyOutput('pac',
+                         height = "800px")
+          ))
+        ),
+        tabPanel(
+        "Delta Area",
+        div(
+          HTML(
+            'It is recommended to choose a meta-cluster where the plateau is reached, similarly to the `elbow method`. "The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups. It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fits the data. The `natural` number of clusters present in the data should thus corresponds to the value of k where there is no longer a considerable increase in stability (plateau onset)." Crowell et al. (2020)'
+          ),
+          style = "text-align: center; vertical-align: middle;"
+        ),
+        fluidRow(withSpinner(
+          plotlyOutput('delta_area',
+            height = "800px")
+        ))
+      ),
+      tabPanel(
+        "CDF",
+        fluidRow(withSpinner(
+          plotOutput('ecdf',
+                     height = "800px")
+        ))
+      ),
+      title = "Metaclustering Visualization",
+      id = "metaclusterVisTabBox",
+      width = 12)
     ),
-    title = "1. Delta Area",
+    title = "1. Metaclustering Analysis",
     width = 12,
     collapsible = TRUE,
     collapsed = TRUE
   )
+})
+
+output$pac <- renderPlotly({
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
+  
+  plot_pac(reactiveVals$sce, interactive = TRUE)
+})
+
+output$delta_area <- renderPlotly({
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
+  
+  plot_delta_area(reactiveVals$sce, interactive = TRUE)
+})
+
+output$ecdf <- renderPlot({
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
+  
+  plot_ecdf(reactiveVals$sce, interactive = FALSE)
 })
 
 output$clusterMergingBox <- renderUI({
