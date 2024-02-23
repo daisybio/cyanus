@@ -153,9 +153,9 @@ observeEvent(input$runDRButton, {
     shinyjs::show("visPlotBox")
     if (length(reactiveVals$availableDRs) == 1) {
       output$visPlot <- renderPlot({
-        custom_colors <- reactiveVals$colorblind_palette
-        if(length(levels(CATALYST::ei(isolate(reactiveVals$sce))[, renameColorColumn(names(colData(isolate(reactiveVals$sce))), T)[[1]]])) > length(reactiveVals$colorblind_palette)){
-          custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(length(levels(CATALYST::ei(isolate(reactiveVals$sce))[, renameColorColumn(names(colData(isolate(reactiveVals$sce))), T)[[1]]])))
+        custom_colors <- reactiveVals$selected_palette
+        if(length(levels(CATALYST::ei(isolate(reactiveVals$sce))[, renameColorColumn(names(colData(isolate(reactiveVals$sce))), T)[[1]]])) > length(reactiveVals$selected_palette)){
+          custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(length(levels(CATALYST::ei(isolate(reactiveVals$sce))[, renameColorColumn(names(colData(isolate(reactiveVals$sce))), T)[[1]]])))
         }
         ggplotObject <- makeDR(sce = isolate(reactiveVals$sce), 
                                dr_chosen = method, 
@@ -216,7 +216,7 @@ observeEvent(input$startDimRed, {
     waiter_show(id = "app",html = tagList(spinner$logo, 
                                           HTML("<br>Visualizing Dimensionality Reduction...")), 
                 color=spinner$color)
-    custom_colors <- reactiveVals$colorblind_palette
+    custom_colors <- reactiveVals$selected_palette
     if (!color %in% names(colData(sceObj))) {
       CATALYST:::.check_k(sceObj, color)
       kids <- cluster_ids(sceObj, color)
@@ -224,8 +224,8 @@ observeEvent(input$startDimRed, {
     }else{
       nk <- length(levels(CATALYST::ei(sceObj)[, color]))
     }
-    if(nk > length(reactiveVals$colorblind_palette)){
-      custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(nk)
+    if(nk > length(reactiveVals$selected_palette)){
+      custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(nk)
     }
     ggplotObject <-
       makeDR(sceObj, method, color, facet, assay, scale, c(dim1, dim2))+

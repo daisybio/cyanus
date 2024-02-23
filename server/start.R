@@ -296,42 +296,40 @@ observeEvent(input$panel_reset, {
 
 observeEvent(input$chosenColorPalette, {
   if(input$chosenColorPalette == "Colorblind1"){
-    reactiveVals$colorblind_palette <- c("#ff6db6", "#004949", "#db6d00",  "#B2DF8A", 
+    reactiveVals$selected_palette <- c("#ff6db6", "#004949", "#db6d00",  "#B2DF8A", 
                                          "#FDB462", "#490092", "#009999", "#8f4e00", 
                                          "#ffdf4d", "#171723","#b66dff")
   }else if(input$chosenColorPalette == "Colorblind2: Wong"){
-    reactiveVals$colorblind_palette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
+    reactiveVals$selected_palette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
                                          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
   }else if(input$chosenColorPalette == "Colorblind3: Tol bright"){
-    reactiveVals$colorblind_palette <- c('#4477AA', '#EE6677', '#228833', '#CCBB44', 
+    reactiveVals$selected_palette <- c('#4477AA', '#EE6677', '#228833', '#CCBB44', 
                                          '#66CCEE', '#AA3377', '#BBBBBB')
   }else if(input$chosenColorPalette == "Colorblind4: Tol vibrant"){
-    reactiveVals$colorblind_palette <- c('#EE7733', '#0077BB', '#33BBEE', '#EE3377', 
+    reactiveVals$selected_palette <- c('#EE7733', '#0077BB', '#33BBEE', '#EE3377', 
                                          '#CC3311', '#009988', '#BBBBBB')
   }else if(input$chosenColorPalette == "Colorblind5: Tol muted"){
-    reactiveVals$colorblind_palette <- c('#CC6677', '#332288', '#DDCC77', '#117733', 
+    reactiveVals$selected_palette <- c('#CC6677', '#332288', '#DDCC77', '#117733', 
                                          '#88CCEE', '#882255', '#44AA99', '#999933', 
                                          '#AA4499', '#DDDDDD')
   }else if(input$chosenColorPalette  == "RColorBrewer: Set1"){
-    reactiveVals$colorblind_palette <- RColorBrewer::brewer.pal(9, "Set1")
+    reactiveVals$selected_palette <- RColorBrewer::brewer.pal(9, "Set1")
   }else if(input$chosenColorPalette  == "RColorBrewer: Set2"){
-    reactiveVals$colorblind_palette <- RColorBrewer::brewer.pal(8, "Set2")
+    reactiveVals$selected_palette <- RColorBrewer::brewer.pal(8, "Set2")
   }else if(input$chosenColorPalette  == "RColorBrewer: Set3"){
-    reactiveVals$colorblind_palette <- RColorBrewer::brewer.pal(12, "Set3")
+    reactiveVals$selected_palette <- RColorBrewer::brewer.pal(12, "Set3")
   }else if(input$chosenColorPalette  == "RColorBrewer: Pastel1"){
-    reactiveVals$colorblind_palette <- RColorBrewer::brewer.pal(9, "Pastel1")
+    reactiveVals$selected_palette <- RColorBrewer::brewer.pal(9, "Pastel1")
   }else if(input$chosenColorPalette  == "RColorBrewer: Pastel2"){
-    reactiveVals$colorblind_palette <- RColorBrewer::brewer.pal(8, "Pastel2")
+    reactiveVals$selected_palette <- RColorBrewer::brewer.pal(8, "Pastel2")
   }else if(input$chosenColorPalette  == "RColorBrewer: Paired"){
-    reactiveVals$colorblind_palette <- RColorBrewer::brewer.pal(12, "Paired")
+    reactiveVals$selected_palette <- RColorBrewer::brewer.pal(12, "Paired")
   }else if(input$chosenColorPalette  == "RColorBrewer: Dark2"){
-    reactiveVals$colorblind_palette <- RColorBrewer::brewer.pal(8, "Dark2")
+    reactiveVals$selected_palette <- RColorBrewer::brewer.pal(8, "Dark2")
   }else if(input$chosenColorPalette  == "RColorBrewer: Accent"){
-    reactiveVals$colorblind_palette <- RColorBrewer::brewer.pal(8, "Accent")
+    reactiveVals$selected_palette <- RColorBrewer::brewer.pal(8, "Accent")
   }else if(input$chosenColorPalette  == "CATALYST colors"){
-    reactiveVals$colorblind_palette <- CATALYST:::.cluster_cols
-  }else{
-    reactiveVals$colorblind_palette <- NULL
+    reactiveVals$selected_palette <- CATALYST:::.cluster_cols
   }
 })
 
@@ -340,12 +338,12 @@ observeEvent(input$addColor, {
   color <- input$colorInput
   # Check if input is a valid color code
   if (grepl("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", color)) {
-    reactiveVals$colorblind_palette <- c(reactiveVals$colorblind_palette, color)
+    reactiveVals$last_colors <- c(reactiveVals$last_colors, color)
   } else {
     # Try to convert color name to hexadecimal code
     hex <- tryCatch(grDevices::col2rgb(color, alpha = FALSE), error = function(e) NULL)
     if (!is.null(hex)) {
-      reactiveVals$colorblind_palette <- c(reactiveVals$colorblind_palette, rgb(hex[1], hex[2], hex[3], maxColorValue = 255))
+      reactiveVals$last_colors <- c(reactiveVals$last_colors, rgb(hex[1], hex[2], hex[3], maxColorValue = 255))
     } else {
       # If not a valid color, don't add it
       showNotification(HTML("Not a valid color"), duration = NULL, type = "error")
@@ -357,7 +355,15 @@ observeEvent(input$addColor, {
 })
 
 observeEvent(input$clearColors, {
-  reactiveVals$colorblind_palette <- NULL
+  reactiveVals$last_colors <- NULL
+})
+
+observeEvent(input$setColorPalette, {
+  if(is.null(reactiveVals$last_colors)){
+    showNotification(HTML("You did not set a color palette!"), type="error")
+  }else{
+    reactiveVals$selected_palette <- reactiveVals$last_colors
+  }
 })
 
 
@@ -544,22 +550,45 @@ output$setColorPalette <- renderUI({
     uiOutput(
       "otherCustomPalette"
     ),
-    plotOutput("showColorPalette",  width = "100%", height = "500px")
+    uiOutput(
+      "renderedPalette"
+    )
   )
 })
 
 output$otherCustomPalette <- renderUI({
   req(input$chosenColorPalette == "Other")
-  div(
-    textInput("colorInput", "Enter color name or code:", ""),
-    actionButton("addColor", "Add Color"),
-    actionButton("clearColors", "Clear All Colors")
+    div(
+      textInput("colorInput", "Enter color name or code:", ""),
+      bsButton("addColor", "Add Color", style = "info"),
+      bsButton("clearColors", "Clear All Colors", style = "warning"),
+      bsButton("setColorPalette", "Set Colors as Color Palette", style = "success")
   )
 })
 
 output$showColorPalette <- renderPlot({
-  req(reactiveVals$colorblind_palette)
-  return(scales::show_col(reactiveVals$colorblind_palette))
+  req(reactiveVals$selected_palette)
+  return(scales::show_col(reactiveVals$selected_palette))
+})
+
+output$showColorPaletteOther <- renderPlot({
+  req(reactiveVals$last_colors)
+  return(scales::show_col(reactiveVals$last_colors))
+})
+
+output$renderedPalette <- renderUI({
+  if(input$chosenColorPalette == "Other"){
+    div(
+      column(width=6, 
+             h4("New palette"),
+             plotOutput("showColorPaletteOther",  width = "100%", height = "500px")),
+      column(width=6,
+             h4("Current palette"),
+             plotOutput("showColorPalette",  width = "100%", height = "500px"))
+    )
+  }else{
+    plotOutput("showColorPalette",  width = "100%", height = "500px")
+  }
 })
 
 

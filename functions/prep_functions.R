@@ -128,7 +128,6 @@ plotCountsCustom <- function (x, group_by = "condition", color_by = group_by, pr
       y <- y/rowSums(y)
     df <- melt(y, varnames = c(group_by, color_by))
     df[, color_by] <- factor(df[, color_by], levels = levels(x[[color_by]]))
-    df[, group_by] <- factor(df[, group_by], levels = levels(x[[group_by]]))
   }
   else {
     y <- table(df)
@@ -137,6 +136,7 @@ plotCountsCustom <- function (x, group_by = "condition", color_by = group_by, pr
     df <- data.frame(value = c(y), row.names = NULL)
     df[[group_by]] <- rownames(y)
   }
+  df[, group_by] <- factor(df[, group_by], levels = levels(x[[group_by]]))
   ggplot(df[df$value != 0, ], aes_string(x = group_by, y = "value", 
                                          fill = color_by)) + geom_bar(stat = "identity", col = ifelse(prop, 
                                                                                                       "white", NA), position = ifelse(prop, "stack", "dodge2")) + 

@@ -1113,7 +1113,7 @@ output$boxplotDE <- renderPlot({
     sce <- filterSCE(sce, get(category) == input$deBoxSubselect)
   }
   
-  custom_colors <- reactiveVals$colorblind_palette
+  custom_colors <- reactiveVals$selected_palette
   if (input$deBoxColor == "cluster_id") {
     CATALYST:::.check_k(sce, k)
     kids <- cluster_ids(sce, k)
@@ -1121,8 +1121,8 @@ output$boxplotDE <- renderPlot({
   }else{
     nk <- length(levels(CATALYST::ei(sce)[, input$deBoxColor]))
   }
-  if(nk > length(reactiveVals$colorblind_palette)){
-    custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(nk)
+  if(nk > length(reactiveVals$selected_palette)){
+    custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(nk)
   }
   result <- plotPbExprsMod(sce, 
                            k = k, 
@@ -1309,7 +1309,7 @@ output$vioDEPlot <- renderPlot({
     category <- isolate(reactiveVals$subselectionMap[[input$deVioSubselect]])
     sce <- filterSCE(sce, get(category) == input$deVioSubselect)
   }
-  custom_colors <- reactiveVals$colorblind_palette
+  custom_colors <- reactiveVals$selected_palette
   if (input$deVioColor == "cluster_id") {
     CATALYST:::.check_k(sce, k)
     kids <- cluster_ids(sce, k)
@@ -1317,8 +1317,8 @@ output$vioDEPlot <- renderPlot({
   }else{
     nk <- length(levels(CATALYST::ei(sce)[, input$deVioColor]))
   }
-  if(nk > length(reactiveVals$colorblind_palette)){
-    custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(nk)
+  if(nk > length(reactiveVals$selected_palette)){
+    custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(nk)
   }
   
   reactiveVals$pbVioPlot <- plotViolinMod(

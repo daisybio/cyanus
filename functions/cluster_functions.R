@@ -393,12 +393,17 @@ clusterSCE <-
 
 
 # plot ecdf
-plot_ecdf <- function(sce, interactive = TRUE) {
+plot_ecdf <- function(sce, interactive = TRUE, pal = RColorBrewer::brewer.pal(12, "Set3")) {
   require(ggplot2)
   mc_dt <- metadata(sce)$mc_dt
   stopifnot(!is.null(mc_dt))
+  nk <- length(levels(mc_dt$k))
+  if(nk > length(pal)){
+    pal <- grDevices::colorRampPalette(colors = pal)(nk)
+  }
   ggp <-
-    ggplot(mc_dt, aes(x = ConsensusIndex, y = CDF, color = k)) + geom_step() + theme_bw()
+    ggplot(mc_dt, aes(x = ConsensusIndex, y = CDF, color = k)) + geom_step() + theme_bw()+
+    scale_color_manual(values = pal)
   if (interactive)
     ggp <- plotly::ggplotly(ggp)
   return(ggp)
@@ -409,7 +414,6 @@ add_max_curvature <- function(dt, column, h = 1) {
   if (!inherits(dt, "data.table")) {
     stop("dt must be a data.table")
   }
-  
   # Calculate lagged and lead values of the target column
   dt[, paste0(column, "_lagged") := data.table::shift(get(column), type = "lag")]
   dt[, paste0(column, "_lead") := data.table::shift(get(column), type = "lead")]
@@ -419,7 +423,7 @@ add_max_curvature <- function(dt, column, h = 1) {
                                                                                                                    2)]
   
   # Identify the index of the maximum curvature point
-  max_curv_index <- which.max(abs(dt$second_derivative))
+  max_curv_index <- which.max(dt$second_derivative)
   
   # Add a column to indicate the maximum curvature point
   dt[, `maximum curvature` := 'no']
