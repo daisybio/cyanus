@@ -122,7 +122,19 @@ startBody <- function() {
         width = 12
       )
     ),
-    shinycssloaders::withSpinner(uiOutput("currentData"))
+    shinycssloaders::withSpinner(uiOutput("currentData")),
+    fluidRow(shinydashboard::box(
+      div(
+        "Set your color palette"
+      ),
+      div(
+        uiOutput("setColorPalette")
+      ),
+      title = "Color palette",
+      width = 12,
+      collapsible = TRUE,
+      collapsed = TRUE
+    )),
   )
   return(startBody)
 }

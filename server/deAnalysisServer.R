@@ -1112,18 +1112,27 @@ output$boxplotDE <- renderPlot({
     category <- isolate(reactiveVals$subselectionMap[[input$deBoxSubselect]])
     sce <- filterSCE(sce, get(category) == input$deBoxSubselect)
   }
+  
+  custom_colors <- reactiveVals$colorblind_palette
+  if (input$deBoxColor == "cluster_id") {
+    CATALYST:::.check_k(sce, k)
+    kids <- cluster_ids(sce, k)
+    nk <- nlevels(kids)
+  }else{
+    nk <- length(levels(CATALYST::ei(sce)[, input$deBoxColor]))
+  }
+  if(nk > length(reactiveVals$colorblind_palette)){
+    custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(nk)
+  }
   result <- plotPbExprsMod(sce, 
-                                          k = k, 
-                                          features = input$deBoxFeatures, 
-                                          color_by = input$deBoxColor, 
-                                          facet_by = facet_by, 
-                                          shape_by = input$deBoxShape)
-  
-  
-  
-  
-  
-  reactiveVals$pbExprsPlot <- result$plot
+                           k = k, 
+                           features = input$deBoxFeatures, 
+                           color_by = input$deBoxColor, 
+                           facet_by = facet_by, 
+                           shape_by = input$deBoxShape)
+
+  reactiveVals$pbExprsPlot <- result$plot + 
+    scale_color_manual(values = custom_colors)
   reactiveVals$pbExprsMed <- result$medians_table
   shinyjs::enable("previousTab")
   shinyjs::enable("nextTab")
@@ -1300,6 +1309,18 @@ output$vioDEPlot <- renderPlot({
     category <- isolate(reactiveVals$subselectionMap[[input$deVioSubselect]])
     sce <- filterSCE(sce, get(category) == input$deVioSubselect)
   }
+  custom_colors <- reactiveVals$colorblind_palette
+  if (input$deVioColor == "cluster_id") {
+    CATALYST:::.check_k(sce, k)
+    kids <- cluster_ids(sce, k)
+    nk <- nlevels(kids)
+  }else{
+    nk <- length(levels(CATALYST::ei(sce)[, input$deVioColor]))
+  }
+  if(nk > length(reactiveVals$colorblind_palette)){
+    custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(nk)
+  }
+  
   reactiveVals$pbVioPlot <- plotViolinMod(
     sce,
     k = k,
@@ -1307,7 +1328,8 @@ output$vioDEPlot <- renderPlot({
     color_by = input$deVioColor,
     facet_by = facet_by,
     shape_by = input$deVioShape
-  )
+  )+
+    scale_color_manual(values = custom_colors)
   
   shinyjs::enable("previousTab")
   shinyjs::enable("nextTab")

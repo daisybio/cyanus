@@ -306,12 +306,17 @@ plotPreprocessing <- function(sce) {
   
   # render counts plot
   output$countsPlot <- renderPlot({
-    reactiveVals$countsPlot <-  CATALYST::plotCounts(
+    custom_colors <- reactiveVals$colorblind_palette
+    if(length(levels(CATALYST::ei(sce)[, input$countsColorBy])) > length(reactiveVals$colorblind_palette)){
+      custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(length(levels(CATALYST::ei(sce)[, input$countsColorBy])))
+    }
+    reactiveVals$countsPlot <-  plotCountsCustom(
       sce,
       group_by = input$countsGroupBy,
       color_by = input$countsColorBy,
       prop = as.logical(input$countsProp)
-    )
+    )+ 
+      scale_fill_manual(values = custom_colors)
     reactiveVals$countsPlot
   })
   
@@ -384,13 +389,18 @@ plotPreprocessing <- function(sce) {
       feature <- NULL
     }
     if(nrow(ei(sce)) > 2){
-    reactiveVals$mdsPlot <- CATALYST::pbMDS(
-      sce,
-      label_by = input$mdsLabelBy,
-      color_by = input$mdsColorBy,
-      features = feature,
-      assay = input$mdsAssay,
-    )
+      custom_colors <- reactiveVals$colorblind_palette
+      if(length(levels(CATALYST::ei(sce)[, input$mdsColorBy])) > length(reactiveVals$colorblind_palette)){
+        custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(length(levels(CATALYST::ei(sce)[, input$mdsColorBy])))
+      }
+      reactiveVals$mdsPlot <- CATALYST::pbMDS(
+        sce,
+        label_by = input$mdsLabelBy,
+        color_by = input$mdsColorBy,
+        features = feature,
+        assay = input$mdsAssay,
+      )+
+        scale_color_manual(values = custom_colors)
     }else{
       reactiveVals$mdsPlot <- ggplot() + theme_void()
       showNotification('MDS is only possible for >2 samples', type = 'warning')
@@ -464,12 +474,17 @@ plotPreprocessing <- function(sce) {
     if (feature == "all") {
       feature <- NULL
     }
+    custom_colors <- reactiveVals$colorblind_palette
+    if(length(levels(CATALYST::ei(sce)[, input$nrsColorBy])) > length(reactiveVals$colorblind_palette)){
+      custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(length(levels(CATALYST::ei(sce)[, input$nrsColorBy])))
+    }
     reactiveVals$nrsPlot <- CATALYST::plotNRS(
       sce,
       color_by = input$nrsColorBy,
       features = feature,
       assay = input$nrsAssay
-    )
+    )+
+      scale_color_manual(values = custom_colors)
     reactiveVals$nrsPlot
   })
   
@@ -539,12 +554,17 @@ plotPreprocessing <- function(sce) {
     if (feature == "all") {
       feature <- NULL
     }
+    custom_colors <- reactiveVals$colorblind_palette
+    if(length(levels(CATALYST::ei(sce)[, input$exprsColorBy])) > length(reactiveVals$colorblind_palette)){
+      custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(length(levels(CATALYST::ei(sce)[, input$exprsColorBy])))
+    }
     reactiveVals$exprsPlot <- CATALYST::plotExprs(
       sce,
       color_by = input$exprsColorBy,
       features = feature,
       assay = input$exprsAssay
-    )
+    )+
+      scale_color_manual(values = custom_colors)
     reactiveVals$exprsPlot
   })
   

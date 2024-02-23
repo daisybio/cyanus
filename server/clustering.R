@@ -659,13 +659,28 @@ output$clusterHeatmapDownload <- renderUI({
 
 output$clusterStarPlot <- renderPlot({
   req(SummarizedExperiment::rowData(reactiveVals$sce)$used_for_clustering)
+  custom_colors <- reactiveVals$colorblind_palette
+  if(length(levels(cluster_codes(reactiveVals$sce)[[input$clusterCode]])) > length(reactiveVals$colorblind_palette)){
+    custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(length(levels(cluster_codes(reactiveVals$sce)[[input$clusterCode]])))
+  }
+  custom_palette <- RColorBrewer::brewer.pal(length(metadata(reactiveVals$sce)$SOM$map$colsUsed), "Set3")
+  if(length(metadata(reactiveVals$sce)$SOM$map$colsUsed) > 12){
+    custom_palette <- grDevices::colorRampPalette(custom_palette)(length(metadata(reactiveVals$sce)$SOM$map$colsUsed))
+  }
   reactiveVals$starCluster <-
-    plotStarsCustom(metadata(reactiveVals$sce)$SOM, overall = TRUE, backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]])
+    plotStarsCustom(metadata(reactiveVals$sce)$SOM, overall = TRUE, 
+                    colorPalette = custom_palette,
+                    backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]], 
+                    backgroundColors = custom_colors)
   print(reactiveVals$starCluster)
   reactiveVals$starCluster
 })
 
 output$clusterStarMarkerPlot <- renderPlot({
+  custom_colors <- reactiveVals$colorblind_palette
+  if(length(levels(cluster_codes(reactiveVals$sce)[[input$clusterCode]])) > length(reactiveVals$colorblind_palette)){
+    custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$colorblind_palette)(length(levels(cluster_codes(reactiveVals$sce)[[input$clusterCode]])))
+  }
   reactiveVals$starMarkerCluster <-
     plotMarkerCustom(
       reactiveVals$sce,
@@ -674,7 +689,8 @@ output$clusterStarMarkerPlot <- renderPlot({
       subselection_col = isolate(input$plotStarMarkerSubselection),
       subselection = input$plotStarMarkerSubselectionChoices,
       assayType = names(metadata(reactiveVals$sce)$clusterRun$assayType),
-      backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]]
+      backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]],
+      backgroundColors = custom_colors
     )
   reactiveVals$starMarkerCluster
 })
@@ -689,7 +705,8 @@ output$clusterAbundancePlot <- renderPlot({
       k = input$clusterCode,
       by = input$abundanceBy,
       group_by = input$abundanceGroup,
-      shape_by = shape_by
+      shape_by = shape_by,
+      k_pal = reactiveVals$colorblind_palette
     )
   reactiveVals$abundanceCluster
 })
@@ -698,7 +715,8 @@ output$clusterHeatmapPlot <- renderPlot({
   req(nlevels(cluster_ids(reactiveVals$sce, input$clusterCode)) > 1)
   reactiveVals$heatmapCluster <-
     plotFreqHeatmapCustom(reactiveVals$sce,
-                          input$clusterCode)
+                          input$clusterCode,
+                          k_pal = reactiveVals$colorblind_palette)
   reactiveVals$heatmapCluster
 })
 
@@ -713,7 +731,9 @@ output$clusterExprsPlot <- renderPlot({
       k = input$clusterCode,
       features = features_tmp,
       input$assayTypeVisIn
-    )
+    )+
+    scale_color_manual(values = reactiveVals$colorblind_palette)+
+    scale_fill_manual(values = reactiveVals$colorblind_palette)
   reactiveVals$exprsCluster
 })
 

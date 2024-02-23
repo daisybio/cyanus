@@ -225,8 +225,8 @@ plotFreqHeatmapCustom <- function (x,
     left_anno <- NULL
   if (!isFALSE(col_anno)) {
     top_anno <-
-      CATALYST:::.anno_factors(x, levels(x$sample_id), col_anno,
-                               "colum")
+      custom_anno_factors(x, levels(x$sample_id), col_anno,
+                               "colum", pal=k_pal)
   }
   else
     top_anno <- NULL
@@ -254,6 +254,36 @@ plotFreqHeatmapCustom <- function (x,
     left_annotation = left_anno,
     right_annotation = right_anno
   )
+}
+
+custom_anno_factors <- function (x, ids, which, type = c("row", "column"), pal=brewer.pal(8, "Set3")[-2]) 
+{
+  type <- match.arg(type)
+  cd <- colData(x)
+  df <- data.frame(cd, check.names = FALSE)
+  df <- select_if(df, ~!is.numeric(.))
+  df <- mutate_all(df, ~droplevels(factor(.x)))
+  m <- match(ids, df$sample_id)
+  ns <- split(df, df$sample_id) %>% lapply(mutate_all, droplevels) %>% 
+    lapply(summarize_all, nlevels) %>% do.call(what = "rbind")
+  keep <- names(which(colMeans(ns) == 1))
+  keep <- setdiff(keep, c("sample_id", "cluster_id"))
+  if (is.character(which)) 
+    keep <- intersect(keep, which)
+  if (length(keep) == 0) 
+    return(NULL)
+  df <- df[m, keep, drop = FALSE]
+  lvls <- lapply(as.list(df), levels)
+  nlvls <- vapply(lvls, length, numeric(1))
+  if (any(nlvls > length(pal))) 
+    pal <- colorRampPalette(pal)(max(nlvls))
+  names(is) <- is <- colnames(df)
+  cols <- lapply(is, function(i) {
+    u <- pal[seq_len(nlvls[i])]
+    names(u) <- lvls[[i]]
+    u
+  })
+  HeatmapAnnotation(which = type, df = df, col = cols, gp = gpar(col = "white"))
 }
 
 library(SingleCellExperiment)
@@ -428,7 +458,7 @@ PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view 
                         bg_size = scaledNodeSize * 1.5)
   p <- ggplot2::ggplot(plot_df)
   if (!is.null(backgroundValues)) {
-    p <- FlowSOM:::AddBackground(p, backgroundValues = backgroundValues, 
+    p <- FlowSOMCustomAddBackground(p, backgroundValues = backgroundValues, 
                                  backgroundColors = backgroundColors, backgroundLim = backgroundLim)
   }
   if (view == "MST") {
@@ -448,10 +478,24 @@ PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view 
   return(p)
 }
 
+FlowSOMCustomAddBackground <- function (p, backgroundValues, backgroundColors = NULL, backgroundLim = NULL) 
+{
+  requireNamespace("ggplot2")
+  if (is.character(backgroundValues)) {
+    backgroundValues <- factor(backgroundValues)
+  }
+  p <- FlowSOM:::AddScale(p, backgroundValues, backgroundColors, backgroundLim, 
+                labelLegend = "background")
+  p <- p + ggforce::geom_circle(ggplot2::aes(x0 = .data$x, 
+                                             y0 = .data$y, r = .data$bg_size, fill = backgroundValues), 
+                                col = NA, alpha = 0.8)
+  return(p)
+}
+
 
 # own function for enabling selection of groups and facetting
 plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "", subselection=NULL, assayType = "exprs", colorPalette = grDevices::colorRampPalette(c("#00007F","blue", "#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", 
-                                                                                                                                                                      "red", "#7F0000")), backgroundValues = NULL)
+                                                                                                                                                                      "red", "#7F0000")), backgroundValues = NULL, ...)
 {
   if (facet_by == "") {
     # no faceting
@@ -460,7 +504,7 @@ plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "",
       color_values <- round(S4Vectors::metadata(sce)$SOM$map$medianValues[, marker], 2)
       colors <- colorPalette(100)[as.numeric(cut(color_values, breaks = 100))]
       # plot star chart for single marker with color_values and colors
-      p <- plotStarsCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = color_values, nodeColors = colorPalette, backgroundValues = backgroundValues)
+      p <- plotStarsCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = color_values, nodeColors = colorPalette, backgroundValues = backgroundValues, ...)
       p <- p + ggtitle(marker) + theme(plot.title = element_text(hjust = 0.5))
       
       
