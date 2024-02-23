@@ -359,7 +359,7 @@ output$metaClusteringAnalysis <- renderUI({
           "ECDF",
           div(
             HTML(
-              '"This graphic shows the cumulative distribution functions of the consensus matrix for each k (indicated by colors). This figure allows a user to determine at what number of clusters, k, the CDF reaches an approximate maximum, thus consensus and cluster confdence is at a maximum at this k. See <a href="https://doi.org/10.1023/A:1023949509487">Monti et al., 2003</a> for further details and intepretation.". <a href="https://doi.org/10.1093/bioinformatics/btq170" target="_blank">Matthew D. Wilkerson, D. Neil Hayes, ConsensusClusterPlus: a class discovery tool with confidence assessments and item tracking, Bioinformatics, Volume 26, Issue 12, June 2010, Pages 1572–1573.</a>'
+              'ConsensusClusterPlus re-samples from the original data and checks how often two cells end up in the same cluster. If the clustering is perfect, the resulting consensus index will only be zero (the two cells never end up in the same cluster) or one (the two cells always end up in the same cluster). This plot shows the cumulative distribution functions of the consensus indices for all metaclusters. <b> An optimal curve is hence horizontal between 0 and 1</b>. For more information, see <a href="https://doi.org/10.1023/A:1023949509487" target="_blank">Monti et al., 2003</a> or <a href="https://doi.org/10.1093/bioinformatics/btq170" target="_blank">Matthew D. Wilkerson, D. Neil Hayes, ConsensusClusterPlus: a class discovery tool with confidence assessments and item tracking, Bioinformatics, Volume 26, Issue 12, June 2010, Pages 1572–1573.</a>'
             ),
             style = "text-align: center; vertical-align: middle;"
           ),
@@ -372,7 +372,7 @@ output$metaClusteringAnalysis <- renderUI({
           "PAC",
           div(
             HTML(
-              '"The empirical CDF plot has consensus index values on the x-axis and CDF values on the y-axis. PAC is defined as the fraction of sample pairs with consensus index values falling in the intermediate sub-interval (x1, x2) ∈ [0, 1]. x1 and x2 are data-dependent thresholds, but will generally be chosen near 0 and 1 respectively. In our implementation, x1 = 0.05 and x2 = 0.95. Since CDF(c) corresponds to the fraction of sample pairs with consensus index values less than or equal to c as explained in the "Empirical CDF" section above, PAC is given by CDF(x2) - CDF(x1). A low value of PAC indicates a flat middle segment, allowing inference of the optimal K by the lowest PAC []".<a href="https://doi.org/10.1038/srep06207" target="_blank">Șenbabaoğlu, Y., Michailidis, G. & Li, J. Critical limitations of consensus clustering in class discovery. Sci Rep 4, 6207 (2014).</a>'
+              'The PAC (Proportion of Ambiguous Clusters) is defined as the fraction of cell pairs with consensus indices between <it>x1, x2</it>. Here, x1=0.05 and x2=0.95. The ECDF plot has the consensus index values on the x-axis and CDF values on the y-axis. Since <it>CDF(c)</it> corresponds to the fraction of cell pairs with consensus index values &le; c, the PAC is given by <it>CDF(x2) - CDF(x1)</it>. <b>A low value of PAC indicates a flat middle segment. Hence, the optimal metacluster has the lowest PAC. The maximum curvature indicates the point with the highest change in slope, which could be the elbow point. </b>For more details, see <a href="https://doi.org/10.1038/srep06207" target="_blank">Șenbabaoğlu, Y., Michailidis, G. & Li, J. Critical limitations of consensus clustering in class discovery. Sci Rep 4, 6207 (2014).</a>'
               ),
             style = "text-align: center; vertical-align: middle;"
           ),
@@ -385,7 +385,7 @@ output$metaClusteringAnalysis <- renderUI({
         "Delta Area",
         div(
           HTML(
-            'It is recommended to choose a meta-cluster where the plateau is reached, similarly to the `elbow method`. "The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups. It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fits the data. The `natural` number of clusters present in the data should thus corresponds to the value of k where there is no longer a considerable increase in stability (plateau onset)." Crowell et al. (2020)'
+            'The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups. It is the difference between the ECDF curves for metacluster k and k-1. It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fit the data. <b>It is recommended to choose a meta-cluster where the plateau is reached, similarly to the <it>elbow method</it>. The maximum curvature indicates the point with the highest change in slope, which could be the elbow point</b>. The <it>natural</it> number of clusters present in the data should thus correspond to the value of k where there is no longer a considerable increase in stability (plateau onset)." Crowell et al. (2020)'
           ),
           style = "text-align: center; vertical-align: middle;"
         ),
