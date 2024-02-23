@@ -739,9 +739,9 @@ output$clusterStarMarkerPlot <- renderPlot({
       reactiveVals$sce,
       input$plotStarMarkerFeatureIn,
       facet_by = input$plotStarMarkerFacets,
-      subselection_col = isolate(input$plotStarMarkerSubselection),
+      subselection_col = input$plotStarMarkerSubselection,
       subselection = input$plotStarMarkerSubselectionChoices,
-      assayType = names(metadata(reactiveVals$sce)$clusterRun$assayType),
+      assayType = metadata(reactiveVals$sce)$clusterRun$assayType,
       backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]],
       backgroundColors = custom_colors
     )
