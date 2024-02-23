@@ -275,11 +275,12 @@ clusterSCE <-
             ydim = 10,
             maxK = 20,
             verbose = TRUE,
-            seed = 1)
-  {
+            seed = 1){
+    # set seed
     if (!is.null(seed)) {
       set.seed(seed)
     }
+    # check input
     stopifnot(is(x, "SingleCellExperiment"))
     stopifnot(
       is.logical(verbose),
@@ -289,6 +290,7 @@ clusterSCE <-
                     is.numeric(arg) &&
                length(arg) == 1, logical(1))
     )
+    # extract markers to cluster
     features <- CATALYST:::.get_features(x, features)
     if (is.null(CATALYST::marker_classes(x))) {
       SummarizedExperiment::rowData(x)$marker_class <-
@@ -324,6 +326,17 @@ clusterSCE <-
         )
       )
     dev.off()
+    # compute metacluster ecdf values
+    Kvec <- 2:maxK
+    names(Kvec) <- Kvec
+    mc_dt <- rbindlist(lapply(Kvec, function(i){
+      consensus_matrix <- mc[[i]]$consensusMatrix
+      consensus_values <- consensus_matrix[lower.tri(consensus_matrix)]
+      ecdf_data <- ecdf(consensus_values)
+      list(ConsensusIndex = consensus_values, CDF = ecdf_data(consensus_values))
+    }), idcol = 'k')
+    mc_dt[, k:=factor(k, levels=Kvec)]
+    
     k <- xdim * ydim
     mcs <- seq_len(maxK)[-1]
     codes <-
@@ -336,7 +349,8 @@ clusterSCE <-
     x$cluster_id <- factor(som$map$mapping[, 1])
     S4Vectors::metadata(x)$cluster_codes <- codes
     S4Vectors::metadata(x)$SOM <- som
-    S4Vectors::metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
+    # S4Vectors::metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
+    S4Vectors::metadata(x)$mc_dt <- mc_dt
     x <-
       CATALYST::mergeClusters(
         x,
@@ -346,6 +360,118 @@ clusterSCE <-
       )
     return(x)
   }
+
+
+# plot ecdf
+plot_ecdf <- function(sce, interactive = TRUE) {
+  require(ggplot2)
+  mc_dt <- metadata(sce)$mc_dt
+  stopifnot(!is.null(mc_dt))
+  ggp <-
+    ggplot(mc_dt, aes(x = ConsensusIndex, y = CDF, color = k)) + geom_step() + theme_bw()
+  if (interactive)
+    ggp <- plotly::ggplotly(ggp)
+  return(ggp)
+}
+
+add_max_curvature <- function(dt, column, h = 1) {
+  # Ensure dt is a data.table
+  if (!inherits(dt, "data.table")) {
+    stop("dt must be a data.table")
+  }
+  
+  # Calculate lagged and lead values of the target column
+  dt[, paste0(column, "_lagged") := data.table::shift(get(column), type = "lag")]
+  dt[, paste0(column, "_lead") := data.table::shift(get(column), type = "lead")]
+  
+  # Calculate the second derivative
+  dt[, second_derivative := (get(paste0(column, "_lead")) - 2 * get(column) + get(paste0(column, "_lagged"))) / (h ^
+                                                                                                                   2)]
+  
+  # Identify the index of the maximum curvature point
+  max_curv_index <- which.max(abs(dt$second_derivative))
+  
+  # Add a column to indicate the maximum curvature point
+  dt[, `maximum curvature` := 'no']
+  dt[max_curv_index, `maximum curvature` := 'maximum curvature']
+  
+  # Optionally, clean up by removing the intermediate columns
+  dt[, c(paste0(column, "_lagged"),
+         paste0(column, "_lead"),
+         "second_derivative") := NULL]
+  
+  return(invisible(dt))
+}
+
+# plot delta area
+plot_delta_area <- function(sce, interactive = TRUE) {
+  mc_dt <- metadata(sce)$mc_dt
+  stopifnot(!is.null(mc_dt))
+  
+  mc_dt <- mc_dt[order(k, ConsensusIndex)]
+  
+  area_under_curve <- mc_dt[, .(AUC = {
+    # Calculate the widths (differences in ConsensusIndex) and heights (CDF values)
+    widths <- diff(.SD$ConsensusIndex)
+    heights <- head(.SD$CDF,-1)
+    # Calculate the area of each rectangle and sum them up
+    sum(widths * heights)
+  }), by = k]
+  
+  # Compute delta Area
+  area_under_curve[, DeltaAUC := c(NA, diff(AUC))]
+  area_under_curve[k == '2', DeltaAUC := AUC]
+  
+  add_max_curvature(area_under_curve, "DeltaAUC")
+  
+  # View the results
+  ggp <-
+    ggplot(area_under_curve, aes(x = k, y = DeltaAUC, group = 1)) + geom_line() + geom_point(aes(color =
+                                                                                                   `maximum curvature`)) +
+    scale_color_manual(values = c('maximum curvature' = 'red')) + theme_bw()
+  if (interactive) {
+    ggp <- plotly::ggplotly(ggp)
+    for (i in seq_along(ggp$x$data))
+      if (length(ggp$x$data[[i]]$legendgroup) > 0)
+        if (ggp$x$data[[i]]$legendgroup == "no")
+          ggp$x$data[[i]]$showlegend <- FALSE
+  }
+  
+  return(ggp)
+}
+
+# plot PAC
+plot_pac <- function(sce,
+                     interactive = TRUE,
+                     x1 = .05,
+                     x2 = 1 - x1) {
+  mc_dt <- metadata(sce)$mc_dt
+  stopifnot(!is.null(mc_dt))
+  
+  pac_dt <-
+    merge(mc_dt[ConsensusIndex <= x1, .(y1 = max(CDF)), by = k], mc_dt[ConsensusIndex <= x2, .(y2 =
+                                                                                                 max(CDF)), by = k])
+  pac_dt[, PAC := y2 - y1]
+  pac_dt[, `minimum PAC` := 'no']
+  pac_dt[PAC == min(PAC), `minimum PAC` := 'minimum PAC']
+  
+  add_max_curvature(pac_dt, "PAC")
+  
+  # View the results
+  ggp <-
+    ggplot(pac_dt, aes(x = k,
+                       y = PAC,
+                       group = 1)) + geom_line() + geom_point(aes(color = `maximum curvature`, shape = `minimum PAC`)) +
+    scale_color_manual(values = c('maximum curvature' = 'red')) + scale_shape_manual(values = c('minimum PAC' = 17, 'no' = 16), breaks= 'minimum PAC') + theme_bw()
+  if (interactive) {
+    ggp <- plotly::ggplotly(ggp)
+    for (i in seq_along(ggp$x$data))
+      if (length(ggp$x$data[[i]]$legendgroup) > 0)
+        if (ggp$x$data[[i]]$legendgroup == "no")
+          ggp$x$data[[i]]$showlegend <- FALSE
+  }
+  return(ggp)
+}
 
 # function for plotting star chart (FlowSOM)
 plotStarsCustom <- function (fsom, markers = fsom$map$colsUsed, overall = TRUE, nodeValues = NULL, nodeColors = NULL, colorPalette = FlowSOM_colors, 
@@ -383,7 +509,6 @@ plotStarsCustom <- function (fsom, markers = fsom$map$colsUsed, overall = TRUE, 
   }
   return(p)
 }
-
 
 # function for plotting with FlowSOM (FlowSOM)
 PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view = "MST", nodeSizes = fsom$map$pctgs, maxNodeSize = 1, 

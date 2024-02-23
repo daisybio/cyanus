@@ -270,7 +270,7 @@ output$clusteringVisualizationSelection <- renderUI({
            ),
            width = 12,
            style = "overflow-x: scroll;"),
-    fluidRow(withSpinner(uiOutput("delta_area"))),
+    fluidRow(withSpinner(uiOutput("metaClusteringAnalysis"))),
     fluidRow(withSpinner(uiOutput(
       "clusteringOutput"
     ))),
@@ -346,28 +346,81 @@ options = list(pageLength = nlevels(
               k = input$clusterCode)
 )))
 
-output$delta_area <- renderUI({
+output$metaClusteringAnalysis <- renderUI({
   req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
   runjs(
     "document.getElementById('clusteringVisualizationSelection').scrollIntoView();"
   )
   shinydashboard::box(
-    div(HTML(
-      'It is recommended to choose a meta-cluster where the plateau is reached, similarly to the `elbow method`.<br>
-                          "The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups.<br>
-                          It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fits the data.<br>
-                          The `natural` number of clusters present in the data should thus corresponds to the value of k where there is no longer a considerable increase in stability (plateau onset)." Crowell et al. (2020)',
-      style = "text-align: center;vertical-align: middle;"
-    )),
-    renderPlot(
-      CATALYST::delta_area(reactiveVals$sce)
+    fluidRow(
+      shinydashboard::tabBox(
+        tabPanel(
+          "ECDF",
+          div(
+            HTML(
+              'ConsensusClusterPlus re-samples from the original data and checks how often two cells end up in the same cluster. If the clustering is perfect, the resulting consensus index will only be zero (the two cells never end up in the same cluster) or one (the two cells always end up in the same cluster). This plot shows the cumulative distribution functions of the consensus indices for all metaclusters. <b> An optimal curve is hence horizontal between 0 and 1</b>. For more information, see <a href="https://doi.org/10.1023/A:1023949509487" target="_blank">Monti et al., 2003</a> or <a href="https://doi.org/10.1093/bioinformatics/btq170" target="_blank">Matthew D. Wilkerson, D. Neil Hayes, ConsensusClusterPlus: a class discovery tool with confidence assessments and item tracking, Bioinformatics, Volume 26, Issue 12, June 2010, Pages 1572–1573.</a>'
+            ),
+            style = "text-align: center; vertical-align: middle;"
+          ),
+          fluidRow(withSpinner(
+            plotOutput('ecdf',
+                       height = "800px")
+          ))
+        ),
+        tabPanel(
+          "PAC",
+          div(
+            HTML(
+              'The PAC (Proportion of Ambiguous Clusters) is defined as the fraction of cell pairs with consensus indices between <it>x1, x2</it>. Here, x1=0.05 and x2=0.95. The ECDF plot has the consensus index values on the x-axis and CDF values on the y-axis. Since <it>CDF(c)</it> corresponds to the fraction of cell pairs with consensus index values &le; c, the PAC is given by <it>CDF(x2) - CDF(x1)</it>. <b>A low value of PAC indicates a flat middle segment. Hence, the optimal metacluster has the lowest PAC. The maximum curvature indicates the point with the highest change in slope, which could be the elbow point. </b>For more details, see <a href="https://doi.org/10.1038/srep06207" target="_blank">Șenbabaoğlu, Y., Michailidis, G. & Li, J. Critical limitations of consensus clustering in class discovery. Sci Rep 4, 6207 (2014).</a>'
+              ),
+            style = "text-align: center; vertical-align: middle;"
+          ),
+          fluidRow(withSpinner(
+            plotlyOutput('pac',
+                         height = "800px")
+          ))
+        ),
+        tabPanel(
+        "Delta Area",
+        div(
+          HTML(
+            'The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups. It is the difference between the ECDF curves for metacluster k and k-1. It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fit the data. <b>It is recommended to choose a meta-cluster where the plateau is reached, similarly to the <it>elbow method</it>. The maximum curvature indicates the point with the highest change in slope, which could be the elbow point</b>. The <it>natural</it> number of clusters present in the data should thus correspond to the value of k where there is no longer a considerable increase in stability (plateau onset)." Crowell et al. (2020)'
+          ),
+          style = "text-align: center; vertical-align: middle;"
+        ),
+        fluidRow(withSpinner(
+          plotlyOutput('delta_area',
+            height = "800px")
+        ))
+      ),
+      title = "Metaclustering Visualization",
+      id = "metaclusterVisTabBox",
+      width = 12)
     ),
-    title = "1. Delta Area",
+    title = "1. Metaclustering Analysis",
     width = 12,
     collapsible = TRUE,
     collapsed = TRUE
   )
+})
+
+output$pac <- renderPlotly({
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
+  
+  plot_pac(reactiveVals$sce, interactive = TRUE)
+})
+
+output$delta_area <- renderPlotly({
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
+  
+  plot_delta_area(reactiveVals$sce, interactive = TRUE)
+})
+
+output$ecdf <- renderPlot({
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
+  
+  plot_ecdf(reactiveVals$sce, interactive = FALSE)
 })
 
 output$clusterMergingBox <- renderUI({
