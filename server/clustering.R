@@ -356,7 +356,26 @@ output$metaClusteringAnalysis <- renderUI({
     fluidRow(
       shinydashboard::tabBox(
         tabPanel(
+          "ECDF",
+          div(
+            HTML(
+              '"This graphic shows the cumulative distribution functions of the consensus matrix for each k (indicated by colors). This figure allows a user to determine at what number of clusters, k, the CDF reaches an approximate maximum, thus consensus and cluster confdence is at a maximum at this k. See <a href="https://doi.org/10.1023/A:1023949509487">Monti et al., 2003</a> for further details and intepretation.". <a href="https://doi.org/10.1093/bioinformatics/btq170" target="_blank">Matthew D. Wilkerson, D. Neil Hayes, ConsensusClusterPlus: a class discovery tool with confidence assessments and item tracking, Bioinformatics, Volume 26, Issue 12, June 2010, Pages 1572–1573.</a>'
+            ),
+            style = "text-align: center; vertical-align: middle;"
+          ),
+          fluidRow(withSpinner(
+            plotOutput('ecdf',
+                       height = "800px")
+          ))
+        ),
+        tabPanel(
           "PAC",
+          div(
+            HTML(
+              '"The empirical CDF plot has consensus index values on the x-axis and CDF values on the y-axis. PAC is defined as the fraction of sample pairs with consensus index values falling in the intermediate sub-interval (x1, x2) ∈ [0, 1]. x1 and x2 are data-dependent thresholds, but will generally be chosen near 0 and 1 respectively. In our implementation, x1 = 0.05 and x2 = 0.95. Since CDF(c) corresponds to the fraction of sample pairs with consensus index values less than or equal to c as explained in the "Empirical CDF" section above, PAC is given by CDF(x2) - CDF(x1). A low value of PAC indicates a flat middle segment, allowing inference of the optimal K by the lowest PAC []".<a href="https://doi.org/10.1038/srep06207" target="_blank">Șenbabaoğlu, Y., Michailidis, G. & Li, J. Critical limitations of consensus clustering in class discovery. Sci Rep 4, 6207 (2014).</a>'
+              ),
+            style = "text-align: center; vertical-align: middle;"
+          ),
           fluidRow(withSpinner(
             plotlyOutput('pac',
                          height = "800px")
@@ -373,13 +392,6 @@ output$metaClusteringAnalysis <- renderUI({
         fluidRow(withSpinner(
           plotlyOutput('delta_area',
             height = "800px")
-        ))
-      ),
-      tabPanel(
-        "CDF",
-        fluidRow(withSpinner(
-          plotOutput('ecdf',
-                     height = "800px")
         ))
       ),
       title = "Metaclustering Visualization",
