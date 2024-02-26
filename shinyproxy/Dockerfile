@@ -1,7 +1,11 @@
-FROM openanalytics/shinyproxy:2.5.0
+FROM openjdk:11-jre
 
-USER root
-
+RUN mkdir -p /opt/shinyproxy/
+RUN wget https://www.shinyproxy.io/downloads/shinyproxy-3.0.2.jar -O /opt/shinyproxy/shinyproxy.jar
 COPY application.yml /opt/shinyproxy/application.yml
-COPY favicon.png favicon.png
+#COPY favicon.png ./favicon.png
 COPY favicon.png /opt/shinyproxy/favicon.png
+
+WORKDIR /opt/shinyproxy/
+CMD ["java", "-jar", "/opt/shinyproxy/shinyproxy.jar"]
+

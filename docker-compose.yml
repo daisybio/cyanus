@@ -6,22 +6,28 @@ services:
     restart: unless-stopped
     expose:
       - 8080
-    networks:
-      - sp-net
+    networks:      
+      sp-net:
+        ipv4_address: 172.16.206.2
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   nginx: 
     image: nginx:1.17.5
     restart: unless-stopped
     ports:
-      - 4848:80
+      - 4848:80 
     networks:
-      - sp-net
+      sp-net:
+        ipv4_address: 172.16.206.3
     depends_on:
       - shinyproxy
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-
+  
 networks:
   sp-net:
-
+   driver: bridge
+   ipam:
+    driver: default
+    config:
+      - subnet: 172.16.206.0/24 
