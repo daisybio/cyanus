@@ -174,6 +174,7 @@ observeEvent(input$dropClusterButton, {
     showNotification(HTML("You cannot drop all clusters!"), type = 'error')
     return(NULL)
   }
+  resetVisualization()
   resetDE()
   reactiveVals$sce <- 
     evap(expression(reactiveVals$sce <- dropClusters(reactiveVals$sce, clusters_to_drop))[[1]],
