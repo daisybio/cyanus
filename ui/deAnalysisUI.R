@@ -87,7 +87,7 @@ deBody <- function(){
           title = "Violinplots"
         ),
         id = "DEplots",
-        title = "Visual Analysation",
+        title = "Visual Analysis",
         width = 12,
         height = plotbox_height
       )

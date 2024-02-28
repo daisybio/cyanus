@@ -391,7 +391,6 @@ clusterSCE <-
     return(x)
   }
 
-
 # plot ecdf
 plot_ecdf <- function(sce, interactive = TRUE, pal = RColorBrewer::brewer.pal(12, "Set3")) {
   require(ggplot2)
@@ -591,8 +590,9 @@ PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view 
                                  backgroundColors = backgroundColors, backgroundLim = backgroundLim)
   }
   if (view == "MST") {
-    p <- FlowSOM:::AddMST(p, fsom)
+    p <- FlowSOMCustomAddMST(p, fsom)
   }
+
   if(is.null(nodeValues)){
     p <- FlowSOM:::AddNodes(p = p, values = as.character(isEmpty), colorPalette = c(`TRUE` = "gray", 
                                                                                     `FALSE` = "white"), showLegend = FALSE)
@@ -606,6 +606,41 @@ PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view 
   } 
   return(p)
 }
+
+
+FlowSOMCustomAddMST <- function (p, fsom) 
+{
+  requireNamespace("ggplot2")
+  fsom <- FlowSOM::UpdateFlowSOM(fsom)
+  edges <- FlowSOMCustomParseEdges(fsom)
+  p <- p + ggplot2::geom_segment(data = edges, ggplot2::aes(x = .data$x, 
+                                                            y = .data$y, xend = .data$xend, yend = .data$yend), 
+                                 size = 0.2)
+  return(p)
+}
+
+FlowSOMCustomParseEdges <- function (fsom) 
+{
+  edgeList <- as.data.frame(igraph::as_edgelist(fsom$MST$g), 
+                            stringsAsFactors = FALSE)
+  coords <- fsom$MST$l
+  if(!is.null(fsom$MST$old_l)){
+    coords <- fsom$MST$old_l
+  }
+
+  segmentPlot <- lapply(seq_len(nrow(edgeList)), function(row_id) {
+    node_ids <- as.numeric(edgeList[row_id, ])
+    row <- c(coords[node_ids[1], 1], coords[node_ids[1], 
+                                            2], coords[node_ids[2], 1], coords[node_ids[2], 
+                                                                               2])
+    return(row)
+  })
+  segmentPlot <- do.call(rbind, segmentPlot)
+  colnames(segmentPlot) <- c("x", "y", "xend", "yend")
+  return(as.data.frame(segmentPlot))
+}
+
+
 
 FlowSOMCustomAddBackground <- function (p, backgroundValues, backgroundColors = NULL, backgroundLim = NULL) 
 {
@@ -751,4 +786,37 @@ addClusterAll <- function(sce){
   S4Vectors::metadata(sce)$cluster_codes <- data.frame(all = as.factor("all"))
   return(sce)
 }
+
+
+dropClusters <- function(sce, clusters_to_drop){
+  mapping <- cluster_codes(sce)[, input$clusterCode]
+  names(mapping) <- cluster_codes(sce)[, 1]
+  cell_idx <- data.table(som_mapping = colData(sce)$cluster_id)
+  cell_idx[, meta_mapping := mapping[som_mapping]]
+  cells_to_keep <- which(!cell_idx$meta_mapping %in% clusters_to_drop)
+  # subset sce
+  sce <- sce[, cells_to_keep]
+  # update metadata
+  dt <- data.table(ei(sce))
+  dt[, n_cells := table(colData(sce)$sample_id)[sample_id]]
+  metadata(sce)$experiment_info <- data.frame(dt)
+  # update cluster codes and SOMs
+  dropped_idx <- which(mapping %in% clusters_to_drop)
+  dropped_soms <- names(mapping)[dropped_idx]
+  metadata(sce)$cluster_codes <- metadata(sce)$cluster_codes %>% filter(!get(input$clusterCode) %in% clusters_to_drop)
+  metadata(sce)$SOM$map$nNodes <- nrow(metadata(sce)$cluster_codes)
+  metadata(sce)$SOM$map$pctgs <- metadata(sce)$SOM$map$pctgs[-dropped_idx]
+  if(is.null(metadata(sce)$SOM$MST$old_l)){
+    metadata(sce)$SOM$MST$old_l <- metadata(sce)$SOM$MST$l
+  }
+  metadata(sce)$SOM$MST$l <- metadata(sce)$SOM$MST$l[-dropped_idx, ]
+  metadata(sce)$SOM$MST$g <- delete_edges(metadata(sce)$SOM$MST$g, unlist(incident_edges( metadata(sce)$SOM$MST$g, dropped_soms)))
+  metadata(sce)$SOM$map$medianValues <- metadata(sce)$SOM$map$medianValues[-dropped_idx, ]
+  # drop levels
+  metadata(sce)$experiment_info <- droplevels(metadata(sce)$experiment_info)
+  colData(sce) <- droplevels(colData(sce))
+  metadata(sce)$cluster_codes <- droplevels(metadata(sce)$cluster_codes)
+  return(sce)
+}
+
 

@@ -168,6 +168,20 @@ observeEvent(input$mergeClusteringButton, {
   # )
 })
 
+observeEvent(input$dropClusterButton, {
+  clusters_to_drop <- isolate(input$selectedClustersToDrop)
+  if(length(clusters_to_drop) == length(levels(cluster_codes(isolate(reactiveVals$sce))[, input$clusterCode]))){
+    showNotification(HTML("You cannot drop all clusters!"), type = 'error')
+    return(NULL)
+  }
+  resetDE()
+  reactiveVals$sce <- 
+    evap(expression(reactiveVals$sce <- dropClusters(reactiveVals$sce, clusters_to_drop))[[1]],
+                           params = list(clusters_to_drop = clusters_to_drop))
+  msg <- paste0("Dropped cluster ",  paste0(isolate(input$selectedClustersToDrop), collapse = ', '), "! Note that the MST from the Star Charts is now no longer a spanning tree and that the plots from the metaclustering analysis are still the ones from the original cluster run.")
+  showNotification(HTML(msg), type = "warning", duration = NULL)
+})
+
 observeEvent(input$clusterCode, {
   if (nlevels(cluster_ids(reactiveVals$sce, input$clusterCode)) == 1) {
     hideTab("clusterVisTabBox", "Cluster Frequencies", session = getDefaultReactiveDomain())
@@ -275,7 +289,7 @@ output$clusteringVisualizationSelection <- renderUI({
       "clusteringOutput"
     ))),
     fluidRow(withSpinner(uiOutput(
-      "clusterMergingBox"
+      "clusterModTabs"
     ))),
     title = "Clustering Output",
     width = 12
@@ -423,10 +437,35 @@ output$ecdf <- renderPlot({
   plot_ecdf(reactiveVals$sce, interactive = FALSE, pal = reactiveVals$selected_palette)
 })
 
+
+output$clusterModTabs <- renderUI({
+  shinydashboard::box(
+    tabBox(
+      tabPanel(
+        uiOutput("clusterMergingBox"),
+        value = "mergeClustersTab",
+        title = "Merge Clusters"
+      ),
+      tabPanel(
+        uiOutput("clusterDropBox"),
+        value = "dropClustersTab",
+        title = "Drop Clusters"
+      ),
+      id = "Modify Clusters",
+      title = "Merge or delete clusters",
+      width = 12
+    ),
+    title = "3. Modify Clusters",
+    width = 12,
+    collapsible = TRUE,
+    collapsed = TRUE
+  )
+})
+
 output$clusterMergingBox <- renderUI({
   req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun, input$clusterCode)
   
-  shinydashboard::box(
+  div(
     HTML(
       "You can assign new cluster names in the <b>new_cluster</b> column by double-clicking.<br>
       <i>If you do not assign new names to all clusters the old cluster names will be kept.</i>"
@@ -441,11 +480,37 @@ output$clusterMergingBox <- renderUI({
         style = "success"
       ),
       style = "margin-top: 5px; float: right;"
+    )
+  )
+})
+
+output$clusterDropBox <- renderUI({
+  choices <- levels(CATALYST::cluster_codes(reactiveVals$sce)[, input$clusterCode])
+  div(
+    HTML(
+      "You can drop whole clusters here, e.g., a cluster you identified to only contain dead cells."
     ),
-    title = "3. Merge Clusters",
-    width = 12,
-    collapsible = TRUE,
-    collapsed = TRUE
+    shinyWidgets::pickerInput(
+      inputId = "selectedClustersToDrop",
+      label = "Select which clusters you want to drop",
+      choices = choices,
+      selected = choices[1],
+      multiple = TRUE,
+      options = list(
+        `actions-box` = TRUE,
+        `selected-text-format` = "count > 3",
+        "dropup-auto" = T
+      )
+    ),
+    div(
+      bsButton(
+        "dropClusterButton",
+        "Drop Selected Clusters",
+        icon("filter"),
+        style = "warning"
+      ),
+      style = "margin-top: 10px; margin-bottom: 10px; float: right;"
+    )
   )
 })
 
