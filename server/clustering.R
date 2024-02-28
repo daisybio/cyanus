@@ -176,6 +176,7 @@ observeEvent(input$dropClusterButton, {
   }
   resetVisualization()
   resetDE()
+  sapply(reducedDimNames(reactiveVals$sce), function(dr){reducedDim(reactiveVals$sce, dr) <- NULL})
   reactiveVals$sce <- 
     evap(expression(reactiveVals$sce <- dropClusters(reactiveVals$sce, clusters_to_drop))[[1]],
                            params = list(clusters_to_drop = clusters_to_drop))
