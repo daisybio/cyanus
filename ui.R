@@ -98,7 +98,7 @@ body <-
     div(
       id = "loading",
       fluidRow(box(
-        box(
+        column(
           width = 8,
           div(HTML(
             'Recently, high-dimensional time-of-flight mass cytometry (CyTOF)

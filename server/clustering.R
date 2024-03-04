@@ -169,6 +169,22 @@ observeEvent(input$mergeClusteringButton, {
   # )
 })
 
+observeEvent(input$dropClusterButton, {
+  clusters_to_drop <- isolate(input$selectedClustersToDrop)
+  if(length(clusters_to_drop) == length(levels(cluster_codes(isolate(reactiveVals$sce))[, input$clusterCode]))){
+    showNotification(HTML("You cannot drop all clusters!"), type = 'error')
+    return(NULL)
+  }
+  resetVisualization()
+  resetDE()
+  sapply(reducedDimNames(reactiveVals$sce), function(dr){reducedDim(reactiveVals$sce, dr) <- NULL})
+  reactiveVals$sce <- 
+    evap(expression(reactiveVals$sce <- dropClusters(reactiveVals$sce, clusters_to_drop))[[1]],
+                           params = list(clusters_to_drop = clusters_to_drop))
+  msg <- paste0("Dropped cluster ",  paste0(isolate(input$selectedClustersToDrop), collapse = ', '), "! Note that the MST from the Star Charts is now no longer a spanning tree and that the plots from the metaclustering analysis are still the ones from the original cluster run.")
+  showNotification(HTML(msg), type = "warning", duration = NULL)
+})
+
 observeEvent(input$clusterCode, {
   if (nlevels(cluster_ids(reactiveVals$sce, input$clusterCode)) == 1) {
     hideTab("clusterVisTabBox", "Cluster Frequencies", session = getDefaultReactiveDomain())
@@ -267,16 +283,16 @@ output$clusteringVisualizationSelection <- renderUI({
     column(withSpinner(uiOutput("clusterFrequencies")),
            div(
              downloadButton("downloadFrequencies", "Download Cluster Frequencies per Sample"),
-             style = "float: left;"
+             style = "float: left; margin-bottom: 10px;"
            ),
            width = 12,
            style = "overflow-x: scroll;"),
-    fluidRow(withSpinner(uiOutput("delta_area"))),
+    fluidRow(withSpinner(uiOutput("metaClusteringAnalysis"))),
     fluidRow(withSpinner(uiOutput(
       "clusteringOutput"
     ))),
     fluidRow(withSpinner(uiOutput(
-      "clusterMergingBox"
+      "clusterModTabs"
     ))),
     title = "Clustering Output",
     width = 12
@@ -347,24 +363,102 @@ options = list(pageLength = nlevels(
               k = input$clusterCode)
 )))
 
-output$delta_area <- renderUI({
+output$metaClusteringAnalysis <- renderUI({
   req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
   runjs(
     "document.getElementById('clusteringVisualizationSelection').scrollIntoView();"
   )
   shinydashboard::box(
-    div(HTML(
-      'It is recommended to choose a meta-cluster where the plateau is reached, similarly to the `elbow method`.<br>
-                          "The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups.<br>
-                          It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fits the data.<br>
-                          The `natural` number of clusters present in the data should thus corresponds to the value of k where there is no longer a considerable increase in stability (plateau onset)." Crowell et al. (2020)',
-      style = "text-align: center;vertical-align: middle;"
-    )),
-    renderPlot(
-      CATALYST::delta_area(reactiveVals$sce)
+    fluidRow(
+      shinydashboard::tabBox(
+        tabPanel(
+          "ECDF",
+          div(
+            HTML(
+              'ConsensusClusterPlus re-samples from the original data and checks how often two cells end up in the same cluster. If the clustering is perfect, the resulting consensus index will only be zero (the two cells never end up in the same cluster) or one (the two cells always end up in the same cluster). This plot shows the cumulative distribution functions of the consensus indices for all metaclusters. <b> An optimal curve is hence horizontal between 0 and 1</b>. For more information, see <a href="https://doi.org/10.1023/A:1023949509487" target="_blank">Monti et al., 2003</a> or <a href="https://doi.org/10.1093/bioinformatics/btq170" target="_blank">Matthew D. Wilkerson, D. Neil Hayes, ConsensusClusterPlus: a class discovery tool with confidence assessments and item tracking, Bioinformatics, Volume 26, Issue 12, June 2010, Pages 1572–1573.</a>'
+            ),
+            style = "text-align: center; vertical-align: middle;"
+          ),
+          fluidRow(withSpinner(
+            plotOutput('ecdf',
+                       height = "800px")
+          ))
+        ),
+        tabPanel(
+          "PAC",
+          div(
+            HTML(
+              'The PAC (Proportion of Ambiguous Clusters) is defined as the fraction of cell pairs with consensus indices between <it>x1, x2</it>. Here, x1=0.05 and x2=0.95. The ECDF plot has the consensus index values on the x-axis and CDF values on the y-axis. Since <it>CDF(c)</it> corresponds to the fraction of cell pairs with consensus index values &le; c, the PAC is given by <it>CDF(x2) - CDF(x1)</it>. <b>A low value of PAC indicates a flat middle segment. Hence, the optimal metacluster has the lowest PAC. The maximum curvature indicates the point with the highest change in slope, which could be the elbow point. </b>For more details, see <a href="https://doi.org/10.1038/srep06207" target="_blank">Șenbabaoğlu, Y., Michailidis, G. & Li, J. Critical limitations of consensus clustering in class discovery. Sci Rep 4, 6207 (2014).</a>'
+              ),
+            style = "text-align: center; vertical-align: middle;"
+          ),
+          fluidRow(withSpinner(
+            plotlyOutput('pac',
+                         height = "800px")
+          ))
+        ),
+        tabPanel(
+        "Delta Area",
+        div(
+          HTML(
+            'The delta area represents the amount of extra cluster stability gained when clustering into k groups as compared to k-1 groups. It is the difference between the ECDF curves for metacluster k and k-1. It can be expected that high stability of clusters can be reached when clustering into the number of groups that best fit the data. <b>It is recommended to choose a meta-cluster where the plateau is reached, similarly to the <it>elbow method</it>. The maximum curvature indicates the point with the highest change in slope, which could be the elbow point</b>. The <it>natural</it> number of clusters present in the data should thus correspond to the value of k where there is no longer a considerable increase in stability (plateau onset)." Crowell et al. (2020)'
+          ),
+          style = "text-align: center; vertical-align: middle;"
+        ),
+        fluidRow(withSpinner(
+          plotlyOutput('delta_area',
+            height = "800px")
+        ))
+      ),
+      title = "Metaclustering Visualization",
+      id = "metaclusterVisTabBox",
+      width = 12)
     ),
-    title = "1. Delta Area",
+    title = "1. Metaclustering Analysis",
+    width = 12,
+    collapsible = TRUE,
+    collapsed = TRUE
+  )
+})
+
+output$pac <- renderPlotly({
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
+  
+  plot_pac(reactiveVals$sce, interactive = TRUE)
+})
+
+output$delta_area <- renderPlotly({
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
+  
+  plot_delta_area(reactiveVals$sce, interactive = TRUE)
+})
+
+output$ecdf <- renderPlot({
+  req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
+  
+  plot_ecdf(reactiveVals$sce, interactive = FALSE, pal = reactiveVals$selected_palette)
+})
+
+
+output$clusterModTabs <- renderUI({
+  shinydashboard::box(
+    tabBox(
+      tabPanel(
+        uiOutput("clusterMergingBox"),
+        value = "mergeClustersTab",
+        title = "Merge Clusters"
+      ),
+      tabPanel(
+        uiOutput("clusterDropBox"),
+        value = "dropClustersTab",
+        title = "Drop Clusters"
+      ),
+      id = "Modify Clusters",
+      title = "Merge or delete clusters",
+      width = 12
+    ),
+    title = "3. Modify Clusters",
     width = 12,
     collapsible = TRUE,
     collapsed = TRUE
@@ -374,7 +468,7 @@ output$delta_area <- renderUI({
 output$clusterMergingBox <- renderUI({
   req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun, input$clusterCode)
   
-  shinydashboard::box(
+  div(
     HTML(
       "You can assign new cluster names in the <b>new_cluster</b> column by double-clicking.<br>
       <i>If you do not assign new names to all clusters the old cluster names will be kept.</i>"
@@ -389,11 +483,37 @@ output$clusterMergingBox <- renderUI({
         style = "success"
       ),
       style = "margin-top: 5px; float: right;"
+    )
+  )
+})
+
+output$clusterDropBox <- renderUI({
+  choices <- levels(CATALYST::cluster_codes(reactiveVals$sce)[, input$clusterCode])
+  div(
+    HTML(
+      "You can drop whole clusters here, e.g., a cluster you identified to only contain dead cells."
     ),
-    title = "3. Merge Clusters",
-    width = 12,
-    collapsible = TRUE,
-    collapsed = TRUE
+    shinyWidgets::pickerInput(
+      inputId = "selectedClustersToDrop",
+      label = "Select which clusters you want to drop",
+      choices = choices,
+      selected = choices[1],
+      multiple = TRUE,
+      options = list(
+        `actions-box` = TRUE,
+        `selected-text-format` = "count > 3",
+        "dropup-auto" = T
+      )
+    ),
+    div(
+      bsButton(
+        "dropClusterButton",
+        "Drop Selected Clusters",
+        icon("filter"),
+        style = "warning"
+      ),
+      style = "margin-top: 10px; margin-bottom: 10px; float: right;"
+    )
   )
 })
 
@@ -711,22 +831,38 @@ output$clusterHeatmapDownload <- renderUI({
 
 output$clusterStarPlot <- renderPlot({
   req(SummarizedExperiment::rowData(reactiveVals$sce)$used_for_clustering)
+  custom_colors <- reactiveVals$selected_palette
+  if(length(levels(cluster_codes(reactiveVals$sce)[[input$clusterCode]])) > length(reactiveVals$selected_palette)){
+    custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(length(levels(cluster_codes(reactiveVals$sce)[[input$clusterCode]])))
+  }
+  custom_palette <- RColorBrewer::brewer.pal(length(metadata(reactiveVals$sce)$SOM$map$colsUsed), "Set3")
+  if(length(metadata(reactiveVals$sce)$SOM$map$colsUsed) > 12){
+    custom_palette <- grDevices::colorRampPalette(custom_palette)(length(metadata(reactiveVals$sce)$SOM$map$colsUsed))
+  }
   reactiveVals$starCluster <-
-    plotStarsCustom(metadata(reactiveVals$sce)$SOM, overall = TRUE, backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]])
+    plotStarsCustom(metadata(reactiveVals$sce)$SOM, overall = TRUE, 
+                    colorPalette = custom_palette,
+                    backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]], 
+                    backgroundColors = custom_colors)
   print(reactiveVals$starCluster)
   reactiveVals$starCluster
 })
 
 output$clusterStarMarkerPlot <- renderPlot({
+  custom_colors <- reactiveVals$selected_palette
+  if(length(levels(cluster_codes(reactiveVals$sce)[[input$clusterCode]])) > length(reactiveVals$selected_palette)){
+    custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(length(levels(cluster_codes(reactiveVals$sce)[[input$clusterCode]])))
+  }
   reactiveVals$starMarkerCluster <-
     plotMarkerCustom(
       reactiveVals$sce,
       input$plotStarMarkerFeatureIn,
       facet_by = input$plotStarMarkerFacets,
-      subselection_col = isolate(input$plotStarMarkerSubselection),
+      subselection_col = input$plotStarMarkerSubselection,
       subselection = input$plotStarMarkerSubselectionChoices,
-      assayType = names(metadata(reactiveVals$sce)$clusterRun$assayType),
-      backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]]
+      assayType = metadata(reactiveVals$sce)$clusterRun$assayType,
+      backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]],
+      backgroundColors = custom_colors
     )
   reactiveVals$starMarkerCluster
 })
@@ -741,7 +877,8 @@ output$clusterAbundancePlot <- renderPlot({
       k = input$clusterCode,
       by = input$abundanceBy,
       group_by = input$abundanceGroup,
-      shape_by = shape_by
+      shape_by = shape_by,
+      k_pal = reactiveVals$selected_palette
     )
   reactiveVals$abundanceCluster
 })
@@ -750,7 +887,8 @@ output$clusterHeatmapPlot <- renderPlot({
   req(nlevels(cluster_ids(reactiveVals$sce, input$clusterCode)) > 1)
   reactiveVals$heatmapCluster <-
     plotFreqHeatmapCustom(reactiveVals$sce,
-                          input$clusterCode)
+                          input$clusterCode,
+                          k_pal = reactiveVals$selected_palette)
   reactiveVals$heatmapCluster
 })
 
@@ -781,7 +919,9 @@ output$clusterExprsPlot <- renderPlot({
       k = input$clusterCode,
       features = features_tmp,
       input$assayTypeVisIn
-    )
+    )+
+    scale_color_manual(values = reactiveVals$selected_palette)+
+    scale_fill_manual(values = reactiveVals$selected_palette)
   reactiveVals$exprsCluster
 })
 

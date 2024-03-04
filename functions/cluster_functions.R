@@ -225,8 +225,8 @@ plotFreqHeatmapCustom <- function (x,
     left_anno <- NULL
   if (!isFALSE(col_anno)) {
     top_anno <-
-      CATALYST:::.anno_factors(x, levels(x$sample_id), col_anno,
-                               "colum")
+      custom_anno_factors(x, levels(x$sample_id), col_anno,
+                               "colum", pal=k_pal)
   }
   else
     top_anno <- NULL
@@ -256,6 +256,36 @@ plotFreqHeatmapCustom <- function (x,
   )
 }
 
+custom_anno_factors <- function (x, ids, which, type = c("row", "column"), pal=brewer.pal(8, "Set3")[-2]) 
+{
+  type <- match.arg(type)
+  cd <- colData(x)
+  df <- data.frame(cd, check.names = FALSE)
+  df <- select_if(df, ~!is.numeric(.))
+  df <- mutate_all(df, ~droplevels(factor(.x)))
+  m <- match(ids, df$sample_id)
+  ns <- split(df, df$sample_id) %>% lapply(mutate_all, droplevels) %>% 
+    lapply(summarize_all, nlevels) %>% do.call(what = "rbind")
+  keep <- names(which(colMeans(ns) == 1))
+  keep <- setdiff(keep, c("sample_id", "cluster_id"))
+  if (is.character(which)) 
+    keep <- intersect(keep, which)
+  if (length(keep) == 0) 
+    return(NULL)
+  df <- df[m, keep, drop = FALSE]
+  lvls <- lapply(as.list(df), levels)
+  nlvls <- vapply(lvls, length, numeric(1))
+  if (any(nlvls > length(pal))) 
+    pal <- colorRampPalette(pal)(max(nlvls))
+  names(is) <- is <- colnames(df)
+  cols <- lapply(is, function(i) {
+    u <- pal[seq_len(nlvls[i])]
+    names(u) <- lvls[[i]]
+    u
+  })
+  HeatmapAnnotation(which = type, df = df, col = cols, gp = gpar(col = "white"))
+}
+
 library(SingleCellExperiment)
 library(FlowSOM)
 library(S4Vectors)
@@ -275,11 +305,12 @@ clusterSCE <-
             ydim = 10,
             maxK = 20,
             verbose = TRUE,
-            seed = 1)
-  {
+            seed = 1){
+    # set seed
     if (!is.null(seed)) {
       set.seed(seed)
     }
+    # check input
     stopifnot(is(x, "SingleCellExperiment"))
     stopifnot(
       is.logical(verbose),
@@ -289,6 +320,7 @@ clusterSCE <-
                     is.numeric(arg) &&
                length(arg) == 1, logical(1))
     )
+    # extract markers to cluster
     features <- CATALYST:::.get_features(x, features)
     if (is.null(CATALYST::marker_classes(x))) {
       SummarizedExperiment::rowData(x)$marker_class <-
@@ -324,6 +356,17 @@ clusterSCE <-
         )
       )
     dev.off()
+    # compute metacluster ecdf values
+    Kvec <- 2:maxK
+    names(Kvec) <- Kvec
+    mc_dt <- rbindlist(lapply(Kvec, function(i){
+      consensus_matrix <- mc[[i]]$consensusMatrix
+      consensus_values <- consensus_matrix[lower.tri(consensus_matrix)]
+      ecdf_data <- ecdf(consensus_values)
+      list(ConsensusIndex = consensus_values, CDF = ecdf_data(consensus_values))
+    }), idcol = 'k')
+    mc_dt[, k:=factor(k, levels=Kvec)]
+    
     k <- xdim * ydim
     mcs <- seq_len(maxK)[-1]
     codes <-
@@ -336,7 +379,8 @@ clusterSCE <-
     x$cluster_id <- factor(som$map$mapping[, 1])
     S4Vectors::metadata(x)$cluster_codes <- codes
     S4Vectors::metadata(x)$SOM <- som
-    S4Vectors::metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
+    # S4Vectors::metadata(x)$delta_area <- CATALYST:::.plot_delta_area(mc)
+    S4Vectors::metadata(x)$mc_dt <- mc_dt
     x <-
       CATALYST::mergeClusters(
         x,
@@ -346,6 +390,121 @@ clusterSCE <-
       )
     return(x)
   }
+
+# plot ecdf
+plot_ecdf <- function(sce, interactive = TRUE, pal = RColorBrewer::brewer.pal(12, "Set3")) {
+  require(ggplot2)
+  mc_dt <- metadata(sce)$mc_dt
+  stopifnot(!is.null(mc_dt))
+  nk <- length(levels(mc_dt$k))
+  if(nk > length(pal)){
+    pal <- grDevices::colorRampPalette(colors = pal)(nk)
+  }
+  ggp <-
+    ggplot(mc_dt, aes(x = ConsensusIndex, y = CDF, color = k)) + geom_step() + theme_bw()+
+    scale_color_manual(values = pal)
+  if (interactive)
+    ggp <- plotly::ggplotly(ggp)
+  return(ggp)
+}
+
+add_max_curvature <- function(dt, column, h = 1) {
+  # Ensure dt is a data.table
+  if (!inherits(dt, "data.table")) {
+    stop("dt must be a data.table")
+  }
+  # Calculate lagged and lead values of the target column
+  dt[, paste0(column, "_lagged") := data.table::shift(get(column), type = "lag")]
+  dt[, paste0(column, "_lead") := data.table::shift(get(column), type = "lead")]
+  
+  # Calculate the second derivative
+  dt[, second_derivative := (get(paste0(column, "_lead")) - 2 * get(column) + get(paste0(column, "_lagged"))) / (h ^
+                                                                                                                   2)]
+  
+  # Identify the index of the maximum curvature point
+  max_curv_index <- which.max(dt$second_derivative)
+  
+  # Add a column to indicate the maximum curvature point
+  dt[, `maximum curvature` := 'no']
+  dt[max_curv_index, `maximum curvature` := 'maximum curvature']
+  
+  # Optionally, clean up by removing the intermediate columns
+  dt[, c(paste0(column, "_lagged"),
+         paste0(column, "_lead"),
+         "second_derivative") := NULL]
+  
+  return(invisible(dt))
+}
+
+# plot delta area
+plot_delta_area <- function(sce, interactive = TRUE) {
+  mc_dt <- metadata(sce)$mc_dt
+  stopifnot(!is.null(mc_dt))
+  
+  mc_dt <- mc_dt[order(k, ConsensusIndex)]
+  
+  area_under_curve <- mc_dt[, .(AUC = {
+    # Calculate the widths (differences in ConsensusIndex) and heights (CDF values)
+    widths <- diff(.SD$ConsensusIndex)
+    heights <- head(.SD$CDF,-1)
+    # Calculate the area of each rectangle and sum them up
+    sum(widths * heights)
+  }), by = k]
+  
+  # Compute delta Area
+  area_under_curve[, DeltaAUC := c(NA, diff(AUC))]
+  area_under_curve[k == '2', DeltaAUC := AUC]
+  
+  add_max_curvature(area_under_curve, "DeltaAUC")
+  
+  # View the results
+  ggp <-
+    ggplot(area_under_curve, aes(x = k, y = DeltaAUC, group = 1)) + geom_line() + geom_point(aes(color =
+                                                                                                   `maximum curvature`)) +
+    scale_color_manual(values = c('maximum curvature' = 'red')) + theme_bw()
+  if (interactive) {
+    ggp <- plotly::ggplotly(ggp)
+    for (i in seq_along(ggp$x$data))
+      if (length(ggp$x$data[[i]]$legendgroup) > 0)
+        if (ggp$x$data[[i]]$legendgroup == "no")
+          ggp$x$data[[i]]$showlegend <- FALSE
+  }
+  
+  return(ggp)
+}
+
+# plot PAC
+plot_pac <- function(sce,
+                     interactive = TRUE,
+                     x1 = .05,
+                     x2 = 1 - x1) {
+  mc_dt <- metadata(sce)$mc_dt
+  stopifnot(!is.null(mc_dt))
+  
+  pac_dt <-
+    merge(mc_dt[ConsensusIndex <= x1, .(y1 = max(CDF)), by = k], mc_dt[ConsensusIndex <= x2, .(y2 =
+                                                                                                 max(CDF)), by = k])
+  pac_dt[, PAC := y2 - y1]
+  pac_dt[, `minimum PAC` := 'no']
+  pac_dt[PAC == min(PAC), `minimum PAC` := 'minimum PAC']
+  
+  add_max_curvature(pac_dt, "PAC")
+  
+  # View the results
+  ggp <-
+    ggplot(pac_dt, aes(x = k,
+                       y = PAC,
+                       group = 1)) + geom_line() + geom_point(aes(color = `maximum curvature`, shape = `minimum PAC`)) +
+    scale_color_manual(values = c('maximum curvature' = 'red')) + scale_shape_manual(values = c('minimum PAC' = 17, 'no' = 16), breaks= 'minimum PAC') + theme_bw()
+  if (interactive) {
+    ggp <- plotly::ggplotly(ggp)
+    for (i in seq_along(ggp$x$data))
+      if (length(ggp$x$data[[i]]$legendgroup) > 0)
+        if (ggp$x$data[[i]]$legendgroup == "no")
+          ggp$x$data[[i]]$showlegend <- FALSE
+  }
+  return(ggp)
+}
 
 # function for plotting star chart (FlowSOM)
 plotStarsCustom <- function (fsom, markers = fsom$map$colsUsed, overall = TRUE, nodeValues = NULL, nodeColors = NULL, colorPalette = FlowSOM_colors, 
@@ -383,7 +542,6 @@ plotStarsCustom <- function (fsom, markers = fsom$map$colsUsed, overall = TRUE, 
   }
   return(p)
 }
-
 
 # function for plotting with FlowSOM (FlowSOM)
 PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view = "MST", nodeSizes = fsom$map$pctgs, maxNodeSize = 1, 
@@ -428,12 +586,13 @@ PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view 
                         bg_size = scaledNodeSize * 1.5)
   p <- ggplot2::ggplot(plot_df)
   if (!is.null(backgroundValues)) {
-    p <- FlowSOM:::AddBackground(p, backgroundValues = backgroundValues, 
+    p <- FlowSOMCustomAddBackground(p, backgroundValues = backgroundValues, 
                                  backgroundColors = backgroundColors, backgroundLim = backgroundLim)
   }
   if (view == "MST") {
-    p <- FlowSOM:::AddMST(p, fsom)
+    p <- FlowSOMCustomAddMST(p, fsom)
   }
+
   if(is.null(nodeValues)){
     p <- FlowSOM:::AddNodes(p = p, values = as.character(isEmpty), colorPalette = c(`TRUE` = "gray", 
                                                                                     `FALSE` = "white"), showLegend = FALSE)
@@ -449,9 +608,58 @@ PlotFlowSOMCustom <- function (fsom, nodeValues = NULL, nodeColors = NULL, view 
 }
 
 
+FlowSOMCustomAddMST <- function (p, fsom) 
+{
+  requireNamespace("ggplot2")
+  fsom <- FlowSOM::UpdateFlowSOM(fsom)
+  edges <- FlowSOMCustomParseEdges(fsom)
+  p <- p + ggplot2::geom_segment(data = edges, ggplot2::aes(x = .data$x, 
+                                                            y = .data$y, xend = .data$xend, yend = .data$yend), 
+                                 size = 0.2)
+  return(p)
+}
+
+FlowSOMCustomParseEdges <- function (fsom) 
+{
+  edgeList <- as.data.frame(igraph::as_edgelist(fsom$MST$g), 
+                            stringsAsFactors = FALSE)
+  coords <- fsom$MST$l
+  if(!is.null(fsom$MST$old_l)){
+    coords <- fsom$MST$old_l
+  }
+
+  segmentPlot <- lapply(seq_len(nrow(edgeList)), function(row_id) {
+    node_ids <- as.numeric(edgeList[row_id, ])
+    row <- c(coords[node_ids[1], 1], coords[node_ids[1], 
+                                            2], coords[node_ids[2], 1], coords[node_ids[2], 
+                                                                               2])
+    return(row)
+  })
+  segmentPlot <- do.call(rbind, segmentPlot)
+  colnames(segmentPlot) <- c("x", "y", "xend", "yend")
+  return(as.data.frame(segmentPlot))
+}
+
+
+
+FlowSOMCustomAddBackground <- function (p, backgroundValues, backgroundColors = NULL, backgroundLim = NULL) 
+{
+  requireNamespace("ggplot2")
+  if (is.character(backgroundValues)) {
+    backgroundValues <- factor(backgroundValues)
+  }
+  p <- FlowSOM:::AddScale(p, backgroundValues, backgroundColors, backgroundLim, 
+                labelLegend = "background")
+  p <- p + ggforce::geom_circle(ggplot2::aes(x0 = .data$x, 
+                                             y0 = .data$y, r = .data$bg_size, fill = backgroundValues), 
+                                col = NA, alpha = 0.8)
+  return(p)
+}
+
+
 # own function for enabling selection of groups and facetting
 plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "", subselection=NULL, assayType = "exprs", colorPalette = grDevices::colorRampPalette(c("#00007F","blue", "#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", 
-                                                                                                                                                                      "red", "#7F0000")), backgroundValues = NULL)
+                                                                                                                                                                      "red", "#7F0000")), backgroundValues = NULL, ...)
 {
   if (facet_by == "") {
     # no faceting
@@ -460,7 +668,7 @@ plotMarkerCustom <- function (sce, marker, facet_by = "", subselection_col = "",
       color_values <- round(S4Vectors::metadata(sce)$SOM$map$medianValues[, marker], 2)
       colors <- colorPalette(100)[as.numeric(cut(color_values, breaks = 100))]
       # plot star chart for single marker with color_values and colors
-      p <- plotStarsCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = color_values, nodeColors = colorPalette, backgroundValues = backgroundValues)
+      p <- plotStarsCustom(metadata(sce)$SOM, overall = FALSE, marker = marker, nodeValues = color_values, nodeColors = colorPalette, backgroundValues = backgroundValues, ...)
       p <- p + ggtitle(marker) + theme(plot.title = element_text(hjust = 0.5))
       
       
@@ -578,4 +786,37 @@ addClusterAll <- function(sce){
   S4Vectors::metadata(sce)$cluster_codes <- data.frame(all = as.factor("all"))
   return(sce)
 }
+
+
+dropClusters <- function(sce, clusters_to_drop){
+  mapping <- cluster_codes(sce)[, input$clusterCode]
+  names(mapping) <- cluster_codes(sce)[, 1]
+  cell_idx <- data.table(som_mapping = colData(sce)$cluster_id)
+  cell_idx[, meta_mapping := mapping[som_mapping]]
+  cells_to_keep <- which(!cell_idx$meta_mapping %in% clusters_to_drop)
+  # subset sce
+  sce <- sce[, cells_to_keep]
+  # update metadata
+  dt <- data.table(ei(sce))
+  dt[, n_cells := table(colData(sce)$sample_id)[sample_id]]
+  metadata(sce)$experiment_info <- data.frame(dt)
+  # update cluster codes and SOMs
+  dropped_idx <- which(mapping %in% clusters_to_drop)
+  dropped_soms <- names(mapping)[dropped_idx]
+  metadata(sce)$cluster_codes <- metadata(sce)$cluster_codes %>% filter(!get(input$clusterCode) %in% clusters_to_drop)
+  metadata(sce)$SOM$map$nNodes <- nrow(metadata(sce)$cluster_codes)
+  metadata(sce)$SOM$map$pctgs <- metadata(sce)$SOM$map$pctgs[-dropped_idx]
+  if(is.null(metadata(sce)$SOM$MST$old_l)){
+    metadata(sce)$SOM$MST$old_l <- metadata(sce)$SOM$MST$l
+  }
+  metadata(sce)$SOM$MST$l <- metadata(sce)$SOM$MST$l[-dropped_idx, ]
+  metadata(sce)$SOM$MST$g <- delete_edges(metadata(sce)$SOM$MST$g, unlist(incident_edges( metadata(sce)$SOM$MST$g, dropped_soms)))
+  metadata(sce)$SOM$map$medianValues <- metadata(sce)$SOM$map$medianValues[-dropped_idx, ]
+  # drop levels
+  metadata(sce)$experiment_info <- droplevels(metadata(sce)$experiment_info)
+  colData(sce) <- droplevels(colData(sce))
+  metadata(sce)$cluster_codes <- droplevels(metadata(sce)$cluster_codes)
+  return(sce)
+}
+
 

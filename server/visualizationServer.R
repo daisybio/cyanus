@@ -153,13 +153,18 @@ observeEvent(input$runDRButton, {
     shinyjs::show("visPlotBox")
     if (length(reactiveVals$availableDRs) == 1) {
       output$visPlot <- renderPlot({
+        custom_colors <- reactiveVals$selected_palette
+        if(length(levels(CATALYST::ei(isolate(reactiveVals$sce))[, renameColorColumn(names(colData(isolate(reactiveVals$sce))), T)[[1]]])) > length(reactiveVals$selected_palette)){
+          custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(length(levels(CATALYST::ei(isolate(reactiveVals$sce))[, renameColorColumn(names(colData(isolate(reactiveVals$sce))), T)[[1]]])))
+        }
         ggplotObject <- makeDR(sce = isolate(reactiveVals$sce), 
                                dr_chosen = method, 
-                               color_chosen = renameColorColumn(names(colData(reactiveVals$sce)), T)[[1]], 
+                               color_chosen = renameColorColumn(names(colData(isolate(reactiveVals$sce))), T)[[1]], 
                                facet_chosen = "", 
                                assay_chosen = assay, 
                                scale =T, 
-                               dims = c(1, 2))
+                               dims = c(1, 2))+
+          scale_color_manual(values = custom_colors)
         return(ggplotObject)
       })
     }
@@ -211,8 +216,20 @@ observeEvent(input$startDimRed, {
     waiter_show(id = "app",html = tagList(spinner$logo, 
                                           HTML("<br>Visualizing Dimensionality Reduction...")), 
                 color=spinner$color)
+    custom_colors <- reactiveVals$selected_palette
+    if (!color %in% names(colData(sceObj))) {
+      CATALYST:::.check_k(sceObj, color)
+      kids <- cluster_ids(sceObj, color)
+      nk <- nlevels(kids)
+    }else{
+      nk <- length(levels(CATALYST::ei(sceObj)[, color]))
+    }
+    if(nk > length(reactiveVals$selected_palette)){
+      custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(nk)
+    }
     ggplotObject <-
-      makeDR(sceObj, method, color, facet, assay, scale, c(dim1, dim2))
+      makeDR(sceObj, method, color, facet, assay, scale, c(dim1, dim2))+
+      scale_color_manual(values = custom_colors)
     waiter_hide(id="app")
     reactiveVals$lastPlot <- ggplotObject
     return(ggplotObject)

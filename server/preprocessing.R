@@ -119,34 +119,37 @@ output$patientsBox <- renderUI({
 output$reorderingTabs <- renderUI({
   library(sortable)
   conditions <- names(metadata(reactiveVals$sce)$experiment_info)
-  conditions <- conditions[!conditions %in% c("sample_id", "patient_id", "n_cells")]
-  lapply(conditions, function(condition){
-    print(condition)
-    rank_list(
-      text = paste0("Reorder the condition: ",condition),
-      labels = levels(metadata(reactiveVals$sce)$experiment_info[[condition]]),
-      input_id = condition
-    )
-  })
+  conditions <- conditions[!conditions %in% c("n_cells")]
+  div(
+    column(width=8, 
+           selectInput("selected_reordering_value", "Which column do you want to reorder?",
+                       choices = conditions),
+           uiOutput("metadata_ranklist")
+    ),
+    column(width=4, 
+           plotOutput("showColorPalette",  width = "100%", height = "500px"))
+  )
   
 })
 
+output$metadata_ranklist <- renderUI({
+  rank_list(
+    text = paste0("Reorder the condition: ",input$selected_reordering_value),
+    labels = levels(metadata(reactiveVals$sce)$experiment_info[[input$selected_reordering_value]]),
+    input_id = "reordered_condition"
+  )
+})
 # if conditions are ordered
 observeEvent(input$reorderButton, {
   waiter_show(id = "app",html = tagList(spinner$logo, 
                                         HTML("<br>Reordering Data...<br>Please be patient")), 
               color=spinner$color)
+  ordered <- input$reordered_condition
+  reactiveVals$sce[[input$selected_reordering_value]] <- evap(expression(reactiveVals$sce[[condition]] <- factor(reactiveVals$sce[[condition]], levels=levels))[[1]],
+                                        params = list(levels = ordered, condition = input$selected_reordering_value))
+  metadata(reactiveVals$sce)$experiment_info[[input$selected_reordering_value]] <- evap(expression(metadata(reactiveVals$sce)$experiment_info[[condition]] <- factor(metadata(reactiveVals$sce)$experiment_info[[condition]], levels=levels))[[1]],
+                                                                  params = list(levels = ordered, condition = input$selected_reordering_value))
   
-  # reorder levels 
-  conditions <- names(metadata(reactiveVals$sce)$experiment_info)
-  conditions <- conditions[!conditions %in% c("sample_id", "patient_id", "n_cells")]
-  lapply(conditions, function(condition){
-    ordered <- input[[condition]]
-    reactiveVals$sce[[condition]] <- evap(expression(reactiveVals$sce[[condition]] <- factor(reactiveVals$sce[[condition]], levels=levels))[[1]],
-                                          params = list(levels = ordered, condition = condition))
-    metadata(reactiveVals$sce)$experiment_info[[condition]] <- evap(expression(metadata(reactiveVals$sce)$experiment_info[[condition]] <- factor(metadata(reactiveVals$sce)$experiment_info[[condition]], levels=levels))[[1]],
-                                                                    params = list(levels = ordered))
-  })
   plotPreprocessing(reactiveVals$sce)
   waiter_hide(id = "app")
 
@@ -306,12 +309,17 @@ plotPreprocessing <- function(sce) {
   
   # render counts plot
   output$countsPlot <- renderPlot({
-    reactiveVals$countsPlot <-  CATALYST::plotCounts(
+    custom_colors <- reactiveVals$selected_palette
+    if(length(levels(CATALYST::ei(sce)[, input$countsColorBy])) > length(reactiveVals$selected_palette)){
+      custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(length(levels(CATALYST::ei(sce)[, input$countsColorBy])))
+    }
+    reactiveVals$countsPlot <-  plotCountsCustom(
       sce,
       group_by = input$countsGroupBy,
       color_by = input$countsColorBy,
       prop = as.logical(input$countsProp)
-    )
+    )+ 
+      scale_fill_manual(values = custom_colors)
     reactiveVals$countsPlot
   })
   
@@ -384,13 +392,18 @@ plotPreprocessing <- function(sce) {
       feature <- NULL
     }
     if(nrow(ei(sce)) > 2){
-    reactiveVals$mdsPlot <- CATALYST::pbMDS(
-      sce,
-      label_by = input$mdsLabelBy,
-      color_by = input$mdsColorBy,
-      features = feature,
-      assay = input$mdsAssay,
-    )
+      custom_colors <- reactiveVals$selected_palette
+      if(length(levels(CATALYST::ei(sce)[, input$mdsColorBy])) > length(reactiveVals$selected_palette)){
+        custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(length(levels(CATALYST::ei(sce)[, input$mdsColorBy])))
+      }
+      reactiveVals$mdsPlot <- CATALYST::pbMDS(
+        sce,
+        label_by = input$mdsLabelBy,
+        color_by = input$mdsColorBy,
+        features = feature,
+        assay = input$mdsAssay,
+      )+
+        scale_color_manual(values = custom_colors)
     }else{
       reactiveVals$mdsPlot <- ggplot() + theme_void()
       showNotification('MDS is only possible for >2 samples', type = 'warning')
@@ -464,12 +477,17 @@ plotPreprocessing <- function(sce) {
     if (feature == "all") {
       feature <- NULL
     }
+    custom_colors <- reactiveVals$selected_palette
+    if(length(levels(CATALYST::ei(sce)[, input$nrsColorBy])) > length(reactiveVals$selected_palette)){
+      custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(length(levels(CATALYST::ei(sce)[, input$nrsColorBy])))
+    }
     reactiveVals$nrsPlot <- CATALYST::plotNRS(
       sce,
       color_by = input$nrsColorBy,
       features = feature,
       assay = input$nrsAssay
-    )
+    )+
+      scale_color_manual(values = custom_colors)
     reactiveVals$nrsPlot
   })
   
@@ -539,12 +557,17 @@ plotPreprocessing <- function(sce) {
     if (feature == "all") {
       feature <- NULL
     }
+    custom_colors <- reactiveVals$selected_palette
+    if(length(levels(CATALYST::ei(sce)[, input$exprsColorBy])) > length(reactiveVals$selected_palette)){
+      custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(length(levels(CATALYST::ei(sce)[, input$exprsColorBy])))
+    }
     reactiveVals$exprsPlot <- CATALYST::plotExprs(
       sce,
       color_by = input$exprsColorBy,
       features = feature,
       assay = input$exprsAssay
-    )
+    )+
+      scale_color_manual(values = custom_colors)
     reactiveVals$exprsPlot
   })
   

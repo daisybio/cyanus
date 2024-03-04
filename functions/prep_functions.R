@@ -81,7 +81,7 @@ makePatientSelection <- function(sce, deselected_patients){
 
 
 # function anno_features from CATALYST with different color palette
-.anno_factors <- function (x, ids, which, type = c("row", "column")) 
+.anno_factors <- function (x, ids, which, type = c("row", "column"), pal=c("#ff6db6", "#004949", "#db6d00",  "#B2DF8A", "#FDB462", "#490092", "#009999", "#8f4e00", "#ffdf4d", "#171723","#b66dff")) 
 {
   library(magrittr)
   type <- match.arg(type)
@@ -101,8 +101,6 @@ makePatientSelection <- function(sce, deselected_patients){
   df <- df[m, keep, drop = FALSE]
   lvls <- lapply(as.list(df), levels)
   nlvls <- vapply(lvls, length, numeric(1))
-  #pal <- brewer.pal(8, "Set2")
-  pal <-  c("#999999","#009E73","#E69F00", "#56B4E9", "#F0E442","#D55E00","#0072B2", "#CC79A7")
   names(is) <- is <- colnames(df)
   cols <- lapply(is, function(i) {
     if (nlvls[i] > length(pal)) 
@@ -115,13 +113,49 @@ makePatientSelection <- function(sce, deselected_patients){
   ComplexHeatmap::HeatmapAnnotation(which = type, df = df, col = cols, gp = grid::gpar(col = "white"))
 }
 
+plotCountsCustom <- function (x, group_by = "condition", color_by = group_by, prop = FALSE) 
+{
+  CATALYST:::.check_sce(x)
+  stopifnot(!is.null(group_by))
+  CATALYST:::.check_cd_factor(x, color_by)
+  CATALYST:::.check_cd_factor(x, group_by)
+  stopifnot(is.logical(prop), length(prop) == 1)
+  df <- data.frame(x[[group_by]], row.names = NULL, check.names = FALSE)
+  if (!is.null(color_by) && color_by != group_by) {
+    df[[color_by]] <- x[[color_by]]
+    y <- table(df)
+    if (prop) 
+      y <- y/rowSums(y)
+    df <- melt(y, varnames = c(group_by, color_by))
+    df[, color_by] <- factor(df[, color_by], levels = levels(x[[color_by]]))
+  }
+  else {
+    y <- table(df)
+    if (prop) 
+      y <- y/sum(y)
+    df <- data.frame(value = c(y), row.names = NULL)
+    df[[group_by]] <- rownames(y)
+  }
+  df[, group_by] <- factor(df[, group_by], levels = levels(x[[group_by]]))
+  ggplot(df[df$value != 0, ], aes_string(x = group_by, y = "value", 
+                                         fill = color_by)) + geom_bar(stat = "identity", col = ifelse(prop, 
+                                                                                                      "white", NA), position = ifelse(prop, "stack", "dodge2")) + 
+    scale_y_continuous(expand = c(0, 0)) + ylab(ifelse(prop, 
+                                                       "frequency", "n_cells")) + coord_cartesian(clip = "off") + 
+    theme_minimal() + theme(panel.grid.minor = element_blank(), 
+                            panel.grid.major.x = element_blank(), panel.grid.major.y = element_line(color = "grey", 
+                                                                                                    size = 0.2), axis.text = element_text(color = "black"), 
+                            axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+}
+
+
 plotExprHeatmapCustom <- function (x, features = NULL, by = c("sample_id", "cluster_id", 
                                                               "both"), k = "meta20", m = NULL, assay = "exprs", fun = c("median", 
                                                                                                                         "mean", "sum"), scale = c("first", "last", "never"), q = 0.01, 
                                    row_anno = TRUE, col_anno = TRUE, row_clust = TRUE, col_clust = TRUE, 
                                    row_dend = TRUE, col_dend = TRUE, bars = FALSE, perc = FALSE, 
                                    bin_anno = FALSE, hm_pal = rev(RColorBrewer::brewer.pal(11, "RdYlBu")), 
-                                   k_pal = CATALYST:::.cluster_cols, m_pal = k_pal, distance = c("euclidean", 
+                                   k_pal = c("#ff6db6", "#004949", "#db6d00",  "#B2DF8A", "#FDB462", "#490092", "#009999", "#8f4e00", "#ffdf4d", "#171723","#b66dff"), m_pal = k_pal, distance = c("euclidean", 
                                                                                                  "maximum", "manhattan", "canberra", "binary", "minkowski"), 
                                    linkage = c("average", "ward.D", "single", "complete", "mcquitty", 
                                                "median", "centroid", "ward.D2")) 
@@ -174,6 +208,8 @@ plotExprHeatmapCustom <- function (x, features = NULL, by = c("sample_id", "clus
   lgd_aes$title_gp <- grid::gpar(fontsize = 10, fontface = "bold", 
                                  lineheight = 0.8)
   if (!isFALSE(row_anno)) {
+    k_pal <- grDevices::colorRampPalette(colors = c("#ff6db6", "#004949", "#db6d00",  "#B2DF8A", "#FDB462", "#490092", "#009999", "#8f4e00", "#ffdf4d", "#171723","#b66dff"))(length(levels(x$sample_id)))
+    m_pal <- k_pal
     left_anno <- switch(by[1], sample_id = .anno_factors(x, 
                                                          levels(x$sample_id), row_anno, "row"), CATALYST:::.anno_clusters(x, 
                                                                                                                           k, m, k_pal, m_pal))
@@ -265,7 +301,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
   y_cols <- y_cols[y_cols %in% names(y)]
   if (is.null(k)) {
     kids <- levels(y$cluster_id)
-    same <- vapply(CATALYST::cluster_codes(x), function(u) identical(levels(u), 
+    same <- vapply(CATALYST::cluster_codes(x), function(u) all(levels(u) %in% 
                                                            kids), logical(1))
     if (!any(same)) 
       stop("Couldn't match any clustering", " in input data 'x' with results in 'y'.")

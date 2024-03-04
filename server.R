@@ -6,7 +6,7 @@ server <- function(input, output, session) {
   
   reactiveVals$call_list <- list() # saves all calls in a list
   reactiveVals$preprocessingShowed <- FALSE
-
+  reactiveVals$selected_palette <- c("#ff6db6", "#004949", "#db6d00",  "#B2DF8A", "#FDB462", "#490092", "#009999", "#8f4e00", "#ffdf4d", "#171723","#b66dff")
   spinner <- list(logo = list(a(icon('envelope'), " Contact", href = "https://github.com/biomedbigdata/cyanus/issues", target = "_blank", style='color: black'), 
                               tags$br(), tags$br(), 
                               spin_loaders(id = 5, color = "black")), color="rgb(146, 180, 242, .5)")

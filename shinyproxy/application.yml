@@ -1,7 +1,7 @@
 proxy:
   port: 8080
-  landing-page: /app/cyanus
-  favicon-path: favicon.ico
+  landing-page: /app/cyanus-dev
+  favicon-path: ./favicon.png
   authentication: none
   admin-groups: admins
   container-log-path: ./container-logs
@@ -19,12 +19,12 @@ proxy:
   docker:
     internal-networking: true
   specs:
-    - id: cyanus
-      display-name: CYANUS
-      description: CYtometry ANalysis Using Shiny
+    - id: cyanus-dev
+      display-name: CYANUS 2.0
+      description: CYtometry ANalysis Using Shiny 2.0
       container-cmd: ["R", "-e", "shiny::runApp(host='0.0.0.0', port=3838)"]
-      container-network: cyanus_sp-net
-      container-image: quirinmanz/cyanus:latest
+      container-network: cyanus-dev_sp-net
+      container-image: judithbernett/cyanus:2.0
       
 
 logging:
