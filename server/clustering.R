@@ -6,6 +6,7 @@ resetClustering <- function(){
   reactiveVals$starCluster <- NULL
   reactiveVals$abundanceCluster <- NULL
   reactiveVals$exprsCluster <- NULL
+  reactiveVals$medianExprsCluster <- NULL
   reactiveVals$heatmapCluster <- NULL
 }
 
@@ -498,6 +499,51 @@ output$clusteringOutput <- renderUI({
           ))
         ),
         tabPanel(
+          "Marker Expression",
+          div(
+            dropdownButton(
+              tags$h3("Plot Options"),
+              selectizeInput("assayTypeVisIn",
+                             "Expression Type",
+                             choices = densityAssayChoices),
+              selectInput(
+                "densityUseFeatureChoicesIn",
+                label = "Features",
+                choices =
+                  c(
+                    "all",
+                    levels(
+                      droplevels(
+                        SummarizedExperiment::rowData(reactiveVals$sce)$marker_class
+                      )
+                    )
+                  ),
+                selected = ifelse("type" %in% c(
+                  "all",
+                  levels(
+                    droplevels(
+                      SummarizedExperiment::rowData(reactiveVals$sce)$marker_class
+                    )
+                  )
+                ), "type", "state")
+              ),
+              circle = TRUE,
+              status = "info",
+              icon = icon("gear"),
+              width = "400px",
+              tooltip = tooltipOptions(title = "Click to see plot options")
+            ),
+            style = "position: relative; z-index: 99; float: left;"
+          ),
+          div(HTML("Heatmap of median marker expressions aggregated by cluster"), style = "text-align: center;vertical-align: middle;"),
+          div(uiOutput("clusterMedianDownload"),
+              style = "position: relative; z-index: 99; float: right;"),
+          fluidRow(withSpinner(
+            plotOutput("clusterMedianExprsPlot",
+                       height = "800px")
+          ))
+        ),
+        tabPanel(
           "Marker Densities",
           div(
             dropdownButton(
@@ -645,6 +691,12 @@ output$clusterAbundanceDownload <- renderUI({
   downloadButton("downloadPlotAbundance", "Download Plot")
 })
 
+output$clusterMedianDownload <- renderUI({
+  req(reactiveVals$medianExprsCluster)
+  
+  downloadButton("downloadPlotMedian", "Download Plot")
+})
+
 output$clusterDensitiyDownload <- renderUI({
   req(reactiveVals$exprsCluster)
   
@@ -700,6 +752,22 @@ output$clusterHeatmapPlot <- renderPlot({
     plotFreqHeatmapCustom(reactiveVals$sce,
                           input$clusterCode)
   reactiveVals$heatmapCluster
+})
+
+output$clusterMedianExprsPlot <- renderPlot({
+  req(nlevels(cluster_ids(reactiveVals$sce, input$clusterCode)) > 1)
+  features_tmp <- input$densityUseFeatureChoicesIn
+  if (features_tmp == "all")
+    features_tmp <- NULL
+  reactiveVals$medianExprsCluster <-
+    plotExprHeatmapCustom(
+      reactiveVals$sce,
+      features = features_tmp,
+      by = 'cluster_id',
+      k = input$clusterCode,
+      assay = input$assayTypeVisIn
+    )
+  reactiveVals$medianExprsCluster
 })
 
 output$clusterExprsPlot <- renderPlot({
@@ -762,6 +830,19 @@ output$downloadPlotAbundance <- downloadHandler(
       height = 6
     )
     waiter_hide(id= "app")
+  }
+)
+
+output$downloadPlotMedian <- downloadHandler(
+  filename = "Median_Cluster_Expression.pdf",
+  content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    pdf(file, width = 12, height = 8)
+    draw(reactiveVals$medianExprsCluster)
+    dev.off()
+    waiter_hide(id = "app")
   }
 )
 
