@@ -647,6 +647,12 @@ output$clusteringOutput <- renderUI({
                   )
                 ), "type", "state")
               ),
+              selectizeInput(
+                "medianClusterExpressionScale",
+                "Scale:",
+                c("never", "first", "last"),
+                multiple = F
+              ),
               circle = TRUE,
               status = "info",
               icon = icon("gear"),
@@ -903,7 +909,8 @@ output$clusterMedianExprsPlot <- renderPlot({
       features = features_tmp,
       by = 'cluster_id',
       k = input$clusterCode,
-      assay = input$assayTypeVisIn
+      assay = input$assayTypeVisIn,
+      scale = input$medianClusterExpressionScale
     )
   reactiveVals$medianExprsCluster
 })
