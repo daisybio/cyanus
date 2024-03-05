@@ -8,6 +8,7 @@ resetClustering <- function(){
   reactiveVals$exprsCluster <- NULL
   reactiveVals$medianExprsCluster <- NULL
   reactiveVals$heatmapCluster <- NULL
+  reactiveVals$ecdf <- NULL
 }
 
 
@@ -380,6 +381,8 @@ output$metaClusteringAnalysis <- renderUI({
             ),
             style = "text-align: center; vertical-align: middle;"
           ),
+          div(uiOutput("ecfdDownload"),
+              style = "position: relative; z-index: 99; float: right;"),
           fluidRow(withSpinner(
             plotOutput('ecdf',
                        height = "800px")
@@ -437,7 +440,8 @@ output$delta_area <- renderPlotly({
 output$ecdf <- renderPlot({
   req(reactiveVals$sce$cluster_id, cluster_codes(reactiveVals$sce), metadata(reactiveVals$sce)$clusterRun)
   
-  plot_ecdf(reactiveVals$sce, interactive = FALSE, pal = reactiveVals$selected_palette)
+  reactiveVals$ecdf <- plot_ecdf(reactiveVals$sce, interactive = FALSE, pal = reactiveVals$selected_palette)
+  reactiveVals$ecdf
 })
 
 
@@ -831,8 +835,14 @@ output$clusterDensitiyDownload <- renderUI({
 
 output$clusterHeatmapDownload <- renderUI({
   req(reactiveVals$heatmapCluster)
-  library(ComplexHeatmap)
+  
   downloadButton("downloadPlotFrequency", "Download Plot")
+})
+
+output$ecfdDownload <- renderUI({
+  req(reactiveVals$ecdf)
+  
+  downloadButton("downloadECDF", "Download Plot")
 })
 
 output$clusterStarPlot <- renderPlot({
@@ -988,7 +998,7 @@ output$downloadPlotMedian <- downloadHandler(
                                           HTML("<br>Downloading...")), 
                 color=spinner$color)
     pdf(file, width = 12, height = 8)
-    draw(reactiveVals$medianExprsCluster)
+    ComplexHeatmap::draw(reactiveVals$medianExprsCluster)
     dev.off()
     waiter_hide(id = "app")
   }
@@ -1019,8 +1029,27 @@ output$downloadPlotFrequency <- downloadHandler(
                                           HTML("<br>Downloading...")), 
                 color=spinner$color)
     pdf(file, width = 12, height = 8)
-    draw(reactiveVals$heatmapCluster)
+    ComplexHeatmap::draw(reactiveVals$heatmapCluster)
     dev.off()
     waiter_hide(id = "app")
   }
 )
+
+output$downloadECDF <- downloadHandler(
+  filename = function() {
+    paste0("ECDF", ".pdf")
+  },
+  content = function(file) {
+    waiter_show(id = "app",html = tagList(spinner$logo, 
+                                          HTML("<br>Downloading...")), 
+                color=spinner$color)
+    ggsave(
+      file,
+      plot = reactiveVals$ecdf,
+      width = 12,
+      height = 6
+    )
+    waiter_hide(id= "app")
+  }
+)
+

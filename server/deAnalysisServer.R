@@ -1548,7 +1548,7 @@ observeEvent(input$visExpButton,{
                                             HTML("<br>Downloading...")), 
                   color=spinner$color)
       pdf(file, width = 12, height = 8)
-      draw(reactiveVals$diffHeatmapPlot)
+      ComplexHeatmap::draw(reactiveVals$diffHeatmapPlot)
       dev.off()
       waiter_hide(id="app")
     }

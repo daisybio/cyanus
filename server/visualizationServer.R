@@ -152,6 +152,7 @@ observeEvent(input$runDRButton, {
   if(!reactiveVals$stopVis){
     shinyjs::show("visPlotBox")
     if (length(reactiveVals$availableDRs) == 1) {
+      reactiveVals$lastMethod <- method
       output$visPlot <- renderPlot({
         custom_colors <- reactiveVals$selected_palette
         if(length(levels(CATALYST::ei(isolate(reactiveVals$sce))[, renameColorColumn(names(colData(isolate(reactiveVals$sce))), T)[[1]]])) > length(reactiveVals$selected_palette)){
