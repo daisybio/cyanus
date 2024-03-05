@@ -644,7 +644,8 @@ plotPreprocessing <- function(sce) {
       sce,
       scale = input$exprsHeatmapScale,
       features = feature,
-      assay = input$exprsHeatmapAssay
+      assay = input$exprsHeatmapAssay,
+      k_pal = reactiveVals$selected_palette
     )
     reactiveVals$exprsPlotHeatmap
   })

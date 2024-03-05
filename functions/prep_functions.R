@@ -208,16 +208,22 @@ plotExprHeatmapCustom <- function (x, features = NULL, by = c("sample_id", "clus
   lgd_aes$title_gp <- grid::gpar(fontsize = 10, fontface = "bold", 
                                  lineheight = 0.8)
   if (!isFALSE(row_anno)) {
-    k_pal <- grDevices::colorRampPalette(colors = c("#ff6db6", "#004949", "#db6d00",  "#B2DF8A", "#FDB462", "#490092", "#009999", "#8f4e00", "#ffdf4d", "#171723","#b66dff"))(length(levels(x$sample_id)))
+    if(length(k_pal) < length(levels(x$sample_id))){
+      k_pal <- grDevices::colorRampPalette(colors = k_pal)(length(levels(x$sample_id)))
+    }
     m_pal <- k_pal
-    left_anno <- switch(by[1], sample_id = .anno_factors(x, 
-                                                         levels(x$sample_id), row_anno, "row"), CATALYST:::.anno_clusters(x, 
-                                                                                                                          k, m, k_pal, m_pal))
+    left_anno <- switch(by[1], sample_id = .anno_factors(x=x,
+                                                         ids=levels(x$sample_id), 
+                                                         which=row_anno, 
+                                                         type="row",
+                                                         pal=k_pal), 
+                        CATALYST:::.anno_clusters(x, k, m, k_pal, m_pal)
+                        )
   }
   else left_anno <- NULL
   if (!isFALSE(col_anno) && length(by) == 2) {
-    top_anno <- .anno_factors(x, levels(x$sample_id), col_anno, 
-                              "colum")
+    top_anno <- .anno_factors(x=x, ids=levels(x$sample_id), which=col_anno, 
+                              type="column", pal=k_pal)
   }
   else top_anno <- NULL
   if (bars) {
@@ -346,8 +352,8 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
     top_n <- nrow(y)
   top <- y[seq_len(top_n), ]
   if (!isFALSE(col_anno)) {
-    top_anno <- .anno_factors(x, levels(x$sample_id), col_anno, 
-                              "column")
+    top_anno <- .anno_factors(x=x, ids=levels(x$sample_id), which=col_anno, 
+                              type="column")
   }
   else top_anno <- NULL
   if (is.null(hm_pal)) 

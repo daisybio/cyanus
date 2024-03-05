@@ -910,7 +910,8 @@ output$clusterMedianExprsPlot <- renderPlot({
       by = 'cluster_id',
       k = input$clusterCode,
       assay = input$assayTypeVisIn,
-      scale = input$medianClusterExpressionScale
+      scale = input$medianClusterExpressionScale,
+      k_pal = reactiveVals$selected_palette
     )
   reactiveVals$medianExprsCluster
 })
