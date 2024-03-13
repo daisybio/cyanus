@@ -31,7 +31,6 @@ methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "CyEMD" = 
 call_DE <- function() {
   
   # read/initialize input   ------------------------------------------
-
   method <- isolate(input$chosenDAMethod)
   methodType <- isolate(reactiveVals$methodType)
   sce <- isolate(reactiveVals$sce)
@@ -80,7 +79,7 @@ call_DE <- function() {
   } else{
     subselection <- isolate(input$deSubselection)
   }
-  if (subselection != "No") {
+  if (length(subselection) != 1 | (length(subselection) == 1 && subselection != "No")) {
     if (is.null(reactiveVals$exclusionList)) {
       reactiveVals$exclusionList <- list()
     }
@@ -1515,7 +1514,6 @@ observeEvent(input$visExpButton,{
     }
     out <- runs[[visMethod]]
     eff_r <- isolate(reactiveVals$eff_r[[visMethod]])
-
     reactiveVals$diffHeatmapPlot <- plotDiffHeatmapCustom(
       x=x,
       y=out, 

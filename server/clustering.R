@@ -45,12 +45,10 @@ observeEvent(input$startClustering, {
                                xdim = input$xdim, ydim = input$ydim, k = input$k))
     },
     
-    error = function(e) {
+    message = function(m) {
       shinyjs::html(id = "clusteringProgress",
-                    html = sprintf("<br>%s", HTML(e$message)),
+                    html = sprintf("<br>%s", HTML(m$message)),
                     add = TRUE)
-      
-      stop(e)
     })
   },
   error = function(e){

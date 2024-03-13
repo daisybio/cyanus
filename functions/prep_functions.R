@@ -307,8 +307,7 @@ plotDiffHeatmapCustom <- function (x, y, k = NULL, top_n = 20, fdr = 0.05, lfc =
   y_cols <- y_cols[y_cols %in% names(y)]
   if (is.null(k)) {
     kids <- levels(y$cluster_id)
-    same <- vapply(CATALYST::cluster_codes(x), function(u) all(levels(u) %in% 
-                                                           kids), logical(1))
+    same <- vapply(CATALYST::cluster_codes(x), function(u) identical(levels(u), kids), logical(1))
     if (!any(same)) 
       stop("Couldn't match any clustering", " in input data 'x' with results in 'y'.")
     k <- names(CATALYST::cluster_codes(x))[same][1]
