@@ -23,6 +23,7 @@ vennBody <- function(){
       ),
       uiOutput("DSVenn"),
       uiOutput("conditionSelectionComp"),
+      uiOutput("conditionSelectionPairComp"),
       uiOutput("groupSelectionComp"),
       uiOutput("additionalTermsSelectionComp"),
       uiOutput("emdInputComp"),

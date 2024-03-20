@@ -29,13 +29,13 @@ methodsDS <- c("limma" = "diffcyt-DS-limma","LMM" = "diffcyt-DS-LMM", "CyEMD" = 
 # checks which methods is selected and executes the runDS function accordingly
  
 call_DE <- function() {
-  
   # read/initialize input   ------------------------------------------
   method <- isolate(input$chosenDAMethod)
   methodType <- isolate(reactiveVals$methodType)
   sce <- isolate(reactiveVals$sce)
   ei <- ei(sce)
   condition <- isolate(input$conditionIn)
+  conditionInPair <- isolate(input$conditionInPair)
   groupCol <- isolate(input$groupCol)
   if (groupCol == "") groupCol <- NULL
   
@@ -72,6 +72,42 @@ call_DE <- function() {
       return(NULL)
     }
   }
+
+  # subselect to conditionInPair
+  if(length(levels(ei[[condition]])) > 2){
+    if (is.null(reactiveVals$exclusionList)) {
+      reactiveVals$exclusionList <- list()
+    }
+    showNotification(
+      ui =
+        HTML(paste0("<div id='condIn'><b>Subselecting ", conditionInPair, "...</b><div>")),
+      duration = NULL,
+      id = "conditionInNote",
+      type = "warning"
+    )
+    conditionsToSelect <- strsplit(conditionInPair, " vs. ")[[1]]
+    withCallingHandlers({
+      returned <-
+        doConditionSubselection(
+          sce,
+          conditionsToSelect,
+          isolate(reactiveVals$subselectionMap),
+          condition,
+          reactiveVals$exclusionList,
+          method
+        )
+    },
+    message = function(m) {
+      shinyjs::html(id = "condIn",
+                    html = sprintf("<br>%s", HTML(m$message)),
+                    add = TRUE)
+    })
+    removeNotification("condIn")
+    if(is.null(returned)) return(NULL)
+    sce <- returned[["sce"]]
+    reactiveVals$exclusionList <- returned[["exclusionList"]]
+    remove(returned)
+  }
   
   #check if subselection is valid, set subselection:
   if (is.null(input$deSubselection)) {
@@ -88,7 +124,7 @@ call_DE <- function() {
         HTML("<div id='subselection'><b>Subselecting...</b><div>"),
       duration = NULL,
       id = "subselectionNote",
-      type = "error"
+      type = "warning"
     )
     withCallingHandlers({
       returned <-
@@ -112,7 +148,6 @@ call_DE <- function() {
     reactiveVals$exclusionList <- returned[["exclusionList"]]
     remove(returned)
   }
-  
   # error handling, make parameters ------------------------------------------
   
   parameters <- list()
@@ -223,6 +258,7 @@ call_DE <- function() {
     analysis_type = isolate(input$da_ds),
     method = method,
     condition = condition,
+    condition_analysed = conditionInPair,
     grouping_columns = toString(groupCol),
     additional_fixed_effects = toString(addTerms),
     clustering = toString(clustering_to_use),
@@ -337,6 +373,7 @@ output$selectionBoxDE <- renderUI({
     ),
     uiOutput("deMethodSelection"),
     uiOutput("conditionSelection"),
+    uiOutput("conditionSelectionPair"),
     uiOutput("groupSelection"),
     uiOutput("additionalTermsSelection"),
     uiOutput("emdInput"),
@@ -394,12 +431,8 @@ output$deMethodSelection <- renderUI({
 
 output$conditionSelection <- renderUI({
   sceEI <- CATALYST::ei(reactiveVals$sce)
-  condChoices <- which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2))
-  if (length(condChoices) == 0) {
-    showNotification("No condition with exactly two levels found. Unfortunately we currently only support comparisons between two conditions. You might want to subset your data.", duration = NULL, type = "error")
-    return(NULL)
-  }
-  condChoices <- names(condChoices)
+  condChoices <- which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) >= 2))
+  condChoices <- names(condChoices)[!names(condChoices) %in% c("sample_id", "patient_id", "n_cells")]
   list(div(
     selectizeInput(
       "conditionIn",
@@ -417,12 +450,45 @@ output$conditionSelection <- renderUI({
     )))
 })
 
+
+output$conditionSelectionPair <- renderUI({
+  req(input$conditionIn)
+  chosen_condition <- input$conditionIn
+  lvls <- levels(as.factor(ei(reactiveVals$sce)[[chosen_condition]]))
+  # get all pairwise combinations of the levels of the conditions
+  pairwise <- combn(lvls, 2, simplify = F)
+  # create a list of the pairwise combinations
+  pairwise <- sapply(pairwise, function(x) paste(x, collapse = " vs. "))
+  list(
+    div(
+      selectizeInput(
+        "conditionInPair",
+        choices = pairwise,
+        label = span(
+          "What conditions do you want to analyse against each other?",
+          icon("question-circle"),
+          id = "conditionInPairQ"
+        )
+      ),
+      bsPopover(
+        id = "conditionInPairQ",
+        title = "Condition for DE analysis",
+        content = HTML("If you want to change the order of the comparison, do so in Preprocessing->Column Reordering of Metadata")
+      )
+    )
+  )
+  
+})
+
+
 output$groupSelection <- renderUI({
   all_methods <- c(methodsDA, methodsDS)
-  req(input$conditionIn, input$chosenDAMethod %in% all_methods[all_methods != 'CyEMD'])
+  req(input$conditionIn, input$conditionInPair, input$chosenDAMethod %in% all_methods[all_methods != 'CyEMD'])
+  conditionsToSelect <- strsplit(input$conditionInPair, " vs. ")[[1]]
   sceEI <- data.table::as.data.table(CATALYST::ei(reactiveVals$sce))
   groupCol <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id")]
-  groupCol <- groupCol[sapply(groupCol, function(x) sceEI[, .(e2 = data.table::uniqueN(get(input$conditionIn)) == 2),, by=get(x)][, all(e2)])]
+  groupCol <- groupCol[sapply(groupCol, function(x) sceEI[get(input$conditionIn) %in% conditionsToSelect, 
+                                                          .(e2 = data.table::uniqueN(get(input$conditionIn)) >= 2),, by=get(x)][, all(e2)])]
   names(groupCol) <- groupCol
   groupCol <- c('unpaired samples' = '', groupCol)
   div(
@@ -1492,12 +1558,12 @@ observeEvent(input$visExpButton,{
   shinyjs::show("heatmapPlotDownload")
   
   ### HEATMAP FUNCTIONS
-  
   # Render Heatmap Plot
   output$heatmapDEPlot <- renderPlot({
     subselection <- isolate(reactiveVals$methodsInfo[[visMethod]]$filter)
+    condition <- isolate(reactiveVals$methodsInfo[[visMethod]]$condition)
     sce <- isolate(reactiveVals$sce)
-    if(subselection != "No"){
+    if(subselection != "No" | nlevels(ei(sce)[[condition]]) > 2){
       exclude <- isolate(reactiveVals$exclusionList[[visMethod]])
       for(cat in names(exclude)){
         sub <- exclude[[cat]]

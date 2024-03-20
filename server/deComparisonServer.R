@@ -22,6 +22,7 @@ runMethods <- function(){
   nr_samples <- length(levels(colData(sce)$sample_id))
   
   condition <- isolate(input$conditionInComp)
+  conditionInPair <- isolate(input$conditionInPairComp)
   group <- isolate(input$groupColComp)
   if(group == "") group <- NULL
   addTerms <- isolate(input$addTermsComp)
@@ -45,6 +46,40 @@ runMethods <- function(){
     
   }
   
+  # subselect to conditionInPair
+  if(length(levels(ei[[condition]])) > 2){
+    excluded <- list()
+    showNotification(
+      ui =
+        HTML(paste0("<div id='condInComp'><b>Subselecting ", conditionInPair, "...</b><div>")),
+      duration = NULL,
+      id = "conditionInCompNote",
+      type = "warning"
+    )
+    conditionsToSelect <- strsplit(conditionInPair, " vs. ")[[1]]
+    withCallingHandlers({
+      returned <-
+        doConditionSubselection(
+          sce,
+          conditionsToSelect,
+          isolate(reactiveVals$subselectionMap),
+          condition,
+          excluded,
+          "method"
+        )
+    },
+    message = function(m) {
+      shinyjs::html(id = "condInComp",
+                    html = sprintf("<br>%s", HTML(m$message)),
+                    add = TRUE)
+    })
+    removeNotification("condInComp")
+    if(is.null(returned)) return(NULL)
+    sce <- returned[["sce"]]
+    remove(returned)
+  }
+  
+  
   if(is.null(input$deSubselectionComp)){
     subselection <- "No"
   }else{
@@ -58,7 +93,7 @@ runMethods <- function(){
         HTML("<div id='subselection'><b>Subselecting...</b><div>"),
       duration = NULL,
       id = "subselectionNote",
-      type = "error"
+      type = "warning"
     )
     withCallingHandlers({
       returned <-
@@ -68,7 +103,7 @@ runMethods <- function(){
           isolate(reactiveVals$subselectionMap),
           condition,
           excluded,
-          method 
+          "method" 
         )
     },
     message = function(m) {
@@ -325,12 +360,8 @@ output$DSVenn <- renderUI({
 
 output$conditionSelectionComp <- renderUI({
   sceEI <- CATALYST::ei(reactiveVals$sce)
-  condChoices <- which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) == 2))
-  if (length(condChoices) == 0) {
-    showNotification("No condition with exactly two levels found. Unfortunately we currently only support comparisons between two conditions. You might want to subset your data.", duration = NULL, type = "error")
-    return(NULL)
-  }
-  condChoices <- names(condChoices)
+  condChoices <- which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) >= 2))
+  condChoices <- names(condChoices)[!names(condChoices) %in% c("sample_id", "patient_id", "n_cells")]
   list(div(
     selectizeInput(
       "conditionInComp",
@@ -349,14 +380,46 @@ output$conditionSelectionComp <- renderUI({
 })
 
 
+output$conditionSelectionPairComp <- renderUI({
+  req(input$conditionInComp)
+  chosen_condition <- input$conditionInComp
+  lvls <- levels(as.factor(ei(reactiveVals$sce)[[chosen_condition]]))
+  # get all pairwise combinations of the levels of the conditions
+  pairwise <- combn(lvls, 2, simplify = F)
+  # create a list of the pairwise combinations
+  pairwise <- sapply(pairwise, function(x) paste(x, collapse = " vs. "))
+  list(
+    div(
+      selectizeInput(
+        "conditionInPairComp",
+        choices = pairwise,
+        label = span(
+          "What conditions do you want to analyse against each other?",
+          icon("question-circle"),
+          id = "conditionInPairCompQ"
+        )
+      ),
+      bsPopover(
+        id = "conditionInPairCompQ",
+        title = "Condition for DE analysis",
+        content = HTML("If you want to change the order of the comparison, do so in Preprocessing->Column Reordering of Metadata")
+      )
+    )
+  )
+  
+})
+
+
 output$groupSelectionComp <- renderUI({
   all_methods <- c(methodsDA, methodsDS)
-  req(input$conditionInComp)
+  req(input$conditionInComp, input$conditionInPairComp)
   if (input$da_dsVenn == "Differential Marker Expression")
     any(input$chosenDAMethodComp %in% all_methods[all_methods != 'CyEMD'])
   sceEI <- data.table::as.data.table(CATALYST::ei(reactiveVals$sce))
+  conditionsToSelect <- strsplit(input$conditionInPairComp, " vs. ")[[1]]
   groupCol <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id")]
-  groupCol <- groupCol[sapply(groupCol, function(x) sceEI[, .(e2 = data.table::uniqueN(get(input$conditionInComp)) == 2),, by=get(x)][, all(e2)])]
+  groupCol <- groupCol[sapply(groupCol, function(x) sceEI[get(input$conditionIn) %in% conditionsToSelect, 
+                                                          .(e2 = data.table::uniqueN(get(input$conditionIn)) >= 2),, by=get(x)][, all(e2)])]
   names(groupCol) <- groupCol
   groupCol <- c('unpaired samples' = '', groupCol)
   div(
