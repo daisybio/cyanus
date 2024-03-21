@@ -516,9 +516,13 @@ output$groupSelection <- renderUI({
   )
 })
 output$additionalTermsSelection <- renderUI({
-  req(input$chosenDAMethod, (startsWith(input$chosenDAMethod, 'diffcyt')||startsWith(input$chosenDAMethod, 'CytoGLM')) ) # this means this is a linear model and additional terms are allowed
-  addTerms <- names(ei(reactiveVals$sce))
-  addTerms <- addTerms[!addTerms %in% c("n_cells", "sample_id", input$conditionIn, input$groupCol)]
+  req(input$chosenDAMethod, (startsWith(input$chosenDAMethod, 'diffcyt')||startsWith(input$chosenDAMethod, 'CytoGLM')), input$conditionInPair, input$groupCol) # this means this is a linear model and additional terms are allowed
+  conditionsToSelect <- strsplit(input$conditionInPair, " vs. ")[[1]]
+  sceEI <- data.table::as.data.table(CATALYST::ei(reactiveVals$sce))
+  addTerms <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id", input$conditionIn, input$groupCol)]
+  addTerms <- addTerms[sapply(addTerms, function(x) sceEI[get(input$conditionIn) %in% conditionsToSelect, 
+                                                          .(e2 = data.table::uniqueN(get(input$conditionIn)) >= 2),, by=get(x)][, all(e2)])]
+  names(addTerms) <- addTerms
   div(
     pickerInput(
       "addTerms",
