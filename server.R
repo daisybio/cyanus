@@ -56,7 +56,7 @@ server <- function(input, output, session) {
   output$downloadLog <- renderUI({
     req(reactiveVals$sce)
     req(reactiveVals$call_list)
-    div(downloadButton("downloadLogButton", "Download R Script"), style="height: 50px; display: flex; align-items: center;")
+    div(downloadButton("downloadLogButton", "Download R Script"), style="height: 50px; display: flex; align-items: center; margin-right: 10px")
   })
   
   output$downloadLogButton <- downloadHandler(

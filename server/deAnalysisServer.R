@@ -695,35 +695,44 @@ output$CytoGLM_num_boot <- renderUI({
 })
 
 output$deSubselection <- renderUI({
+  condition <- req(input$conditionIn)
+  
   choices <- colnames(metadata(reactiveVals$sce)$experiment_info)
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
-
-  map <- unlist(sapply(choices, function(x){
-    lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
-    return(rep(x, length(lvls)))
-  }))
-
-  choices <- unlist(sapply(choices, function(x){
-    lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
-    return(lvls)
-  }))
-  names(map) <- choices
-  names(choices) <- paste("only", choices)
-  reactiveVals$subselectionMap <- map
-  div(
-    checkboxGroupInput(
-      inputId = "deSubselection",
-      label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectQ"),
-      choices = c(choices), 
-      inline = T
-    ),
-    bsPopover(
-      id = "subSelectQ",
-      title = "Run differential analysis on a subset of your data",
-      content = "Sometimes it might make sense to compare differential expression/abundance just in a subset of your data, e.g. you have two different treatment groups and want to investigate the effect of an activation agent separately. You can do the subselection right at the beginning (Preprocessing) or here.",
-      placement = "top"
+  
+  # only show subsets not corresponding to condition
+  choices <- choices[choices != condition]
+  if(length(choices) == 0){
+    reactiveVals$subselectionMap <- NULL
+    div()
+  } else {
+    map <- unlist(sapply(choices, function(x){
+      lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
+      return(rep(x, length(lvls)))
+    }))
+    
+    choices <- unlist(sapply(choices, function(x){
+      lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
+      return(lvls)
+    }))
+    names(map) <- choices
+    names(choices) <- paste("only", choices)
+    reactiveVals$subselectionMap <- map
+    div(
+      checkboxGroupInput(
+        inputId = "deSubselection",
+        label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectQ"),
+        choices = c(choices), 
+        inline = T
+      ),
+      bsPopover(
+        id = "subSelectQ",
+        title = "Run differential analysis on a subset of your data",
+        content = "Sometimes it might make sense to compare differential expression/abundance just in a subset of your data, e.g. you have two different treatment groups and want to investigate the effect of an activation agent separately. You can do the subselection right at the beginning (Preprocessing) or here.",
+        placement = "top"
+      )
     )
-  )
+  }
 })
 
 output$downsamplingDE <- renderUI({

@@ -23,7 +23,6 @@ library(CyEMD)
 ###################################################################################################
 
 effectSize <- function(sce, condition, group = NULL, k=NULL, use_assay="exprs", use_mean=FALSE) {
-  
   use_assay <- match.arg(use_assay, SummarizedExperiment::assayNames(sce))
   CATALYST:::.check_cd_factor(sce, condition)
   stopifnot(nlevels(sce[[condition]]) == 2)
@@ -41,7 +40,8 @@ effectSize <- function(sce, condition, group = NULL, k=NULL, use_assay="exprs", 
   } else {
     k <- CATALYST:::.check_k(sce, k)
     c_ids <- CATALYST::cluster_ids(sce, k)
-    return(data.table::rbindlist(sapply(levels(c_ids), function(c_id) calculateEffectSize(dt[c_ids==c_id], use_mean), simplify = FALSE), idcol ='cluster_id'))
+    effect_sizes <- sapply(levels(c_ids), function(c_id) calculateEffectSize(dt[c_ids==c_id], use_mean), simplify = FALSE)
+    return(data.table::rbindlist(effect_sizes, idcol ='cluster_id'))
   }
 }
 
@@ -61,10 +61,23 @@ calculateEffectSize <- function(dt, use_mean=FALSE, hedges.correction = TRUE){
     dt <- dt[, -'group']
   }
   dt_melt <- data.table::melt(dt, id.vars='condition')
-  dt_melt[, comb := paste(variable, condition, sep='::')]
-  comp <- split(dt_melt[, sort(unique(comb))], ceiling(seq_along(dt_melt[, sort(unique(comb))])/2))
-  res$overall <- data.table::as.data.table(rstatix::cohens_d(dt_melt, value ~ comb, comparisons = comp))[, -'.y.']
-  return(data.table::rbindlist(res, idcol = 'overall_group'))
+  if(length(unique(dt_melt$condition)) == 1){
+    # only cells with one condition detected -> effect size can not be calculated
+    res <- data.frame(overall_group = rep("overall", nrow(dt_melt)), 
+                      group1 = paste(dt_melt$variable, dt_melt$condition, sep = "::"), 
+                      group2 = rep(NA, nrow(dt_melt)), 
+                      effsize = rep(NA, nrow(dt_melt)),
+                      n1 = rep(NA, nrow(dt_melt)), 
+                      n2 = rep(NA, nrow(dt_melt)), 
+                      magnitude = rep(NA, nrow(dt_melt)))
+    return(res)
+  } else {
+    dt_melt[, comb := paste(variable, condition, sep='::')]
+    comp <- split(dt_melt[, sort(unique(comb))], ceiling(seq_along(dt_melt[, sort(unique(comb))])/2))
+    res$overall <- data.table::as.data.table(rstatix::cohens_d(dt_melt, value ~ comb, comparisons = comp))[, -'.y.']
+    return(data.table::rbindlist(res, idcol = 'overall_group'))
+  }
+ 
 }
 
 runDA <- function(sce, parameters = NULL,
