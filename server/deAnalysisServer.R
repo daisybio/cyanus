@@ -446,7 +446,7 @@ output$conditionSelection <- renderUI({
     bsPopover(
       id = "conditionInQ",
       title = "Condition for DE analysis",
-      content = HTML("Here, you specify the comparison of interest.<br><b>Currently only conditions with two levels are supported.</b>")
+      content = HTML("Here, you specify the comparison column of interest.")
     )))
 })
 
@@ -473,7 +473,7 @@ output$conditionSelectionPair <- renderUI({
       bsPopover(
         id = "conditionInPairQ",
         title = "Condition for DE analysis",
-        content = HTML("If you want to change the order of the comparison, do so in Preprocessing->Column Reordering of Metadata")
+        content = HTML("<b>You can only compare two conditions.</b></br>If you want to change the order of the comparison, do so in Preprocessing->Column Reordering of Metadata")
       )
     )
   )
