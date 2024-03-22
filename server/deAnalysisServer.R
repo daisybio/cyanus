@@ -656,40 +656,34 @@ output$emdInput <- renderUI({
 output$emdNpermInput <- renderUI({
   req(input$conditionIn, input$conditionInPair, input$deCluster, input$emd_Replacement_Yes_No)
   sce <- isolate(reactiveVals$sce)
+  if(!is.null(input$deSubselection)){
+    sce <- doConditionSubselection(
+      sce,
+      input$deSubselection,
+      isolate(reactiveVals$subselectionMap),
+      input$conditionIn,
+      list(),
+      "CyEMD"
+    )[["sce"]]
+  }
   cd <- as.data.table(colData(sce))
   cd[, cluster_id := cluster_ids(sce, input$deCluster)]
   conditionsToSelect <- strsplit(input$conditionInPair, " vs. ")[[1]]
-  
-  samples_per_condition_and_cluster <- cd[get(input$conditionIn) %in% conditionsToSelect, uniqueN(sample_id), by = cluster_id]
-  min_nr_samples_per_condition_and_cluster <- min(samples_per_condition_and_cluster$V1)
+  samples_per_cluster <- cd[get(input$conditionIn) %in% conditionsToSelect, uniqueN(sample_id), by = cluster_id]
+  clusters_with_only_one_sample <- samples_per_cluster[samples_per_cluster$V1 == 1, cluster_id]
   
   conditions_per_cluster <- cd[get(input$conditionIn) %in% conditionsToSelect, uniqueN(get(input$conditionIn)), by = cluster_id]
-  min_nr_conditions_per_cluster <- min(conditions_per_cluster$V1)
-  
-  if(min_nr_conditions_per_cluster < 2){
-    showNotification(paste0("Each cluster should have samples from the two conditions for running CyEMD. Cluster " , 
-                            conditions_per_cluster$cluster_id[which.min(conditions_per_cluster$V1)], 
-                            " does not."), type = "warning")
-    allowed_perms <- 0
-  }else if(input$emd_Replacement_Yes_No == "Yes"){
-    allowed_perms <- RcppAlgos::permuteCount(min_nr_samples_per_condition_and_cluster, repetition = FALSE)
-  }else{
-    if(min_nr_samples_per_condition_and_cluster < 2){
-      showNotification(paste0("Each cluster should have at least 2 samples from each condition for running CyEMD. Cluster " , 
-                              samples_per_condition_and_cluster$cluster_id[which.min(samples_per_condition_and_cluster$V1)], 
-                              " does not."), type = "warning")
-      allowed_perms <- 0
-    }else{
-      allowed_perms <- RcppAlgos::permuteCount(v = 2, 
-                                               m = min_nr_samples_per_condition_and_cluster,
-                                               freqs = c(ceiling(min_nr_samples_per_condition_and_cluster/2), 
-                                                         floor(min_nr_samples_per_condition_and_cluster/2)),
-                                               n = nperm, 
-                                               seed = seed)
-    }
+  clusters_with_only_one_condition <- conditions_per_cluster[conditions_per_cluster$V1 == 1, cluster_id]
+
+  if(length(clusters_with_only_one_condition) > 0){
+    showNotification(paste0("Each cluster should have samples from the two conditions for running CyEMD. Cluster(s) " , 
+                            clusters_with_only_one_condition, 
+                            " do not."), type = "warning")
+  }else if(input$emd_Replacement_Yes_No == "No" && length(clusters_with_only_one_sample) > 0){
+    showNotification(paste0("Each cluster should have at least 2 samples from each condition for running CyEMD. Cluster " , 
+                            clusters_with_only_one_sample, 
+                            " do not."), type = "warning")
   }
-  
-  maxPerm <- allowed_perms
   div(
     numericInput(
       "emdNperm",
@@ -698,9 +692,8 @@ output$emdNpermInput <- renderUI({
         icon("question-circle"),
         id = "emdNpermQ"
       ),
-      value = min(500, maxPerm),
+      value = 100,
       min = 0,
-      max = maxPerm,
       step = 100
     ),
     bsPopover(
@@ -721,13 +714,13 @@ output$emdReplacementInput <- renderUI({
                    icon("question-circle"),
                    id="emd_Replacement_Yes_No_Q"),
       choices = c("Yes", "No"),
-      selected = "No",
+      selected = "Yes",
       inline = TRUE
     ),
     bsPopover(
       id = "emd_Replacement_Yes_No_Q",
       title = "Empirical p-value calculation with or without replacement",
-      content = HTML("Caution: We do not recommend to enable replacement if less than 10 samples are avaiable.")
+      content = HTML("Caution: We do not recommend to disable replacement if less than 10 samples are available")
     )
   )})
 
@@ -1716,18 +1709,18 @@ observeEvent(input$visExpButton,{
       eff_r[, marker_id := sapply(strsplit(eff_r$group2,'::'), "[", 1)]
       topTableOut <- merge(topTableOut, eff_r[, c("cluster_id", "marker_id", "overall_group","effsize", "magnitude")], by = c("cluster_id", "marker_id"), all.x=TRUE, all.y=FALSE, allow.cartesian=TRUE)
       colnames(topTableOut) <- c(colnames(data.frame(out)), "overall_group","cohens_d", "magnitude")
-      topTableOut$cohens_d <- formatC(topTableOut$cohens_d)
+      topTableOut$cohens_d <- formatC(as.numeric(topTableOut$cohens_d))
     }
     
     reactiveVals$topTable <- topTableOut
-    topTableOut$p_val <- formatC(topTableOut$p_val)
-    topTableOut$p_adj <- formatC(topTableOut$p_adj)
+    topTableOut$p_val <- formatC(as.numeric(topTableOut$p_val))
+    topTableOut$p_adj <- formatC(as.numeric(topTableOut$p_adj))
     
     if(visMethod == "diffcyt-DS-limma"){
-      topTableOut$logFC <- formatC(topTableOut$logFC)
-      topTableOut$AveExpr <- formatC(topTableOut$AveExpr)
-      topTableOut$t <- formatC(topTableOut$t)
-      topTableOut$B <- formatC(topTableOut$B)
+      topTableOut$logFC <- formatC(as.numeric(topTableOut$logFC))
+      topTableOut$AveExpr <- formatC(as.numeric(topTableOut$AveExpr))
+      topTableOut$t <- formatC(as.numeric(topTableOut$t))
+      topTableOut$B <- formatC(as.numeric(topTableOut$B))
       
     }
     DT::datatable(topTableOut, rownames = FALSE, 

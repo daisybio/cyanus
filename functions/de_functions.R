@@ -333,7 +333,8 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
           binSize = cyEMD_binsize,
           nperm = cyEMD_nperm,
           replace = cyEMD_replacement,
-          parallel = parallel
+          parallel = parallel, 
+          cluster_id = curr_cluster_id
         )
       cluster_results[["CyEMD"]] <- out
       
@@ -462,27 +463,76 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
 }
 
 
-cyEMDCustom <- function (sce, condition, binSize = NULL, nperm = 100, assay = "exprs", 
-          seed = 1, parallel = FALSE, replace = FALSE) 
+rowwiseEMDCustom <- function (mat, condition, binSize = NULL, cluster_id="22") 
 {
+  stopifnot(is.matrix(mat), is.numeric(mat), nlevels(as.factor(condition)) == 
+              2, ncol(mat) == length(condition))
+  condition <- as.factor(condition)
+  result <- apply(mat, 1, function(marker) {
+    grouped <- split(marker, condition)
+    myEMDCustom(grouped[[1]], grouped[[2]], cluster_id=cluster_id)
+  })
+  out_dt <- data.table::as.data.table(result, keep.rownames = "marker_id")
+  out_dt[, `:=`(marker_id, as.factor(marker_id))]
+  out_dt
+}
+
+myEMDCustom <- function (A, B, binSize = NULL, cluster_id="22") 
+{
+  stopifnot(is.numeric(A) & is.numeric(B))
+  if (is.null(binSize)) 
+    binSize <- 2 * stats::IQR(c(A[A != 0], B[B != 0]))/length(c(A[A != 
+                                                                    0], B[B != 0]))^(1/3)
+  emd <- tryCatch({
+    bins <- seq(floor(min(c(A, B))), ceiling(max(c(A, B))), by = binSize)
+    if (max(bins) < max(A, B)) 
+      bins <- c(bins, bins[length(bins)] + binSize)
+    histA <- graphics::hist(A, breaks = bins, plot = FALSE)
+    histB <- graphics::hist(B, breaks = bins, plot = FALSE)
+    densA <- histA$density
+    densA <- densA/sum(densA)
+    densB <- histB$density
+    densB <- densB/sum(densB)
+    return(CyEMD:::emdC(densA, densB))
+  }, 
+  error = function(e) {
+    message(paste("Error in cluster", cluster_id, ":", e))
+    return(0)
+  })
+  return(emd)
+}
+
+
+cyEMDCustom <- function (sce, condition, binSize = NULL, nperm = 100, assay = "exprs", 
+          seed = 1, parallel = FALSE, replace = FALSE, cluster_id="22") 
+{
+  sceEI <- CATALYST::ei(sce)
+  if(length(unique(sceEI[[condition]])) == 1){
+    message("Only one condition detected. Returning NA.")
+    empty_dt <- data.table::data.table(
+      marker_id = rownames(rowData(sce)),
+      emd = rep(NA, nrow(rowData(sce))),
+      p_val = rep(NA, nrow(rowData(sce)))
+    )
+    return(empty_dt)
+  }
   bppar <- BiocParallel::bpparam()
   if (!parallel) 
     bppar <- BiocParallel::SerialParam(progressbar = TRUE)
   set.seed(1)
   assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
   data <- SummarizedExperiment::assay(sce, assay)
-  emd_real <- CyEMD:::rowwiseEMD(mat = data, condition = sce[[condition]], 
-                         binSize = binSize)
+  emd_real <- rowwiseEMDCustom(mat = data, condition = sce[[condition]], 
+                         binSize = binSize, cluster_id=cluster_id)
   data.table::setnames(emd_real, "result", "real_emd")
   data.table::setkey(emd_real, marker_id)
-  sceEI <- CATALYST::ei(sce)
   if(replace){
     allowed_perms <- RcppAlgos::permuteCount(sceEI[[condition]], n = nperm, 
                                               seed = seed, repetition = FALSE)
     if(allowed_perms < nperm){
-      message(paste0("Number of allowed permutations (", 
+      message(paste0("Allowed permutations (", 
                   allowed_perms, "=", length(sceEI[[condition]]), 
-                  "!) is smaller than requested number of permutations. Returning NA."))
+                  "!) <", nperm, ". Returning NA."))
       empty_dt <- data.table::data.table(
         marker_id = rownames(rowData(sce)),
         emd = rep(NA, nrow(rowData(sce))),
@@ -499,10 +549,10 @@ cyEMDCustom <- function (sce, condition, binSize = NULL, nperm = 100, assay = "e
                                              n = nperm, 
                                              seed = seed)
     if(allowed_perms < nperm){
-      message(paste0("Number of allowed permutations (",
+      message(paste0("Allowed permutations (",
                   allowed_perms, "=", length(sceEI[[condition]]), "!/(", 
                   sum(sceEI[[condition]] == unique(sceEI[[condition]])[1]), "! * ", sum(sceEI[[condition]] == unique(sceEI[[condition]])[2]), "!)",
-                  ") is smaller than requested number of permutations. Returning NA"))
+                  ") <", nperm, ". Returning NA"))
       empty_dt <- data.table::data.table(
         marker_id = rownames(rowData(sce)),
         emd = rep(NA, nrow(rowData(sce))),
@@ -519,7 +569,7 @@ cyEMDCustom <- function (sce, condition, binSize = NULL, nperm = 100, assay = "e
   perm_res <- BiocParallel::bplapply(as.data.frame(t(unclass(perms))), 
                                      function(perm, sceEI, data, binSize) {
                                        condition_permutation_cells <- rep(perm, times = sceEI$n_cells)
-                                       CyEMD:::rowwiseEMD(mat = data, condition = condition_permutation_cells, 
+                                       rowwiseEMDCustom(mat = data, condition = condition_permutation_cells, 
                                                   binSize = binSize)
                                      }, sceEI, data, binSize, BPPARAM = bppar)
   all_perms <- data.table::rbindlist(perm_res, idcol = "permutation")
