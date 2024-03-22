@@ -72,7 +72,6 @@ call_DE <- function() {
       return(NULL)
     }
   }
-
   # subselect to conditionInPair
   if(length(levels(ei[[condition]])) > 2){
     if (is.null(reactiveVals$exclusionList)) {
@@ -433,6 +432,22 @@ output$conditionSelection <- renderUI({
   sceEI <- CATALYST::ei(reactiveVals$sce)
   condChoices <- which(sapply(sceEI, function(feature) nlevels(as.factor(feature)) >= 2))
   condChoices <- names(condChoices)[!names(condChoices) %in% c("sample_id", "patient_id", "n_cells")]
+  choices <- condChoices
+  if(length(choices) == 0){
+    reactiveVals$subselectionMap <- NULL
+  } else {
+    map <- unlist(sapply(choices, function(x){
+      lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
+      return(rep(x, length(lvls)))
+    }))
+    
+    choices <- unlist(sapply(choices, function(x){
+      lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
+      return(lvls)
+    }))
+    names(map) <- choices
+    reactiveVals$subselectionMap <- map
+  }
   list(div(
     selectizeInput(
       "conditionIn",
@@ -461,7 +476,7 @@ output$conditionSelectionPair <- renderUI({
   pairwise <- sapply(pairwise, function(x) paste(x, collapse = " vs. "))
   list(
     div(
-      selectizeInput(
+      selectInput(
         "conditionInPair",
         choices = pairwise,
         label = span(
@@ -479,7 +494,6 @@ output$conditionSelectionPair <- renderUI({
   )
   
 })
-
 
 output$groupSelection <- renderUI({
   all_methods <- c(methodsDA, methodsDS)
@@ -516,36 +530,44 @@ output$groupSelection <- renderUI({
   )
 })
 output$additionalTermsSelection <- renderUI({
-  req(input$chosenDAMethod, (startsWith(input$chosenDAMethod, 'diffcyt')||startsWith(input$chosenDAMethod, 'CytoGLM')), input$conditionInPair, input$groupCol) # this means this is a linear model and additional terms are allowed
+  req(input$chosenDAMethod, (startsWith(input$chosenDAMethod, 'diffcyt')||startsWith(input$chosenDAMethod, 'CytoGLM')), input$conditionInPair) # this means this is a linear model and additional terms are allowed
   conditionsToSelect <- strsplit(input$conditionInPair, " vs. ")[[1]]
   sceEI <- data.table::as.data.table(CATALYST::ei(reactiveVals$sce))
-  addTerms <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id", input$conditionIn, input$groupCol)]
-  addTerms <- addTerms[sapply(addTerms, function(x) sceEI[get(input$conditionIn) %in% conditionsToSelect, 
-                                                          .(e2 = data.table::uniqueN(get(input$conditionIn)) >= 2),, by=get(x)][, all(e2)])]
-  names(addTerms) <- addTerms
-  div(
-    pickerInput(
-      "addTerms",
-      choices = addTerms,
-      label = span(
-        "Additional fixed terms to include in the Model",
-        icon("question-circle"),
-        id = "addTermsQ"
+  if(!is.null(input$groupCol)){
+    addTerms <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id", input$conditionIn, input$groupCol)]
+  }else{
+    addTerms <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id", input$conditionIn)]
+  }
+  if(length(addTerms) == 0){
+    div()
+  }else{
+    addTerms <- addTerms[sapply(addTerms, function(x) sceEI[get(input$conditionIn) %in% conditionsToSelect, 
+                                                            .(e2 = data.table::uniqueN(get(input$conditionIn)) >= 2),, by=get(x)][, all(e2)])]
+    names(addTerms) <- addTerms
+    div(
+      pickerInput(
+        "addTerms",
+        choices = addTerms,
+        label = span(
+          "Additional fixed terms to include in the Model",
+          icon("question-circle"),
+          id = "addTermsQ"
+        ),
+        options = list(
+          `actions-box` = TRUE,
+          size = 4,
+          `selected-text-format` = "count > 3",
+          "dropup-auto" = FALSE
+        ),
+        multiple = TRUE
       ),
-      options = list(
-        `actions-box` = TRUE,
-        size = 4,
-        `selected-text-format` = "count > 3",
-        "dropup-auto" = FALSE
-      ),
-      multiple = TRUE
-    ),
-    bsPopover(
-      id = "addTermsQ",
-      title = "Additional terms to include in the Model",
-      content = "Since you have specified a method using a linear model, you can include additional terms that might have an effect on expression other than the condition, such as batches."
+      bsPopover(
+        id = "addTermsQ",
+        title = "Additional terms to include in the Model",
+        content = "Since you have specified a method using a linear model, you can include additional terms that might have an effect on expression other than the condition, such as batches."
+      )
     )
-  )
+  }
 })
 
 # selection of weights for analysis
@@ -632,8 +654,42 @@ output$emdInput <- renderUI({
 })
 
 output$emdNpermInput <- renderUI({
-  req(input$conditionIn)
-  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$conditionIn]], repetition = FALSE))
+  req(input$conditionIn, input$conditionInPair, input$deCluster, input$emd_Replacement_Yes_No)
+  sce <- isolate(reactiveVals$sce)
+  cd <- as.data.table(colData(sce))
+  cd[, cluster_id := cluster_ids(sce, input$deCluster)]
+  conditionsToSelect <- strsplit(input$conditionInPair, " vs. ")[[1]]
+  
+  samples_per_condition_and_cluster <- cd[get(input$conditionIn) %in% conditionsToSelect, uniqueN(sample_id), by = cluster_id]
+  min_nr_samples_per_condition_and_cluster <- min(samples_per_condition_and_cluster$V1)
+  
+  conditions_per_cluster <- cd[get(input$conditionIn) %in% conditionsToSelect, uniqueN(get(input$conditionIn)), by = cluster_id]
+  min_nr_conditions_per_cluster <- min(conditions_per_cluster$V1)
+  
+  if(min_nr_conditions_per_cluster < 2){
+    showNotification(paste0("Each cluster should have samples from the two conditions for running CyEMD. Cluster " , 
+                            conditions_per_cluster$cluster_id[which.min(conditions_per_cluster$V1)], 
+                            " does not."), type = "warning")
+    allowed_perms <- 0
+  }else if(input$emd_Replacement_Yes_No == "Yes"){
+    allowed_perms <- RcppAlgos::permuteCount(min_nr_samples_per_condition_and_cluster, repetition = FALSE)
+  }else{
+    if(min_nr_samples_per_condition_and_cluster < 2){
+      showNotification(paste0("Each cluster should have at least 2 samples from each condition for running CyEMD. Cluster " , 
+                              samples_per_condition_and_cluster$cluster_id[which.min(samples_per_condition_and_cluster$V1)], 
+                              " does not."), type = "warning")
+      allowed_perms <- 0
+    }else{
+      allowed_perms <- RcppAlgos::permuteCount(v = 2, 
+                                               m = min_nr_samples_per_condition_and_cluster,
+                                               freqs = c(ceiling(min_nr_samples_per_condition_and_cluster/2), 
+                                                         floor(min_nr_samples_per_condition_and_cluster/2)),
+                                               n = nperm, 
+                                               seed = seed)
+    }
+  }
+  
+  maxPerm <- allowed_perms
   div(
     numericInput(
       "emdNperm",
@@ -650,7 +706,7 @@ output$emdNpermInput <- renderUI({
     bsPopover(
       id = "emdNpermQ",
       title = "Number of permutations for p-value estimation",
-      content = HTML("Note that meaningful results require many permutations. E.g. for an unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br>For p-value calculation <b>without replacement</b> this value must not exceed the factorial of the number of samples. For p-value calculation <b>with replacement</b> this value must not exceed the number of samples to the power of the number of samples.")
+      content = HTML("Note that meaningful results require many permutations. E.g. for an unadjusted pvalue smaller than 0.01 at least 100 permutations are necessary.<br>For p-value calculation <b>with replacement</b> this value must not exceed the factorial of the number of samples (per cluster). With replacement, only unique permutations of sample labels will be computed. For p-value calculation <b>without replacement</b> this value must not exceed the N/(K! * (N-K)!) where N is the number of samples (per cluster) and K is the number of samples for one of the two conditions (per cluster).")
     )
   )
 })
@@ -699,15 +755,14 @@ output$CytoGLM_num_boot <- renderUI({
 })
 
 output$deSubselection <- renderUI({
-  condition <- req(input$conditionIn)
+  req(input$conditionIn)
+  condition <- input$conditionIn
   
   choices <- colnames(metadata(reactiveVals$sce)$experiment_info)
   choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
-  
   # only show subsets not corresponding to condition
   choices <- choices[choices != condition]
   if(length(choices) == 0){
-    reactiveVals$subselectionMap <- NULL
     div()
   } else {
     map <- unlist(sapply(choices, function(x){
@@ -721,7 +776,11 @@ output$deSubselection <- renderUI({
     }))
     names(map) <- choices
     names(choices) <- paste("only", choices)
-    reactiveVals$subselectionMap <- map
+    if(is.null(reactiveVals$subselectionMap)){
+      reactiveVals$subselectionMap <- map
+    }else{
+      reactiveVals$subselectionMap <- c(reactiveVals$subselectionMap, map)
+    }
     div(
       checkboxGroupInput(
         inputId = "deSubselection",
@@ -1461,12 +1520,6 @@ observe({
   }
 })
 
-observeEvent(input$emd_Replacement_Yes_No, {
-  # Update maxPerm based on the chosen option in emd_Replacement_Yes_No
-  req(input$conditionIn)
-  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$conditionIn]], repetition = (input$emd_Replacement_Yes_No == "Yes")))
-  updateNumericInput(session, "emdNperm", max = maxPerm, value = min(500, maxPerm))
-})
 
 observeEvent(input$downsampling_Yes_No_DE, {
   req(input$downsampling_Yes_No_DE)

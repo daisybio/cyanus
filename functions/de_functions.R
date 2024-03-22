@@ -40,12 +40,15 @@ effectSize <- function(sce, condition, group = NULL, k=NULL, use_assay="exprs", 
   } else {
     k <- CATALYST:::.check_k(sce, k)
     c_ids <- CATALYST::cluster_ids(sce, k)
-    effect_sizes <- sapply(levels(c_ids), function(c_id) calculateEffectSize(dt[c_ids==c_id], use_mean), simplify = FALSE)
+    effect_sizes <- sapply(levels(c_ids), function(c_id) calculateEffectSize(dt[c_ids==c_id], use_mean, cid=c_id), simplify = FALSE)
     return(data.table::rbindlist(effect_sizes, idcol ='cluster_id'))
   }
 }
 
-calculateEffectSize <- function(dt, use_mean=FALSE, hedges.correction = TRUE){
+calculateEffectSize <- function(dt, use_mean=FALSE, hedges.correction = TRUE, cid=NULL){
+  if(!is.null(cid)){
+    message(paste0("Computing effect size for cluster", cid))
+  }
   res <- list()
   if ('group' %in% names(dt)) {
     if (use_mean)
@@ -54,10 +57,33 @@ calculateEffectSize <- function(dt, use_mean=FALSE, hedges.correction = TRUE){
       agg_fun <- median
     dt_melt <- data.table::melt(dt, id.vars=c('condition', 'group'))
     dt_melt <- dt_melt[, .(value=agg_fun(value)), by=list(condition, variable, group)]
-    # data.table::dcast(dt_melt, variable + group ~ condition)
     dt_melt[, comb := paste(variable, condition, sep='::')]
     comp <- split(dt_melt[, sort(unique(comb))], ceiling(seq_along(dt_melt[, sort(unique(comb))])/2))
-    res$grouped <- data.table::as.data.table(rstatix::cohens_d(dt_melt, value ~ comb, comparisons = comp, paired=T, hedges.correction = hedges.correction))[, -'.y.']
+    if(length(unique(dt_melt$condition)) == 1){
+      # only cells with one condition detected -> effect size can not be calculated
+      res <- data.frame(overall_group = rep("overall", length(comp)), 
+                        group1 = sapply(comp, function(x) x[1]), 
+                        group2 = sapply(comp, function(x) x[2]), 
+                        effsize = rep(NA, length(comp)),
+                        n1 = rep(NA, length(comp)), 
+                        n2 = rep(NA, length(comp)), 
+                        magnitude = rep(NA, length(comp)))
+      return(res)
+    }
+    # per variable: check whether the same number of groups are in the conditions
+    unique_groups <- dt_melt[, uniqueN(group), by=.(variable, condition)]
+    # check whether all values in V1 are the same
+    if (all(unique_groups$V1 == unique_groups$V1[1])){
+      res$grouped <- data.table::as.data.table(rstatix::cohens_d(dt_melt, value ~ comb, comparisons = comp, paired=T, hedges.correction = hedges.correction))[, -'.y.']
+    }else{
+      resg <- data.frame(group1 = sapply(comp, function(x) x[1]), 
+                        group2 = sapply(comp, function(x) x[2]), 
+                        effsize = rep(NA, length(comp)),
+                        n1 = rep(NA, length(comp)), 
+                        n2 = rep(NA, length(comp)), 
+                        magnitude = rep(NA, length(comp)))
+      res$grouped <- resg
+    }
     dt <- dt[, -'group']
   }
   dt_melt <- data.table::melt(dt, id.vars='condition')
@@ -301,7 +327,7 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
     if("CyEMD" == method){
       message(sprintf("calculating CyEMD for cluster %s", curr_cluster_id))
       out <-
-        cyEMD(
+        cyEMDCustom(
           sce = sce_cluster,
           condition = contrast_vars,
           binSize = cyEMD_binsize,
@@ -435,6 +461,74 @@ timeMethod<- function(method, sce, markers_to_test, clustering_to_use,
   return(other_res)
 }
 
+
+cyEMDCustom <- function (sce, condition, binSize = NULL, nperm = 100, assay = "exprs", 
+          seed = 1, parallel = FALSE, replace = FALSE) 
+{
+  bppar <- BiocParallel::bpparam()
+  if (!parallel) 
+    bppar <- BiocParallel::SerialParam(progressbar = TRUE)
+  set.seed(1)
+  assay <- match.arg(assay, names(SummarizedExperiment::assays(sce)))
+  data <- SummarizedExperiment::assay(sce, assay)
+  emd_real <- CyEMD:::rowwiseEMD(mat = data, condition = sce[[condition]], 
+                         binSize = binSize)
+  data.table::setnames(emd_real, "result", "real_emd")
+  data.table::setkey(emd_real, marker_id)
+  sceEI <- CATALYST::ei(sce)
+  if(replace){
+    allowed_perms <- RcppAlgos::permuteCount(sceEI[[condition]], n = nperm, 
+                                              seed = seed, repetition = FALSE)
+    if(allowed_perms < nperm){
+      message(paste0("Number of allowed permutations (", 
+                  allowed_perms, "=", length(sceEI[[condition]]), 
+                  "!) is smaller than requested number of permutations. Returning NA."))
+      empty_dt <- data.table::data.table(
+        marker_id = rownames(rowData(sce)),
+        emd = rep(NA, nrow(rowData(sce))),
+        p_val = rep(NA, nrow(rowData(sce)))
+      )
+      return(empty_dt)
+    }
+    perms <- RcppAlgos::permuteSample(sceEI[[condition]], n = nperm, 
+                                      seed = seed, repetition = FALSE)
+  }else{
+    allowed_perms <- RcppAlgos::permuteCount(v = unique(sceEI[[condition]]), 
+                                             m = length(sceEI[[condition]]),
+                                             freqs = table(sceEI[[condition]]),
+                                             n = nperm, 
+                                             seed = seed)
+    if(allowed_perms < nperm){
+      message(paste0("Number of allowed permutations (",
+                  allowed_perms, "=", length(sceEI[[condition]]), "!/(", 
+                  sum(sceEI[[condition]] == unique(sceEI[[condition]])[1]), "! * ", sum(sceEI[[condition]] == unique(sceEI[[condition]])[2]), "!)",
+                  ") is smaller than requested number of permutations. Returning NA"))
+      empty_dt <- data.table::data.table(
+        marker_id = rownames(rowData(sce)),
+        emd = rep(NA, nrow(rowData(sce))),
+        p_val = rep(NA, nrow(rowData(sce)))
+      )
+      return(empty_dt)
+    }
+    perms <- RcppAlgos::permuteSample(v = unique(sceEI[[condition]]), 
+                                      m = length(sceEI[[condition]]),
+                                      freqs = table(sceEI[[condition]]),
+                                      n = nperm, 
+                                      seed = seed)
+  }
+  perm_res <- BiocParallel::bplapply(as.data.frame(t(unclass(perms))), 
+                                     function(perm, sceEI, data, binSize) {
+                                       condition_permutation_cells <- rep(perm, times = sceEI$n_cells)
+                                       CyEMD:::rowwiseEMD(mat = data, condition = condition_permutation_cells, 
+                                                  binSize = binSize)
+                                     }, sceEI, data, binSize, BPPARAM = bppar)
+  all_perms <- data.table::rbindlist(perm_res, idcol = "permutation")
+  data.table::setkey(all_perms, marker_id)
+  res_agg <- all_perms[emd_real][, .(p_val = (sum(result >= 
+                                                    real_emd) + 1)/(nperm + 1)), by = c("marker_id", "real_emd")]
+  data.table::setnames(res_agg, "real_emd", "emd")
+  return(res_agg)
+}
 
 
 

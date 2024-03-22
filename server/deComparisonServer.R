@@ -213,6 +213,7 @@ runMethods <- function(){
       error = function(e){
         showNotification(HTML(sprintf("The analysis failed with the following message:<br>
                                     <b>%s</b><br>Please retry with different parameters.", e$message)), duration = NULL, type = "error")
+        removeNotification("progressNoteDAComp")
       })
 
     return(resultVenn)
@@ -418,8 +419,8 @@ output$groupSelectionComp <- renderUI({
   sceEI <- data.table::as.data.table(CATALYST::ei(reactiveVals$sce))
   conditionsToSelect <- strsplit(input$conditionInPairComp, " vs. ")[[1]]
   groupCol <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id")]
-  groupCol <- groupCol[sapply(groupCol, function(x) sceEI[get(input$conditionIn) %in% conditionsToSelect, 
-                                                          .(e2 = data.table::uniqueN(get(input$conditionIn)) >= 2),, by=get(x)][, all(e2)])]
+  groupCol <- groupCol[sapply(groupCol, function(x) sceEI[get(input$conditionInComp) %in% conditionsToSelect, 
+                                                          .(e2 = data.table::uniqueN(get(input$conditionInComp)) >= 2),, by=get(x)][, all(e2)])]
   names(groupCol) <- groupCol
   groupCol <- c('unpaired samples' = '', groupCol)
   div(
@@ -450,33 +451,42 @@ output$groupSelectionComp <- renderUI({
 
 output$additionalTermsSelectionComp <- renderUI({
   if (input$da_dsVenn == "Differential Marker Expression"){
-    req(input$chosenDAMethodComp, any(startsWith(input$chosenDAMethodComp, 'diffcyt') | startsWith(input$chosenDAMethodComp, 'CytoGLM'))) # this means this is a linear model and additional terms are allowed
+    req(input$chosenDAMethodComp, any(startsWith(input$chosenDAMethodComp, 'diffcyt') | startsWith(input$chosenDAMethodComp, 'CytoGLM')), input$conditionInPairComp) # this means this is a linear model and additional terms are allowed
   }
-  addTerms <- names(ei(reactiveVals$sce))
-  addTerms <- addTerms[!addTerms %in% c("n_cells", "sample_id", input$conditionInComp, input$groupColComp)]
-  div(
-    pickerInput(
-      "addTermsComp",
-      choices = addTerms,
-      label = span(
-        "Additional fixed terms to include in the Model",
-        icon("question-circle"),
-        id = "addTermsQComp"
+  conditionsToSelect <- strsplit(input$conditionInPairComp, " vs. ")[[1]]
+  sceEI <- data.table::as.data.table(CATALYST::ei(reactiveVals$sce))
+  if(!is.null(input$groupCol)){
+    addTerms <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id", input$conditionInComp, input$groupColComp)]
+  }else{
+    addTerms <- names(sceEI)[!names(sceEI) %in% c("n_cells", "sample_id", input$conditionInComp)]
+  }
+  if(length(addTerms) == 0){
+    div()
+  }else{
+    div(
+      pickerInput(
+        "addTermsComp",
+        choices = addTerms,
+        label = span(
+          "Additional fixed terms to include in the Model",
+          icon("question-circle"),
+          id = "addTermsQComp"
+        ),
+        options = list(
+          `actions-box` = TRUE,
+          size = 4,
+          `selected-text-format` = "count > 3",
+          "dropup-auto" = FALSE
+        ),
+        multiple = TRUE
       ),
-      options = list(
-        `actions-box` = TRUE,
-        size = 4,
-        `selected-text-format` = "count > 3",
-        "dropup-auto" = FALSE
-      ),
-      multiple = TRUE
-    ),
-    bsPopover(
-      id = "addTermsQComp",
-      title = "Additional terms to include in the Model",
-      content = "Since you have specified a method using a linear model (limma, LMM, CytoGLMM, CytoGLM), you can include additional terms that might have an effect on expression other than the condition, such as batches."
+      bsPopover(
+        id = "addTermsQComp",
+        title = "Additional terms to include in the Model",
+        content = "Since you have specified a method using a linear model (limma, LMM, CytoGLMM, CytoGLM), you can include additional terms that might have an effect on expression other than the condition, such as batches."
+      )
     )
-  )
+  }
 })
 
 
@@ -509,8 +519,42 @@ output$emdInputComp <- renderUI({
 
 
 output$emdNpermInputComp <- renderUI({
-  req(input$conditionInComp)
-  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$conditionInComp]], repetition=FALSE))
+  req(input$conditionInComp, input$conditionInPairComp, input$deClusterVenn, input$emd_Replacement_Yes_No_Comp)
+  sce <- isolate(reactiveVals$sce)
+  cd <- as.data.table(colData(sce))
+  cd[, cluster_id := cluster_ids(sce, input$deClusterVenn)]
+  conditionsToSelect <- strsplit(input$conditionInPairComp, " vs. ")[[1]]
+  
+  samples_per_condition_and_cluster <- cd[get(input$conditionInComp) %in% conditionsToSelect, uniqueN(sample_id), by = cluster_id]
+  min_nr_samples_per_condition_and_cluster <- min(samples_per_condition_and_cluster$V1)
+  
+  conditions_per_cluster <- cd[get(input$conditionInComp) %in% conditionsToSelect, uniqueN(get(input$conditionInComp)), by = cluster_id]
+  min_nr_conditions_per_cluster <- min(conditions_per_cluster$V1)
+  
+  if(min_nr_conditions_per_cluster < 2){
+    showNotification(paste0("Each cluster should have samples from the two conditions for running CyEMD. Cluster " , 
+                            conditions_per_cluster$cluster_id[which.min(conditions_per_cluster$V1)], 
+                            " does not."), type = "warning")
+    allowed_perms <- 0
+  }else if(input$emd_Replacement_Yes_No_Comp == "Yes"){
+    allowed_perms <- RcppAlgos::permuteCount(min_nr_samples_per_condition_and_cluster, repetition = FALSE)
+  }else{
+    if(min_nr_samples_per_condition_and_cluster < 2){
+      showNotification(paste0("Each cluster should have at least 2 samples from each condition for running CyEMD. Cluster " , 
+                              samples_per_condition_and_cluster$cluster_id[which.min(samples_per_condition_and_cluster$V1)], 
+                              " does not."), type = "warning")
+      allowed_perms <- 0
+    }else{
+      allowed_perms <- RcppAlgos::permuteCount(v = 2, 
+                                               m = min_nr_samples_per_condition_and_cluster,
+                                               freqs = c(ceiling(min_nr_samples_per_condition_and_cluster/2), 
+                                                         floor(min_nr_samples_per_condition_and_cluster/2)),
+                                               n = nperm, 
+                                               seed = seed)
+    }
+  }
+  
+  maxPerm <- allowed_perms
   div(
     numericInput(
       "emdNpermComp",
@@ -578,28 +622,36 @@ output$CytoGLM_num_bootComp <- renderUI({
 
 
 output$deSubselectionComp <- renderUI({
-  choices <- isolate(colnames(metadata(reactiveVals$sce)$experiment_info))
-  choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
+  req(input$conditionInComp)
+  condition <- input$conditionInComp
   
-  choices <- unlist(sapply(choices, function(x){
-    lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
-    return(lvls)
-  }))
-  names(choices) <- paste("only", choices)
-  div(
-    checkboxGroupInput(
-      inputId = "deSubselectionComp",
-      label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectVennQ"),
-      choices = choices, 
-      inline = T
-    ),
-    bsPopover(
-      id = "subSelectVennQ",
-      title = "Run differential expression on a subset of your data",
-      content = "Sometimes it might make sense to compare differential expression just in a subset of your data, e.g. you have two different treatment groups and want to investigate the effect of an activation agent separately. You can do the subselection right at the beginning (Preprocessing) or here.",
-      placement = "top"
+  choices <- colnames(metadata(reactiveVals$sce)$experiment_info)
+  choices <- choices[!choices %in% c("n_cells", "sample_id", "patient_id")]
+  choices <- choices[choices != condition]
+  
+  if(length(choices) == 0){
+    div()
+  }else{
+    choices <- unlist(sapply(choices, function(x){
+      lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
+      return(lvls)
+    }))
+    names(choices) <- paste("only", choices)
+    div(
+      checkboxGroupInput(
+        inputId = "deSubselectionComp",
+        label = span("Do you want to analyse this condition just on a subset?", icon("question-circle"), id = "subSelectVennQ"),
+        choices = choices, 
+        inline = T
+      ),
+      bsPopover(
+        id = "subSelectVennQ",
+        title = "Run differential expression on a subset of your data",
+        content = "Sometimes it might make sense to compare differential expression just in a subset of your data, e.g. you have two different treatment groups and want to investigate the effect of an activation agent separately. You can do the subselection right at the beginning (Preprocessing) or here.",
+        placement = "top"
+      )
     )
-  )
+  }
 })
 
 # until here ----
@@ -910,12 +962,6 @@ output$downloadTableVennAll <- downloadHandler(
 # ---------------------------------------------------------------------------------
 # Observer
 # ---------------------------------------------------------------------------------
-observeEvent(input$emd_Replacement_Yes_No_Comp, {
-  # Update maxPerm based on the chosen option in emd_Replacement_Yes_No_Comp
-  req(input$conditionInComp)
-  maxPerm <- as.numeric(RcppAlgos::permuteCount(ei(reactiveVals$sce)[[input$conditionInComp]], repetition = (input$emd_Replacement_Yes_No_Comp == "Yes")))
-  updateNumericInput(session, "emdNpermComp", max = maxPerm, value = min(500, maxPerm))
-})
 
 observeEvent(input$downsampling_Yes_No_Comp, {
   req(input$downsampling_Yes_No_Comp)
