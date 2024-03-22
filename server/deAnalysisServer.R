@@ -765,22 +765,11 @@ output$deSubselection <- renderUI({
   if(length(choices) == 0){
     div()
   } else {
-    map <- unlist(sapply(choices, function(x){
-      lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
-      return(rep(x, length(lvls)))
-    }))
-    
     choices <- unlist(sapply(choices, function(x){
       lvls <- isolate(levels(metadata(reactiveVals$sce)$experiment_info[[x]]))
       return(lvls)
     }))
-    names(map) <- choices
     names(choices) <- paste("only", choices)
-    if(is.null(reactiveVals$subselectionMap)){
-      reactiveVals$subselectionMap <- map
-    }else{
-      reactiveVals$subselectionMap <- c(reactiveVals$subselectionMap, map)
-    }
     div(
       checkboxGroupInput(
         inputId = "deSubselection",
