@@ -11,9 +11,15 @@ library(ggvenn)
 createVennHeatmap <- function(res, DS = T, fdr_threshold = 0.05, columns = NULL){
   colorBlindBlack8  <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-  results <-
-    data.table::rbindlist(sapply(res[names(res) != "effect_size"], data.table::as.data.table),
-      idcol = "method", fill = TRUE)
+  if(length(res[names(res)!= "effect_size"]) == 1){
+    results <- as.data.table(res[names(res) != "effect_size"][[1]])
+    results$method <- names(res)[names(res)!= "effect_size"]
+  } else {
+    results <-
+      data.table::rbindlist(sapply(res[names(res) != "effect_size"], data.table::as.data.table),
+                            idcol = "method", fill = TRUE)
+  }
+ 
   if(DS){
     eff_r <- res[["effect_size"]]
     results[, feature := marker_id]#paste0(marker_id, "(", cluster_id, ")")]
