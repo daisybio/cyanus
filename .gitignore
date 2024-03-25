@@ -6,3 +6,4 @@
 extdata/
 .DS_Store
 logs/*
+.Renviron
