@@ -252,14 +252,13 @@
     },
     "CyEMD": {
       "Package": "CyEMD",
-      "Version": "0.1.0",
+      "Version": "0.1.2",
       "Source": "Git",
       "RemoteType": "xgit",
       "RemoteUrl": "https://github.com/biomedbigdata/CyEMD_package.git",
-      "RemoteSha": "ad9bab4bd1c9280756d0024deeef2f2dfa6b5160",
+      "RemoteSha": "b296170d2d028080cdf7d92e4d28a0e8b5951d4b",
       "Requirements": [
         "CATALYST",
-        "R",
         "Rcpp",
         "RcppAlgos",
         "SummarizedExperiment",
@@ -267,7 +266,7 @@
         "graphics",
         "stats"
       ],
-      "Hash": "ebbe946dedb5e72e04985254151292ae"
+      "Hash": "7bf1754ec9a513748b6a32eda5e57435"
     },
     "CytoGLMM": {
       "Package": "CytoGLMM",
