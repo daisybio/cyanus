@@ -629,7 +629,7 @@ output$clusteringOutput <- renderUI({
                              "Expression Type",
                              choices = densityAssayChoices),
               selectInput(
-                "densityUseFeatureChoicesIn",
+                "markerExpressionUseFeatureChoicesIn",
                 label = "Features",
                 choices =
                   c(
@@ -910,7 +910,7 @@ output$clusterHeatmapPlot <- renderPlot({
 
 output$clusterMedianExprsPlot <- renderPlot({
   req(nlevels(cluster_ids(reactiveVals$sce, input$clusterCode)) > 1)
-  features_tmp <- input$densityUseFeatureChoicesIn
+  features_tmp <- input$markerExpressionUseFeatureChoicesIn
   if (features_tmp == "all")
     features_tmp <- NULL
   reactiveVals$medianExprsCluster <-
