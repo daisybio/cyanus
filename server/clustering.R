@@ -867,6 +867,8 @@ output$clusterStarMarkerPlot <- renderPlot({
   if(length(levels(cluster_codes(reactiveVals$sce)[[input$clusterCode]])) > length(reactiveVals$selected_palette)){
     custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(length(levels(cluster_codes(reactiveVals$sce)[[input$clusterCode]])))
   }
+  assays <- c("Transformed" = "exprs", "Raw" = "counts")
+  assayType <- assays[metadata(reactiveVals$sce)$clusterRun$assayType]
   reactiveVals$starMarkerCluster <-
     plotMarkerCustom(
       reactiveVals$sce,
@@ -874,7 +876,7 @@ output$clusterStarMarkerPlot <- renderPlot({
       facet_by = input$plotStarMarkerFacets,
       subselection_col = input$plotStarMarkerSubselection,
       subselection = input$plotStarMarkerSubselectionChoices,
-      assayType = metadata(reactiveVals$sce)$clusterRun$assayType,
+      assayType = assayType,
       backgroundValues = cluster_codes(reactiveVals$sce)[[input$clusterCode]],
       backgroundColors = custom_colors
     )
