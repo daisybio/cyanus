@@ -12,8 +12,8 @@ server <- function(input, output, session) {
                               spin_loaders(id = 5, color = "black")), color="rgb(146, 180, 242, .5)")
   
   # read all server files
-  sapply(list.files("server", full.names = TRUE), source, environment())
-  sapply(list.files("functions", full.names = TRUE), source, environment())
+  sapply(list.files("R/server", full.names = TRUE), source, environment())
+  sapply(list.files("R/functions", full.names = TRUE), source, environment())
   
   # additional functions
   #downloadPlotFunction <- function(name, ggplotObject, width = 7, height = 7){

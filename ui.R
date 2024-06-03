@@ -11,7 +11,7 @@ library(waiter)
 jscode <- "shinyjs.closewindow = function() { window.close(); }"
 
 # read all ui files
-sapply(list.files("ui", full.names = TRUE), source, environment())
+sapply(list.files("R/ui", full.names = TRUE), source, environment())
 
 header <-
   dashboardHeader(title = span(img(src="logo_title.png", height="50px")), tags$li(uiOutput("downloadLog"), class='dropdown'), tags$li(uiOutput("dashboard"), class='dropdown'), tags$li(a(icon('envelope'), " Contact for problems/suggestions", href = "https://github.com/biomedbigdata/cyanus/issues", target = "_blank"), class='dropdown'))
