@@ -1,9 +1,8 @@
-welcomeBody <- tabItem(tabName = "welcome",
-                       fluidRow(box(
-                         column(
-                           width = 8,
-                           div(HTML(
-                             'Recently, high-dimensional time-of-flight mass cytometry (CyTOF)
+welcomeRow <- fluidRow(box(
+  column(
+    width = 8,
+    div(HTML(
+      'Recently, high-dimensional time-of-flight mass cytometry (CyTOF)
                              has emerged with the ability to identify more than 40 parameters simultaneously.
                              Traditional flow cytometry would require multiple tubes with different
                              antibody panels to cover the same number of markers. Consequently,
@@ -22,16 +21,19 @@ welcomeBody <- tabItem(tabName = "welcome",
                              of these existing methods and novel approaches published in <a href="https://doi.org/10.1093/bib/bbab471" target="_blank">Briefings in Bioinformatics</a>. 
                              Since the Wilcoxon rank-sum test and the t-test on sample medians, as well as our novel method CyEMD performed well, 
                              we made them available in this interface.'),
-                             style = "font-size: large;"
-                           )
-                         ),
-                         column(4, div(
-                           img(src = "cyanus_logo.png", height = "250px", width="auto"), 
-                           style = "vertical-align: middle; text-align:center;"
-                         )),
-                         title = h1("Welcome to CYANUS: CYtometry ANalysis Using Shiny"),
-                         width = 12
-                       )),
+      style = "font-size: large;"
+    )
+  ),
+  column(4, div(
+    img(src = "cyanus_logo.png", height = "250px", width="auto"), 
+    style = "vertical-align: middle; text-align:center;"
+  )),
+  title = h1("Welcome to CYANUS: CYtometry ANalysis Using Shiny"),
+  width = 12
+))
+
+welcomeBody <- tabItem(tabName = "welcome",
+                       welcomeRow,
                        fluidRow(
                          shinydashboard::box(
                            width = 12,
@@ -51,8 +53,8 @@ welcomeBody <- tabItem(tabName = "welcome",
                            ),
                            collapsible = TRUE,
                            collapsed = TRUE
-                           )
-                        ),
+                         )
+                       ),
                        fluidRow(
                          shinydashboard::box(
                            withSpinner(tableOutput('licenseTable')),
