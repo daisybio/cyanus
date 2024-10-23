@@ -145,11 +145,12 @@ observeEvent(input$runDRButton, {
                            scale = scale,
                            k = k,
                            dimensions = nrDims))
+    reactiveVals$stopVis <- T
   }
 
   reactiveVals$availableDRs <- reducedDimNames(reactiveVals$sce)
   waiter_hide(id="app")
-  if(!reactiveVals$stopVis){
+  if(length(reactiveVals$availableDRs) >= 1){
     shinyjs::show("visPlotBox")
     if (length(reactiveVals$availableDRs) == 1) {
       reactiveVals$lastMethod <- method
@@ -175,7 +176,7 @@ observeEvent(input$runDRButton, {
 observeEvent(input$selectedVisMethod, {
   req(input$selectedVisMethod)
   req(input$plt_color_by)
-  if (input$plt_color_by != "" & input$selectedVisMethod != "") {
+  if (all(input$plt_color_by != "") & input$selectedVisMethod != "") {
     enable("startDimRed")
   } else{
     disable("startDimRed")
@@ -183,12 +184,14 @@ observeEvent(input$selectedVisMethod, {
 })
 
 observeEvent(input$plt_color_by, {
-  if (input$plt_color_by != "" & input$selectedVisMethod != "") {
+  if (!is.null(input$plt_color_by) && 
+      all(input$plt_color_by != "") && 
+      input$selectedVisMethod != "") {
     enable("startDimRed")
   } else{
     disable("startDimRed")
   }
-})
+}, ignoreNULL = FALSE)
 
 
 
@@ -205,6 +208,7 @@ observeEvent(input$startDimRed, {
   library(ggplot2)
   library(CATALYST)
   output$visPlot <- renderPlot({
+    color_by <- isolate(input$radioButtonsColor)
     color <- isolate(input$plt_color_by)
     facet <- isolate(input$plt_facet_by)
     method <- isolate(input$selectedVisMethod)
@@ -218,19 +222,23 @@ observeEvent(input$startDimRed, {
                                           HTML("<br>Visualizing Dimensionality Reduction...")), 
                 color=spinner$color)
     custom_colors <- reactiveVals$selected_palette
-    if (!color %in% names(colData(sceObj))) {
+    if (color_by != "expression" && !color %in% names(colData(sceObj))) {
+      # color by cluster
       CATALYST:::.check_k(sceObj, color)
       kids <- cluster_ids(sceObj, color)
       nk <- nlevels(kids)
-    }else{
+    }else if (color_by != "expression"){
+      # color by condition/sample/meta information
       nk <- length(levels(CATALYST::ei(sceObj)[, color]))
     }
-    if(nk > length(reactiveVals$selected_palette)){
+    if(color_by != "expression" && nk > length(reactiveVals$selected_palette)){
       custom_colors <- grDevices::colorRampPalette(colors = reactiveVals$selected_palette)(nk)
     }
     ggplotObject <-
-      makeDR(sceObj, method, color, facet, assay, scale, c(dim1, dim2))+
-      scale_color_manual(values = custom_colors)
+      makeDR(sceObj, method, color, facet, assay, scale, c(dim1, dim2))
+    if(color_by != "expression"){
+      ggplotObject <- ggplotObject + scale_color_manual(values = custom_colors)
+    }
     waiter_hide(id="app")
     reactiveVals$lastPlot <- ggplotObject
     return(ggplotObject)
@@ -578,7 +586,7 @@ output$assayVis <- renderUI({
 output$selectColorBy <- renderUI({
   req(input$radioButtonsColor)
   if (input$radioButtonsColor == "expression") {
-    choices = c(rownames(reactiveVals$sce))
+    choices <- c(rownames(reactiveVals$sce))
     return(
       pickerInput(
         inputId = "plt_color_by",
@@ -589,7 +597,8 @@ output$selectColorBy <- renderUI({
       )
     )
   } else{
-    choices = renameColorColumn(names(colData(reactiveVals$sce)), T)
+    choices <- renameColorColumn(names(colData(reactiveVals$sce)), T)
+    choices <- choices[choices != 'cluster_id']
     return(
       selectizeInput(
         inputId = "plt_color_by",

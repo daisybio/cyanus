@@ -254,7 +254,8 @@ observeEvent(reactiveVals$sce, {
 
 # method for plotting all kinds of preprocessing plots
 plotPreprocessing <- function(sce) {
-  groupColorLabelBy <- names(colData(sce))
+  groupColorLabelBy <- names(CATALYST::ei(sce))
+  groupColorLabelBy <- groupColorLabelBy[groupColorLabelBy != 'n_cells']
   possAssays <- assayNames(sce)
   if (all(possAssays == c("counts", "exprs"))) {
     possAssays <- c("Normalized" = "exprs", "Raw" = "counts")

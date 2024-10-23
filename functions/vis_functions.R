@@ -49,7 +49,7 @@ makeDR <-
            assay_chosen,
            scale,
            dims = c(1,2)) {
-    if (color_chosen == "") {
+    if (length(color_chosen) == 1 && color_chosen == "") {
       color_chosen <- NULL
     }
     if (facet_chosen == "") {
