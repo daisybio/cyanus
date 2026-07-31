@@ -24,7 +24,7 @@ proxy:
       description: CYtometry ANalysis Using Shiny 2.0
       container-cmd: ["R", "-e", "shiny::runApp(host='0.0.0.0', port=3838)"]
       container-network: cyanus-dev_sp-net
-      container-image: judithbernett/cyanus:2.0
+      container-image: judithbernett/cyanus:2.1
       
 
 logging:
